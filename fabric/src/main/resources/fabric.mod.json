@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "cydun",
+  "version": "${version}",
+  "name": "Cyclic Dungeons",
+  "description": "Smarter dungeons for the avid adventurer",
+  "authors": [
+  	"Lying"
+  ],
+  "contact": {
+    "homepage": "https://lyinginbedmon.carrd.co/",
+    "sources": "https://github.com/Lyinginbedmon/CyclicDungeons"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/cydun/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.lying.fabric.CyclicDungeonsFabric"
+    ],
+    "client": [
+      "com.lying.fabric.client.CyclicDungeonsFabricClient"
+    ],
+	"fabric-datagen": [
+		"com.lying.fabric.data.CDDataGenerators"
+	]
+  },
+  "mixins": [
+    "cydun.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "architectury": ">=15.0.1",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
