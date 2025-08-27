@@ -1,7 +1,12 @@
 package com.lying.grammar;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.google.common.collect.Lists;
+import com.lying.init.CDTerms;
+import com.lying.reference.Reference;
 
 import net.minecraft.text.MutableText;
 
@@ -28,10 +33,17 @@ public class Room
 	
 	public final MutableText name()
 	{
-		return term.name();
+		return Reference.ModInfo.translate("debug", "room", term.name(), depth);
 	}
 	
-	public Optional<UUID> getLink() { return linksTo; }
+	public final String asString()
+	{
+		return term.name().getString()+" ("+depth+")";
+	}
+	
+	public boolean hasLinks() { return linksTo.isPresent(); }
+	
+	public boolean hasLinkTo(UUID uuid) { return linksTo.isPresent() && linksTo.get().equals(uuid); }
 	
 	public Room linkTo(UUID otherRoom)
 	{
@@ -39,7 +51,27 @@ public class Room
 		return this;
 	}
 	
-	public boolean hasLink() { return linksTo.isPresent(); }
+	public Room detachFrom(UUID otherRoom)
+	{
+		if(linksTo.isPresent() && linksTo.get().equals(otherRoom))
+			linksTo = Optional.empty();
+		return this;
+	}
+	
+	/** Collects all rooms within the given graph that this room links to */
+	public List<Room> getLinksFrom(Graph graph)
+	{
+		List<Room> links = Lists.newArrayList();
+		getLinkIds().forEach(id -> graph.get(id).ifPresent(links::add));
+		return links;
+	}
+	
+	public List<UUID> getLinkIds()
+	{
+		List<UUID> links = Lists.newArrayList();
+		linksTo.ifPresent(links::add);
+		return links;
+	}
 	
 	/** Returns true if this room can be replaced during generation */
 	public boolean isReplaceable() { return term.isReplaceable(); }

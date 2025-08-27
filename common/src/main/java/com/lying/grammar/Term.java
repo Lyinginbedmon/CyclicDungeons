@@ -1,10 +1,10 @@
 package com.lying.grammar;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import com.google.common.collect.Lists;
 
@@ -37,7 +37,7 @@ public abstract class Term
 	public boolean isPlaceable() { return isPlaceable; }
 	
 	/** Returns true if this Term can exist in the given room */
-	public abstract boolean canBePlaced(Room inRoom, Room previous, @Nullable Room next, Graph graph);
+	public abstract boolean canBePlaced(Room inRoom, @NotNull List<Room> previous, @NotNull List<Room> next, Graph graph);
 	
 	public void applyTo(Room room, Graph graph)
 	{
@@ -47,15 +47,27 @@ public abstract class Term
 	
 	protected abstract void onApply(Room room, Graph graph);
 	
-	protected static Room injectRoom(Room room, Graph graph)
+	public static Room injectRoom(Room room, Graph graph)
 	{
-		Room injected = new Room(UUID.randomUUID());
-		room.getLink().ifPresent(injected::linkTo);
+		Room injected = new Room();
+		room.getLinkIds().forEach(uuid -> 
+		{
+			// Move all links of parent to child
+			injected.linkTo(uuid);
+			room.detachFrom(uuid);
+		});
+		// Link parent to child and add to graph
 		room.linkTo(injected.uuid());
 		graph.add(injected);
 		return injected;
 	}
 	
+	protected static boolean checkListFor(List<Room> rooms, Term term)
+	{
+		return rooms.stream().anyMatch(r -> r.is(term));
+	}
+	
+	@SuppressWarnings("unchecked")
 	public static class Builder
 	{
 		private boolean replaceable = false;
@@ -110,7 +122,6 @@ public abstract class Term
 			return this;
 		}
 		
-		@SuppressWarnings("unchecked")
 		public Builder onlyAfter(Supplier<Term>... term)
 		{
 			for(Supplier<Term> termIn : term)
@@ -118,21 +129,24 @@ public abstract class Term
 			return this;
 		}
 		
-		public Builder neverAfter(Supplier<Term> term)
+		public Builder neverAfter(Supplier<Term>... term)
 		{
-			notAfter.add(term);
+			for(Supplier<Term> termIn : term)
+				notAfter.add(termIn);
 			return this;
 		}
 		
-		public Builder onlyBefore(Supplier<Term> term)
+		public Builder onlyBefore(Supplier<Term>... term)
 		{
-			before.add(term);
+			for(Supplier<Term> termIn : term)
+				before.add(termIn);
 			return this;
 		}
 		
-		public Builder neverBefore(Supplier<Term> term)
+		public Builder neverBefore(Supplier<Term>... term)
 		{
-			notBefore.add(term);
+			for(Supplier<Term> termIn : term)
+				notBefore.add(termIn);
 			return this;
 		}
 		
@@ -146,7 +160,7 @@ public abstract class Term
 		{
 			return new Term(registryName, placeable, replaceable)
 				{
-					public boolean canBePlaced(Room inRoom, Room previous, @Nullable Room next, Graph graph)
+					public boolean canBePlaced(Room inRoom, List<Room> previous, List<Room> next, Graph graph)
 					{
 						// Only placeable whilst graph is below a maximum scale
 						if(sizeCap > 0 && graph.size() >= sizeCap)
@@ -160,26 +174,29 @@ public abstract class Term
 						if(maxPop > 0 && graph.tally(this) >= maxPop)
 							return false;
 						
+						final Predicate<Term> prevCheck = t -> Term.checkListFor(previous, t);
+						final Predicate<Term> nextCheck = t -> Term.checkListFor(next, t);
+						
 						// Cannot be placed consecutively
-						if(!afterSelf && (previous.is(this) || next.is(this)))
+						if(!afterSelf && (prevCheck.test(this) || nextCheck.test(this)))
 							return false;
 						
 						// Must be placed after one or more possible rooms
-						if(!after.isEmpty() && after.stream().map(Supplier::get).noneMatch(previous::is))
+						if(!after.isEmpty() && after.stream().map(Supplier::get).noneMatch(prevCheck::test))
 							return false;
 						
 						// Must not be placed after one or more possible rooms
-						if(!notAfter.isEmpty() && notAfter.stream().map(Supplier::get).anyMatch(previous::is))
+						if(!notAfter.isEmpty() && notAfter.stream().map(Supplier::get).anyMatch(prevCheck::test))
 							return false;
 						
 						if(next != null)
 						{
 							// Must be placed before one or more possible rooms
-							if(!before.isEmpty() && before.stream().map(Supplier::get).noneMatch(next::is))
+							if(!before.isEmpty() && before.stream().map(Supplier::get).noneMatch(nextCheck::test))
 								return false;
 							
 							// Must not be placed before one or more possible rooms
-							if(!notBefore.isEmpty() && notBefore.stream().map(Supplier::get).anyMatch(next::is))
+							if(!notBefore.isEmpty() && notBefore.stream().map(Supplier::get).anyMatch(nextCheck::test))
 								return false;
 						}
 						
