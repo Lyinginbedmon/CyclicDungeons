@@ -17,9 +17,13 @@ public class Grammar
 	public static void run()
 	{
 		final int scale = 5;
-		LOGGER.info("Initial graph: {}", initialGraph(scale).asString());
+		LOGGER.info("Initial graph:");
+		initialGraph(scale).printAsTree(LOGGER::info, r -> "	".repeat(r.depth) + r.asString());
 		for(int i=0; i<5; i++)
-			LOGGER.info("Generated graph {}: {}", i, generate(initialGraph(scale)).asString());
+		{
+			LOGGER.info("Generated graph {}:", i);
+			generate(initialGraph(scale)).printAsTree(LOGGER::info, r -> "	".repeat(r.depth) + r.asString());
+		}
 	}
 	
 	/** Generates a linear initial starting graph */

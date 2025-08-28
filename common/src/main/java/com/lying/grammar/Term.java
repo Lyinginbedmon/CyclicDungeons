@@ -1,10 +1,14 @@
 package com.lying.grammar;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
 
@@ -15,13 +19,15 @@ import net.minecraft.util.Identifier;
 public abstract class Term
 {
 	private final Identifier registryName;
+	private final EnumSet<EnumTermType> groups;
 	private final boolean isReplaceable, isPlaceable;
 	
-	private Term(Identifier idIn, boolean placeable, boolean replaceable)
+	private Term(Identifier idIn, boolean placeable, boolean replaceable, EnumSet<EnumTermType> groupsIn)
 	{
 		registryName = idIn;
 		isPlaceable = placeable;
 		isReplaceable = replaceable;
+		groups = groupsIn;
 	}
 	
 	public Identifier registryName() { return registryName; }
@@ -62,9 +68,17 @@ public abstract class Term
 		return injected;
 	}
 	
-	protected static boolean checkListFor(List<Room> rooms, Term term)
+	public static Room injectBranch(Room room, Graph graph)
 	{
-		return rooms.stream().anyMatch(r -> r.is(term));
+		Room injected = new Room();
+		room.linkTo(injected.uuid());
+		graph.add(injected);
+		return injected;
+	}
+	
+	protected static boolean checkListFor(@Nullable List<Room> rooms, Term term)
+	{
+		return rooms != null && !rooms.isEmpty() && rooms.stream().anyMatch(r -> r.is(term));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -73,11 +87,13 @@ public abstract class Term
 		private boolean replaceable = false;
 		private boolean placeable = true;
 		private boolean afterSelf = true;
+		private boolean deadEnds = true;
 		private int maxPop = -1, sizeCap = -1;
 		private int depthMin = -1;
 		private List<Supplier<Term>> after = Lists.newArrayList(), before = Lists.newArrayList();
 		private List<Supplier<Term>> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
 		private TermApplyFunc applyFunc = (t,r,g) -> {};
+		private EnumSet<EnumTermType> groups = EnumSet.noneOf(EnumTermType.class);
 		
 		private Builder() { }
 		
@@ -86,7 +102,13 @@ public abstract class Term
 			return new Builder();
 		}
 		
-		public Builder system()
+		public Builder group(EnumTermType groupIn)
+		{
+			groups.add(groupIn);
+			return this;
+		}
+		
+		public Builder unplaceable()
 		{
 			placeable = false;
 			return this;
@@ -107,6 +129,12 @@ public abstract class Term
 		public Builder afterDepth(int dep)
 		{
 			depthMin = dep;
+			return this;
+		}
+		
+		public Builder allowDeadEnds(boolean val)
+		{
+			deadEnds = val;
 			return this;
 		}
 		
@@ -158,7 +186,7 @@ public abstract class Term
 		
 		public Term build(Identifier registryName)
 		{
-			return new Term(registryName, placeable, replaceable)
+			return new Term(registryName, placeable, replaceable, groups)
 				{
 					public boolean canBePlaced(Room inRoom, List<Room> previous, List<Room> next, Graph graph)
 					{
@@ -174,6 +202,10 @@ public abstract class Term
 						if(maxPop > 0 && graph.tally(this) >= maxPop)
 							return false;
 						
+						// Cannot be placed at a dead end
+						if(!deadEnds && !inRoom.hasLinks())
+							return false;
+						
 						final Predicate<Term> prevCheck = t -> Term.checkListFor(previous, t);
 						final Predicate<Term> nextCheck = t -> Term.checkListFor(next, t);
 						
@@ -182,25 +214,30 @@ public abstract class Term
 							return false;
 						
 						// Must be placed after one or more possible rooms
-						if(!after.isEmpty() && after.stream().map(Supplier::get).noneMatch(prevCheck::test))
+						if(!after.isEmpty() && terms(after).noneMatch(prevCheck::test))
 							return false;
 						
 						// Must not be placed after one or more possible rooms
-						if(!notAfter.isEmpty() && notAfter.stream().map(Supplier::get).anyMatch(prevCheck::test))
+						if(!notAfter.isEmpty() && terms(notAfter).anyMatch(prevCheck::test))
 							return false;
 						
-						if(next != null)
+						if(!next.isEmpty())
 						{
 							// Must be placed before one or more possible rooms
-							if(!before.isEmpty() && before.stream().map(Supplier::get).noneMatch(nextCheck::test))
+							if(!before.isEmpty() && terms(before).noneMatch(nextCheck::test))
 								return false;
 							
 							// Must not be placed before one or more possible rooms
-							if(!notBefore.isEmpty() && notBefore.stream().map(Supplier::get).anyMatch(nextCheck::test))
+							if(!notBefore.isEmpty() && terms(notBefore).anyMatch(nextCheck::test))
 								return false;
 						}
 						
 						return true;
+					}
+					
+					private static Stream<Term> terms(List<Supplier<Term>> setIn)
+					{
+						return setIn.stream().map(Supplier::get).filter(Objects::nonNull);
 					}
 					
 					public void onApply(Room room, Graph graph) { applyFunc.apply(this, room, graph); }

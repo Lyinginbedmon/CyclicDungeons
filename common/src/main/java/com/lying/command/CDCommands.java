@@ -9,6 +9,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import com.lying.grammar.Grammar;
 import com.lying.grammar.Graph;
+import com.lying.grammar.Room;
 import com.lying.reference.Reference;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -19,6 +20,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 
 @SuppressWarnings("unused")
 public class CDCommands
@@ -66,7 +68,8 @@ public class CDCommands
 		Graph graph = parsePhrase(nbt);
 		if(graph.isEmpty())
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
-		source.sendFeedback(graph::describe, false);
+		source.sendFeedback(() -> Text.literal("Parsed dungeon:"), false);
+		graph.printAsTree(t -> source.sendFeedback(() -> t, false), CDCommands::roomToText);
 		return graph.size();
 	}
 	
@@ -75,7 +78,15 @@ public class CDCommands
 		Graph graph = parsePhrase(nbt);
 		if(graph.isEmpty())
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
-		source.sendFeedback(Grammar.generate(graph)::describe, false);
+		source.sendFeedback(() -> Text.literal("Generated dungeon:"), false);
+		Grammar.generate(graph).printAsTree(t -> source.sendFeedback(() -> t, false), CDCommands::roomToText);
 		return graph.size();
+	}
+	
+	private static Text roomToText(Room r)
+	{
+		return 
+				Text.literal("  ".repeat(r.depth))
+				.append(r.name());
 	}
 }

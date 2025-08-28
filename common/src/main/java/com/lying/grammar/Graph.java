@@ -1,8 +1,13 @@
 package com.lying.grammar;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import org.jetbrains.annotations.NotNull;
 
 import com.google.common.collect.Lists;
 import com.lying.init.CDTerms;
@@ -46,6 +51,7 @@ public class Graph
 		return index < rooms.size() ? Optional.of(rooms.get(index)) : Optional.empty();
 	}
 	
+	@NotNull
 	public List<Room> getLinksTo(UUID uuid)
 	{
 		List<Room> links = Lists.newArrayList();
@@ -97,8 +103,26 @@ public class Graph
 			});
 	}
 	
+	public <T extends Object> void printAsTree(Consumer<T> print, Function<Room,T> getter)
+	{
+		if(isEmpty())
+			return;
+		
+		printRecursive(print, rooms.get(0), getter);
+	}
+	
+	private <T extends Object> void printRecursive(Consumer<T> print, Room room, Function<Room,T> getter)
+	{
+		print.accept(getter.apply(room));
+		Comparator<Room> sorter = Room.branchSort(this);
+		room.getLinksFrom(this).stream().sorted(sorter).forEach(r -> printRecursive(print, r, getter));
+	}
+	
 	public String asString()
 	{
+		if(isEmpty())
+			return "NULL";
+		
 		Room room = rooms.get(0);
 		String result = room.asString();
 		while(room.hasLinks())
@@ -115,6 +139,9 @@ public class Graph
 	
 	public Text describe()
 	{
+		if(isEmpty())
+			return Text.literal("NULL");
+		
 		Room room = rooms.get(0);
 		MutableText result = room.name();
 		while(room.hasLinks())
