@@ -9,58 +9,58 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
-import com.lying.grammar.Graph;
-import com.lying.grammar.Room;
-import com.lying.grammar.Term;
+import com.lying.grammar.CDGraph;
+import com.lying.grammar.CDRoom;
+import com.lying.grammar.GrammarTerm;
 
 import net.minecraft.util.Identifier;
 
 @SuppressWarnings("unchecked")
 public class CDTerms
 {
-	private static final Map<Identifier, Supplier<Term>> TERMS = new HashMap<>();
+	private static final Map<Identifier, Supplier<GrammarTerm>> TERMS = new HashMap<>();
 	private static int tally = 0;
 	
 	// Initial building blocks
-	public static final Supplier<Term> START		= register("start", () -> Term.Builder.create().unplaceable());
-	public static final Supplier<Term> BLANK		= register("blank", () -> Term.Builder.create().unplaceable().replaceable());
-	public static final Supplier<Term> END			= register("end", () -> Term.Builder.create().unplaceable());
+	public static final Supplier<GrammarTerm> START		= register("start", () -> GrammarTerm.Builder.create(0xFFFFFF).unplaceable());
+	public static final Supplier<GrammarTerm> BLANK		= register("blank", () -> GrammarTerm.Builder.create(0x080808).unplaceable().replaceable());
+	public static final Supplier<GrammarTerm> END			= register("end", () -> GrammarTerm.Builder.create(0xFFFFFF).unplaceable());
 	
 	/** Completely blank, only used to mark errors in generation */
-	public static final Supplier<Term> VOID			= register("void", () -> Term.Builder.create().unplaceable());
+	public static final Supplier<GrammarTerm> VOID			= register("void", () -> GrammarTerm.Builder.create(0x000000).unplaceable());
 	
 	// Functional rooms
-	public static final Supplier<Term> EMPTY		= register("empty", () -> Term.Builder.create().nonconsecutive().allowDeadEnds(false).neverAfter(CDTerms.START).neverBefore(CDTerms.END));
-	public static final Supplier<Term> BATTLE		= register("battle", () -> Term.Builder.create().nonconsecutive());
-	public static final Supplier<Term> TRAP			= register("trap", () -> Term.Builder.create().nonconsecutive());
-	public static final Supplier<Term> BIG_PUZZLE	= register("big_puzzle", () -> Term.Builder.create().nonconsecutive().popCap(2).neverAfter(CDTerms.SML_PUZZLE).onApply(CDTerms::injectTreasure));
-	public static final Supplier<Term> SML_PUZZLE	= register("small_puzzle", () -> Term.Builder.create().nonconsecutive().popCap(4).neverAfter(CDTerms.BIG_PUZZLE).neverBefore(CDTerms.BIG_PUZZLE));
-	public static final Supplier<Term> BOSS			= register("boss", () -> Term.Builder.create().popCap(1).onlyBefore(CDTerms.END).onApply(CDTerms::injectTreasure));
-	public static final Supplier<Term> TREASURE		= register("treasure", () -> Term.Builder.create().popCap(3).onlyAfter(CDTerms.BATTLE, CDTerms.SML_PUZZLE, CDTerms.EMPTY));
-	public static final Supplier<Term> ADD			= register("add_room", () -> Term.Builder.create().replaceable().sizeCap(10).onApply((t,r,g) -> Term.injectRoom(r, g)));
-	public static final Supplier<Term> ADD_BRANCH	= register("add_branch", () -> Term.Builder.create().replaceable().sizeCap(10).onApply((t,r,g) -> Term.injectBranch(r, g)));
+	public static final Supplier<GrammarTerm> EMPTY		= register("empty", () -> GrammarTerm.Builder.create(0xA6A6A6).nonconsecutive().allowDeadEnds(false).neverAfter(CDTerms.START).neverBefore(CDTerms.END));
+	public static final Supplier<GrammarTerm> BATTLE		= register("battle", () -> GrammarTerm.Builder.create(0xC80707).nonconsecutive());
+	public static final Supplier<GrammarTerm> TRAP			= register("trap", () -> GrammarTerm.Builder.create(0xAE31DE).nonconsecutive());
+	public static final Supplier<GrammarTerm> BIG_PUZZLE	= register("big_puzzle", () -> GrammarTerm.Builder.create(0x3136DE).nonconsecutive().popCap(2).onApply(CDTerms::injectTreasure));
+	public static final Supplier<GrammarTerm> SML_PUZZLE	= register("small_puzzle", () -> GrammarTerm.Builder.create(0x2768CA).nonconsecutive().popCap(4));
+	public static final Supplier<GrammarTerm> BOSS			= register("boss", () -> GrammarTerm.Builder.create(0x7D1D1D).popCap(1).onlyBefore(CDTerms.END).onApply(CDTerms::injectTreasure));
+	public static final Supplier<GrammarTerm> TREASURE		= register("treasure", () -> GrammarTerm.Builder.create(0xF2B03C).popCap(3).onlyAfter(CDTerms.BATTLE, CDTerms.SML_PUZZLE, CDTerms.EMPTY));
+	public static final Supplier<GrammarTerm> ADD			= register("add_room", () -> GrammarTerm.Builder.create(0xD2D2D2).replaceable().sizeCap(6).onApply((t,r,g) -> GrammarTerm.injectRoom(r, g)));
+	public static final Supplier<GrammarTerm> ADD_BRANCH	= register("add_branch", () -> GrammarTerm.Builder.create(0xB9B9B9).replaceable().sizeCap(6).onApply((t,r,g) -> GrammarTerm.injectBranch(r, g)));
 	
-	private static void injectTreasure(Term t, Room r, Graph g)
+	private static void injectTreasure(GrammarTerm t, CDRoom r, CDGraph g)
 	{
-		Term.injectRoom(r, g).applyTerm(CDTerms.TREASURE.get(), g);
+		GrammarTerm.injectRoom(r, g).applyTerm(CDTerms.TREASURE.get(), g);
 	}
 	
-	private static Supplier<Term> register(String name, Supplier<Term.Builder> funcIn)
+	private static Supplier<GrammarTerm> register(String name, Supplier<GrammarTerm.Builder> funcIn)
 	{
 		final Identifier id = prefix(name);
-		final Term term = funcIn.get().build(id);
+		final GrammarTerm term = funcIn.get().build(id);
 		if(term.isPlaceable())
 			tally++;
-		Supplier<Term> sup = () -> term;
+		Supplier<GrammarTerm> sup = () -> term;
 		TERMS.put(id, sup);
 		return sup;
 	}
 	
-	public static Optional<Term> get(String name) { return get(name.contains(":") ? Identifier.of(name) : prefix(name)); }
+	public static Optional<GrammarTerm> get(String name) { return get(name.contains(":") ? Identifier.of(name) : prefix(name)); }
 	
-	public static Optional<Term> get(Identifier id) { return TERMS.containsKey(id) ? Optional.of(TERMS.get(id).get()) : Optional.empty(); }
+	public static Optional<GrammarTerm> get(Identifier id) { return TERMS.containsKey(id) ? Optional.of(TERMS.get(id).get()) : Optional.empty(); }
 	
-	public static List<Term> placeables() { return TERMS.values().stream().map(Supplier::get).filter(Term::isPlaceable).toList(); }
+	public static List<GrammarTerm> placeables() { return TERMS.values().stream().map(Supplier::get).filter(GrammarTerm::isPlaceable).toList(); }
 	
 	public static void init()
 	{

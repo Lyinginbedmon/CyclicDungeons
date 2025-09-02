@@ -1,8 +1,8 @@
 package com.lying.grammar;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -11,30 +11,44 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.lying.init.CDTerms;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-public abstract class Term
+public abstract class GrammarTerm
 {
+	protected static final Codec<GrammarTerm> CODEC = Identifier.CODEC.comapFlatMap(id -> 
+	{
+		Optional<GrammarTerm> type = CDTerms.get(id);
+		if(type.isPresent())
+			return DataResult.success(type.get());
+		else
+			return DataResult.error(() -> "Not a recognised type: '"+String.valueOf(id) + "'");
+	}, GrammarTerm::registryName);
+	
 	private final Identifier registryName;
-	private final EnumSet<EnumTermType> groups;
+	private final int colour;
 	private final boolean isReplaceable, isPlaceable;
 	
-	private Term(Identifier idIn, boolean placeable, boolean replaceable, EnumSet<EnumTermType> groupsIn)
+	private GrammarTerm(Identifier idIn, int colourIn, boolean placeable, boolean replaceable)
 	{
 		registryName = idIn;
+		colour = colourIn;
 		isPlaceable = placeable;
 		isReplaceable = replaceable;
-		groups = groupsIn;
 	}
 	
-	public Identifier registryName() { return registryName; }
+	public final Identifier registryName() { return registryName; }
+	
+	public final int colour() { return colour; }
 	
 	public MutableText name() { return Text.literal(registryName.getPath()); }
 	
-	public boolean matches(Term b) { return registryName.equals(b.registryName); }
+	public boolean matches(GrammarTerm b) { return registryName.equals(b.registryName); }
 	
 	/** Returns true if generation should replace rooms with this term */
 	public boolean isReplaceable() { return isReplaceable; }
@@ -43,19 +57,19 @@ public abstract class Term
 	public boolean isPlaceable() { return isPlaceable; }
 	
 	/** Returns true if this Term can exist in the given room */
-	public abstract boolean canBePlaced(Room inRoom, @NotNull List<Room> previous, @NotNull List<Room> next, Graph graph);
+	public abstract boolean canBePlaced(CDRoom inRoom, @NotNull List<CDRoom> previous, @NotNull List<CDRoom> next, CDGraph graph);
 	
-	public void applyTo(Room room, Graph graph)
+	public void applyTo(CDRoom room, CDGraph graph)
 	{
-		room.setTerm(this);
+		room.metadata().setType(this);
 		onApply(room, graph);
 	}
 	
-	protected abstract void onApply(Room room, Graph graph);
+	protected abstract void onApply(CDRoom room, CDGraph graph);
 	
-	public static Room injectRoom(Room room, Graph graph)
+	public static CDRoom injectRoom(CDRoom room, CDGraph graph)
 	{
-		Room injected = new Room();
+		CDRoom injected = new CDRoom();
 		room.getLinkIds().forEach(uuid -> 
 		{
 			// Move all links of parent to child
@@ -68,44 +82,41 @@ public abstract class Term
 		return injected;
 	}
 	
-	public static Room injectBranch(Room room, Graph graph)
+	public static CDRoom injectBranch(CDRoom room, CDGraph graph)
 	{
-		Room injected = new Room();
+		CDRoom injected = new CDRoom();
 		room.linkTo(injected.uuid());
 		graph.add(injected);
 		return injected;
 	}
 	
-	protected static boolean checkListFor(@Nullable List<Room> rooms, Term term)
+	protected static boolean checkListFor(@Nullable List<CDRoom> rooms, GrammarTerm term)
 	{
-		return rooms != null && !rooms.isEmpty() && rooms.stream().anyMatch(r -> r.is(term));
+		return rooms != null && !rooms.isEmpty() && rooms.stream().filter(Objects::nonNull).anyMatch(r -> r.metadata().is(term));
 	}
 	
 	@SuppressWarnings("unchecked")
 	public static class Builder
 	{
+		private final int colour;
 		private boolean replaceable = false;
 		private boolean placeable = true;
 		private boolean afterSelf = true;
 		private boolean deadEnds = true;
 		private int maxPop = -1, sizeCap = -1;
 		private int depthMin = -1;
-		private List<Supplier<Term>> after = Lists.newArrayList(), before = Lists.newArrayList();
-		private List<Supplier<Term>> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
+		private List<Supplier<GrammarTerm>> after = Lists.newArrayList(), before = Lists.newArrayList();
+		private List<Supplier<GrammarTerm>> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
 		private TermApplyFunc applyFunc = (t,r,g) -> {};
-		private EnumSet<EnumTermType> groups = EnumSet.noneOf(EnumTermType.class);
 		
-		private Builder() { }
-		
-		public static Builder create()
+		private Builder(int colourIn)
 		{
-			return new Builder();
+			colour = colourIn;
 		}
 		
-		public Builder group(EnumTermType groupIn)
+		public static Builder create(int colour)
 		{
-			groups.add(groupIn);
-			return this;
+			return new Builder(colour);
 		}
 		
 		public Builder unplaceable()
@@ -150,30 +161,30 @@ public abstract class Term
 			return this;
 		}
 		
-		public Builder onlyAfter(Supplier<Term>... term)
+		public Builder onlyAfter(Supplier<GrammarTerm>... term)
 		{
-			for(Supplier<Term> termIn : term)
+			for(Supplier<GrammarTerm> termIn : term)
 				after.add(termIn);
 			return this;
 		}
 		
-		public Builder neverAfter(Supplier<Term>... term)
+		public Builder neverAfter(Supplier<GrammarTerm>... term)
 		{
-			for(Supplier<Term> termIn : term)
+			for(Supplier<GrammarTerm> termIn : term)
 				notAfter.add(termIn);
 			return this;
 		}
 		
-		public Builder onlyBefore(Supplier<Term>... term)
+		public Builder onlyBefore(Supplier<GrammarTerm>... term)
 		{
-			for(Supplier<Term> termIn : term)
+			for(Supplier<GrammarTerm> termIn : term)
 				before.add(termIn);
 			return this;
 		}
 		
-		public Builder neverBefore(Supplier<Term>... term)
+		public Builder neverBefore(Supplier<GrammarTerm>... term)
 		{
-			for(Supplier<Term> termIn : term)
+			for(Supplier<GrammarTerm> termIn : term)
 				notBefore.add(termIn);
 			return this;
 		}
@@ -184,18 +195,18 @@ public abstract class Term
 			return this;
 		}
 		
-		public Term build(Identifier registryName)
+		public GrammarTerm build(Identifier registryName)
 		{
-			return new Term(registryName, placeable, replaceable, groups)
+			return new GrammarTerm(registryName, colour, placeable, replaceable)
 				{
-					public boolean canBePlaced(Room inRoom, List<Room> previous, List<Room> next, Graph graph)
+					public boolean canBePlaced(CDRoom inRoom, List<CDRoom> previous, List<CDRoom> next, CDGraph graph)
 					{
 						// Only placeable whilst graph is below a maximum scale
 						if(sizeCap > 0 && graph.size() >= sizeCap)
 							return false;
 						
 						// Only placeable after a minimum number of preceding rooms
-						if(depthMin > 0 && inRoom.depth <= depthMin)
+						if(depthMin > 0 && inRoom.metadata().depth() <= depthMin)
 							return false;
 						
 						// Only placeable up to a maximum population in the same graph
@@ -206,8 +217,8 @@ public abstract class Term
 						if(!deadEnds && !inRoom.hasLinks())
 							return false;
 						
-						final Predicate<Term> prevCheck = t -> Term.checkListFor(previous, t);
-						final Predicate<Term> nextCheck = t -> Term.checkListFor(next, t);
+						final Predicate<GrammarTerm> prevCheck = t -> GrammarTerm.checkListFor(previous, t);
+						final Predicate<GrammarTerm> nextCheck = t -> GrammarTerm.checkListFor(next, t);
 						
 						// Cannot be placed consecutively
 						if(!afterSelf && (prevCheck.test(this) || nextCheck.test(this)))
@@ -235,19 +246,19 @@ public abstract class Term
 						return true;
 					}
 					
-					private static Stream<Term> terms(List<Supplier<Term>> setIn)
+					private static Stream<GrammarTerm> terms(List<Supplier<GrammarTerm>> setIn)
 					{
 						return setIn.stream().map(Supplier::get).filter(Objects::nonNull);
 					}
 					
-					public void onApply(Room room, Graph graph) { applyFunc.apply(this, room, graph); }
+					public void onApply(CDRoom room, CDGraph graph) { applyFunc.apply(this, room, graph); }
 				};
 		}
 		
 		@FunctionalInterface
 		public interface TermApplyFunc
 		{
-			public void apply(Term term, Room room, Graph graph);
+			public void apply(GrammarTerm term, CDRoom room, CDGraph graph);
 		}
 	}
 }

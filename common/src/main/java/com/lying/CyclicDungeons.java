@@ -5,13 +5,15 @@ import org.slf4j.LoggerFactory;
 
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
-import com.lying.grammar.Grammar;
+import com.lying.grammar.CDGrammar;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDParticleTypes;
+import com.lying.init.CDScreenHandlerTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.init.CDTerms;
+import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
 
 public final class CyclicDungeons
@@ -47,9 +49,11 @@ public final class CyclicDungeons
 		CDItems.init();
 		CDSoundEvents.init();
 		CDParticleTypes.init();
+		CDScreenHandlerTypes.init();
+		CDPacketHandler.initServer();
 		registerServerEvents();
 		
-		Grammar.run();
+		CDGrammar.run();
 	}
 	
 	private static void registerServerEvents()

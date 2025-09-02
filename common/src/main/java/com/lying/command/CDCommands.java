@@ -7,9 +7,10 @@ import static net.minecraft.server.command.CommandManager.literal;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import com.lying.grammar.Grammar;
-import com.lying.grammar.Graph;
-import com.lying.grammar.Room;
+import com.lying.grammar.CDGrammar;
+import com.lying.grammar.CDGraph;
+import com.lying.grammar.CDRoom;
+import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -47,7 +48,7 @@ public class CDCommands
 		});
 	}
 	
-	public static Graph parsePhrase(NbtCompound nbt) throws CommandSyntaxException
+	public static CDGraph parsePhrase(NbtCompound nbt) throws CommandSyntaxException
 	{
 		if(nbt.contains("Phrase", NbtElement.LIST_TYPE))
 		{
@@ -57,7 +58,7 @@ public class CDCommands
 			
 			List<String> terms = Lists.newArrayList();
 			phrase.forEach(e -> terms.add(e.asString()));
-			return Graph.parsePhrase(terms.toArray(new String[0]));
+			return CDGraph.parsePhrase(terms.toArray(new String[0]));
 		}
 		else
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
@@ -65,28 +66,29 @@ public class CDCommands
 	
 	private static int tryParsePhrase(NbtCompound nbt, ServerCommandSource source) throws CommandSyntaxException
 	{
-		Graph graph = parsePhrase(nbt);
+		CDGraph graph = parsePhrase(nbt);
 		if(graph.isEmpty())
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
-		source.sendFeedback(() -> Text.literal("Parsed dungeon:"), false);
-		graph.printAsTree(t -> source.sendFeedback(() -> t, false), CDCommands::roomToText);
+		if(source.getPlayer() != null)
+			ShowDungeonLayoutPacket.sendTo(source.getPlayer(), graph, false);
 		return graph.size();
 	}
 	
 	private static int tryGenerate(NbtCompound nbt, ServerCommandSource source) throws CommandSyntaxException
 	{
-		Graph graph = parsePhrase(nbt);
+		CDGraph graph = parsePhrase(nbt);
 		if(graph.isEmpty())
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
-		source.sendFeedback(() -> Text.literal("Generated dungeon:"), false);
-		Grammar.generate(graph).printAsTree(t -> source.sendFeedback(() -> t, false), CDCommands::roomToText);
+		CDGrammar.generate(graph);
+		if(source.getPlayer() != null)
+			ShowDungeonLayoutPacket.sendTo(source.getPlayer(), graph, true);
 		return graph.size();
 	}
 	
-	private static Text roomToText(Room r)
+	private static Text roomToText(CDRoom r)
 	{
 		return 
-				Text.literal("  ".repeat(r.depth))
+				Text.literal("  ".repeat(r.metadata().depth()))
 				.append(r.name());
 	}
 }
