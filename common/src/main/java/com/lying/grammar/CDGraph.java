@@ -48,13 +48,18 @@ public class CDGraph
 			CDRoom room = new CDRoom();
 			room.metadata().setType(term.get());
 			if(prev != null)
-				prev.linkTo(room.uuid());
+				prev.linkTo(room);
 			
 			graph.add(room);
 			prev = room;
 		}
 		
 		return graph;
+	}
+	
+	public CDGraph clone()
+	{
+		return fromNbt(toNbt());
 	}
 	
 	public final NbtElement toNbt()
@@ -136,7 +141,7 @@ public class CDGraph
 	{
 		int depth = host.metadata().depth() + 1;
 		if(host.hasLinks())
-			host.getLinksFrom(this).forEach(r -> 
+			host.getChildRooms(this).forEach(r -> 
 			{
 				r.metadata().setDepth(depth);
 				updateDepth(r);
@@ -155,7 +160,7 @@ public class CDGraph
 	{
 		print.accept(getter.apply(room));
 		Comparator<CDRoom> sorter = CDRoom.branchSort(this);
-		room.getLinksFrom(this).stream().sorted(sorter).forEach(r -> printRecursive(print, r, getter));
+		room.getChildRooms(this).stream().sorted(sorter).forEach(r -> printRecursive(print, r, getter));
 	}
 	
 	public String asString()
@@ -167,7 +172,7 @@ public class CDGraph
 		String result = room.asString();
 		while(room.hasLinks())
 		{
-			List<CDRoom> links = room.getLinksFrom(this);
+			List<CDRoom> links = room.getChildRooms(this);
 			if(links.isEmpty())
 				break;
 			
@@ -186,7 +191,7 @@ public class CDGraph
 		MutableText result = room.name();
 		while(room.hasLinks())
 		{
-			List<CDRoom> links = room.getLinksFrom(this);
+			List<CDRoom> links = room.getChildRooms(this);
 			if(links.isEmpty())
 				break;
 			

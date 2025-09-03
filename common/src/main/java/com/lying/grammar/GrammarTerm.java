@@ -32,19 +32,24 @@ public abstract class GrammarTerm
 	
 	private final Identifier registryName;
 	private final int colour;
-	private final boolean isReplaceable, isPlaceable;
+	private final int weight;
+	private final boolean isReplaceable, isPlaceable, isBranchInjector;
 	
-	private GrammarTerm(Identifier idIn, int colourIn, boolean placeable, boolean replaceable)
+	private GrammarTerm(Identifier idIn, int weightIn, int colourIn, boolean placeable, boolean replaceable, boolean injectsBranch)
 	{
 		registryName = idIn;
+		weight = weightIn;
 		colour = colourIn;
 		isPlaceable = placeable;
 		isReplaceable = replaceable;
+		isBranchInjector = injectsBranch;
 	}
 	
 	public final Identifier registryName() { return registryName; }
 	
 	public final int colour() { return colour; }
+	
+	public final int weight() { return weight; }
 	
 	public MutableText name() { return Text.literal(registryName.getPath()); }
 	
@@ -55,6 +60,9 @@ public abstract class GrammarTerm
 	
 	/** Returns true if generation can place this kind of room */
 	public boolean isPlaceable() { return isPlaceable; }
+	
+	/** Returns true if this term adds a new branch to the graph */
+	public boolean isBranchInjector() { return isBranchInjector; }
 	
 	/** Returns true if this Term can exist in the given room */
 	public abstract boolean canBePlaced(CDRoom inRoom, @NotNull List<CDRoom> previous, @NotNull List<CDRoom> next, CDGraph graph);
@@ -70,14 +78,18 @@ public abstract class GrammarTerm
 	public static CDRoom injectRoom(CDRoom room, CDGraph graph)
 	{
 		CDRoom injected = new CDRoom();
-		room.getLinkIds().forEach(uuid -> 
+		room.getChildLinks().forEach(uuid -> 
 		{
+			Optional<CDRoom> child = graph.get(uuid);
+			if(child.isEmpty())
+				return;
+			
 			// Move all links of parent to child
-			injected.linkTo(uuid);
-			room.detachFrom(uuid);
+			injected.linkTo(child.get());
+			room.detachFrom(child.get());
 		});
 		// Link parent to child and add to graph
-		room.linkTo(injected.uuid());
+		room.linkTo(injected);
 		graph.add(injected);
 		return injected;
 	}
@@ -85,7 +97,7 @@ public abstract class GrammarTerm
 	public static CDRoom injectBranch(CDRoom room, CDGraph graph)
 	{
 		CDRoom injected = new CDRoom();
-		room.linkTo(injected.uuid());
+		room.linkTo(injected);
 		graph.add(injected);
 		return injected;
 	}
@@ -99,10 +111,12 @@ public abstract class GrammarTerm
 	public static class Builder
 	{
 		private final int colour;
+		private int weight = 1;
 		private boolean replaceable = false;
 		private boolean placeable = true;
 		private boolean afterSelf = true;
 		private boolean deadEnds = true;
+		private boolean injects = false;
 		private int maxPop = -1, sizeCap = -1;
 		private int depthMin = -1;
 		private List<Supplier<GrammarTerm>> after = Lists.newArrayList(), before = Lists.newArrayList();
@@ -128,6 +142,18 @@ public abstract class GrammarTerm
 		public Builder replaceable()
 		{
 			replaceable = true;
+			return this;
+		}
+		
+		public Builder injectsBranches()
+		{
+			injects = true;
+			return this;
+		}
+		
+		public Builder weight(int val)
+		{
+			weight = val;
 			return this;
 		}
 		
@@ -197,7 +223,7 @@ public abstract class GrammarTerm
 		
 		public GrammarTerm build(Identifier registryName)
 		{
-			return new GrammarTerm(registryName, colour, placeable, replaceable)
+			return new GrammarTerm(registryName, weight, colour, placeable, replaceable, injects)
 				{
 					public boolean canBePlaced(CDRoom inRoom, List<CDRoom> previous, List<CDRoom> next, CDGraph graph)
 					{
@@ -215,6 +241,10 @@ public abstract class GrammarTerm
 						
 						// Cannot be placed at a dead end
 						if(!deadEnds && !inRoom.hasLinks())
+							return false;
+						
+						// Cannot be applied to a room with the maximum number of connections
+						if(injects && !inRoom.canAddLink())
 							return false;
 						
 						final Predicate<GrammarTerm> prevCheck = t -> GrammarTerm.checkListFor(previous, t);

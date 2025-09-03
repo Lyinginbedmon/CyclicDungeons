@@ -12,6 +12,7 @@ import com.lying.grammar.CDGraph;
 import com.lying.grammar.CDRoom;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
@@ -43,7 +44,9 @@ public class CDCommands
 						.executes(context -> tryParsePhrase(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), context.getSource()))))
 				.then(literal("generate")
 					.then(argument("phrase", NbtCompoundArgumentType.nbtCompound())
-						.executes(context -> tryGenerate(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), context.getSource()))))
+						.executes(context -> tryGenerate(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), context.getSource())))
+					.then(argument("size", IntegerArgumentType.integer(1))
+						.executes(context -> tryGenerate(IntegerArgumentType.getInteger(context, "size"), context.getSource()))))
 				);
 		});
 	}
@@ -79,6 +82,15 @@ public class CDCommands
 		CDGraph graph = parsePhrase(nbt);
 		if(graph.isEmpty())
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
+		CDGrammar.generate(graph);
+		if(source.getPlayer() != null)
+			ShowDungeonLayoutPacket.sendTo(source.getPlayer(), graph, true);
+		return graph.size();
+	}
+	
+	private static int tryGenerate(int size, ServerCommandSource source)
+	{
+		CDGraph graph = CDGrammar.initialGraph(size);
 		CDGrammar.generate(graph);
 		if(source.getPlayer() != null)
 			ShowDungeonLayoutPacket.sendTo(source.getPlayer(), graph, true);

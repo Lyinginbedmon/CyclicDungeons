@@ -23,18 +23,23 @@ public class CDRoom
 	public static final Codec<CDRoom> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Uuids.STRING_CODEC.fieldOf("Uuid").forGetter(CDRoom::uuid),
 			CDMetadata.CODEC.fieldOf("Metadata").forGetter(CDRoom::metadata),
-			Uuids.STRING_CODEC.listOf().fieldOf("Links").forGetter(CDRoom::getLinkIds)
-			).apply(instance, (id,meta,doors) -> 
+			Uuids.STRING_CODEC.listOf().fieldOf("Children").forGetter(CDRoom::getChildLinks),
+			Uuids.STRING_CODEC.listOf().fieldOf("Parents").forGetter(CDRoom::getParentLinks)
+			).apply(instance, (id,meta,doors,entries) -> 
 			{
 				CDRoom room = new CDRoom(id);
 				room.metadata = meta;
-				doors.forEach(room::linkTo);
+				doors.forEach(child -> room.childLinks.add(child));
+				entries.forEach(parent -> room.parentLinks.add(parent));
 				return room;
 			}));
 	
+	/** Maximum total number of links both in and out of each room */
+	public static final int MAX_LINKS = 4;
+	
 	private final UUID id;
 	private CDMetadata metadata = new CDMetadata();
-	private List<UUID> linksTo = Lists.newArrayList();
+	private List<UUID> childLinks = Lists.newArrayList(), parentLinks = Lists.newArrayList();
 	
 	public CDRoom(UUID idIn)
 	{
@@ -80,14 +85,17 @@ public class CDRoom
 	
 	public CDMetadata metadata() { return this.metadata; }
 	
-	public boolean hasLinks() { return !linksTo.isEmpty(); }
+	public boolean hasLinks() { return !childLinks.isEmpty(); }
 	
-	public boolean hasLinkTo(UUID uuid) { return !linksTo.isEmpty() && linksTo.contains(uuid); }
+	public boolean hasLinkTo(UUID uuid)
+	{
+		return !childLinks.isEmpty() && childLinks.contains(uuid);
+	}
 	
 	public int tallyDescendants(CDGraph graph)
 	{
-		int tally = linksTo.size();
-		for(UUID offshoot : linksTo)
+		int tally = childLinks.size();
+		for(UUID offshoot : childLinks)
 		{
 			Optional<CDRoom> r = graph.get(offshoot);
 			if(r.isEmpty())
@@ -97,25 +105,29 @@ public class CDRoom
 		return tally;
 	}
 	
-	public CDRoom linkTo(UUID otherRoom)
+	public CDRoom linkTo(CDRoom otherRoom)
 	{
-		linksTo.add(otherRoom);
+		childLinks.add(otherRoom.uuid());
+		otherRoom.parentLinks.add(id);
 		return this;
 	}
 	
-	public CDRoom detachFrom(UUID otherRoom)
+	public CDRoom detachFrom(CDRoom otherRoom)
 	{
-		if(hasLinks() && hasLinkTo(otherRoom))
-			linksTo.remove(otherRoom);
+		if(hasLinks() && hasLinkTo(otherRoom.uuid()))
+		{
+			childLinks.remove(otherRoom.uuid());
+			otherRoom.parentLinks.remove(id);
+		}
 		return this;
 	}
 	
 	/** Collects all rooms within the given graph that this room links to */
 	@NotNull
-	public List<CDRoom> getLinksFrom(CDGraph graph)
+	public List<CDRoom> getChildRooms(CDGraph graph)
 	{
 		List<CDRoom> links = Lists.newArrayList();
-		linksTo.stream()
+		childLinks.stream()
 			.map(graph::get)
 			.filter(Optional::isPresent)
 			.map(Optional::get)
@@ -123,7 +135,24 @@ public class CDRoom
 		return links;
 	}
 	
-	public List<UUID> getLinkIds() { return List.of(linksTo.toArray(new UUID[0])); }
+	/** Collects all rooms within the given graph that link to this room */
+	@NotNull
+	public List<CDRoom> getParentRooms(CDGraph graph)
+	{
+		List<CDRoom> links = Lists.newArrayList();
+		parentLinks.stream()
+			.map(graph::get)
+			.filter(Optional::isPresent)
+			.map(Optional::get)
+			.forEach(links::add);
+		return links;
+	}
+	
+	public List<UUID> getChildLinks() { return List.of(childLinks.toArray(new UUID[0])); }
+	public List<UUID> getParentLinks() { return List.of(parentLinks.toArray(new UUID[0])); }
+	
+	public int getTotalLinks() { return childLinks.size() + parentLinks.size(); }
+	public boolean canAddLink() { return getTotalLinks() < MAX_LINKS; }
 	
 	public CDRoom applyTerm(GrammarTerm termIn, CDGraph graph)
 	{
