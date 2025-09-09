@@ -24,18 +24,18 @@ public class CDTerms
 	// Initial building blocks
 	public static final Supplier<GrammarTerm> START		= register("start", () -> GrammarTerm.Builder.create(0xFFFFFF).unplaceable());
 	public static final Supplier<GrammarTerm> BLANK		= register("blank", () -> GrammarTerm.Builder.create(0x080808).unplaceable().replaceable());
-	public static final Supplier<GrammarTerm> END			= register("end", () -> GrammarTerm.Builder.create(0xFFFFFF).unplaceable());
+	public static final Supplier<GrammarTerm> END		= register("end", () -> GrammarTerm.Builder.create(0xFFFFFF).unplaceable());
 	
 	/** Completely blank, only used to mark errors in generation */
 	public static final Supplier<GrammarTerm> VOID			= register("void", () -> GrammarTerm.Builder.create(0x000000).unplaceable());
 	
 	// Functional rooms
-	public static final Supplier<GrammarTerm> EMPTY		= register("empty", () -> GrammarTerm.Builder.create(0xA6A6A6).nonconsecutive().allowDeadEnds(false).neverAfter(CDTerms.START).neverBefore(CDTerms.END));
+	public static final Supplier<GrammarTerm> EMPTY			= register("empty", () -> GrammarTerm.Builder.create(0xA6A6A6).nonconsecutive().allowDeadEnds(false).neverAfter(CDTerms.START).neverBefore(CDTerms.END));
 	public static final Supplier<GrammarTerm> BATTLE		= register("battle", () -> GrammarTerm.Builder.create(0xC80707).nonconsecutive().weight(3));
 	public static final Supplier<GrammarTerm> TRAP			= register("trap", () -> GrammarTerm.Builder.create(0xAE31DE).nonconsecutive().weight(2));
 	public static final Supplier<GrammarTerm> BIG_PUZZLE	= register("big_puzzle", () -> GrammarTerm.Builder.create(0x3136DE).nonconsecutive().popCap(2).onApply(CDTerms::injectTreasure));
 	public static final Supplier<GrammarTerm> SML_PUZZLE	= register("small_puzzle", () -> GrammarTerm.Builder.create(0x2768CA).nonconsecutive().popCap(4));
-	public static final Supplier<GrammarTerm> BOSS			= register("boss", () -> GrammarTerm.Builder.create(0x7D1D1D).popCap(1).onlyBefore(CDTerms.END).onApply(CDTerms::injectTreasure));
+	public static final Supplier<GrammarTerm> BOSS			= register("boss", () -> GrammarTerm.Builder.create(0x7D1D1D).popCap(1).neverAfter(CDTerms.START).onlyBefore(CDTerms.END).onApply(CDTerms::injectTreasure));
 	public static final Supplier<GrammarTerm> TREASURE		= register("treasure", () -> GrammarTerm.Builder.create(0xF2B03C).popCap(3).weight(2).onlyAfter(CDTerms.BATTLE, CDTerms.SML_PUZZLE, CDTerms.EMPTY));
 	public static final Supplier<GrammarTerm> ADD			= register("add_room", () -> GrammarTerm.Builder.create(0xD2D2D2).replaceable().sizeCap(6).weight(3).onApply((t,r,g) -> GrammarTerm.injectRoom(r, g)));
 	public static final Supplier<GrammarTerm> ADD_BRANCH	= register("add_branch", () -> GrammarTerm.Builder.create(0xB9B9B9).replaceable().injectsBranches().sizeCap(6).weight(4).onApply((t,r,g) -> GrammarTerm.injectBranch(r, g)));

@@ -1,5 +1,6 @@
 package com.lying.client.screen;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +18,13 @@ import com.lying.grammar.CDMetadata;
 import com.lying.grammar.CDRoom;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
+import com.lying.utility.Box2;
+import com.lying.utility.Line2;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
@@ -33,16 +37,22 @@ import net.minecraft.util.math.Vec2f;
 public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 {
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
-	private Vector2i offset = new Vector2i(0,0);
+	private Vector2i displayOffset = new Vector2i(0,0);
 	private Vector2i dragStart = null;
 	
 	private List<Node> chart = null;
+	public static final int RENDER_SCALE = 16;
 	
 	private static final Identifier ICON_TEX = Reference.ModInfo.prefix("textures/gui/tree_node.png");
 	
 	public DungeonScreen(DungeonScreenHandler handler, PlayerInventory inventory, Text title)
 	{
 		super(handler, inventory, title);
+	}
+	
+	protected void init()
+	{
+		addDrawableChild(ButtonWidget.builder(Text.literal("Crunch"), b -> crunchGraph()).dimensions(0, 0, 60, 20).build());
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -55,10 +65,10 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		blur();
 		context.drawText(textRenderer, this.title, (mc.getWindow().getScaledWidth() - textRenderer.getWidth(this.title)) / 2, 10, 0xFFFFFF, false);
 		
-		final Vector2i position = isDragging() ? new Vector2i(offset.x + mouseX - dragStart.x, offset.y + mouseY - dragStart.y) : offset;
+		final Vector2i position = isDragging() ? new Vector2i(displayOffset.x + mouseX - dragStart.x, displayOffset.y + mouseY - dragStart.y) : displayOffset;
 		final Vector2i origin = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5).add(position);
 		if(chart != null && !chart.isEmpty())
-			chart.get(0).render(context, origin, chart, mouseX, mouseY);
+			chart.get(0).render(context, origin, chart, mouseX, mouseY, RENDER_SCALE);
 	}
 	
 	public void handledScreenTick()
@@ -71,10 +81,121 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 					return;
 				
 				chart = buildNodeGraph(graph);
+				Random rand = new Random();
 //				organisePositionsByRow(chart);
 				organisePositionsByGrid(chart);
+				
+				chart.forEach(node -> 
+				{
+					int x = 1 + rand.nextInt(4);
+					int y = 1 + rand.nextInt(4);
+					node.metadata.setSize(x, y);
+				});
 			});
 		}
+	}
+	
+	public boolean crunchGraph()
+	{
+		CyclicDungeons.LOGGER.info("# Attempting to crunch graph of {} nodes", chart.size());
+		int maxDepth = 0;
+		for(Node node : chart)
+			if(node.metadata.depth() > maxDepth)
+				maxDepth = node.metadata.depth();
+		
+		boolean anyMoved = false;
+		for(int i=maxDepth; i>0; i--)
+		{
+			final int depth = i;
+			Map<Node, List<Node>> nodesAtDepth = new HashMap<>();
+			chart.stream()
+				.filter(n -> n.metadata.depth() == depth)
+				.forEach(n -> nodesAtDepth.put(n, n.getParents(chart)));
+			
+			CyclicDungeons.LOGGER.info(" # Crunch depth: {}, {} nodes", depth, nodesAtDepth.size());
+			anyMoved = tryCrunch(nodesAtDepth) || anyMoved;
+		}
+		return anyMoved;
+	}
+	
+	private boolean tryCrunch(Map<Node, List<Node>> nodes)
+	{
+		boolean anyMoved = false;
+		for(Entry<Node, List<Node>> entry : nodes.entrySet())
+		{
+			// Calculate "ideal" position, ie. right on top of or between the parents
+			int x = 0, y = 0;
+			if(entry.getValue().size() > 1)
+			{
+				for(Node parent : entry.getValue())
+				{
+					x += parent.position.x;
+					y += parent.position.y;
+				}
+				x /= entry.getValue().size();
+				y /= entry.getValue().size();
+			}
+			else
+			{
+				Node parent = entry.getValue().get(0);
+				x = parent.position.x;
+				y = parent.position.y;
+			}
+			
+			Node node = entry.getKey();
+			
+			// Amount & direction to move
+			Vector2i offset = new Vector2i(x - node.position.x, y - node.position.y);
+			double len = offset.length();
+			if(len < 1)
+				continue;
+			
+			offset = new Vector2i(
+					offset.x != 0 ? (int)Math.signum(offset.x) : 0, 
+					offset.y != 0 ? (int)Math.signum(offset.y) : 0);
+			
+			// Collect node and all descendants as a "cluster"
+			List<Node> toMove = gatherDescendantsOf(node, chart);
+			toMove.add(node);
+			
+			List<Node> otherNodes = chart.stream().filter(n -> !toMove.contains(n)).toList();
+			while(len-- > 0 && tryMove(toMove, otherNodes, offset))
+				anyMoved = true;
+			
+			// FIXME If whole movement infeasible, try partial
+		};
+		return anyMoved;
+	}
+	
+	public static List<Node> gatherDescendantsOf(Node node, List<Node> chart)
+	{
+		List<Node> children = Lists.newArrayList();
+		node.getChildren(chart).forEach(child -> 
+		{
+			children.add(child);
+			if(child.hasChildren())
+				children.addAll(gatherDescendantsOf(child, chart));
+		});
+		// FIXME Ensure uniqueness in list of children
+		return children;
+	}
+	
+	private boolean tryMove(List<Node> toMove, List<Node> otherNodes, Vector2i move)
+	{
+		if(move.length() == 0 || toMove.isEmpty())
+			return false;
+		
+		for(Node n : toMove)
+		{
+			Box2 bounds = n.bounds().offset(move);
+			if(otherNodes.stream().anyMatch(o -> o.intersects(bounds)))
+				return false;
+		}
+		
+		for(Node n : toMove)
+			n.offset(move);
+		
+		return true;
 	}
 	
 	public boolean mouseClicked(double mouseX, double mouseY, int button)
@@ -93,7 +214,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		{
 			int xOff = (int)mouseX - dragStart.x;
 			int yOff = (int)mouseY - dragStart.y;
-			this.offset = this.offset.add(xOff, yOff);
+			this.displayOffset = this.displayOffset.add(xOff, yOff);
 			setDragging(false);
 			return true;
 		}
@@ -142,13 +263,17 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	{
 		Map<Vector2i, Node> gridMap = new HashMap<>();
 		
-		final int gridSize = 50;
-		final Vector2i[] neighbours = new Vector2i[]
+		final GridPosition[] moveSet = new GridPosition[]
 				{
-					new Vector2i(gridSize, 0),
-					new Vector2i(-gridSize, 0),
-					new Vector2i(0, gridSize),
-					new Vector2i(0, -gridSize)
+					(p,o,g) -> add(p, new Vector2i(g, 0)),
+					(p,o,g) -> add(p, new Vector2i(-g, 0)),
+					(p,o,g) -> add(p, new Vector2i(0, g)),
+					(p,o,g) -> add(p, new Vector2i(0, -g)),
+					
+					(p,o,g) -> add(p, new Vector2i(g, g)),
+					(p,o,g) -> add(p, new Vector2i(g, -g)),
+					(p,o,g) -> add(p, new Vector2i(-g, g)),
+					(p,o,g) -> add(p, new Vector2i(-g, -g))
 				};
 		
 		int maxDepth = 0;
@@ -158,18 +283,16 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		
 		Random rand = new Random();
 		for(int step = 0; step <= maxDepth; step++)
-			organiseByGrid(chart, step, gridMap, neighbours, rand);
+			organiseByGrid(chart, step, gridMap, moveSet, 10, rand);
 		
 		if(gridMap.size() != chart.size())
 			CyclicDungeons.LOGGER.warn("Grid layout size ({}) differs from input graph size ({})", gridMap.size(), chart.size());
 	}
 	
-	private static void organiseByGrid(List<Node> chart, int depth, Map<Vector2i,Node> gridMap, Vector2i[] neighbours, Random rand)
+	private static void organiseByGrid(List<Node> chart, int depth, Map<Vector2i,Node> gridMap, GridPosition[] moveSet, int gridSize, Random rand)
 	{
 		List<Node> byDepth = chart.stream().filter(n -> n.metadata.depth() == depth).toList();
 		for(Node node : byDepth)
-		{
-			Vector2i position = new Vector2i(0,0);
 			if(gridMap.isEmpty())
 			{
 				node.setPosition(0, 0);
@@ -177,33 +300,103 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			}
 			else if(!node.parentLinks.isEmpty())
 			{
+				Vector2i position = new Vector2i(0,0);
+				
 				// Find unoccupied position adjacent to parent(s)
 				List<Node> parents = node.getParents(chart);
 				if(!parents.isEmpty())
 				{
-					List<Vector2i> options = Lists.newArrayList();
-					for(Node parent : parents)
-						for(Vector2i offset : neighbours)
-						{
-							Vector2i neighbour = add(parent.position, offset);
-							if(gridMap.keySet().stream().noneMatch(neighbour::equals))
-								options.add(neighbour);
-						}
-					
+					List<Vector2i> options = getAvailableOptions(parents, node.childLinks.size(), moveSet, gridSize, gridMap);
 					if(options.isEmpty())
 						continue;	// FIXME
-					position = options.size() == 1 ? options.get(0) : options.get(rand.nextInt(options.size()));
+					
+					position = 
+							options.size() == 1 ? 
+								options.get(0) : 
+								options.get(rand.nextInt(options.size()));
 				}
 				
 				node.setPosition(position.x, position.y);
 				gridMap.put(position, node);
 			}
+	}
+	
+	public static List<Vector2i> getAvailableOptions(List<Node> parents, int childTally, GridPosition[] moveSet, int gridSize, Map<Vector2i,Node> gridMap)
+	{
+		List<Vector2i> options = Lists.newArrayList();
+		for(Node parent : parents)
+			getAvailableOptions(parent.position, childTally, moveSet, gridSize, gridMap).stream().filter(p -> !options.contains(p)).forEach(options::add);
+		
+		// Make list of all existing paths in gridMap
+		List<Line2> existingPaths = getPaths(gridMap.values());
+		
+		if(!existingPaths.isEmpty())
+			options.removeIf(pos -> 
+			{
+				for(Node parent : parents)
+				{
+					// Test if the path intersects with any existing path in the grid
+					final Line2 a = new Line2(pos, parent.position);
+					if(existingPaths.stream().anyMatch(p -> a.intersects(p)))
+						return true;
+				}
+				
+				return false;
+			});
+		
+		return options;
+	}
+	
+	/** Returns a list of all paths between the given nodes */
+	public static List<Line2> getPaths(Collection<Node> chart)
+	{
+		List<Line2> existingPaths = Lists.newArrayList();
+		for(Node node : chart)
+			for(UUID childId : node.childLinks)
+				chart.stream().filter(c -> c.id.equals(childId)).findAny().ifPresent(c -> existingPaths.add(new Line2(node.position, c.position)));
+		return existingPaths;
+	}
+	
+	public static List<Line2> getPaths(Node node, List<Node> chart)
+	{
+		List<Line2> existingPaths = Lists.newArrayList();
+		for(UUID childId : node.childLinks)
+			chart.stream().filter(c -> c.id.equals(childId)).findAny().ifPresent(c -> existingPaths.add(new Line2(node.position, c.position)));
+		return existingPaths;
+	}
+	
+	public static List<Vector2i> getAvailableOptions(Vector2i position, int minExits, GridPosition[] moveSet, int gridSize, Map<Vector2i,Node> gridMap)
+	{
+		List<Vector2i> options = Lists.newArrayList();
+		for(GridPosition offset : moveSet)
+		{
+			Vector2i neighbour = offset.get(position, gridMap, gridSize);
+			if(gridMap.keySet().stream().noneMatch(neighbour::equals))
+			{
+				// Ensure the position has at least as many moves itself as the node has children
+				if(minExits > 0 && getAvailableOptions(neighbour, -1, moveSet, gridSize, gridMap).size() < minExits)
+					continue;
+				
+				options.add(neighbour);
+			}
 		}
+		return options;
+	}
+	
+	@FunctionalInterface
+	public interface GridPosition
+	{
+		public Vector2i get(Vector2i position, Map<Vector2i,Node> occupancies, int gridSize);
 	}
 	
 	public static Vector2i add(Vector2i a, Vector2i b)
 	{
 		return new Vector2i(a.x + b.x, a.y + b.y);
+	}
+	
+	public static Vector2i mul(Vector2i a, int scalar)
+	{
+		return new Vector2i(a.x * scalar, a.y * scalar);
 	}
 	
 	private class Node
@@ -228,31 +421,73 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			return this;
 		}
 		
+		public Node offset(Vector2i vec)
+		{
+			return offset(vec.x, vec.y);
+		}
+		
+		public Node offset(int x, int y)
+		{
+			position = position.add(x, y);
+			return this;
+		}
+		
+		public boolean hasChildren() { return !childLinks.isEmpty(); }
+		
 		public List<Node> getParents(List<Node> graph)
 		{
 			return graph.stream().filter(n -> parentLinks.contains(n.id)).toList();
 		}
 		
-		public void render(DrawContext context, Vector2i origin, List<Node> chart, int mouseX, int mouseY)
+		public List<Node> getChildren(List<Node> graph)
 		{
-			// Render links first
-			renderRecursive(origin, context, chart, mouseX, mouseY, false);
-			// Then render icons & titles
-			renderRecursive(origin, context, chart, mouseX, mouseY, true);
+			List<Node> set = Lists.newArrayList();
+			set.addAll(graph.stream().filter(n -> childLinks.contains(n.id)).toList());
+			return set;
 		}
 		
-		public void renderRecursive(Vector2i origin, DrawContext context, List<Node> chart, int mouseX, int mouseY, boolean drawIcon)
+		public Box2 bounds()
 		{
-			Vector2i pos = add(position, origin);
+			int sizeX = metadata.size().x;
+			int sizeY = metadata.size().y;
+			int minX = position.x - (sizeX / 2);
+			int minY = position.y - (sizeY / 2);
+			return new Box2(minX, minX + sizeX, minY, minY + sizeY);
+		}
+		
+		public boolean intersects(Box2 boundsB)
+		{
+			Box2 bounds = bounds();
+			return bounds.intersects(boundsB) || boundsB.intersects(bounds);
+		}
+		
+		public void render(DrawContext context, Vector2i origin, List<Node> chart, int mouseX, int mouseY, int renderScale)
+		{
+			// Render links first
+			renderRecursive(origin, context, chart, mouseX, mouseY, renderScale, false);
+			// Then render icons & titles
+			renderRecursive(origin, context, chart, mouseX, mouseY, renderScale, true);
+		}
+		
+		public void renderRecursive(Vector2i origin, DrawContext context, List<Node> chart, int mouseX, int mouseY, int renderScale, boolean drawIcon)
+		{
+			Vector2i pos = add(mul(position, renderScale), origin);
+			
+			if(drawIcon)
+			{
+				Vector2i size = metadata.size();
+				context.drawBorder(pos.x - (size.x / 2) * renderScale, pos.y - (size.y / 2) * renderScale, size.x * renderScale, size.y * renderScale, -1);
+			}
+			
 			// Render node links
 			if(!childLinks.isEmpty())
 				chart.stream().filter(n -> childLinks.contains(n.id)).forEach(child -> 
 				{
 					// Render link to child
 					if(!drawIcon)
-						renderLink(pos, add(child.position, origin), context);
+						renderLink(pos, add(mul(child.position, renderScale), origin), context);
 					
-					child.renderRecursive(origin, context, chart, mouseX, mouseY, drawIcon);
+					child.renderRecursive(origin, context, chart, mouseX, mouseY, renderScale, drawIcon);
 				});
 			
 			// Render node
@@ -296,24 +531,5 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				context.fill(0, -thickness, (int)len, thickness, col);
 			matrixStack.pop();
 		}
-		
-//		private static void renderJointedLine(Vector2i start, Vector2i end, DrawContext context, int border, int rgba)
-//		{
-//			Vector2i joint = new Vector2i(end.x, start.y);
-//			int thickness = 1;
-//			// Draw line from start to joint
-//			renderLine(start, joint, context, thickness, rgba);
-//			// Draw line from joint to end
-//			renderLine(joint, end, context, thickness, rgba);
-//		}
-//		
-//		private static void renderLine(Vector2i a, Vector2i b, DrawContext context, int border, int rgba)
-//		{
-//			int minX = Math.min(a.x, b.x) - border;
-//			int maxX = Math.max(a.x, b.x) + border;
-//			int minY = Math.min(a.y, b.y) - border;
-//			int maxY = Math.max(a.y, b.y) + border;
-//			context.fill(minX, minY, maxX, maxY, rgba);
-//		}
 	}
 }

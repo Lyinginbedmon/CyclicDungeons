@@ -92,6 +92,12 @@ public class CDRoom
 		return !childLinks.isEmpty() && childLinks.contains(uuid);
 	}
 	
+	public List<UUID> getChildLinks() { return List.of(childLinks.toArray(new UUID[0])); }
+	public List<UUID> getParentLinks() { return List.of(parentLinks.toArray(new UUID[0])); }
+	
+	public int getTotalLinks() { return childLinks.size() + parentLinks.size(); }
+	public boolean canAddLink() { return getTotalLinks() < MAX_LINKS; }
+	
 	public int tallyDescendants(CDGraph graph)
 	{
 		int tally = childLinks.size();
@@ -147,12 +153,6 @@ public class CDRoom
 			.forEach(links::add);
 		return links;
 	}
-	
-	public List<UUID> getChildLinks() { return List.of(childLinks.toArray(new UUID[0])); }
-	public List<UUID> getParentLinks() { return List.of(parentLinks.toArray(new UUID[0])); }
-	
-	public int getTotalLinks() { return childLinks.size() + parentLinks.size(); }
-	public boolean canAddLink() { return getTotalLinks() < MAX_LINKS; }
 	
 	public CDRoom applyTerm(GrammarTerm termIn, CDGraph graph)
 	{
