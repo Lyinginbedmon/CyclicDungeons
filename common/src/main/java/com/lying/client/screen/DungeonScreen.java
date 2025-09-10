@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
@@ -53,6 +54,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	protected void init()
 	{
 		addDrawableChild(ButtonWidget.builder(Text.literal("Crunch"), b -> crunchGraph()).dimensions(0, 0, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("Collapse"), b -> collapseGraph()).dimensions(0, 20, 60, 20).build());
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -87,17 +89,23 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				
 				chart.forEach(node -> 
 				{
-					int x = 1 + rand.nextInt(4);
-					int y = 1 + rand.nextInt(4);
+					int x = 2 + rand.nextInt(4);
+					int y = 2 + rand.nextInt(4);
 					node.metadata.setSize(x, y);
 				});
 			});
 		}
 	}
 	
+	/** Applies crunch algorithm until failure */
+	public void collapseGraph()
+	{
+		while(crunchGraph()) { }
+	}
+	
+	/** Reduces the distance between nodes */
 	public boolean crunchGraph()
 	{
-		CyclicDungeons.LOGGER.info("# Attempting to crunch graph of {} nodes", chart.size());
 		int maxDepth = 0;
 		for(Node node : chart)
 			if(node.metadata.depth() > maxDepth)
@@ -112,7 +120,6 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				.filter(n -> n.metadata.depth() == depth)
 				.forEach(n -> nodesAtDepth.put(n, n.getParents(chart)));
 			
-			CyclicDungeons.LOGGER.info(" # Crunch depth: {}, {} nodes", depth, nodesAtDepth.size());
 			anyMoved = tryCrunch(nodesAtDepth) || anyMoved;
 		}
 		return anyMoved;
@@ -141,28 +148,22 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				x = parent.position.x;
 				y = parent.position.y;
 			}
+			Vector2i ideal = new Vector2i(x, y);
 			
 			Node node = entry.getKey();
 			
 			// Amount & direction to move
-			Vector2i offset = new Vector2i(x - node.position.x, y - node.position.y);
-			double len = offset.length();
+			double len = subtract(node.position, ideal).length();
 			if(len < 1)
 				continue;
-			
-			offset = new Vector2i(
-					offset.x != 0 ? (int)Math.signum(offset.x) : 0, 
-					offset.y != 0 ? (int)Math.signum(offset.y) : 0);
 			
 			// Collect node and all descendants as a "cluster"
 			List<Node> toMove = gatherDescendantsOf(node, chart);
 			toMove.add(node);
 			
 			List<Node> otherNodes = chart.stream().filter(n -> !toMove.contains(n)).toList();
-			while(len-- > 0 && tryMove(toMove, otherNodes, offset))
+			while(len-- > 0 && tryMoveTowards(node, toMove, otherNodes, ideal))
 				anyMoved = true;
-			
-			// FIXME If whole movement infeasible, try partial
 		};
 		return anyMoved;
 	}
@@ -172,6 +173,9 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		List<Node> children = Lists.newArrayList();
 		node.getChildren(chart).forEach(child -> 
 		{
+			if(children.contains(child))
+				return;
+			
 			children.add(child);
 			if(child.hasChildren())
 				children.addAll(gatherDescendantsOf(child, chart));
@@ -180,19 +184,60 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		return children;
 	}
 	
-	private boolean tryMove(List<Node> toMove, List<Node> otherNodes, Vector2i move)
+	private boolean tryMoveTowards(Node node, List<Node> cluster, List<Node> otherNodes, Vector2i point)
 	{
-		if(move.length() == 0 || toMove.isEmpty())
+		// Current position, from which we calculate offset
+		Vector2i position = node.position;
+		
+		Vector2i offset = subtract(position, point);
+		double len = offset.length();
+		if(len < 1)
 			return false;
 		
-		for(Node n : toMove)
+		offset = new Vector2i(
+				offset.x != 0 ? (int)Math.signum(offset.x) : 0, 
+				offset.y != 0 ? (int)Math.signum(offset.y) : 0);
+		
+		// Try move the full offset, then if that fails try to move on one axis
+		if(tryMove(cluster, otherNodes, offset))
+			return true;
+		else
+		{
+			// If both axises are non-zero, try to move on each individually
+			if(offset.x != 0 && offset.y != 0)
+			{
+				Vector2i onlyX = new Vector2i(offset.x, 0);
+				Vector2i onlyY = new Vector2i(0, offset.y);
+				double distX = add(position, onlyX).distance(point);
+				double distY = add(position, onlyY).distance(point);
+				
+				Supplier<Boolean> tryX = () -> tryMove(cluster, otherNodes, onlyX);
+				Supplier<Boolean> tryY = () -> tryMove(cluster, otherNodes, onlyY);
+				
+				// Prioritise moving in whichever direction results in the shortest distance to the point
+				if(distX < distY)
+					return tryX.get() ? true : tryY.get();
+				else
+					return tryY.get() ? true : tryX.get();
+			}
+			else
+				return false;
+		}
+	}
+	
+	private boolean tryMove(List<Node> cluster, List<Node> otherNodes, Vector2i move)
+	{
+		if(move.length() == 0 || cluster.isEmpty())
+			return false;
+		
+		for(Node n : cluster)
 		{
 			Box2 bounds = n.bounds().offset(move);
 			if(otherNodes.stream().anyMatch(o -> o.intersects(bounds)))
 				return false;
 		}
 		
-		for(Node n : toMove)
+		for(Node n : cluster)
 			n.offset(move);
 		
 		return true;
@@ -308,8 +353,9 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				{
 					List<Vector2i> options = getAvailableOptions(parents, node.childLinks.size(), moveSet, gridSize, gridMap);
 					if(options.isEmpty())
-						continue;	// FIXME
+						continue;	// FIXME Resolve contexts where nodes have nowhere to go
 					
+					// FIXME Prioritise positions to reduce "snarling"
 					position = 
 							options.size() == 1 ? 
 								options.get(0) : 
@@ -394,6 +440,11 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		return new Vector2i(a.x + b.x, a.y + b.y);
 	}
 	
+	public static Vector2i subtract(Vector2i val, Vector2i from)
+	{
+		return new Vector2i(from.x - val.x, from.y - val.y);
+	}
+	
 	public static Vector2i mul(Vector2i a, int scalar)
 	{
 		return new Vector2i(a.x * scalar, a.y * scalar);
@@ -472,11 +523,11 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		public void renderRecursive(Vector2i origin, DrawContext context, List<Node> chart, int mouseX, int mouseY, int renderScale, boolean drawIcon)
 		{
 			Vector2i pos = add(mul(position, renderScale), origin);
-			
+			int colour = ColorHelper.withAlpha(255, metadata.type().colour());
 			if(drawIcon)
 			{
 				Vector2i size = metadata.size();
-				context.drawBorder(pos.x - (size.x / 2) * renderScale, pos.y - (size.y / 2) * renderScale, size.x * renderScale, size.y * renderScale, -1);
+				context.drawBorder(pos.x - (size.x / 2) * renderScale, pos.y - (size.y / 2) * renderScale, size.x * renderScale, size.y * renderScale, colour);
 			}
 			
 			// Render node links
@@ -493,7 +544,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			// Render node
 			if(drawIcon)
 			{
-				context.drawTexture(RenderLayer::getGuiTextured, ICON_TEX, pos.x - 8, pos.y - 8, 0F, 0F, 16, 16, 16, 16, ColorHelper.withAlpha(255, metadata.type().colour()));
+				context.drawTexture(RenderLayer::getGuiTextured, ICON_TEX, pos.x - 8, pos.y - 8, 0F, 0F, 16, 16, 16, 16, colour);
 				
 				if(pos.distance(mouseX, mouseY) < 30)
 				{
