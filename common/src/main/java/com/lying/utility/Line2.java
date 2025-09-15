@@ -47,6 +47,16 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 		return (getLeft().equals(line.getLeft()) && getRight().equals(line.getRight())) || (getLeft().equals(line.getRight()) && getRight().equals(getLeft()));
 	}
 	
+	public Line2 offset(Vector2i offset)
+	{
+		return new Line2(Vector2iUtils.add(getLeft(), offset), Vector2iUtils.add(getRight(), offset));
+	}
+	
+	public Line2 scale(int scalar)
+	{
+		return new Line2(Vector2iUtils.mul(getLeft(), scalar), Vector2iUtils.mul(getRight(), scalar));
+	}
+	
 	/** Returns true if the given lines are parallel */
 	public static boolean areParallel(Line2 a, Line2 b)
 	{
@@ -62,9 +72,9 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 		return new Box2(xRange.getLeft(), yRange.getLeft(), xRange.getRight(), yRange.getRight());
 	}
 	
-	public boolean intersects(Line2 cd)
+	public boolean intersects(Line2 line2)
 	{
-		return intercept(cd) != null;
+		return intercept(line2) != null;
 	}
 	
 	/** Returns the point that this line intersects with the given line, if at all */
@@ -74,9 +84,6 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 	@Nullable
 	public Vector2i intercept(Line2 line2, boolean ignoreRange)
 	{
-		if(!bounds().intersects(line2.bounds()))
-			return null;
-		
 		Vector2i intercept = null;
 		if(isVertical && line2.isVertical)
 		{
