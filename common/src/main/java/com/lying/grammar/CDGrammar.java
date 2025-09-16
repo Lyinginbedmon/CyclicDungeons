@@ -2,6 +2,7 @@ package com.lying.grammar;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -19,16 +20,16 @@ public class CDGrammar
 	
 	public static void run()
 	{
-//		final int scale = 5;
-//		final Function<CDRoom,String> func = r -> "	".repeat(r.metadata().depth()) + r.asString();
-//		LOGGER.info("Initial graph:");
-//		CDGraph initial = initialGraph(scale);
-//		initial.printAsTree(LOGGER::info, func);
-//		for(int i=0; i<5; i++)
-//		{
-//			LOGGER.info("Generated graph {}:", i);
-//			generate(initial.clone()).printAsTree(LOGGER::info, func);
-//		}
+		final int scale = 5;
+		final Function<CDRoom,String> func = r -> "	".repeat(r.metadata().depth()) + r.asString();
+		LOGGER.info("Initial graph:");
+		CDGraph initial = initialGraph(scale);
+		initial.printAsTree(LOGGER::info, func);
+		for(int i=0; i<5; i++)
+		{
+			LOGGER.info("Generated graph {}:", i);
+			generate(initial.clone()).printAsTree(LOGGER::info, func);
+		}
 	}
 	
 	/** Generates a linear initial starting graph */

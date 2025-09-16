@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
-import com.lying.grammar.CDGrammar;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
@@ -52,8 +51,6 @@ public final class CyclicDungeons
 		CDScreenHandlerTypes.init();
 		CDPacketHandler.initServer();
 		registerServerEvents();
-		
-		CDGrammar.run();
 	}
 	
 	private static void registerServerEvents()

@@ -85,7 +85,10 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 					return;
 				
 				blueprint = Blueprint.fromGraph(graph);
+				blueprint.updateGoldenPath();
 				BlueprintOrganiser.Tree.create().organise(blueprint, new Random(randSeed));
+				if(blueprint.hasErrors())
+					return;
 				
 				Random rand = new Random(randSeed);
 				blueprint.forEach(node -> 
@@ -133,8 +136,12 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	{
 		public static void render(Node node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, int mouseX, int mouseY, int renderScale)
 		{
-			// Render links between nodes first
+			// Render node boundaries
+			chart.forEach(n -> renderNodeBounds(n, origin, renderScale, context));
+			// Render links between nodes
 			renderLinks(origin, renderScale, chart, context);
+			// Render the golden path from the start to the end of the dungeon
+			renderGoldenPath(origin, renderScale, chart, context);
 			// Then render icons & titles
 			chart.forEach(n -> renderNode(n, origin, renderScale, context, textRenderer, mouseX, mouseY));
 		}
@@ -165,7 +172,23 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			});
 		}
 		
-		public static void renderNode(Node node, Vector2i origin, int renderScale, DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY)
+		public static void renderGoldenPath(Vector2i origin, int renderScale, Blueprint chart, DrawContext context)
+		{
+			if(chart.getGoldenPath().isEmpty() || chart.hasErrors())
+				return;
+			
+			List<Line2> links = Blueprint.getAllPaths(chart);
+			links.stream()
+				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.position().equals(p.getLeft())))
+				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.position().equals(p.getRight())))
+				.forEach(path -> 
+				{
+					Line2 link = path.scale(renderScale).offset(origin);
+					renderLink(link.getLeft(), link.getRight(), context, 0xFFBF00);
+				});
+		}
+		
+		public static void renderNodeBounds(Node node, Vector2i origin, int renderScale, DrawContext context)
 		{
 			CDMetadata metadata = node.metadata();
 			Vector2i pos = Vector2iUtils.add(Vector2iUtils.mul(node.position(), renderScale), origin);
@@ -173,6 +196,14 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			
 			Vector2i size = metadata.size();
 			context.drawBorder(pos.x - (size.x / 2) * renderScale, pos.y - (size.y / 2) * renderScale, size.x * renderScale, size.y * renderScale, iconColour);
+		}
+		
+		public static void renderNode(Node node, Vector2i origin, int renderScale, DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY)
+		{
+			CDMetadata metadata = node.metadata();
+			Vector2i pos = Vector2iUtils.add(Vector2iUtils.mul(node.position(), renderScale), origin);
+			int iconColour = ColorHelper.withAlpha(255, metadata.type().colour());
+			
 			context.drawTexture(RenderLayer::getGuiTextured, DungeonScreen.ICON_TEX, pos.x - 8, pos.y - 8, 0F, 0F, 16, 16, 16, 16, iconColour);
 			
 			if(pos.distance(mouseX, mouseY) < 8)

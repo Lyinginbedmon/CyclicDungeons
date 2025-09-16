@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.grammar.CDGraph;
 import com.lying.grammar.CDRoom;
+import com.lying.init.CDTerms;
 import com.lying.utility.Box2;
 import com.lying.utility.Line2;
 
@@ -22,6 +24,7 @@ public class Blueprint extends ArrayList<Node>
 {
 	protected int maxDepth = 0;
 	protected Map<Integer, List<Node>> byDepth = new HashMap<>();
+	private List<Node> goldenPath = Lists.newArrayList();
 	
 	public static Blueprint fromGraph(CDGraph graphIn)
 	{
@@ -38,6 +41,10 @@ public class Blueprint extends ArrayList<Node>
 			room.getChildRooms(graphIn).forEach(r -> addNodeToBlueprint(r, parent, graph, graphIn));
 		return node;
 	}
+	
+	public Optional<Node> start() { return stream().filter(n -> n.metadata().is(CDTerms.START.get())).findFirst(); }
+	
+	public Optional<Node> end() { return stream().filter(n -> n.metadata().is(CDTerms.END.get())).findFirst(); }
 	
 	public boolean add(Node node)
 	{
@@ -61,7 +68,16 @@ public class Blueprint extends ArrayList<Node>
 		return result;
 	}
 	
+	/** Returns the deepest level of this dungeon */
 	public int maxDepth() { return maxDepth; }
+	
+	public void updateGoldenPath()
+	{
+		goldenPath = BlueprintPather.calculateGoldenPath(this);
+	}
+	
+	/** Returns a list of nodes representing the path from the start to the end of this dungeon */
+	public List<Node> getGoldenPath() { return this.goldenPath; }
 	
 	@NotNull
 	public List<Node> byDepth(int depth) { return byDepth.getOrDefault(depth, Lists.newArrayList()); }
