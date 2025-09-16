@@ -141,21 +141,24 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		
 		public static void renderLinks(Vector2i origin, int renderScale, Blueprint chart, DrawContext context)
 		{
+			boolean errorsPresent = chart.hasErrors();
 			List<Line2> links = Blueprint.getAllPaths(chart);
 			links.forEach(path -> 
 			{
 				int linkColour = 0x6E6E6E;
-				
-				// Path intersecting another path
-				if(links.stream()
-						.filter(l -> !(l.getLeft().equals(path.getLeft()) && l.getRight().equals(path.getRight())))
-						.anyMatch(l -> path.intersects(l)))
-					linkColour = 0x1D77F5;
-				// Path intersecting an unrelated node
-				else if(chart.stream()
-						.filter(n -> !(n.position().equals(path.getLeft()) || n.position().equals(path.getRight())))
-						.anyMatch(n -> n.bounds().intersects(path)))
-					linkColour = 0x1DF537;
+				if(errorsPresent)
+				{
+					// Path intersecting another path
+					if(links.stream()
+							.filter(l -> !(l.getLeft().equals(path.getLeft()) && l.getRight().equals(path.getRight())))
+							.anyMatch(l -> path.intersects(l)))
+						linkColour = 0x1D77F5;
+					// Path intersecting an unrelated node
+					else if(chart.stream()
+							.filter(n -> !(n.position().equals(path.getLeft()) || n.position().equals(path.getRight())))
+							.anyMatch(n -> n.bounds().intersects(path)))
+						linkColour = 0x1DF537;
+				}
 				
 				Line2 link = path.scale(renderScale).offset(origin);
 				renderLink(link.getLeft(), link.getRight(), context, linkColour);

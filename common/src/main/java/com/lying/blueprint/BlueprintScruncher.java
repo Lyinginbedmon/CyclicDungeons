@@ -1,16 +1,11 @@
 package com.lying.blueprint;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
-import com.lying.utility.Line2;
 import com.lying.utility.Vector2iUtils;
 
 /** Utility class for reducing the footprint of a blueprint */
@@ -51,8 +46,10 @@ public class BlueprintScruncher
 			List<Node> toMove = gatherDescendantsOf(node, chart);
 			toMove.add(node);
 			
-			len = 1;	// TODO Scrunching restricted to 1 step for debugging
 			List<Node> otherNodes = chart.stream().filter(n -> !toMove.contains(n)).toList();
+			if(otherNodes.isEmpty())
+				continue;
+			
 			while(len-- > 0 && tryMoveTowards(node, toMove, otherNodes, chart, ideal))
 				anyMoved = true;
 		};
@@ -120,26 +117,15 @@ public class BlueprintScruncher
 	{
 		if(move.length() == 0 || cluster.isEmpty())
 			return false;
-
-		// Check if the adjusted bounding box of any node in the cluster would cause an intersection
-		if(cluster.stream().anyMatch(n -> Blueprint.boxHasIntersection(n.bounds().offset(move), otherNodes)))
+		
+		// Move the cluster, check for errors, revert if any are found
+		cluster.forEach(n -> n.offset(move));
+		
+		if(chart.hasErrors())
+		{
+			cluster.forEach(n -> n.offset(Vector2iUtils.negate(move)));
 			return false;
-		
-		// Calculate modified positions of all nodes in the cluster (for their updated paths)
-		Map<UUID,Vector2i> clusterPositions = new HashMap<>();
-		cluster.forEach(n -> clusterPositions.put(n.uuid(), Vector2iUtils.add(n.position(), move)));
-		final Function<Node,Vector2i> getter = p -> clusterPositions.containsKey(p.uuid()) ? clusterPositions.get(p.uuid()) : p.position();
-		
-		// FIXME Check if any path between this node and its parents or children would cause an intersection with the rest of the blueprint
-		for(Node n : cluster)
-			if(
-				n.getParents(chart).stream().map(getter::apply).anyMatch(p -> Blueprint.pathHasIntersection(new Line2(getter.apply(n), p), otherNodes)) || 
-				n.getChildren(chart).stream().map(getter::apply).anyMatch(c -> Blueprint.pathHasIntersection(new Line2(getter.apply(n), c), otherNodes))
-				)
-				return false;
-		
-		for(Node n : cluster)
-			n.offset(move);
+		}
 		
 		return true;
 	}

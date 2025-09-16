@@ -11,7 +11,6 @@ import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
-import com.lying.blueprint.Blueprint.GridPosition;
 import com.lying.utility.CDUtils;
 import com.lying.utility.Line2;
 import com.lying.utility.Vector2iUtils;
@@ -47,6 +46,12 @@ public abstract class BlueprintOrganiser
 	public static abstract class Grid extends BlueprintOrganiser
 	{
 		protected abstract GridPosition[] moveSet(Vector2i position);
+		
+		@FunctionalInterface
+		public interface GridPosition
+		{
+			public Vector2i get(Vector2i position, Map<Vector2i,Node> occupancies, int gridSize);
+		}
 		
 		public void organise(Blueprint chart, Random rand)
 		{

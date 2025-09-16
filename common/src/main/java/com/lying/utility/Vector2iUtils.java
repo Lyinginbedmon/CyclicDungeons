@@ -20,6 +20,11 @@ public class Vector2iUtils
 		return new Vector2i(a.x * scalar, a.y * scalar);
 	}
 	
+	public static Vector2i negate(Vector2i a)
+	{
+		return mul(a, -1);
+	}
+	
 	@Nullable
 	public static Vector2i avg(Vector2i... values)
 	{
