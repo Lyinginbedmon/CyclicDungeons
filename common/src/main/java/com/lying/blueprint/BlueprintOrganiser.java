@@ -18,7 +18,7 @@ import com.lying.utility.Vector2iUtils;
 /** Utilities for organising a blueprint, prior to scrunching */
 public abstract class BlueprintOrganiser
 {
-	private static final int GRID_SIZE = 10;
+	private static final int GRID_SIZE = 50;
 	
 	public abstract void organise(Blueprint chart, Random rand);
 	
@@ -30,11 +30,11 @@ public abstract class BlueprintOrganiser
 		{
 			for(int depth=0; depth<=chart.maxDepth(); depth++)
 			{
-				List<Node> nodes = chart.byDepth(depth);
+				List<BlueprintRoom> nodes = chart.byDepth(depth);
 				int y = depth * GRID_SIZE;
 				int rowWidth = (nodes.size() - 1) * GRID_SIZE;
 				int x = -rowWidth / 2;
-				for(Node node : nodes)
+				for(BlueprintRoom node : nodes)
 				{
 					node.setPosition(x, y);
 					x += GRID_SIZE;
@@ -50,12 +50,12 @@ public abstract class BlueprintOrganiser
 		@FunctionalInterface
 		public interface GridPosition
 		{
-			public Vector2i get(Vector2i position, Map<Vector2i,Node> occupancies, int gridSize);
+			public Vector2i get(Vector2i position, Map<Vector2i,BlueprintRoom> occupancies, int gridSize);
 		}
 		
 		public void organise(Blueprint chart, Random rand)
 		{
-			Map<Vector2i, Node> gridMap = new HashMap<>();
+			Map<Vector2i, BlueprintRoom> gridMap = new HashMap<>();
 			
 			for(int step = 0; step <= chart.maxDepth(); step++)
 				organiseByGrid(chart, step, gridMap, this::moveSet, GRID_SIZE, rand);
@@ -64,9 +64,9 @@ public abstract class BlueprintOrganiser
 				CyclicDungeons.LOGGER.warn("Grid layout size ({}) differs from input blueprint size ({})", gridMap.size(), chart.size());
 		}
 		
-		private static void organiseByGrid(Blueprint chart, int depth, Map<Vector2i,Node> gridMap, Function<Vector2i,GridPosition[]> moveSet, int gridSize, Random rand)
+		private static void organiseByGrid(Blueprint chart, int depth, Map<Vector2i,BlueprintRoom> gridMap, Function<Vector2i,GridPosition[]> moveSet, int gridSize, Random rand)
 		{
-			for(Node node : chart.byDepth(depth))
+			for(BlueprintRoom node : chart.byDepth(depth))
 				if(gridMap.isEmpty())
 				{
 					node.setPosition(0, 0);
@@ -77,7 +77,7 @@ public abstract class BlueprintOrganiser
 					Vector2i position = new Vector2i(0,0);
 					
 					// Find unoccupied position adjacent to parent(s)
-					List<Node> parents = node.getParents(chart);
+					List<BlueprintRoom> parents = node.getParents(chart);
 					if(!parents.isEmpty())
 					{
 						List<Vector2i> options = getAvailableOptions(parents, node.childrenCount(), moveSet, gridSize, gridMap);
@@ -120,10 +120,10 @@ public abstract class BlueprintOrganiser
 				}
 		}
 		
-		public static List<Vector2i> getAvailableOptions(List<Node> parents, int childTally, Function<Vector2i, GridPosition[]> moveSet, int gridSize, Map<Vector2i,Node> gridMap)
+		public static List<Vector2i> getAvailableOptions(List<BlueprintRoom> parents, int childTally, Function<Vector2i, GridPosition[]> moveSet, int gridSize, Map<Vector2i,BlueprintRoom> gridMap)
 		{
 			List<Vector2i> options = Lists.newArrayList();
-			for(Node parent : parents)
+			for(BlueprintRoom parent : parents)
 				getAvailableOptions(parent.position(), childTally, moveSet, gridSize, gridMap).stream().filter(p -> !options.contains(p)).forEach(options::add);
 			
 			// Make list of all existing paths in gridMap
@@ -132,7 +132,7 @@ public abstract class BlueprintOrganiser
 			if(!existingPaths.isEmpty())
 				options.removeIf(pos -> 
 				{
-					for(Node parent : parents)
+					for(BlueprintRoom parent : parents)
 					{
 						// Test if the path intersects with any existing path in the grid
 						final Line2 a = new Line2(pos, parent.position());
@@ -146,7 +146,7 @@ public abstract class BlueprintOrganiser
 			return options;
 		}
 		
-		public static List<Vector2i> getAvailableOptions(Vector2i position, int minExits, Function<Vector2i,GridPosition[]> moveSet, int gridSize, Map<Vector2i,Node> gridMap)
+		public static List<Vector2i> getAvailableOptions(Vector2i position, int minExits, Function<Vector2i,GridPosition[]> moveSet, int gridSize, Map<Vector2i,BlueprintRoom> gridMap)
 		{
 			List<Vector2i> options = Lists.newArrayList();
 			for(GridPosition offset : moveSet.apply(position))
@@ -178,7 +178,7 @@ public abstract class BlueprintOrganiser
 			
 			public static GridPosition of(double val, int x, int y) { return new ScaledGridPosition(x, y, val); }
 			
-			public Vector2i get(Vector2i position, Map<Vector2i,Node> occupancies, int gridSize)
+			public Vector2i get(Vector2i position, Map<Vector2i,BlueprintRoom> occupancies, int gridSize)
 			{
 				int size = (int)((double)gridSize * scale);
 				return Vector2iUtils.add(position, new Vector2i(x * size, y * size));

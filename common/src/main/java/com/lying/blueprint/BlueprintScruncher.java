@@ -12,27 +12,32 @@ import com.lying.utility.Vector2iUtils;
 public class BlueprintScruncher
 {
 	/** Applies scrunch algorithm until failure */
-	public static void collapse(Blueprint chart)
+	public static void collapse(Blueprint chart, boolean reverse)
 	{
-		while(scrunch(chart)) { }
+		int cap = 1000;
+		while(scrunch(chart, reverse) && --cap > 0) { }
 	}
 	
 	/** Reduces the distance between nodes */
-	public static boolean scrunch(Blueprint chart)
+	public static boolean scrunch(Blueprint chart, boolean reverse)
 	{
 		int maxDepth = chart.maxDepth();
 		
 		boolean anyMoved = false;
-		for(int i=maxDepth; i>0; i--)
-			anyMoved = tryScrunch(chart.byDepth(i), chart) || anyMoved;
+		int depth = reverse ? maxDepth : -maxDepth;
+		while(depth != 0)
+		{
+			depth -= Math.signum(depth);
+			anyMoved = tryScrunch(chart.byDepth(Math.abs(depth)), chart) || anyMoved;
+		}
 		
 		return anyMoved;
 	}
 	
-	private static boolean tryScrunch(List<Node> nodes, Blueprint chart)
+	private static boolean tryScrunch(List<BlueprintRoom> nodes, Blueprint chart)
 	{
 		boolean anyMoved = false;
-		for(Node node : nodes)
+		for(BlueprintRoom node : nodes)
 		{
 			// Calculated "ideal" position, ie. right on top of or between the parents
 			Vector2i ideal = node.getParentPosition(chart);
@@ -43,10 +48,10 @@ public class BlueprintScruncher
 				continue;
 			
 			// Collect node and all descendants as a "cluster"
-			List<Node> toMove = gatherDescendantsOf(node, chart);
+			List<BlueprintRoom> toMove = gatherDescendantsOf(node, chart);
 			toMove.add(node);
 			
-			List<Node> otherNodes = chart.stream().filter(n -> !toMove.contains(n)).toList();
+			List<BlueprintRoom> otherNodes = chart.stream().filter(n -> !toMove.contains(n)).toList();
 			if(otherNodes.isEmpty())
 				continue;
 			
@@ -56,9 +61,9 @@ public class BlueprintScruncher
 		return anyMoved;
 	}
 	
-	public static List<Node> gatherDescendantsOf(Node node, Blueprint chart)
+	public static List<BlueprintRoom> gatherDescendantsOf(BlueprintRoom node, Blueprint chart)
 	{
-		List<Node> children = Lists.newArrayList();
+		List<BlueprintRoom> children = Lists.newArrayList();
 		node.getChildren(chart).forEach(child -> 
 		{
 			if(children.contains(child))
@@ -72,7 +77,7 @@ public class BlueprintScruncher
 		return children;
 	}
 	
-	private static boolean tryMoveTowards(Node node, List<Node> cluster, List<Node> otherNodes, Blueprint chart, Vector2i point)
+	private static boolean tryMoveTowards(BlueprintRoom node, List<BlueprintRoom> cluster, List<BlueprintRoom> otherNodes, Blueprint chart, Vector2i point)
 	{
 		// Current position, from which we calculate offset
 		Vector2i position = node.position();
@@ -113,7 +118,7 @@ public class BlueprintScruncher
 		}
 	}
 	
-	private static boolean tryMove(List<Node> cluster, List<Node> otherNodes, Blueprint chart, Vector2i move)
+	private static boolean tryMove(List<BlueprintRoom> cluster, List<BlueprintRoom> otherNodes, Blueprint chart, Vector2i move)
 	{
 		if(move.length() == 0 || cluster.isEmpty())
 			return false;

@@ -2,14 +2,15 @@ package com.lying.client.screen;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintOrganiser;
+import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.BlueprintScruncher;
-import com.lying.blueprint.Node;
-import com.lying.grammar.CDMetadata;
+import com.lying.grammar.RoomMetadata;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
 import com.lying.utility.Line2;
@@ -34,7 +35,8 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 {
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
 	public static final Identifier ICON_TEX = Reference.ModInfo.prefix("textures/gui/tree_node.png");
-	public static int RENDER_SCALE = 16;
+	public static int renderScale = 1;
+	private static boolean showGoldenRoute = false;
 	
 	private final Long randSeed;
 	private Vector2i displayOffset = new Vector2i(0,0);
@@ -46,17 +48,38 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	{
 		super(handler, inventory, title);
 		randSeed = System.currentTimeMillis();
-		RENDER_SCALE = 16;
+		renderScale = 16;
+		showGoldenRoute = false;
 	}
 	
 	protected void init()
 	{
-		addDrawableChild(ButtonWidget.builder(Text.literal("Tree"), b -> { BlueprintOrganiser.Tree.create().organise(blueprint, new Random(randSeed)); resetDrag(); }).dimensions(0, 0, 60, 20).build());
-		addDrawableChild(ButtonWidget.builder(Text.literal("4x Grid"), b -> { BlueprintOrganiser.Grid.Square.create().organise(blueprint, new Random(randSeed)); resetDrag(); }).dimensions(0, 20, 60, 20).build());
-		addDrawableChild(ButtonWidget.builder(Text.literal("8x Grid"), b -> { BlueprintOrganiser.Grid.Octagonal.create().organise(blueprint, new Random(randSeed)); resetDrag(); }).dimensions(0, 40, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("Tree"), b -> organise(BlueprintOrganiser.Tree::create)).dimensions(0, 0, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("4x Grid"), b -> organise(BlueprintOrganiser.Grid.Square::create)).dimensions(0, 20, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("8x Grid"), b -> organise(BlueprintOrganiser.Grid.Octagonal::create)).dimensions(0, 40, 60, 20).build());
 		
-		addDrawableChild(ButtonWidget.builder(Text.literal("Scrunch"), b -> BlueprintScruncher.scrunch(blueprint)).dimensions(0, 70, 60, 20).build());
-		addDrawableChild(ButtonWidget.builder(Text.literal("Collapse"), b -> BlueprintScruncher.collapse(blueprint)).dimensions(0, 90, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("Scrunch"), b -> scrunch()).dimensions(0, 70, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("Collapse"), b -> collapse()).dimensions(0, 90, 60, 20).build());
+		
+		addDrawableChild(ButtonWidget.builder(Text.literal("X"), b -> showGoldenRoute = !showGoldenRoute).dimensions(width - 20, 0, 20, 20).build());
+	}
+	
+	private void organise(Supplier<BlueprintOrganiser> organiser)
+	{
+		organiser.get().organise(blueprint, new Random(randSeed));
+		resetDrag();
+	}
+	
+	private void scrunch()
+	{
+		BlueprintScruncher.scrunch(blueprint, false);
+		BlueprintScruncher.scrunch(blueprint, true);
+	}
+	
+	private void collapse()
+	{
+		BlueprintScruncher.collapse(blueprint, false);
+		BlueprintScruncher.collapse(blueprint, true);
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -72,13 +95,12 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		final Vector2i position = isDragging() ? new Vector2i(displayOffset.x + mouseX - dragStart.x, displayOffset.y + mouseY - dragStart.y) : displayOffset;
 		final Vector2i origin = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5).add(position);
 		if(blueprint != null && !blueprint.isEmpty())
-			NodeRenderUtils.render(blueprint.get(0), context, this.textRenderer, origin, blueprint, mouseX, mouseY, RENDER_SCALE);
+			NodeRenderUtils.render(blueprint.get(0), context, this.textRenderer, origin, blueprint, mouseX, mouseY, renderScale);
 	}
 	
 	public void handledScreenTick()
 	{
 		if(blueprint == null)
-		{
 			getScreenHandler().graph().ifPresent(graph -> 
 			{
 				if(graph.isEmpty())
@@ -86,19 +108,12 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				
 				blueprint = Blueprint.fromGraph(graph);
 				blueprint.updateGoldenPath();
-				BlueprintOrganiser.Tree.create().organise(blueprint, new Random(randSeed));
+				Random rand = new Random(randSeed);
+				blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
+				BlueprintOrganiser.Tree.create().organise(blueprint, rand);
 				if(blueprint.hasErrors())
 					return;
-				
-				Random rand = new Random(randSeed);
-				blueprint.forEach(node -> 
-				{
-					int x = 2 + rand.nextInt(4);
-					int y = 2 + rand.nextInt(4);
-					node.metadata().setSize(x, y);
-				});
 			});
-		}
 	}
 	
 	public void resetDrag() { this.displayOffset = new Vector2i(0,0); }
@@ -128,20 +143,21 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
 	{
-		RENDER_SCALE = MathHelper.clamp(RENDER_SCALE + (int)verticalAmount, 1, 50);
+		renderScale = MathHelper.clamp(renderScale + (int)verticalAmount, 1, 500);
 		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
 	}
 	
 	public static class NodeRenderUtils
 	{
-		public static void render(Node node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, int mouseX, int mouseY, int renderScale)
+		public static void render(BlueprintRoom node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, int mouseX, int mouseY, int renderScale)
 		{
 			// Render node boundaries
 			chart.forEach(n -> renderNodeBounds(n, origin, renderScale, context));
 			// Render links between nodes
 			renderLinks(origin, renderScale, chart, context);
 			// Render the golden path from the start to the end of the dungeon
-			renderGoldenPath(origin, renderScale, chart, context);
+			if(showGoldenRoute)
+				renderGoldenPath(origin, renderScale, chart, context);
 			// Then render icons & titles
 			chart.forEach(n -> renderNode(n, origin, renderScale, context, textRenderer, mouseX, mouseY));
 		}
@@ -188,9 +204,9 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				});
 		}
 		
-		public static void renderNodeBounds(Node node, Vector2i origin, int renderScale, DrawContext context)
+		public static void renderNodeBounds(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context)
 		{
-			CDMetadata metadata = node.metadata();
+			RoomMetadata metadata = node.metadata();
 			Vector2i pos = Vector2iUtils.add(Vector2iUtils.mul(node.position(), renderScale), origin);
 			int iconColour = ColorHelper.withAlpha(255, metadata.type().colour());
 			
@@ -198,9 +214,9 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			context.drawBorder(pos.x - (size.x / 2) * renderScale, pos.y - (size.y / 2) * renderScale, size.x * renderScale, size.y * renderScale, iconColour);
 		}
 		
-		public static void renderNode(Node node, Vector2i origin, int renderScale, DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY)
+		public static void renderNode(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY)
 		{
-			CDMetadata metadata = node.metadata();
+			RoomMetadata metadata = node.metadata();
 			Vector2i pos = Vector2iUtils.add(Vector2iUtils.mul(node.position(), renderScale), origin);
 			int iconColour = ColorHelper.withAlpha(255, metadata.type().colour());
 			

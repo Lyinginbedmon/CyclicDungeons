@@ -8,19 +8,19 @@ import java.util.UUID;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
-import com.lying.grammar.CDMetadata;
+import com.lying.grammar.RoomMetadata;
 import com.lying.utility.Box2;
 import com.lying.utility.Vector2iUtils;
 
-public class Node
+public class BlueprintRoom
 {
 	private final UUID id;
-	private final CDMetadata metadata;
+	private final RoomMetadata metadata;
 	private List<UUID> childLinks = Lists.newArrayList();
 	private List<UUID> parentLinks = Lists.newArrayList();
 	private Vector2i position = new Vector2i(0,0);
 	
-	public Node(UUID idIn, CDMetadata termIn, List<UUID> childLinksIn, List<UUID> parentLinksIn)
+	public BlueprintRoom(UUID idIn, RoomMetadata termIn, List<UUID> childLinksIn, List<UUID> parentLinksIn)
 	{
 		id = idIn;
 		metadata = termIn;
@@ -30,22 +30,27 @@ public class Node
 	
 	public UUID uuid() { return id; }
 	
-	public CDMetadata metadata() { return metadata; }
+	public RoomMetadata metadata() { return metadata; }
 	
 	public Vector2i position() { return new Vector2i(position.x, position.y); }
 	
-	public Node setPosition(int x, int y)
+	public BlueprintRoom setPosition(int x, int y)
 	{
-		position = new Vector2i(x, y);
+		return setPosition(new Vector2i(x, y));
+	}
+	
+	public BlueprintRoom setPosition(Vector2i vec)
+	{
+		position = vec;
 		return this;
 	}
 	
-	public Node offset(Vector2i vec)
+	public BlueprintRoom offset(Vector2i vec)
 	{
 		return offset(vec.x, vec.y);
 	}
 	
-	public Node offset(int x, int y)
+	public BlueprintRoom offset(int x, int y)
 	{
 		position = position.add(x, y);
 		return this;
@@ -62,7 +67,7 @@ public class Node
 		int x = 0, y = 0;
 		if(parentLinks.size() > 1)
 		{
-			for(Node parent : getParents(chart))
+			for(BlueprintRoom parent : getParents(chart))
 			{
 				x += parent.position().x;
 				y += parent.position().y;
@@ -73,7 +78,7 @@ public class Node
 			return new Vector2i(x, y);
 		}
 		
-		Optional<Node> parentOpt = chart.stream().filter(n->n.uuid().equals(parentLinks.get(0))).findAny();
+		Optional<BlueprintRoom> parentOpt = chart.stream().filter(n->n.uuid().equals(parentLinks.get(0))).findAny();
 		if(parentOpt.isPresent())
 			return parentOpt.get().position();
 		else
@@ -85,15 +90,15 @@ public class Node
 	public int childrenCount() { return childLinks.size(); }
 	
 	/** Returns a list of all nodes this node is parented to in the given selection */
-	public List<Node> getParents(Collection<Node> graph)
+	public List<BlueprintRoom> getParents(Collection<BlueprintRoom> graph)
 	{
 		return graph.stream().filter(n -> parentLinks.contains(n.id)).toList();
 	}
 	
 	/** Returns a list of all nodes parented to this node in the given selection */
-	public List<Node> getChildren(Collection<Node> graph)
+	public List<BlueprintRoom> getChildren(Collection<BlueprintRoom> graph)
 	{
-		List<Node> set = Lists.newArrayList();
+		List<BlueprintRoom> set = Lists.newArrayList();
 		set.addAll(graph.stream().filter(n -> childLinks.contains(n.id)).toList());
 		return set;
 	}
@@ -105,6 +110,7 @@ public class Node
 	
 	public Box2 bounds(Vector2i position)
 	{
+		// TODO Ensure position is central in odd-sized bounds
 		int sizeX = metadata.size().x;
 		int sizeY = metadata.size().y;
 		int minX = position.x - (sizeX / 2);

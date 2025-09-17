@@ -3,21 +3,32 @@ package com.lying.grammar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.Random;
+import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.blueprint.Blueprint;
+import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDTerms;
+import com.lying.utility.CDUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 
 public abstract class GrammarTerm
 {
@@ -32,14 +43,29 @@ public abstract class GrammarTerm
 	
 	private final Identifier registryName;
 	private final int colour;
+	private final DyeColor color;
 	private final int weight;
 	private final boolean isReplaceable, isPlaceable, isBranchInjector;
+	private final TermConditions conditions;
+	private final Function<Random, Vector2i> sizeFunc;
 	
-	private GrammarTerm(Identifier idIn, int weightIn, int colourIn, boolean placeable, boolean replaceable, boolean injectsBranch)
+	private GrammarTerm(
+			Identifier idIn, 
+			int weightIn, 
+			int colourIn, 
+			DyeColor colorIn, 
+			Function<Random, Vector2i> sizeFuncIn, 
+			boolean placeable, 
+			boolean replaceable, 
+			boolean injectsBranch,
+			TermConditions conditionsIn)
 	{
 		registryName = idIn;
 		weight = weightIn;
 		colour = colourIn;
+		color = colorIn;
+		sizeFunc = sizeFuncIn;
+		conditions = conditionsIn;
 		isPlaceable = placeable;
 		isReplaceable = replaceable;
 		isBranchInjector = injectsBranch;
@@ -49,38 +75,105 @@ public abstract class GrammarTerm
 	
 	public final int colour() { return colour; }
 	
+	public final DyeColor color() { return color; }
+	
 	public final int weight() { return weight; }
 	
 	public MutableText name() { return Text.literal(registryName.getPath()); }
 	
 	public boolean matches(GrammarTerm b) { return registryName.equals(b.registryName); }
 	
-	/** Returns true if generation should replace rooms with this term */
+	/** Returns true if generation should replace rooms with this Term */
 	public boolean isReplaceable() { return isReplaceable; }
 	
 	/** Returns true if generation can place this kind of room */
 	public boolean isPlaceable() { return isPlaceable; }
 	
-	/** Returns true if this term adds a new branch to the graph */
+	/** Returns true if this Term adds a new branch to the graph */
 	public boolean isBranchInjector() { return isBranchInjector; }
 	
 	/** Returns true if this Term can exist in the given room */
-	public abstract boolean canBePlaced(CDRoom inRoom, @NotNull List<CDRoom> previous, @NotNull List<CDRoom> next, CDGraph graph);
+	public final boolean canBePlaced(GrammarRoom inRoom, @NotNull List<GrammarRoom> previous, @NotNull List<GrammarRoom> next, GrammarPhrase graph)
+	{
+		return (!isBranchInjector() || inRoom.canAddLink()) && conditions.test(this, inRoom, previous, next, graph);
+	}
 	
-	public void applyTo(CDRoom room, CDGraph graph)
+	public boolean generate(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart)
+	{
+		// Build exterior walls
+		final BlockState wall = Blocks.DEEPSLATE_BRICKS.getDefaultState();
+		BlockPos.Mutable.iterate(min, max).forEach(p -> 
+		{
+			if((p.getX() == min.getX() || p.getX() == max.getX()) || (p.getZ() == min.getZ() || p.getZ() == max.getZ()))
+			{
+				Blueprint.tryPlaceAt(wall, p, world);
+				for(int i=2; i>0; i--)
+					Blueprint.tryPlaceAt(wall, p.up(i), world);
+			}
+		});
+		
+		// Lay flooring
+		BlockPos.Mutable.iterate(min, max).forEach(p -> 
+		{
+			if(p.getX() == min.getX() || p.getX() == max.getX())
+				return;
+			else if(p.getZ() == min.getZ() || p.getZ() == max.getZ())
+				return;
+			
+			DyeColor color = node.metadata().type().color();
+			Blueprint.tryPlaceAt(CDUtils.dyeToConcretePowder(color).getDefaultState(), p, world);
+		});
+		
+		// Draw connecting paths
+		List<BlueprintRoom> pathsTo = Lists.newArrayList();
+		pathsTo.addAll(node.getChildren(chart));
+		pathsTo.addAll(node.getParents(chart));
+		final BlockPos start = min.add(node.metadata().size().x() / 2, 0, node.metadata().size().y() / 2);
+		final BlockPos offset = start.subtract(new BlockPos(node.position().x(), 0, node.position().y()));
+		pathsTo.stream().map(BlueprintRoom::position).forEach(end -> 
+		{
+			BlockPos pos2 = offset.add(end.x(), 0, end.y());
+			BlockPos current = start;
+			while(current.getSquaredDistance(pos2) > 0 && Box.enclosing(min, max).contains(current.toCenterPos()))
+			{
+				double minDist = Double.MAX_VALUE;
+				Direction face = Direction.NORTH;
+				for(Direction facing : Direction.Type.HORIZONTAL)
+				{
+					double dist = current.offset(facing).getSquaredDistance(pos2);
+					if(minDist > dist)
+					{
+						face = facing;
+						minDist = dist;
+					}
+				}
+				
+				Blueprint.tryPlaceAt(Blocks.SMOOTH_STONE.getDefaultState(), current, world);
+				for(int i=2; i>0; i--)
+					Blueprint.tryPlaceAt(Blocks.AIR.getDefaultState(), current.up(i), world);
+				current = current.offset(face);
+			}
+		});
+		
+		return true;
+	}
+	
+	public void applyTo(GrammarRoom room, GrammarPhrase graph)
 	{
 		room.metadata().setType(this);
 		onApply(room, graph);
 	}
 	
-	protected abstract void onApply(CDRoom room, CDGraph graph);
+	protected abstract void onApply(GrammarRoom room, GrammarPhrase graph);
 	
-	public static CDRoom injectRoom(CDRoom room, CDGraph graph)
+	public Vector2i size(Random rand) { return sizeFunc.apply(rand); }
+	
+	public static GrammarRoom injectRoom(GrammarRoom room, GrammarPhrase graph)
 	{
-		CDRoom injected = new CDRoom();
+		GrammarRoom injected = new GrammarRoom();
 		room.getChildLinks().forEach(uuid -> 
 		{
-			Optional<CDRoom> child = graph.get(uuid);
+			Optional<GrammarRoom> child = graph.get(uuid);
 			if(child.isEmpty())
 				return;
 			
@@ -94,15 +187,15 @@ public abstract class GrammarTerm
 		return injected;
 	}
 	
-	public static CDRoom injectBranch(CDRoom room, CDGraph graph)
+	public static GrammarRoom injectBranch(GrammarRoom room, GrammarPhrase graph)
 	{
-		CDRoom injected = new CDRoom();
+		GrammarRoom injected = new GrammarRoom();
 		room.linkTo(injected);
 		graph.add(injected);
 		return injected;
 	}
 	
-	protected static boolean checkListFor(@Nullable List<CDRoom> rooms, GrammarTerm term)
+	protected static boolean checkListFor(@Nullable List<GrammarRoom> rooms, GrammarTerm term)
 	{
 		return rooms != null && !rooms.isEmpty() && rooms.stream().filter(Objects::nonNull).anyMatch(r -> r.metadata().is(term));
 	}
@@ -111,6 +204,7 @@ public abstract class GrammarTerm
 	public static class Builder
 	{
 		private final int colour;
+		private final DyeColor color;
 		private int weight = 1;
 		private boolean replaceable = false;
 		private boolean placeable = true;
@@ -122,15 +216,17 @@ public abstract class GrammarTerm
 		private List<Supplier<GrammarTerm>> after = Lists.newArrayList(), before = Lists.newArrayList();
 		private List<Supplier<GrammarTerm>> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
 		private TermApplyFunc applyFunc = (t,r,g) -> {};
+		private Function<Random, Vector2i> sizeFunc = r -> new Vector2i(3 + r.nextInt(4), 3 + r.nextInt(4));
 		
-		private Builder(int colourIn)
+		private Builder(int colourIn, DyeColor colorIn)
 		{
 			colour = colourIn;
+			color = colorIn;
 		}
 		
-		public static Builder create(int colour)
+		public static Builder create(int colour, DyeColor color)
 		{
-			return new Builder(colour);
+			return new Builder(colour, color);
 		}
 		
 		public Builder unplaceable()
@@ -187,6 +283,18 @@ public abstract class GrammarTerm
 			return this;
 		}
 		
+		public Builder size(Function<Random, Vector2i> func)
+		{
+			sizeFunc = func;
+			return this;
+		}
+		
+		public Builder size(Vector2i vec)
+		{
+			sizeFunc = r -> vec;
+			return this;
+		}
+		
 		public Builder onlyAfter(Supplier<GrammarTerm>... term)
 		{
 			for(Supplier<GrammarTerm> termIn : term)
@@ -223,72 +331,25 @@ public abstract class GrammarTerm
 		
 		public GrammarTerm build(Identifier registryName)
 		{
-			return new GrammarTerm(registryName, weight, colour, placeable, replaceable, injects)
+			TermConditions conditions = TermConditions.create()
+					.nonconsecutive(afterSelf)
+					.sizeCap(sizeCap)
+					.afterDepth(depthMin)
+					.popCap(maxPop)
+					.allowDeadEnds(deadEnds)
+					.onlyAfter(after).neverAfter(notAfter)
+					.onlyBefore(before).neverBefore(notBefore);
+			
+			return new GrammarTerm(registryName, weight, colour, color, sizeFunc, placeable, replaceable, injects, conditions)
 				{
-					public boolean canBePlaced(CDRoom inRoom, List<CDRoom> previous, List<CDRoom> next, CDGraph graph)
-					{
-						// Only placeable whilst graph is below a maximum scale
-						if(sizeCap > 0 && graph.size() >= sizeCap)
-							return false;
-						
-						// Only placeable after a minimum number of preceding rooms
-						if(depthMin > 0 && inRoom.metadata().depth() <= depthMin)
-							return false;
-						
-						// Only placeable up to a maximum population in the same graph
-						if(maxPop > 0 && graph.tally(this) >= maxPop)
-							return false;
-						
-						// Cannot be placed at a dead end
-						if(!deadEnds && !inRoom.hasLinks())
-							return false;
-						
-						// Cannot be applied to a room with the maximum number of connections
-						if(injects && !inRoom.canAddLink())
-							return false;
-						
-						final Predicate<GrammarTerm> prevCheck = t -> GrammarTerm.checkListFor(previous, t);
-						final Predicate<GrammarTerm> nextCheck = t -> GrammarTerm.checkListFor(next, t);
-						
-						// Cannot be placed consecutively
-						if(!afterSelf && (prevCheck.test(this) || nextCheck.test(this)))
-							return false;
-						
-						// Must be placed after one or more possible rooms
-						if(!after.isEmpty() && terms(after).noneMatch(prevCheck::test))
-							return false;
-						
-						// Must not be placed after one or more possible rooms
-						if(!notAfter.isEmpty() && terms(notAfter).anyMatch(prevCheck::test))
-							return false;
-						
-						if(!next.isEmpty())
-						{
-							// Must be placed before one or more possible rooms
-							if(!before.isEmpty() && terms(before).noneMatch(nextCheck::test))
-								return false;
-							
-							// Must not be placed before one or more possible rooms
-							if(!notBefore.isEmpty() && terms(notBefore).anyMatch(nextCheck::test))
-								return false;
-						}
-						
-						return true;
-					}
-					
-					private static Stream<GrammarTerm> terms(List<Supplier<GrammarTerm>> setIn)
-					{
-						return setIn.stream().map(Supplier::get).filter(Objects::nonNull);
-					}
-					
-					public void onApply(CDRoom room, CDGraph graph) { applyFunc.apply(this, room, graph); }
+					public void onApply(GrammarRoom room, GrammarPhrase graph) { applyFunc.apply(this, room, graph); }
 				};
 		}
 		
 		@FunctionalInterface
 		public interface TermApplyFunc
 		{
-			public void apply(GrammarTerm term, CDRoom room, CDGraph graph);
+			public void apply(GrammarTerm term, GrammarRoom room, GrammarPhrase graph);
 		}
 	}
 }

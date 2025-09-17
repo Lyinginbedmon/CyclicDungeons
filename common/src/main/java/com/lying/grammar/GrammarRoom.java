@@ -18,16 +18,16 @@ import net.minecraft.text.MutableText;
 import net.minecraft.util.Uuids;
 
 /** Graph object holding structural information */
-public class CDRoom
+public class GrammarRoom
 {
-	public static final Codec<CDRoom> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-			Uuids.STRING_CODEC.fieldOf("Uuid").forGetter(CDRoom::uuid),
-			CDMetadata.CODEC.fieldOf("Metadata").forGetter(CDRoom::metadata),
-			Uuids.STRING_CODEC.listOf().fieldOf("Children").forGetter(CDRoom::getChildLinks),
-			Uuids.STRING_CODEC.listOf().fieldOf("Parents").forGetter(CDRoom::getParentLinks)
+	public static final Codec<GrammarRoom> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+			Uuids.STRING_CODEC.fieldOf("Uuid").forGetter(GrammarRoom::uuid),
+			RoomMetadata.CODEC.fieldOf("Metadata").forGetter(GrammarRoom::metadata),
+			Uuids.STRING_CODEC.listOf().fieldOf("Children").forGetter(GrammarRoom::getChildLinks),
+			Uuids.STRING_CODEC.listOf().fieldOf("Parents").forGetter(GrammarRoom::getParentLinks)
 			).apply(instance, (id,meta,doors,entries) -> 
 			{
-				CDRoom room = new CDRoom(id);
+				GrammarRoom room = new GrammarRoom(id);
 				room.metadata = meta;
 				doors.forEach(child -> room.childLinks.add(child));
 				entries.forEach(parent -> room.parentLinks.add(parent));
@@ -38,20 +38,20 @@ public class CDRoom
 	public static final int MAX_LINKS = 4;
 	
 	private final UUID id;
-	private CDMetadata metadata = new CDMetadata();
+	private RoomMetadata metadata = new RoomMetadata();
 	private List<UUID> childLinks = Lists.newArrayList(), parentLinks = Lists.newArrayList();
 	
-	public CDRoom(UUID idIn)
+	public GrammarRoom(UUID idIn)
 	{
 		id = idIn;
 	}
 	
-	public CDRoom()
+	public GrammarRoom()
 	{
 		this(UUID.randomUUID());
 	}
 	
-	public static Comparator<CDRoom> branchSort(CDGraph graph)
+	public static Comparator<GrammarRoom> branchSort(GrammarPhrase graph)
 	{
 		return (a,b) -> 
 		{
@@ -63,7 +63,7 @@ public class CDRoom
 	
 	public final UUID uuid() { return id; }
 	
-	public final boolean matches(CDRoom b) { return b.id.equals(id); }
+	public final boolean matches(GrammarRoom b) { return b.id.equals(id); }
 	
 	public final MutableText name() { return metadata.name(); }
 	
@@ -74,16 +74,16 @@ public class CDRoom
 		return CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
 	}
 	
-	public static final Optional<CDRoom> fromNbt(NbtElement nbt)
+	public static final Optional<GrammarRoom> fromNbt(NbtElement nbt)
 	{
-		DataResult<CDRoom> room = CODEC.parse(NbtOps.INSTANCE, nbt);
+		DataResult<GrammarRoom> room = CODEC.parse(NbtOps.INSTANCE, nbt);
 		if(room.isSuccess())
 			return Optional.of(room.getOrThrow());
 		else
 			return Optional.empty();
 	}
 	
-	public CDMetadata metadata() { return this.metadata; }
+	public RoomMetadata metadata() { return this.metadata; }
 	
 	public boolean hasLinks() { return !childLinks.isEmpty(); }
 	
@@ -98,12 +98,12 @@ public class CDRoom
 	public int getTotalLinks() { return childLinks.size() + parentLinks.size(); }
 	public boolean canAddLink() { return getTotalLinks() < MAX_LINKS; }
 	
-	public int tallyDescendants(CDGraph graph)
+	public int tallyDescendants(GrammarPhrase graph)
 	{
 		int tally = childLinks.size();
 		for(UUID offshoot : childLinks)
 		{
-			Optional<CDRoom> r = graph.get(offshoot);
+			Optional<GrammarRoom> r = graph.get(offshoot);
 			if(r.isEmpty())
 				continue;
 			tally += r.get().tallyDescendants(graph);
@@ -111,14 +111,14 @@ public class CDRoom
 		return tally;
 	}
 	
-	public CDRoom linkTo(CDRoom otherRoom)
+	public GrammarRoom linkTo(GrammarRoom otherRoom)
 	{
 		childLinks.add(otherRoom.uuid());
 		otherRoom.parentLinks.add(id);
 		return this;
 	}
 	
-	public CDRoom detachFrom(CDRoom otherRoom)
+	public GrammarRoom detachFrom(GrammarRoom otherRoom)
 	{
 		if(hasLinks() && hasLinkTo(otherRoom.uuid()))
 		{
@@ -130,9 +130,9 @@ public class CDRoom
 	
 	/** Collects all rooms within the given graph that this room links to */
 	@NotNull
-	public List<CDRoom> getChildRooms(CDGraph graph)
+	public List<GrammarRoom> getChildRooms(GrammarPhrase graph)
 	{
-		List<CDRoom> links = Lists.newArrayList();
+		List<GrammarRoom> links = Lists.newArrayList();
 		childLinks.stream()
 			.map(graph::get)
 			.filter(Optional::isPresent)
@@ -143,9 +143,9 @@ public class CDRoom
 	
 	/** Collects all rooms within the given graph that link to this room */
 	@NotNull
-	public List<CDRoom> getParentRooms(CDGraph graph)
+	public List<GrammarRoom> getParentRooms(GrammarPhrase graph)
 	{
-		List<CDRoom> links = Lists.newArrayList();
+		List<GrammarRoom> links = Lists.newArrayList();
 		parentLinks.stream()
 			.map(graph::get)
 			.filter(Optional::isPresent)
@@ -154,7 +154,7 @@ public class CDRoom
 		return links;
 	}
 	
-	public CDRoom applyTerm(GrammarTerm termIn, CDGraph graph)
+	public GrammarRoom applyTerm(GrammarTerm termIn, GrammarPhrase graph)
 	{
 		termIn.applyTo(this, graph);
 		return this;

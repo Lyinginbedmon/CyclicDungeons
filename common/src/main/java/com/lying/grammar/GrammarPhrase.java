@@ -20,32 +20,32 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
-/** Rewritable structure composed of {@link CDRoom} objects */
-public class CDGraph
+/** Rewritable structure composed of {@link GrammarRoom} objects */
+public class GrammarPhrase
 {
-	public static final Codec<CDGraph> CODEC	= CDRoom.CODEC.listOf().xmap(CDGraph::new, CDGraph::rooms);
-	List<CDRoom> rooms = Lists.newArrayList();
+	public static final Codec<GrammarPhrase> CODEC	= GrammarRoom.CODEC.listOf().xmap(GrammarPhrase::new, GrammarPhrase::rooms);
+	List<GrammarRoom> rooms = Lists.newArrayList();
 	
-	public CDGraph() {}
+	public GrammarPhrase() {}
 	
-	protected CDGraph(List<CDRoom> roomsIn)
+	protected GrammarPhrase(List<GrammarRoom> roomsIn)
 	{
 		this();
 		rooms.addAll(roomsIn);
 	}
 	
-	public static CDGraph parsePhrase(String[] phrase)
+	public static GrammarPhrase parsePhrase(String[] phrase)
 	{
-		CDGraph graph = new CDGraph();
+		GrammarPhrase graph = new GrammarPhrase();
 		
-		CDRoom prev = null;
+		GrammarRoom prev = null;
 		for(int i=0; i<phrase.length; i++)
 		{
 			Optional<GrammarTerm> term = CDTerms.get(phrase[i]);
 			if(term.isEmpty())
 				continue;
 			
-			CDRoom room = new CDRoom();
+			GrammarRoom room = new GrammarRoom();
 			room.metadata().setType(term.get());
 			if(prev != null)
 				prev.linkTo(room);
@@ -57,7 +57,7 @@ public class CDGraph
 		return graph;
 	}
 	
-	public CDGraph clone()
+	public GrammarPhrase clone()
 	{
 		return fromNbt(toNbt());
 	}
@@ -68,33 +68,33 @@ public class CDGraph
 	}
 	
 	@NotNull
-	public static CDGraph fromNbt(@Nullable NbtElement element)
+	public static GrammarPhrase fromNbt(@Nullable NbtElement element)
 	{
 		if(element != null)
 		{
-			DataResult<CDGraph> result = CODEC.parse(NbtOps.INSTANCE, element);
+			DataResult<GrammarPhrase> result = CODEC.parse(NbtOps.INSTANCE, element);
 			if(result.isSuccess())
 				return result.getOrThrow();
 		}
-		return new CDGraph();
+		return new GrammarPhrase();
 	}
 	
-	protected List<CDRoom> rooms() { return this.rooms; }
+	protected List<GrammarRoom> rooms() { return this.rooms; }
 	
-	public Optional<CDRoom> get(UUID idIn)
+	public Optional<GrammarRoom> get(UUID idIn)
 	{
 		return rooms.stream().filter(r -> r.uuid().equals(idIn)).findAny();
 	}
 	
-	public Optional<CDRoom> get(int index)
+	public Optional<GrammarRoom> get(int index)
 	{
 		return index < rooms.size() ? Optional.of(rooms.get(index)) : Optional.empty();
 	}
 	
 	@NotNull
-	public List<CDRoom> getLinksTo(UUID uuid)
+	public List<GrammarRoom> getLinksTo(UUID uuid)
 	{
-		List<CDRoom> links = Lists.newArrayList();
+		List<GrammarRoom> links = Lists.newArrayList();
 		links.addAll(rooms.stream().filter(r -> r.hasLinkTo(uuid)).toList());
 		return links;
 	}
@@ -105,14 +105,14 @@ public class CDGraph
 	
 	public int size() { return rooms.size(); }
 	
-	public Optional<CDRoom> getStart() { return isEmpty() ? Optional.empty() : Optional.of(rooms.get(0)); }
+	public Optional<GrammarRoom> getStart() { return isEmpty() ? Optional.empty() : Optional.of(rooms.get(0)); }
 	
 	public boolean hasBlanks()
 	{
-		return rooms.stream().map(CDRoom::metadata).anyMatch(CDMetadata::isReplaceable);
+		return rooms.stream().map(GrammarRoom::metadata).anyMatch(RoomMetadata::isReplaceable);
 	}
 	
-	public List<CDRoom> getBlanks()
+	public List<GrammarRoom> getBlanks()
 	{
 		return rooms.stream().filter(r -> r.metadata().isReplaceable()).toList();
 	}
@@ -120,13 +120,13 @@ public class CDGraph
 	public int depth()
 	{
 		int max = Integer.MIN_VALUE;
-		for(CDRoom room : rooms)
+		for(GrammarRoom room : rooms)
 			if(room.metadata().depth() > max)
 				max = room.metadata().depth();
 		return max;
 	}
 	
-	public void add(CDRoom roomIn)
+	public void add(GrammarRoom roomIn)
 	{
 		rooms.add(roomIn);
 		
@@ -137,7 +137,7 @@ public class CDGraph
 		});
 	}
 	
-	protected void updateDepth(CDRoom host)
+	protected void updateDepth(GrammarRoom host)
 	{
 		int depth = host.metadata().depth() + 1;
 		if(host.hasLinks())
@@ -148,7 +148,7 @@ public class CDGraph
 			});
 	}
 	
-	public <T extends Object> void printAsTree(Consumer<T> print, Function<CDRoom,T> getter)
+	public <T extends Object> void printAsTree(Consumer<T> print, Function<GrammarRoom,T> getter)
 	{
 		if(isEmpty())
 			return;
@@ -156,10 +156,10 @@ public class CDGraph
 		getStart().ifPresent(start -> printRecursive(print, start, getter));
 	}
 	
-	private <T extends Object> void printRecursive(Consumer<T> print, CDRoom room, Function<CDRoom,T> getter)
+	private <T extends Object> void printRecursive(Consumer<T> print, GrammarRoom room, Function<GrammarRoom,T> getter)
 	{
 		print.accept(getter.apply(room));
-		Comparator<CDRoom> sorter = CDRoom.branchSort(this);
+		Comparator<GrammarRoom> sorter = GrammarRoom.branchSort(this);
 		room.getChildRooms(this).stream().sorted(sorter).forEach(r -> printRecursive(print, r, getter));
 	}
 	
@@ -168,11 +168,11 @@ public class CDGraph
 		if(isEmpty())
 			return "NULL";
 		
-		CDRoom room = getStart().get();
+		GrammarRoom room = getStart().get();
 		String result = room.asString();
 		while(room.hasLinks())
 		{
-			List<CDRoom> links = room.getChildRooms(this);
+			List<GrammarRoom> links = room.getChildRooms(this);
 			if(links.isEmpty())
 				break;
 			
@@ -187,11 +187,11 @@ public class CDGraph
 		if(isEmpty())
 			return Text.literal("NULL");
 		
-		CDRoom room = getStart().get();
+		GrammarRoom room = getStart().get();
 		MutableText result = room.name();
 		while(room.hasLinks())
 		{
-			List<CDRoom> links = room.getChildRooms(this);
+			List<GrammarRoom> links = room.getChildRooms(this);
 			if(links.isEmpty())
 				break;
 			

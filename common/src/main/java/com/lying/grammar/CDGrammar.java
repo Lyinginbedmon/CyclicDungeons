@@ -2,7 +2,6 @@ package com.lying.grammar;
 
 import java.util.List;
 import java.util.Random;
-import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -18,33 +17,24 @@ public class CDGrammar
 	
 	public static final List<GrammarTerm> PLACEABLE = CDTerms.placeables();
 	
-	public static void run()
+	/** Generates a relatively linear initial starting graph */
+	public static GrammarPhrase initialGraph(int blanks)
 	{
-		final int scale = 5;
-		final Function<CDRoom,String> func = r -> "	".repeat(r.metadata().depth()) + r.asString();
-		LOGGER.info("Initial graph:");
-		CDGraph initial = initialGraph(scale);
-		initial.printAsTree(LOGGER::info, func);
-		for(int i=0; i<5; i++)
-		{
-			LOGGER.info("Generated graph {}:", i);
-			generate(initial.clone()).printAsTree(LOGGER::info, func);
-		}
+		return initialGraph(blanks, new Random());
 	}
 	
-	/** Generates a linear initial starting graph */
-	public static CDGraph initialGraph(int blanks)
+	/** Generates a relatively linear initial starting graph */
+	public static GrammarPhrase initialGraph(int blanks, Random rand)
 	{
-		Random rand = new Random();
-		CDGraph graph = new CDGraph();
-		CDRoom start = new CDRoom();
+		GrammarPhrase graph = new GrammarPhrase();
+		GrammarRoom start = new GrammarRoom();
 		start.metadata().setType(CDTerms.START.get());
 		graph.add(start);
 		
-		CDRoom previous = start;
+		GrammarRoom previous = start;
 		for(int i=0; i<blanks; i++)
 		{
-			CDRoom blank = new CDRoom();
+			GrammarRoom blank = new GrammarRoom();
 			previous.linkTo(blank);
 			
 			graph.add(blank);
@@ -54,7 +44,7 @@ public class CDGrammar
 				previous = blank;
 		}
 		
-		CDRoom end = new CDRoom();
+		GrammarRoom end = new GrammarRoom();
 		end.metadata().setType(CDTerms.END.get());
 		previous.linkTo(end);
 		graph.add(end);
@@ -62,31 +52,36 @@ public class CDGrammar
 	}
 	
 	/** Populates the given graph */
-	public static CDGraph generate(CDGraph graph)
+	public static GrammarPhrase generate(GrammarPhrase graph)
 	{
-		Random rand = new Random();
+		return generate(graph, new Random());
+	}
+	
+	/** Populates the given graph */
+	public static GrammarPhrase generate(GrammarPhrase graph, Random rand)
+	{
 		int iterationCap = 5;
 		while(!graph.isEmpty() && graph.hasBlanks() && --iterationCap > 0)
 			recursiveGenerate(graph.get(0).get(), graph, rand);
 		return graph;
 	}
 	
-	private static void recursiveGenerate(CDRoom room, CDGraph graph, Random rand)
+	private static void recursiveGenerate(GrammarRoom room, GrammarPhrase graph, Random rand)
 	{
 		generate(room, graph, rand);
 		room.getChildRooms(graph).forEach(r -> recursiveGenerate(r, graph, rand));
 	}
 	
-	private static void generate(CDRoom room, CDGraph graph, Random rand)
+	private static void generate(GrammarRoom room, GrammarPhrase graph, Random rand)
 	{
 		if(!room.metadata().isReplaceable())
 			return;
 		
 		/** Rooms that connect to this one */
-		final List<CDRoom> previous = room.getParentRooms(graph);
+		final List<GrammarRoom> previous = room.getParentRooms(graph);
 		
 		/** Rooms immediately following this one */
-		final List<CDRoom> next = room.getChildRooms(graph);
+		final List<GrammarRoom> next = room.getChildRooms(graph);
 		
 		GrammarTerm term = CDTerms.VOID.get();
 		List<GrammarTerm> candidates = PLACEABLE.stream().filter(t -> t.canBePlaced(room, previous, next, graph)).toList();

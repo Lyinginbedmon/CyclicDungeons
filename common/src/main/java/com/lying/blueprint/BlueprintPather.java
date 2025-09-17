@@ -10,25 +10,25 @@ import com.google.common.collect.Lists;
 
 public class BlueprintPather
 {
-	public static List<Node> calculateGoldenPath(Blueprint chart)
+	public static List<BlueprintRoom> calculateGoldenPath(Blueprint chart)
 	{
-		Optional<Node> start = chart.start();
-		Optional<Node> end = chart.end();
+		Optional<BlueprintRoom> start = chart.start();
+		Optional<BlueprintRoom> end = chart.end();
 		return start.isPresent() && end.isPresent() ? calculatePathBetween(start.get(), end.get(), chart) : Lists.newArrayList();
 	}
 	
-	public static List<Node> calculatePathBetween(Node start, Node end, Blueprint chart)
+	public static List<BlueprintRoom> calculatePathBetween(BlueprintRoom start, BlueprintRoom end, Blueprint chart)
 	{
 		// Map of nodes to the node they are accessed from
-		Map<Node, Node> pathMap = new HashMap<>();
+		Map<BlueprintRoom, BlueprintRoom> pathMap = new HashMap<>();
 		
 		// Nodes available to check
-		List<Node> checkList = Lists.newArrayList();
+		List<BlueprintRoom> checkList = Lists.newArrayList();
 		checkList.add(start);
 		
 		// Nodes already checked
-		List<Node> checkedList = Lists.newArrayList();
-		final Comparator<Node> distSort = (a,b) -> 
+		List<BlueprintRoom> checkedList = Lists.newArrayList();
+		final Comparator<BlueprintRoom> distSort = (a,b) -> 
 		{
 			double distA = a.position().distance(end.position());
 			double distB = b.position().distance(end.position());
@@ -40,14 +40,14 @@ public class BlueprintPather
 			checkList.removeAll(checkedList);
 			checkList.sort(distSort);
 			
-			Node node = checkList.get(0);
+			BlueprintRoom node = checkList.get(0);
 			checkedList.add(node);
 			
 			if(node.equals(end))
 			{
 				// Work backwards through the pathMap to identify the route
-				List<Node> finalPath = Lists.newArrayList();
-				Node point = node;
+				List<BlueprintRoom> finalPath = Lists.newArrayList();
+				BlueprintRoom point = node;
 				finalPath.add(point);
 				while(pathMap.containsKey(point))
 				{
@@ -58,7 +58,7 @@ public class BlueprintPather
 				return finalPath;
 			}
 			
-			for(Node child : node.getChildren(chart))
+			for(BlueprintRoom child : node.getChildren(chart))
 			{
 				checkList.add(child);
 				pathMap.put(child, node);

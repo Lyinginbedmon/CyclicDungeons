@@ -2,7 +2,7 @@ package com.lying.network;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.lying.grammar.CDGraph;
+import com.lying.grammar.GrammarPhrase;
 
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.nbt.NbtElement;
@@ -20,17 +20,17 @@ public class ShowDungeonLayoutPacket
 	public static final CustomPayload.Id<Payload> PACKET_TYPE	= new CustomPayload.Id<>(PACKET_ID);
 	public static final PacketCodec<RegistryByteBuf, Payload> PACKET_CODEC	= CustomPayload.codecOf(Payload::write, Payload::read);
 	
-	public static void sendTo(ServerPlayerEntity player, CDGraph graph, boolean isGenerated)
+	public static void sendTo(ServerPlayerEntity player, GrammarPhrase graph, boolean isGenerated)
 	{
 		NetworkManager.sendToPlayer(player, new Payload(graph, isGenerated));
 	}
 	
 	public static class Payload implements CustomPayload
 	{
-		private final CDGraph graph;
+		private final GrammarPhrase graph;
 		private final boolean isGenerated;
 		
-		protected Payload(@NotNull CDGraph graphIn, boolean isGenerated)
+		protected Payload(@NotNull GrammarPhrase graphIn, boolean isGenerated)
 		{
 			this.graph = graphIn;
 			this.isGenerated = isGenerated; 
@@ -39,7 +39,7 @@ public class ShowDungeonLayoutPacket
 		public static Payload read(RegistryByteBuf buffer)
 		{
 			NbtElement ele = RegistryByteBuf.readNbt(buffer, NbtSizeTracker.of(2097152L));
-			CDGraph graph = CDGraph.fromNbt(ele);
+			GrammarPhrase graph = GrammarPhrase.fromNbt(ele);
 			return new Payload(graph, buffer.readBoolean());
 		}
 		
@@ -49,7 +49,7 @@ public class ShowDungeonLayoutPacket
 			buffer.writeBoolean(isGenerated);
 		}
 		
-		public CDGraph graph() { return graph; }
+		public GrammarPhrase graph() { return graph; }
 		
 		public Text title()
 		{
