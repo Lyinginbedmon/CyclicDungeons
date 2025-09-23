@@ -27,8 +27,8 @@ public class BlueprintScruncher
 		int depth = reverse ? maxDepth : -maxDepth;
 		while(depth != 0)
 		{
-			depth -= Math.signum(depth);
 			anyMoved = tryScrunch(chart.byDepth(Math.abs(depth)), chart) || anyMoved;
+			depth -= Math.signum(depth);
 		}
 		
 		return anyMoved;
@@ -71,9 +71,12 @@ public class BlueprintScruncher
 			
 			children.add(child);
 			if(child.hasChildren())
-				children.addAll(gatherDescendantsOf(child, chart));
+			{
+				List<BlueprintRoom> childRooms = gatherDescendantsOf(child, chart);
+				childRooms.removeIf(children::contains);
+				children.addAll(childRooms);
+			}
 		});
-		// FIXME Ensure uniqueness in list of children
 		return children;
 	}
 	

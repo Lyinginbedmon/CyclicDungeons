@@ -1,13 +1,17 @@
 package com.lying.client.screen;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
 import com.lying.blueprint.Blueprint;
+import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintOrganiser;
+import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.BlueprintScruncher;
 import com.lying.grammar.RoomMetadata;
@@ -24,6 +28,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
@@ -42,7 +47,10 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	private Vector2i displayOffset = new Vector2i(0,0);
 	private Vector2i dragStart = null;
 	
+	private ButtonWidget scrunchButton, collapseButton, routeButton;
+	
 	private Blueprint blueprint = null;
+	private Map<ErrorType,Integer> errorCache = new HashMap<>();
 	
 	public DungeonScreen(DungeonScreenHandler handler, PlayerInventory inventory, Text title)
 	{
@@ -57,16 +65,18 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		addDrawableChild(ButtonWidget.builder(Text.literal("Tree"), b -> organise(BlueprintOrganiser.Tree::create)).dimensions(0, 0, 60, 20).build());
 		addDrawableChild(ButtonWidget.builder(Text.literal("4x Grid"), b -> organise(BlueprintOrganiser.Grid.Square::create)).dimensions(0, 20, 60, 20).build());
 		addDrawableChild(ButtonWidget.builder(Text.literal("8x Grid"), b -> organise(BlueprintOrganiser.Grid.Octagonal::create)).dimensions(0, 40, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("Concentric"), b -> organise(BlueprintOrganiser.Circular::create)).dimensions(0, 60, 60, 20).build());
 		
-		addDrawableChild(ButtonWidget.builder(Text.literal("Scrunch"), b -> scrunch()).dimensions(0, 70, 60, 20).build());
-		addDrawableChild(ButtonWidget.builder(Text.literal("Collapse"), b -> collapse()).dimensions(0, 90, 60, 20).build());
+		addDrawableChild(scrunchButton = ButtonWidget.builder(Text.literal("Scrunch"), b -> scrunch()).dimensions(0, 90, 60, 20).build());
+		addDrawableChild(collapseButton = ButtonWidget.builder(Text.literal("Collapse"), b -> collapse()).dimensions(0, 110, 60, 20).build());
 		
-		addDrawableChild(ButtonWidget.builder(Text.literal("X"), b -> showGoldenRoute = !showGoldenRoute).dimensions(width - 20, 0, 20, 20).build());
+		addDrawableChild(routeButton = ButtonWidget.builder(Text.literal("X"), b -> showGoldenRoute = !showGoldenRoute).dimensions(width - 20, 0, 20, 20).build());
 	}
 	
 	private void organise(Supplier<BlueprintOrganiser> organiser)
 	{
 		organiser.get().organise(blueprint, new Random(randSeed));
+		cacheErrors();
 		resetDrag();
 	}
 	
@@ -74,12 +84,20 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	{
 		BlueprintScruncher.scrunch(blueprint, false);
 		BlueprintScruncher.scrunch(blueprint, true);
+		cacheErrors();
 	}
 	
 	private void collapse()
 	{
 		BlueprintScruncher.collapse(blueprint, false);
 		BlueprintScruncher.collapse(blueprint, true);
+		cacheErrors();
+	}
+	
+	private void cacheErrors()
+	{
+		for(ErrorType type : ErrorType.values())
+			errorCache.put(type, Blueprint.tallyErrors(blueprint, type));
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -92,10 +110,24 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		blur();
 		context.drawText(textRenderer, this.title, (mc.getWindow().getScaledWidth() - textRenderer.getWidth(this.title)) / 2, 10, 0xFFFFFF, false);
 		
-		final Vector2i position = isDragging() ? new Vector2i(displayOffset.x + mouseX - dragStart.x, displayOffset.y + mouseY - dragStart.y) : displayOffset;
-		final Vector2i origin = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5).add(position);
 		if(blueprint != null && !blueprint.isEmpty())
+		{
+			int totalErrors = 0;
+			for(int val : errorCache.values())
+				totalErrors += val;
+			MutableText details = Text.translatable("gui.cydun.dungeon_data", 
+					blueprint.size(), 
+					blueprint.maxDepth(), 
+					totalErrors, 
+					errorCache.get(ErrorType.COLLISION), 
+					errorCache.get(ErrorType.INTERSECTION), 
+					errorCache.get(ErrorType.TUNNEL));
+			context.drawText(textRenderer, details, (mc.getWindow().getScaledWidth() - textRenderer.getWidth(details)) / 2, 20, 0xFFFFFF, false);
+			
+			final Vector2i position = isDragging() ? new Vector2i(displayOffset.x + mouseX - dragStart.x, displayOffset.y + mouseY - dragStart.y) : displayOffset;
+			final Vector2i origin = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5).add(position);
 			NodeRenderUtils.render(blueprint.get(0), context, this.textRenderer, origin, blueprint, mouseX, mouseY, renderScale);
+		}
 	}
 	
 	public void handledScreenTick()
@@ -111,9 +143,15 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				Random rand = new Random(randSeed);
 				blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
 				BlueprintOrganiser.Tree.create().organise(blueprint, rand);
+				cacheErrors();
 				if(blueprint.hasErrors())
 					return;
 			});
+		else
+		{
+			scrunchButton.active = collapseButton.active = routeButton.active = !blueprint.hasErrors();
+			showGoldenRoute = showGoldenRoute && routeButton.active;
+		}
 	}
 	
 	public void resetDrag() { this.displayOffset = new Vector2i(0,0); }
@@ -149,6 +187,10 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	public static class NodeRenderUtils
 	{
+		public static final int LIGHT_BLUE = 0x1D77F5;
+		public static final int LIME_GREEN = 0x1DF537;
+		public static final int DARK_GRAY = 0x6E6E6E;
+		
 		public static void render(BlueprintRoom node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, int mouseX, int mouseY, int renderScale)
 		{
 			// Render node boundaries
@@ -165,25 +207,17 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		public static void renderLinks(Vector2i origin, int renderScale, Blueprint chart, DrawContext context)
 		{
 			boolean errorsPresent = chart.hasErrors();
-			List<Line2> links = Blueprint.getAllPaths(chart);
-			links.forEach(path -> 
+			Blueprint.getPassages(chart).forEach(p -> 
 			{
-				int linkColour = 0x6E6E6E;
-				if(errorsPresent)
-				{
-					// Path intersecting another path
-					if(links.stream()
-							.filter(l -> !(l.getLeft().equals(path.getLeft()) && l.getRight().equals(path.getRight())))
-							.anyMatch(l -> path.intersects(l)))
-						linkColour = 0x1D77F5;
-					// Path intersecting an unrelated node
-					else if(chart.stream()
-							.filter(n -> !(n.position().equals(path.getLeft()) || n.position().equals(path.getRight())))
-							.anyMatch(n -> n.bounds().intersects(path)))
-						linkColour = 0x1DF537;
-				}
+				int linkColour = errorsPresent ?
+						(p.hasIntersections(chart) ? 
+							LIGHT_BLUE : 
+							p.hasTunnels(chart) ? 
+								LIME_GREEN : 
+								DARK_GRAY) :
+						DARK_GRAY;
 				
-				Line2 link = path.scale(renderScale).offset(origin);
+				Line2 link = p.asLine().scale(renderScale).offset(origin);
 				renderLink(link.getLeft(), link.getRight(), context, linkColour);
 			});
 		}
@@ -193,7 +227,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			if(chart.getGoldenPath().isEmpty() || chart.hasErrors())
 				return;
 			
-			List<Line2> links = Blueprint.getAllPaths(chart);
+			List<Line2> links = Blueprint.getPassages(chart).stream().map(BlueprintPassage::asLine).toList();
 			links.stream()
 				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.position().equals(p.getLeft())))
 				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.position().equals(p.getRight())))

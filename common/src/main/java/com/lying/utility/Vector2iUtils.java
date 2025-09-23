@@ -15,9 +15,14 @@ public class Vector2iUtils
 		return new Vector2i(from.x - val.x, from.y - val.y);
 	}
 	
-	public static Vector2i mul(Vector2i a, int scalar)
+	public static Vector2i mul(Vector2i a, double scalar)
 	{
-		return new Vector2i(a.x * scalar, a.y * scalar);
+		return new Vector2i((int)(a.x * scalar), (int)(a.y * scalar));
+	}
+	
+	public static Vector2i normalize(Vector2i a)
+	{
+		return mul(a, 1 / a.length());
 	}
 	
 	public static Vector2i negate(Vector2i a)
@@ -40,5 +45,14 @@ public class Vector2iUtils
 			y += vec.y;
 		}
 		return new Vector2i(x / values.length, y / values.length);
+	}
+	
+	public static Vector2i rotate(Vector2i a, double radians)
+	{
+		double cos = Math.cos(radians), sin = Math.sin(radians);
+		return new Vector2i(
+				(int)(a.x() * cos - a.y() * sin),
+				(int)(a.x() * sin + a.y() * cos)
+				);
 	}
 }

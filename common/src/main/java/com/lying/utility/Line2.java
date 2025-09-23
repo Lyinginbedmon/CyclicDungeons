@@ -41,6 +41,11 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 		return isVertical == line.isVertical && m == line.m && b == line.b && xRange.equals(line.xRange) && yRange.equals(line.yRange);
 	}
 	
+	public boolean linksTo(Line2 line)
+	{
+		return getLeft().equals(line.getRight()) || getRight().equals(line.getRight()) || getLeft().equals(line.getLeft()) || getRight().equals(line.getLeft());
+	}
+	
 	/** Returns true if this is the same line, without checking complex properties */
 	public boolean simpleEquals(Line2 line)
 	{

@@ -1,7 +1,7 @@
 {
 	"itemGroup.cydun.item_group": "Cyclic Dungeons",
 	// Debug
-	"debug.cydun.room": "%s %s (%s)"
+	"debug.cydun.room": "%s %s (%s)",
 	// Entities
 	// Blocks
 	// Items
@@ -9,6 +9,7 @@
 	// Status effects
 	// Commands
 	// Gui
+	"gui.cydun.dungeon_data": "%s:%s, %s errors (%s c, %s i, %s t)"
 	// Enums
 	// Keybinds
 	// Sounds

@@ -28,7 +28,14 @@ public class BlueprintRoom
 		parentLinks.addAll(parentLinksIn);
 	}
 	
+	public static BlueprintRoom create(){ return new BlueprintRoom(UUID.randomUUID(), new RoomMetadata(), List.of(), List.of()); }
+	
 	public UUID uuid() { return id; }
+	
+	public BlueprintRoom clone()
+	{
+		return new BlueprintRoom(id, metadata, childLinks, parentLinks).setPosition(position);
+	}
 	
 	public RoomMetadata metadata() { return metadata; }
 	
@@ -88,6 +95,17 @@ public class BlueprintRoom
 	public boolean hasChildren() { return !childLinks.isEmpty(); }
 	
 	public int childrenCount() { return childLinks.size(); }
+	
+	public int descendantCount(Collection<BlueprintRoom> chart)
+	{
+		int tally = childrenCount();
+		for(BlueprintRoom child : getChildren(chart))
+			tally += child.descendantCount(chart);
+		return tally;
+	}
+	
+	/** Adds a child to this room. Rarely used, since structure is largely determined by graph phase */
+	public void addChild(BlueprintRoom child) { childLinks.add(child.id); }
 	
 	/** Returns a list of all nodes this node is parented to in the given selection */
 	public List<BlueprintRoom> getParents(Collection<BlueprintRoom> graph)
