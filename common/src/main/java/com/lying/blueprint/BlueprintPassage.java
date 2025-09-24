@@ -14,14 +14,19 @@ import net.minecraft.util.math.Direction;
 
 public class BlueprintPassage
 {
-	public static final int PASSAGE_WIDTH = 5;
+	public static final int PASSAGE_WIDTH = 3;
 	private final Line2 line;
 	private final RotaryBox2 box;
 	
 	public BlueprintPassage(Line2 lineIn)
 	{
+		this(lineIn, PASSAGE_WIDTH);
+	}
+	
+	public BlueprintPassage(Line2 lineIn, int width)
+	{
 		line = lineIn;
-		box = RotaryBox2.fromLine(line, PASSAGE_WIDTH);
+		box = RotaryBox2.fromLine(line, width);
 	}
 	
 	public BlueprintPassage(Vector2i a, Vector2i b)
@@ -32,7 +37,7 @@ public class BlueprintPassage
 	public Line2 asLine() { return line; }
 	
 	public RotaryBox2 asBox() { return box; }
-
+	
 	// FIXME Restrict to only constructing outside room boundaries
 	public void build(BlockPos origin, ServerWorld world)
 	{
@@ -56,7 +61,7 @@ public class BlueprintPassage
 				}
 			}
 			
-			Blueprint.tryPlaceAt(Blocks.SMOOTH_STONE.getDefaultState(), current, world);
+			Blueprint.tryPlaceAt(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), current, world);
 			for(int i=2; i>0; i--)
 				Blueprint.tryPlaceAt(Blocks.AIR.getDefaultState(), current.up(i), world);
 			current = current.offset(face);
@@ -88,7 +93,6 @@ public class BlueprintPassage
 				.anyMatch(this::intersects);
 	}
 	
-	// FIXME Resolve erroneous error reports
 	/** Returns true if this passage intersects any unrelated rooms in the given chart */
 	public boolean hasTunnels(List<BlueprintRoom> chart)
 	{

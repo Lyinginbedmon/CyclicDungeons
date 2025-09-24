@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -19,6 +18,7 @@ import com.lying.grammar.GrammarTerm;
 
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.random.Random;
 
 @SuppressWarnings("unchecked")
 public class CDTerms

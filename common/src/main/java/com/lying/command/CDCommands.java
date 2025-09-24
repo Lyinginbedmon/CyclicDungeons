@@ -5,7 +5,6 @@ import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
 import java.util.List;
-import java.util.Random;
 
 import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
@@ -31,6 +30,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 @SuppressWarnings("unused")
 public class CDCommands
@@ -55,13 +55,13 @@ public class CDCommands
 						.executes(context -> tryParsePhrase(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), context.getSource()))))
 				.then(literal("preview")
 					.then(argument("phrase", NbtCompoundArgumentType.nbtCompound())
-						.executes(context -> tryPreview(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), new Random(), context.getSource()))
+						.executes(context -> tryPreview(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), Random.create(), context.getSource()))
 						.then(argument("seed", BlockPosArgumentType.blockPos())
-							.executes(context -> tryPreview(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), new Random(getRandSeed(context, "seed")), context.getSource()))))
+							.executes(context -> tryPreview(NbtCompoundArgumentType.getNbtCompound(context, "phrase"), Random.create(getRandSeed(context, "seed")), context.getSource()))))
 					.then(argument("size", IntegerArgumentType.integer(1))
-						.executes(context -> tryPreview(IntegerArgumentType.getInteger(context, "size"), new Random(), context.getSource()))
+						.executes(context -> tryPreview(IntegerArgumentType.getInteger(context, "size"), Random.create(), context.getSource()))
 						.then(argument("seed", BlockPosArgumentType.blockPos())
-							.executes(context -> tryPreview(IntegerArgumentType.getInteger(context, "size"), new Random(getRandSeed(context, "seed")), context.getSource())))))
+							.executes(context -> tryPreview(IntegerArgumentType.getInteger(context, "size"), Random.create(getRandSeed(context, "seed")), context.getSource())))))
 				.then(literal("generate")
 					.then(argument("size", IntegerArgumentType.integer(1))
 						.then(argument("position", BlockPosArgumentType.blockPos())
@@ -131,13 +131,13 @@ public class CDCommands
 	
 	private static int generateInWorld(int size, BlockPos position, ServerCommandSource source) throws CommandSyntaxException
 	{
-		Random rand = new Random(position.getX() * position.getX() + position.getZ() * position.getZ());
+		Random rand = Random.create(position.getX() * position.getX() + position.getZ() * position.getZ());
 		GrammarPhrase graph = CDGrammar.initialGraph(size, rand);
 		CDGrammar.generate(graph, rand);
 		
 		Blueprint blueprint = Blueprint.fromGraph(graph);
 		blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
-		BlueprintOrganiser.Grid.Square.create().organise(blueprint, rand);
+		BlueprintOrganiser.Circular.create().organise(blueprint, rand);
 		if(blueprint.hasErrors())
 			throw GRAPH_FAILED_EXCEPTION.create();
 		

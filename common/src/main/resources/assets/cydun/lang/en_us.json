@@ -9,7 +9,8 @@
 	// Status effects
 	// Commands
 	// Gui
-	"gui.cydun.dungeon_data": "%s:%s, %s errors (%s c, %s i, %s t)"
+	"gui.cydun.dungeon_data": "%s:%s, %s errors",
+	"gui.cydun.dungeon_data_long": "%s:%s, %s errors (%s c, %s i, %s t)"
 	// Enums
 	// Keybinds
 	// Sounds

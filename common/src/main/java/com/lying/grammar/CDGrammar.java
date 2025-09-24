@@ -1,7 +1,6 @@
 package com.lying.grammar;
 
 import java.util.List;
-import java.util.Random;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -10,6 +9,8 @@ import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.init.CDTerms;
 import com.lying.utility.CDUtils;
+
+import net.minecraft.util.math.random.Random;
 
 public class CDGrammar
 {
@@ -20,7 +21,7 @@ public class CDGrammar
 	/** Generates a relatively linear initial starting graph */
 	public static GrammarPhrase initialGraph(int blanks)
 	{
-		return initialGraph(blanks, new Random());
+		return initialGraph(blanks, Random.create());
 	}
 	
 	/** Generates a relatively linear initial starting graph */
@@ -54,7 +55,7 @@ public class CDGrammar
 	/** Populates the given graph */
 	public static GrammarPhrase generate(GrammarPhrase graph)
 	{
-		return generate(graph, new Random());
+		return generate(graph, Random.create());
 	}
 	
 	/** Populates the given graph */

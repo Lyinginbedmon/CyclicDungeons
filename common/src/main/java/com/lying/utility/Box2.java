@@ -1,5 +1,7 @@
 package com.lying.utility;
 
+import java.util.List;
+
 import org.joml.Vector2i;
 
 public class Box2
@@ -62,5 +64,21 @@ public class Box2
 	public boolean contains(Vector2i vec)
 	{
 		return vec.x > minX && vec.x < maxX && vec.y > minY && vec.y < maxY;
+	}
+	
+	public List<Line2> asEdges()
+	{
+		Vector2i 
+			a = new Vector2i(minX, minY), 
+			b = new Vector2i(maxX, minY), 
+			c = new Vector2i(maxX, maxY), 
+			d = new Vector2i(minX, maxY);
+		
+		return List.of(
+				new Line2(a, b),
+				new Line2(b, c),
+				new Line2(c, d),
+				new Line2(d, a)
+				);
 	}
 }

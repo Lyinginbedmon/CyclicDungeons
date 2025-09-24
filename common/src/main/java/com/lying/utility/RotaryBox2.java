@@ -2,6 +2,8 @@ package com.lying.utility;
 
 import org.joml.Vector2i;
 
+import net.minecraft.util.math.Vec2f;
+
 public class RotaryBox2
 {
 	private Vector2i[] points = new Vector2i[4];
@@ -31,7 +33,7 @@ public class RotaryBox2
 	
 	protected void calculateSimpleBounds()
 	{
-		int mx = Integer.MIN_VALUE, my = Integer.MIN_VALUE, mX = Integer.MAX_VALUE, mY = Integer.MAX_VALUE;
+		int mx = Integer.MAX_VALUE, my = Integer.MAX_VALUE, mX = Integer.MIN_VALUE, mY = Integer.MIN_VALUE;
 		for(Vector2i vec : points)
 		{
 			int x = vec.x();
@@ -79,18 +81,24 @@ public class RotaryBox2
 	
 	public static RotaryBox2 fromLine(Line2 line, int height)
 	{
-		Vector2i p1 = line.getLeft();
-		Vector2i p2 = line.getRight();
+		Vec2f p1 = new Vec2f(line.getLeft().x, line.getLeft().y);
+		Vec2f p2 = new Vec2f(line.getRight().x, line.getRight().y);
 		
-		Vector2i delta = Vector2iUtils.rotate(Vector2iUtils.normalize(Vector2iUtils.subtract(p1, p2)), Math.toRadians(90D));
+		Vec2f delta = p2.add(p1.negate()).normalize();
+		delta = new Vec2f(-delta.y, delta.x);
 		int minH = -height / 2;
 		int maxH = minH + height;
 		
+		Vec2f a = p1.add(delta.multiply(minH));
+		Vec2f b = p2.add(delta.multiply(minH));
+		Vec2f c = p2.add(delta.multiply(maxH));
+		Vec2f d = p1.add(delta.multiply(maxH));
+		
 		return new RotaryBox2(
-				Vector2iUtils.add(p1, Vector2iUtils.mul(delta, minH)),
-				Vector2iUtils.add(p2, Vector2iUtils.mul(delta, minH)),
-				Vector2iUtils.add(p2, Vector2iUtils.mul(delta, maxH)),
-				Vector2iUtils.add(p1, Vector2iUtils.mul(delta, maxH))
+				new Vector2i((int)a.x, (int)a.y),
+				new Vector2i((int)b.x, (int)b.y),
+				new Vector2i((int)c.x, (int)c.y),
+				new Vector2i((int)d.x, (int)d.y)
 				);
 	}
 	
@@ -98,6 +106,14 @@ public class RotaryBox2
 	public Box2 simplify()
 	{
 		return new Box2(minX, maxX, minY, maxY);
+	}
+	
+	public Line2[] edges()
+	{
+		Line2[] set = new Line2[4];
+		for(int i=0; i<4; i++)
+			set[i] = edges[i];
+		return set;
 	}
 	
 	/**
@@ -111,42 +127,39 @@ public class RotaryBox2
 	
 	public boolean contains(Vector2i vec)
 	{
-		// A singular point cannot possibly be within the box if it is outside the simple bounds
-		if(!inBounds(vec))
+		// A singular point cannot possibly be within the box if it is outside the simplified bounds
+		if(vec.x < minX || vec.x > maxX || vec.y < minY || vec.y > maxY)
 			return false;
 		
-		Vector2i[] testSet = new Vector2i[] 
-				{
-					new Vector2i(0, Integer.MAX_VALUE),
-					new Vector2i(0, Integer.MIN_VALUE),
-					new Vector2i(Integer.MAX_VALUE, 0),
-					new Vector2i(Integer.MIN_VALUE)
-				};
-		
 		// Connect point to infinity in each cardinal direction
-		for(Vector2i test : testSet)
+		for(Vector2i test : new Vector2i[] { new Vector2i(0, 1), new Vector2i(1, 0) })
 		{
-			Line2 line = new Line2(vec, test.x() == 0 ? new Vector2i(vec.x(), test.y()) : new Vector2i(test.y(), vec.y()));
-			int tally = 0;
-			for(Line2 edge : edges)
-				if(edge.intersects(line))
-					tally++;
+			// If the number of intersections is odd in any direction, the point must be inside the box
 			
-			// If the number of intersections is odd, the point must be inside the box
-			if(tally%2 > 0)
+			Line2 linePos = new Line2(vec, Vector2iUtils.add(vec, Vector2iUtils.mul(test, Integer.MAX_VALUE)));
+			if(intersections(linePos)%2 > 0)
+				return true;
+			
+			Line2 lineNeg = new Line2(vec, Vector2iUtils.add(vec, Vector2iUtils.mul(test, Integer.MIN_VALUE)));
+			if(intersections(lineNeg)%2 > 0)
 				return true;
 		}
 		
 		return false;
 	}
 	
-	public boolean intersects(Line2 line)
+	public int intersections(Line2 line)
 	{
+		int tally = 0;
 		for(Line2 edge : edges)
 			if(edge.intersects(line))
-				return true;
-		
-		return false;
+				tally++;
+		return tally;
+	}
+	
+	public boolean intersects(Line2 line)
+	{
+		return intersections(line) > 0;
 	}
 	
 	public boolean intersects(Box2 box)

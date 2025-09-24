@@ -137,7 +137,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			Vector2i scale = node.metadata().size();
 			
 			BlockPos min = pos.add(-scale.x / 2, 0, -scale.y / 2);
-			BlockPos max = min.add(scale.x, 0, scale.y);
+			BlockPos max = min.add(scale.x, 1, scale.y);
 			node.metadata().type().generate(min, max, world, node, this);
 		});
 		
@@ -167,6 +167,11 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			n.getChildren(chart).stream().map(BlueprintRoom::position).map(c -> new BlueprintPassage(point, c)).forEach(paths::add);
 		}
 		return paths;
+	}
+	
+	public static List<BlueprintPassage> getPassagesOf(BlueprintRoom room, Collection<BlueprintRoom> chart)
+	{
+		return getPassages(chart).stream().filter(p -> p.isTerminus(room)).toList();
 	}
 	
 	public static enum ErrorType

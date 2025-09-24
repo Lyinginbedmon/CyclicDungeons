@@ -1,34 +1,38 @@
 package com.lying.grammar;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Random;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.blueprint.Blueprint;
+import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDTerms;
+import com.lying.init.CDTiles;
 import com.lying.utility.CDUtils;
+import com.lying.worldgen.Tile;
+import com.lying.worldgen.TileSet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 
 public abstract class GrammarTerm
 {
@@ -100,62 +104,57 @@ public abstract class GrammarTerm
 	
 	public boolean generate(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart)
 	{
-		// Build exterior walls
-		final BlockState wall = Blocks.DEEPSLATE_BRICKS.getDefaultState();
-		BlockPos.Mutable.iterate(min, max).forEach(p -> 
-		{
-			if((p.getX() == min.getX() || p.getX() == max.getX()) || (p.getZ() == min.getZ() || p.getZ() == max.getZ()))
-			{
-				Blueprint.tryPlaceAt(wall, p, world);
-				for(int i=2; i>0; i--)
-					Blueprint.tryPlaceAt(wall, p.up(i), world);
-			}
-		});
+		CyclicDungeons.LOGGER.info(" # Generating {} room # ", this.registryName().getPath());
 		
-		// Lay flooring
-		BlockPos.Mutable.iterate(min, max).forEach(p -> 
+		TileSet map = TileSet.enclosing(min, max);
+		List<BlockPos> boundaries = map.getBoundaries(Direction.Type.HORIZONTAL.stream().toList());
+		List<BlueprintPassage> passages = Blueprint.getPassagesOf(node, chart).stream().map(p -> new BlueprintPassage(p.asLine(), 1)).toList();
+		boundaries.stream()
+			.filter(p -> passages.stream()
+				.anyMatch(r -> r.asBox().contains(new Vector2i(p.getX(), p.getZ()))))
+					.forEach(p -> map.put(p, CDTiles.PASSAGE.get()));
+		
+		for(Tile t : List.of(CDTiles.WALL.get(), CDTiles.FLOOR.get()))
+			map.applyToAllValid(t);
+		
+		List<BlockPos> slots = map.getBlanks();
+		while(!slots.isEmpty())
 		{
-			if(p.getX() == min.getX() || p.getX() == max.getX())
-				return;
-			else if(p.getZ() == min.getZ() || p.getZ() == max.getZ())
-				return;
+			/**
+			 * Sort open slots by number of available options
+			 * Pop slot with fewest
+			 * Assign random option to slot
+			 * Repeat until slots are depleted
+			 */
+			slots.sort((a,b) -> 
+			{
+				int eA = map.getOptionsFor(a).size();
+				int eB = map.getOptionsFor(b).size();
+				return eA < eB ? -1 : eA > eB ? 1 : 0;
+			});
 			
-			DyeColor color = node.metadata().type().color();
-			Blueprint.tryPlaceAt(CDUtils.dyeToConcretePowder(color).getDefaultState(), p, world);
-		});
-		
-		// Draw connecting paths
-		List<BlueprintRoom> pathsTo = Lists.newArrayList();
-		pathsTo.addAll(node.getChildren(chart));
-		pathsTo.addAll(node.getParents(chart));
-		final BlockPos start = min.add(node.metadata().size().x() / 2, 0, node.metadata().size().y() / 2);
-		final BlockPos offset = start.subtract(new BlockPos(node.position().x(), 0, node.position().y()));
-		pathsTo.stream().map(BlueprintRoom::position).forEach(end -> 
-		{
-			BlockPos pos2 = offset.add(end.x(), 0, end.y());
-			BlockPos current = start;
-			while(current.getSquaredDistance(pos2) > 0 && Box.enclosing(min, max).contains(current.toCenterPos()))
-			{
-				double minDist = Double.MAX_VALUE;
-				Direction face = Direction.NORTH;
-				for(Direction facing : Direction.Type.HORIZONTAL)
-				{
-					double dist = current.offset(facing).getSquaredDistance(pos2);
-					if(minDist > dist)
-					{
-						face = facing;
-						minDist = dist;
-					}
-				}
-				
-				Blueprint.tryPlaceAt(Blocks.SMOOTH_STONE.getDefaultState(), current, world);
-				for(int i=2; i>0; i--)
-					Blueprint.tryPlaceAt(Blocks.AIR.getDefaultState(), current.up(i), world);
-				current = current.offset(face);
-			}
-		});
+			BlockPos slot = slots.removeFirst();
+			List<Tile> options = map.getOptionsFor(slot);
+			if(options.size() == 1)
+				map.put(slot, options.get(0));
+			else
+				map.put(slot, selectTile(options, world.getRandom()));
+		}
+		map.generate(world);
 		
 		return true;
+	}
+	
+	public Tile selectTile(List<Tile> options, Random rand)
+	{
+		final Map<Identifier, Integer> weights = Map.of(
+				CDTiles.LIGHT.get().registryName(), 1,
+				CDTiles.AIR.get().registryName(), 100
+				);
+		List<Pair<Tile,Float>> weightedList = Lists.newArrayList();
+		options.forEach(tile -> weightedList.add(Pair.of(tile, (float)weights.get(tile.registryName()))));
+		
+		return CDUtils.selectFromWeightedList(weightedList, rand.nextFloat());
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)

@@ -49,7 +49,10 @@ public class Vector2iUtils
 	
 	public static Vector2i rotate(Vector2i a, double radians)
 	{
-		double cos = Math.cos(radians), sin = Math.sin(radians);
+		if(radians == Math.toRadians(90D))
+			return new Vector2i(-a.y(), a.x());
+		
+		final double cos = Math.cos(radians), sin = Math.sin(radians);
 		return new Vector2i(
 				(int)(a.x() * cos - a.y() * sin),
 				(int)(a.x() * sin + a.y() * cos)

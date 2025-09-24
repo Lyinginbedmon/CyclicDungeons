@@ -41,6 +41,11 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 		return isVertical == line.isVertical && m == line.m && b == line.b && xRange.equals(line.xRange) && yRange.equals(line.yRange);
 	}
 	
+	public Vector2i atX(int x)
+	{
+		return new Vector2i(x, (int)((m * x) + b));
+	}
+	
 	public boolean linksTo(Line2 line)
 	{
 		return getLeft().equals(line.getRight()) || getRight().equals(line.getRight()) || getLeft().equals(line.getLeft()) || getRight().equals(line.getLeft());
@@ -105,9 +110,8 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 			Line2 vert = isVertical ? this : line2;
 			Line2 hori = isVertical ? line2 : this;
 			
-			// Horizontal line's position at the X coordinate of the vertical line
-			float x = vert.m;
-			intercept = new Vector2i((int)x, (int)((hori.m * x) + hori.b));
+			// Non-vertical line's position at the X coordinate of the vertical line
+			intercept = hori.atX((int)vert.m);
 		}
 		else
 		{

@@ -3,7 +3,6 @@ package com.lying.blueprint;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -13,6 +12,8 @@ import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.utility.CDUtils;
 import com.lying.utility.Vector2iUtils;
+
+import net.minecraft.util.math.random.Random;
 
 /** Utilities for organising a blueprint, prior to scrunching */
 public abstract class BlueprintOrganiser
@@ -69,7 +70,7 @@ public abstract class BlueprintOrganiser
 				 *  Number of slots = circumference / (grid size * 2)
 				 *  eg. assuming grid size = 30: 3, 6, 9, 12, 15, 18, etc.
 				 */
-				int pop = (int)(circ / (GRID_SIZE * 2));
+				int pop = Math.max((int)(circ / (GRID_SIZE * 2)), set.size());
 				double rot = Math.toRadians(180D / pop);
 				double cos = Math.cos(rot), sin = Math.sin(rot);
 				
@@ -87,6 +88,9 @@ public abstract class BlueprintOrganiser
 				// Place all rooms in positions closest to their parents at their radius
 				for(BlueprintRoom room : set)
 				{
+					if(positions.isEmpty())
+						break;
+					
 					Vector2i parent = room.getParentPosition(chart);
 					positions.sort((a,b) -> 
 					{
@@ -255,7 +259,6 @@ public abstract class BlueprintOrganiser
 				Vector2i neighbour = offset.get(position, gridMap, gridSize);
 				if(!gridMap.containsKey(neighbour))
 				{
-					// FIXME Improve placement validity for descendants check
 					// Ensure the position has at least as many moves itself as the node has children
 					if(minExits > 0 && getAvailableOptions(neighbour, -1, moveSet, gridSize, gridMap).size() <= minExits)
 						continue;

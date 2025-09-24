@@ -52,6 +52,7 @@ public class CDUtils
 		for(Pair<T,Float> entry : weightList)
 			percentileMap.put(entry.getLeft(), entry.getRight() / totalWeight);
 		
+		// FIXME Refine selection process
 		// Step 3 - Select the last entry in the list whose position in the set does not exceed the selector value
 		float cumulative = 0F;
 		List<Entry<T,Float>> entryList = Lists.newArrayList(percentileMap.entrySet());
