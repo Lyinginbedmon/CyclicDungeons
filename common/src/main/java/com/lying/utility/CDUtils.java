@@ -3,15 +3,16 @@ package com.lying.utility;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.math.Vec2f;
 
 public class CDUtils
 {
@@ -40,31 +41,47 @@ public class CDUtils
 	public static Block dyeToConcretePowder(DyeColor color) { return DYE_TO_CONCRETE.get(color).getLeft(); }
 	public static Block dyeToConcrete(DyeColor color) { return DYE_TO_CONCRETE.get(color).getRight(); }
 	
-	public static <T extends Object> T selectFromWeightedList(List<Pair<T,Float>> weightList, final float selector)
+	@Nullable
+	public static <T extends Object> T selectFromWeightedList(List<Pair<T,Float>> weightedList, final float selector)
 	{
+		if(weightedList.isEmpty())
+			return null;
+		else if(weightedList.size() == 1)
+			return weightedList.get(0).getLeft();
+		
 		// Step 1 - Calculate the sum of all weights
 		float totalWeight = 0F;
-		for(Pair<T,Float> entry : weightList)
-			totalWeight += entry.getRight();
+		for(float weight : weightedList.stream().map(Pair::getRight).map(Math::abs).filter(w -> w>0).toList())
+			totalWeight += weight;
 		
 		// Step 2 - Use that sum to calculate the percentile of each choice within the set
-		Map<T, Float> percentileMap = new HashMap<>();
-		for(Pair<T,Float> entry : weightList)
-			percentileMap.put(entry.getLeft(), entry.getRight() / totalWeight);
+		List<Pair<T,Float>> percentileList = Lists.newArrayList();
+		for(Pair<T,Float> entry : weightedList)
+			percentileList.add(Pair.of(entry.getLeft(), entry.getRight() / totalWeight));
+		percentileList.sort((a,b) -> a.getRight() < b.getRight() ? -1 : a.getRight() > b.getRight() ? 1 : 0);
 		
-		// FIXME Refine selection process
-		// Step 3 - Select the last entry in the list whose position in the set does not exceed the selector value
-		float cumulative = 0F;
-		List<Entry<T,Float>> entryList = Lists.newArrayList(percentileMap.entrySet());
-		T result = entryList.get(0).getKey();
-		for(Entry<T, Float> entry : entryList)
+		// Step 3 - Select the first entry in the list whose weight val exceeds the selector value
+		float lowerBound = 0F;
+		for(int i=0; i<percentileList.size(); i++)
 		{
-			cumulative += entry.getValue();
-			if(cumulative > selector)
-				break;
-			
-			result = entry.getKey();
+			Pair<T,Float> entry = percentileList.get(i);
+			float upperBound = lowerBound + entry.getRight();
+			if(selector >= lowerBound && selector <= upperBound)
+				return entry.getLeft();
+			lowerBound = upperBound;
 		}
-		return result;
+		return percentileList.getLast().getLeft();
+	}
+	
+	public static Vec2f rotate(Vec2f a, float radians)
+	{
+		if(radians == Math.toRadians(90D))
+			return new Vec2f(-a.y, a.x);
+		
+		final double cos = Math.cos(radians), sin = Math.sin(radians);
+		return new Vec2f(
+				(float)(a.x * cos - a.y * sin),
+				(float)(a.x * sin + a.y * cos)
+				);
 	}
 }

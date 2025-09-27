@@ -16,7 +16,7 @@ import com.lying.blueprint.BlueprintScruncher;
 import com.lying.grammar.RoomMetadata;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
-import com.lying.utility.Line2;
+import com.lying.utility.Line2f;
 import com.lying.utility.Vector2iUtils;
 
 import net.minecraft.client.MinecraftClient;
@@ -241,8 +241,8 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 								DARK_GRAY) :
 						DARK_GRAY;
 				
-				BlueprintPassage path = new BlueprintPassage(p.asLine().scale(renderScale).offset(origin), BlueprintPassage.PASSAGE_WIDTH * renderScale); 
-				renderPath(path, context, linkColour, path.asBox().contains(new Vector2i(mouseX, mouseY)));
+				BlueprintPassage path = new BlueprintPassage(p.asLine().scale(renderScale).offset(new Vec2f(origin.x, origin.y)), BlueprintPassage.PASSAGE_WIDTH * renderScale); 
+				renderPath(path, context, linkColour, path.asBox().contains(new Vec2f(mouseX, mouseY)));
 			});
 		}
 		
@@ -251,13 +251,12 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			if(chart.getGoldenPath().isEmpty() || chart.hasErrors())
 				return;
 			
-			List<Line2> links = Blueprint.getPassages(chart).stream().map(BlueprintPassage::asLine).toList();
+			List<Line2f> links = Blueprint.getPassages(chart).stream().map(BlueprintPassage::asLine).toList();
 			links.stream()
-				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.position().equals(p.getLeft())))
-				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.position().equals(p.getRight())))
+				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.isAt(p.getLeft()) || n.isAt(p.getRight())))
 				.forEach(path -> 
 				{
-					Line2 link = path.scale(renderScale).offset(origin);
+					Line2f link = path.scale(renderScale).offset(new Vec2f(origin.x, origin.y));
 					renderLink(link.getLeft(), link.getRight(), context, GOLD);
 				});
 		}
@@ -265,7 +264,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		public static void renderNodeBounds(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context)
 		{
 			RoomMetadata metadata = node.metadata();
-			Vector2i pos = Vector2iUtils.add(Vector2iUtils.mul(node.position(), renderScale), origin);
+			Vector2i pos = Vector2iUtils.add(origin, Vector2iUtils.mul(node.position(), renderScale));
 			int iconColour = ColorHelper.withAlpha(255, metadata.type().colour());
 			
 			Vector2i size = metadata.size();
@@ -275,7 +274,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		public static void renderNode(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY)
 		{
 			RoomMetadata metadata = node.metadata();
-			Vector2i pos = Vector2iUtils.add(Vector2iUtils.mul(node.position(), renderScale), origin);
+			Vector2i pos = Vector2iUtils.add(origin, Vector2iUtils.mul(node.position(), renderScale));
 			int iconColour = ColorHelper.withAlpha(255, metadata.type().colour());
 			
 			context.drawTexture(RenderLayer::getGuiTextured, DungeonScreen.ICON_TEX, pos.x - 8, pos.y - 8, 0F, 0F, 16, 16, 16, 16, iconColour);
@@ -287,7 +286,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			}
 		}
 		
-		private static void renderLink(Vector2i start, Vector2i end, DrawContext context, int colour)
+		private static void renderLink(Vec2f start, Vec2f end, DrawContext context, int colour)
 		{
 			renderStraightLine(start, end, 1, context, colour);
 		}
@@ -297,11 +296,11 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			renderStraightLine(path.asLine().getLeft(), path.asLine().getRight(), 1, context, colour);
 			
 			if(showBounds)
-				for(Line2 edge : path.asBox().edges())
+				for(Line2f edge : path.asBox().edges())
 					renderStraightLine(edge.getLeft(), edge.getRight(), 1, context, DARK_GRAY);
 		}
 		
-		private static void renderStraightLine(Vector2i start, Vector2i end, int thickness, DrawContext context, int rgb)
+		private static void renderStraightLine(Vec2f start, Vec2f end, int thickness, DrawContext context, int rgb)
 		{
 			Vec2f st = new Vec2f(start.x, start.y);
 			Vec2f en = new Vec2f(end.x, end.y);

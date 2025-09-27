@@ -9,8 +9,10 @@ import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
-import com.lying.utility.Box2;
+import com.lying.utility.Box2f;
 import com.lying.utility.Vector2iUtils;
+
+import net.minecraft.util.math.Vec2f;
 
 public class BlueprintRoom
 {
@@ -61,6 +63,21 @@ public class BlueprintRoom
 	{
 		position = position.add(x, y);
 		return this;
+	}
+	
+	public boolean isAt(int x, int y)
+	{
+		return position.x == x && position.y == y;
+	}
+	
+	public boolean isAt(Vector2i vec)
+	{
+		return isAt(vec.x, vec.y);
+	}
+	
+	public boolean isAt(Vec2f vec)
+	{
+		return isAt((int)vec.x, (int)vec.y);
 	}
 	
 	public boolean hasParents() { return !parentLinks.isEmpty(); }
@@ -121,24 +138,24 @@ public class BlueprintRoom
 		return set;
 	}
 	
-	public Box2 bounds()
+	public Box2f bounds()
 	{
 		return bounds(position);
 	}
 	
-	public Box2 bounds(Vector2i position)
+	public Box2f bounds(Vector2i position)
 	{
 		// TODO Ensure position is central in odd-sized bounds
 		int sizeX = metadata.size().x;
 		int sizeY = metadata.size().y;
 		int minX = position.x - (sizeX / 2);
 		int minY = position.y - (sizeY / 2);
-		return new Box2(minX, minX + sizeX, minY, minY + sizeY);
+		return new Box2f(minX, minX + sizeX, minY, minY + sizeY);
 	}
 	
-	public boolean intersects(Box2 boundsB)
+	public boolean intersects(Box2f boundsB)
 	{
-		Box2 bounds = bounds();
+		Box2f bounds = bounds();
 		return bounds.intersects(boundsB) || boundsB.intersects(bounds);
 	}
 }

@@ -6,25 +6,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
+import com.lying.grammar.GrammarTerm;
+import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDTerms;
-import com.lying.utility.Box2;
+import com.lying.reference.Reference;
+import com.lying.utility.Box2f;
+import com.lying.worldgen.Tile;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec2f;
 
 @SuppressWarnings("serial")
 public class Blueprint extends ArrayList<BlueprintRoom>
 {
+	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_worldgen");
+	private static final int ROOM_HEIGHT = Tile.TILE_SIZE * 4;
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
 	private List<BlueprintRoom> goldenPath = Lists.newArrayList();
@@ -105,9 +116,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		switch(type)
 		{
 			case COLLISION:
-				List<Box2> bounds = chart.stream().map(BlueprintRoom::bounds).toList();
-				for(Box2 boundA : bounds)
-					if(bounds.stream().filter(b -> !b.equals(boundA)).anyMatch(b -> boundA.intersects(b)))
+				List<Box2f> bounds = chart.stream().map(BlueprintRoom::bounds).toList();
+				for(Box2f boundA : bounds)	// FIXME Increase proximity limit so rooms are always separated by walls
+					if(bounds.stream().filter(b -> !b.equals(boundA)).anyMatch(b -> boundA.intersects(b.grow(1))))
 						++tally;
 				return tally;
 			case TUNNEL:
@@ -130,24 +141,88 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		if(isEmpty() || hasErrors())
 			return false;
 		
-		forEach(node -> 
+		long timeMillis = System.currentTimeMillis();
+		LOGGER.info(" # Beginning blueprint generation");
+		
+		buildExteriorShell(position, world);
+		
+		buildRooms(position, world);
+		
+//		buildExteriorPaths(position, world);
+		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);
+		return true;
+	}
+	
+	public void buildExteriorShell(BlockPos position, ServerWorld world)
+	{
+		long timeMillis = System.currentTimeMillis();
+		LOGGER.info(" # Generating exterior shell");
+		
+		// Collect all bounding boxes as tile sets
+		List<Box2f> bounds = stream().map(BlueprintRoom::bounds).toList();
+		List<BlockPos> interior = Lists.newArrayList();
+		bounds.stream().forEach(b -> 
+		{
+			BlockPos start = position.add((int)b.minX(), 0, (int)b.minY());
+			BlockPos end = position.add((int)b.maxX(), ROOM_HEIGHT, (int)b.maxY());
+			BlockPos.Mutable.iterate(start, end.add(-1, -1, -1)).forEach(p -> interior.add(p.toImmutable()));
+		});
+		
+		// Expand the bounding boxes 1 block in all directions and collect the new positions
+		// Exclude any positions that are in the interior set
+		final Predicate<BlockPos> isExterior = p -> !interior.contains(p);
+		List<BlockPos> points = Lists.newArrayList();
+		bounds.forEach(b -> 
+		{
+			BlockPos start = position.add((int)b.minX() - 1, -1, (int)b.minY() - 1);
+			BlockPos end = position.add((int)b.maxX(), ROOM_HEIGHT, (int)b.maxY());
+			BlockPos.Mutable.iterate(start, end).forEach(p -> 
+			{
+				if(isExterior.test(p))
+					points.add(p.toImmutable());
+			});
+		});
+		
+		// Generate wall tile at all remaining positions
+		final BlockState[] states = new BlockState[] 
+				{
+					Blocks.DEEPSLATE_BRICKS.getDefaultState(),
+					Blocks.CRACKED_DEEPSLATE_BRICKS.getDefaultState(),
+					Blocks.DEEPSLATE_TILES.getDefaultState(),
+					Blocks.CRACKED_DEEPSLATE_TILES.getDefaultState()
+				};
+		points.forEach(p -> Tile.tryPlace(states[world.random.nextInt(states.length)], p, world));
+		
+		LOGGER.info(" ## Exterior shell completed in {}ms", System.currentTimeMillis() - timeMillis);
+	}
+	
+	public void buildRooms(BlockPos position, ServerWorld world)
+	{
+		final List<BlueprintPassage> passages = getPassages(this);
+		int tally = 0;
+		for(BlueprintRoom node : this)
 		{
 			Vector2i nodePos = node.position();
 			BlockPos pos = position.add(nodePos.x, 0, nodePos.y);
 			Vector2i scale = node.metadata().size();
 			
 			BlockPos min = pos.add(-scale.x / 2, 0, -scale.y / 2);
-			BlockPos max = min.add(scale.x, 1, scale.y);
-			node.metadata().type().generate(min, max, world, node, this);
-		});
-		
-		buildExteriorPaths(position, world);
-		return true;
+			BlockPos max = min.add(scale.x, ROOM_HEIGHT, scale.y);
+			
+			RoomMetadata meta = node.metadata();
+			GrammarTerm type = meta.type();
+			LOGGER.info(" # Room {}: {}x{} {}", tally++, meta.size().x(), meta.size().y(), type.registryName().getPath());
+			type.generate(min, max, world, node, this, passages);
+		};
 	}
 	
 	public void buildExteriorPaths(BlockPos position, ServerWorld world)
 	{
-		getPassages(this).forEach(p -> p.build(position, world));
+		long timeMillis = System.currentTimeMillis();
+		LOGGER.info(" # Generating exterior passages");
+		List<Box2f> bounds = stream().map(BlueprintRoom::bounds).toList();
+		getPassages(this).forEach(p -> p.build(position, world, bounds));
+		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
 	public static void tryPlaceAt(BlockState state, BlockPos pos, ServerWorld world)
@@ -163,8 +238,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		List<BlueprintPassage> paths = Lists.newArrayList();
 		for(BlueprintRoom n : chart)
 		{
-			final Vector2i point = n.position();
-			n.getChildren(chart).stream().map(BlueprintRoom::position).map(c -> new BlueprintPassage(point, c)).forEach(paths::add);
+			final Vec2f point = new Vec2f(n.position().x, n.position().y);
+			n.getChildren(chart).stream().map(BlueprintRoom::position).map(v -> new Vec2f(v.x, v.y)).map(c -> new BlueprintPassage(point, c)).forEach(paths::add);
 		}
 		return paths;
 	}

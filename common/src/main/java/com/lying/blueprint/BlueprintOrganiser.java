@@ -7,9 +7,11 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Vector2i;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
-import com.lying.CyclicDungeons;
+import com.lying.reference.Reference;
 import com.lying.utility.CDUtils;
 import com.lying.utility.Vector2iUtils;
 
@@ -18,10 +20,13 @@ import net.minecraft.util.math.random.Random;
 /** Utilities for organising a blueprint, prior to scrunching */
 public abstract class BlueprintOrganiser
 {
+	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_planar");
 	private static final int GRID_SIZE = 30;
 	
 	public final void organise(Blueprint chart, Random rand)
 	{
+		LOGGER.info(" # Applying organiser to {}:{} planar graph", chart.size(), chart.maxDepth());
+		
 		// Clears all preceding structural information
 		chart.forEach(n -> n.setPosition(0, 0));
 		
@@ -137,7 +142,7 @@ public abstract class BlueprintOrganiser
 				organiseByGrid(chart, step, gridMap, this::moveSet, GRID_SIZE, rand);
 			
 			if(gridMap.size() != chart.size())
-				CyclicDungeons.LOGGER.warn("Grid layout size ({}) differs from input blueprint size ({})", gridMap.size(), chart.size());
+				LOGGER.warn("Grid layout size ({}) differs from input blueprint size ({})", gridMap.size(), chart.size());
 		}
 		
 		private static void organiseByGrid(Blueprint chart, int depth, Map<Vector2i,BlueprintRoom> gridMap, Function<Vector2i,GridPosition[]> moveSet, int gridSize, Random rand)

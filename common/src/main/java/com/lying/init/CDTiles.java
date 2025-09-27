@@ -10,9 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileSet;
@@ -29,22 +27,20 @@ public class CDTiles
 	private static final Map<Identifier, Supplier<Tile>> TERMS = new HashMap<>();
 	private static int tally = 0;
 	
-	public static final Supplier<Tile> BLANK	= register("blank", Tile.of((a,b)->false, (a,b) -> {}));
+	public static final Supplier<Tile> BLANK	= register("blank", Tile.of(never(), noOp()));
 	
-	public static final Supplier<Tile> AIR		= register("air", Tile.of((a,b)->true, (a,b) -> {}));
-	public static final Supplier<Tile> WALL		= register("wall", Tile.of(boundary(List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)), ofBlocks(
-			Blocks.DEEPSLATE_BRICKS.getDefaultState(),
-			Blocks.CRACKED_DEEPSLATE_BRICKS.getDefaultState(),
-			Blocks.DEEPSLATE_TILES.getDefaultState(),
-			Blocks.CRACKED_DEEPSLATE_TILES.getDefaultState())));
+	public static final Supplier<Tile> AIR		= register("air", Tile.of(always(), ofBlocks(Blocks.AIR.getDefaultState())));
 	public static final Supplier<Tile> PASSAGE	= register("passage", Tile.of(boundary(Direction.Type.HORIZONTAL), ofBlocks(Blocks.IRON_BARS.getDefaultState())));
-	public static final Supplier<Tile> FLOOR	= register("floor", Tile.of(boundary(List.of(Direction.DOWN)), ofBlocks(Blocks.SMOOTH_STONE.getDefaultState())));
-	public static final Supplier<Tile> LIGHT	= register("lamp", Tile.of(adjacent(List.of(Direction.DOWN), List.of(CDTiles.FLOOR.get())), ofBlocks(Blocks.LANTERN.getDefaultState())));
 	
-	protected static BiConsumer<BlockPos,ServerWorld> ofBlocks(BlockState... states)
-	{
-		return (a,b) -> b.setBlockState(a, states[b.random.nextInt(states.length)]);
-	}
+	public static final Supplier<Tile> FLOOR	= register("floor", Tile.of(boundary(List.of(Direction.DOWN)), ofBlocks(Blocks.SMOOTH_STONE.getDefaultState())));
+	public static final Supplier<Tile> LIGHT	= register("lamp", Tile.of(onFloor(), ofBlocks(Blocks.LANTERN.getDefaultState())));
+	public static final Supplier<Tile> TABLE	= register("table", Tile.of(onFloor(), ofBlocks(Blocks.OAK_STAIRS.getDefaultState())));
+	public static final Supplier<Tile> SEAT		= register("seat", Tile.of(onFloor(), ofBlocks(Blocks.OAK_SLAB.getDefaultState())));
+	
+	protected static BiPredicate<BlockPos,TileSet> always() { return (a,b) -> true; }
+	protected static BiPredicate<BlockPos,TileSet> never() { return (a,b) -> false; }
+	
+	protected static BiPredicate<BlockPos,TileSet> nonBoundary() { return (a,b) -> Direction.stream().noneMatch(d -> b.isBoundary(a, d)); }
 	
 	protected static BiPredicate<BlockPos,TileSet> boundary(Direction.Type faces)
 	{
@@ -56,17 +52,23 @@ public class CDTiles
 		return (a,b)-> faces.stream().anyMatch(d -> b.isBoundary(a, d));
 	}
 	
-	protected static BiPredicate<BlockPos,TileSet> adjacent(List<Direction> faces, List<Tile> tiles)
+	protected static BiPredicate<BlockPos,TileSet> adjacent(List<Direction> faces, List<Supplier<Tile>> tiles)
 	{
-		return (a,b) -> faces.stream().anyMatch(d -> tiles.stream().anyMatch(t -> b.get(a.offset(d)).equals(t)));
+		return (a,b) -> faces.stream().anyMatch(d -> b.contains(a.offset(d)) && tiles.stream().map(Supplier::get).anyMatch(t -> b.get(a.offset(d)).equals(t)));
 	}
 	
-	protected static BiPredicate<BlockPos,TileSet> adjacent(Stream<Direction> faces, Tile... tiles)
+	protected static BiPredicate<BlockPos,TileSet> onFloor()
 	{
-		List<Tile> tileSet = Lists.newArrayList();
-		for(Tile t : tiles)
-			tileSet.add(t);
-		return (a,b) -> faces.anyMatch(d -> tileSet.stream().anyMatch(t -> b.get(a.offset(d)).equals(t)));
+		return adjacent(List.of(Direction.DOWN), List.of(CDTiles.FLOOR));
+	}
+	
+	protected static BiConsumer<BlockPos,ServerWorld> noOp() { return (a,b) -> {}; }
+	
+	protected static BiConsumer<BlockPos,ServerWorld> ofBlocks(BlockState... states)
+	{
+		final int sc = Tile.TILE_SIZE - 1;
+		return (a,b) -> 
+			BlockPos.Mutable.iterate(a, a.add(sc, sc, sc)).forEach(p -> Tile.tryPlace(states[b.random.nextInt(states.length)], p, b));
 	}
 	
 	private static Supplier<Tile> register(String name, Function<Identifier,Tile> funcIn)

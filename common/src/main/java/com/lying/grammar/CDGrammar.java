@@ -4,17 +4,18 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
-import com.lying.CyclicDungeons;
 import com.lying.init.CDTerms;
+import com.lying.reference.Reference;
 import com.lying.utility.CDUtils;
 
 import net.minecraft.util.math.random.Random;
 
 public class CDGrammar
 {
-	private static final Logger LOGGER = CyclicDungeons.LOGGER;
+	private static final Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_grammar");
 	
 	public static final List<GrammarTerm> PLACEABLE = CDTerms.placeables();
 	
@@ -64,6 +65,7 @@ public class CDGrammar
 		int iterationCap = 5;
 		while(!graph.isEmpty() && graph.hasBlanks() && --iterationCap > 0)
 			recursiveGenerate(graph.get(0).get(), graph, rand);
+		LOGGER.info(" # Generated {}:{} graph", graph.size(), graph.depth());
 		return graph;
 	}
 	

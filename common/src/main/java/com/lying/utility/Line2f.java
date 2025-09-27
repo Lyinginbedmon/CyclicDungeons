@@ -1,23 +1,23 @@
 package com.lying.utility;
 
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector2i;
 
 import net.minecraft.util.Pair;
+import net.minecraft.util.math.Vec2f;
 
-public class Line2 extends Pair<Vector2i, Vector2i>
+public class Line2f extends Pair<Vec2f, Vec2f>
 {
 	// Components of the slope intercept equation of this line
 	// y = mx + b OR x = a
 	private final float m, b;
-	private final Pair<Integer, Integer> xRange, yRange;
+	private final Pair<Float, Float> xRange, yRange;
 	private final boolean isVertical;
 	
-	public Line2(Vector2i posA, Vector2i posB)
+	public Line2f(Vec2f posA, Vec2f posB)
 	{
 		super(posA, posB);
-		xRange = new Pair<Integer, Integer>(Math.min(posA.x, posB.x), Math.max(posA.x, posB.x));
-		yRange = new Pair<Integer, Integer>(Math.min(posA.y, posB.y), Math.max(posA.y, posB.y));
+		xRange = new Pair<Float, Float>(Math.min(posA.x, posB.x), Math.max(posA.x, posB.x));
+		yRange = new Pair<Float, Float>(Math.min(posA.y, posB.y), Math.max(posA.y, posB.y));
 		
 		float run = getRight().x - getLeft().x;
 		float rise = getRight().y - getLeft().y;
@@ -36,39 +36,39 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 	}
 	
 	/** Returns true if these two lines have identical complex properties */
-	public boolean equals(Line2 line)
+	public boolean equals(Line2f line)
 	{
 		return isVertical == line.isVertical && m == line.m && b == line.b && xRange.equals(line.xRange) && yRange.equals(line.yRange);
 	}
 	
-	public Vector2i atX(int x)
+	public Vec2f atX(float x)
 	{
-		return new Vector2i(x, (int)((m * x) + b));
+		return new Vec2f(x, ((m * x) + b));
 	}
 	
-	public boolean linksTo(Line2 line)
+	public boolean linksTo(Line2f line)
 	{
 		return getLeft().equals(line.getRight()) || getRight().equals(line.getRight()) || getLeft().equals(line.getLeft()) || getRight().equals(line.getLeft());
 	}
 	
 	/** Returns true if this is the same line, without checking complex properties */
-	public boolean simpleEquals(Line2 line)
+	public boolean simpleEquals(Line2f line)
 	{
 		return (getLeft().equals(line.getLeft()) && getRight().equals(line.getRight())) || (getLeft().equals(line.getRight()) && getRight().equals(getLeft()));
 	}
 	
-	public Line2 offset(Vector2i offset)
+	public Line2f offset(Vec2f offset)
 	{
-		return new Line2(Vector2iUtils.add(getLeft(), offset), Vector2iUtils.add(getRight(), offset));
+		return new Line2f(getLeft().add(offset), getRight().add(offset));
 	}
 	
-	public Line2 scale(int scalar)
+	public Line2f scale(float scalar)
 	{
-		return new Line2(Vector2iUtils.mul(getLeft(), scalar), Vector2iUtils.mul(getRight(), scalar));
+		return new Line2f(getLeft().multiply(scalar), getRight().multiply(scalar));
 	}
 	
 	/** Returns true if the given lines are parallel */
-	public static boolean areParallel(Line2 a, Line2 b)
+	public static boolean areParallel(Line2f a, Line2f b)
 	{
 		if(a.isVertical && b.isVertical)
 			return true;
@@ -77,24 +77,24 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 		return false;
 	}
 	
-	public Box2 bounds()
+	public Box2f bounds()
 	{
-		return new Box2(xRange.getLeft(), yRange.getLeft(), xRange.getRight(), yRange.getRight());
+		return new Box2f(xRange.getLeft(), yRange.getLeft(), xRange.getRight(), yRange.getRight());
 	}
 	
-	public boolean intersects(Line2 line2)
+	public boolean intersects(Line2f line2)
 	{
 		return intercept(line2) != null;
 	}
 	
 	/** Returns the point that this line intersects with the given line, if at all */
 	@Nullable
-	public Vector2i intercept(Line2 line2) { return intercept(line2, false); }
+	public Vec2f intercept(Line2f line2) { return intercept(line2, false); }
 	
 	@Nullable
-	public Vector2i intercept(Line2 line2, boolean ignoreRange)
+	public Vec2f intercept(Line2f line2, boolean ignoreRange)
 	{
-		Vector2i intercept = null;
+		Vec2f intercept = null;
 		if(isVertical && line2.isVertical)
 		{
 			// Two vertical lines = Parallel: No intercept
@@ -107,11 +107,11 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 			// X of vertical line determines y = mx + B of non-vertical line
 			// Intercept if within range of both
 			
-			Line2 vert = isVertical ? this : line2;
-			Line2 hori = isVertical ? line2 : this;
+			Line2f vert = isVertical ? this : line2;
+			Line2f hori = isVertical ? line2 : this;
 			
 			// Non-vertical line's position at the X coordinate of the vertical line
-			intercept = hori.atX((int)vert.m);
+			intercept = hori.atX(vert.m);
 		}
 		else
 		{
@@ -127,14 +127,14 @@ public class Line2 extends Pair<Vector2i, Vector2i>
 			float y = (a * x) + c;
 			
 			// Point at which these lines would intersect, if they were of infinite length
-			intercept = new Vector2i((int)x, (int)y);
+			intercept = new Vec2f(x, y);
 		}
 		
 		// Optional range check
 		return (ignoreRange || (inRange(intercept) && line2.inRange(intercept))) ? intercept : null;
 	}
 	
-	public boolean inRange(Vector2i point)
+	public boolean inRange(Vec2f point)
 	{
 		if(point.equals(getLeft()) || point.equals(getRight()))
 			return false;

@@ -4,6 +4,7 @@ import org.joml.Vector2i;
 
 import com.lying.init.CDTerms;
 import com.lying.reference.Reference;
+import com.lying.worldgen.Tile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -37,7 +38,7 @@ public class RoomMetadata
 	{
 		return CODEC.parse(NbtOps.INSTANCE, nbt).getOrThrow();
 	}
-
+	
 	public static String vec2ToString(Vector2i vec)
 	{
 		return vec.x + "x" + vec.y;
@@ -57,7 +58,13 @@ public class RoomMetadata
 	public int depth() { return depth; }
 	
 	public RoomMetadata setSize(int x, int y) { return setSize(new Vector2i(x, y)); }
-	public RoomMetadata setSize(Vector2i sizeIn) { size = sizeIn; return this; }
+	public RoomMetadata setSize(Vector2i sizeIn)
+	{
+		int x = Math.ceilDiv(sizeIn.x(), Tile.TILE_SIZE) * Tile.TILE_SIZE;
+		int y = Math.ceilDiv(sizeIn.y(), Tile.TILE_SIZE) * Tile.TILE_SIZE;
+		size = new Vector2i(x, y);
+		return this;
+	}
 	public Vector2i size() { return size; }
 	
 	public RoomMetadata setType(GrammarTerm term) { type = term; return this; }

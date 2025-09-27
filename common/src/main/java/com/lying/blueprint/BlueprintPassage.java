@@ -1,59 +1,75 @@
 package com.lying.blueprint;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.joml.Vector2i;
 
-import com.lying.utility.Line2;
-import com.lying.utility.RotaryBox2;
+import com.lying.init.CDTiles;
+import com.lying.utility.Box2f;
+import com.lying.utility.Line2f;
+import com.lying.utility.RotaryBox2f;
+import com.lying.worldgen.Tile;
+import com.lying.worldgen.TileSet;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec2f;
 
 public class BlueprintPassage
 {
 	public static final int PASSAGE_WIDTH = 3;
-	private final Line2 line;
-	private final RotaryBox2 box;
+	private final Line2f line;
+	private final RotaryBox2f box;
 	
-	public BlueprintPassage(Line2 lineIn)
+	public BlueprintPassage(Line2f lineIn)
 	{
 		this(lineIn, PASSAGE_WIDTH);
 	}
 	
-	public BlueprintPassage(Line2 lineIn, int width)
+	public BlueprintPassage(Line2f lineIn, float width)
 	{
 		line = lineIn;
-		box = RotaryBox2.fromLine(line, width);
+		box = RotaryBox2f.fromLine(line, width);
 	}
 	
-	public BlueprintPassage(Vector2i a, Vector2i b)
+	public BlueprintPassage(Vec2f a, Vec2f b)
 	{
-		this(new Line2(a, b));
+		this(new Line2f(a, b));
 	}
 	
-	public Line2 asLine() { return line; }
+	public Line2f asLine() { return line; }
 	
-	public RotaryBox2 asBox() { return box; }
+	public RotaryBox2f asBox() { return box; }
 	
-	// FIXME Restrict to only constructing outside room boundaries
-	public void build(BlockPos origin, ServerWorld world)
+	public void build(BlockPos origin, ServerWorld world, List<Box2f> boundaries)
 	{
-		Vector2i parentPos = line.getLeft();
-		Vector2i childPos = line.getRight();
-		BlockPos pos1 = origin.add(parentPos.x, 0, parentPos.y);
-		BlockPos pos2 = origin.add(childPos.x, 0, childPos.y);
+		TileSet map = new TileSet();
 		
-		BlockPos current = pos1;
-		while(current.getSquaredDistance(pos2) > 0)
+		// Add enclosed positions to volume where they exceed the boundaries of rooms
+		final Predicate<Vec2f> isExterior = p -> boundaries.stream().noneMatch(b -> b.contains(p));
+		final List<Vec2f> positions = box.enclosedPositions();
+		if(positions.stream().noneMatch(isExterior))
+			return;
+		
+		positions.stream()
+			.filter(isExterior)
+			.forEach(p -> map.addToVolume(origin.add((int)p.x, 0, (int)p.y)));
+		
+		Vec2f parentPos = line.getLeft();
+		Vec2f childPos = line.getRight();
+		
+		// Populate map
+		Vec2f current = parentPos;
+		while(current.distanceSquared(childPos) > 0)
 		{
 			double minDist = Double.MAX_VALUE;
 			Direction face = Direction.NORTH;
 			for(Direction facing : Direction.Type.HORIZONTAL)
 			{
-				double dist = current.offset(facing).getSquaredDistance(pos2);
+				double dist = current.add(new Vec2f(facing.getOffsetX(), facing.getOffsetZ())).distanceSquared(childPos);
 				if(minDist > dist)
 				{
 					face = facing;
@@ -61,15 +77,20 @@ public class BlueprintPassage
 				}
 			}
 			
-			Blueprint.tryPlaceAt(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), current, world);
-			for(int i=2; i>0; i--)
-				Blueprint.tryPlaceAt(Blocks.AIR.getDefaultState(), current.up(i), world);
-			current = current.offset(face);
+			current = current.add(new Vec2f(face.getOffsetX(), face.getOffsetZ()));
+			BlockPos pos = origin.add((int)current.x, 0, (int)current.y);
+			if(map.contains(pos))
+				map.put(pos, CDTiles.FLOOR.get());
+			else
+				Tile.tryPlace(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), pos, world);
 		}
+		
+		// Generate
+//		map.generate(world);
 	}
 	
 	/** Returns true if the given point is either end of this passage */
-	public boolean isTerminus(Vector2i point)
+	public boolean isTerminus(Vec2f point)
 	{
 		return line.getLeft().equals(point) || line.getRight().equals(point);
 	}
@@ -77,7 +98,8 @@ public class BlueprintPassage
 	/** Returns true if the given room is either intended end of this passage */
 	public boolean isTerminus(BlueprintRoom room)
 	{
-		return isTerminus(room.position());
+		Vector2i pos = room.position();
+		return isTerminus(new Vec2f(pos.x, pos.y));
 	}
 	
 	public boolean linksTo(BlueprintPassage b) { return isTerminus(b.line.getLeft()) || isTerminus(b.line.getRight()); }

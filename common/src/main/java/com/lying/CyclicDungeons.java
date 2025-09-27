@@ -42,8 +42,8 @@ public final class CyclicDungeons
 		config = new ServerConfig("config/CyclicDungeonsServer.cfg");
 		config.read();
 		
-		CDTerms.init();
 		CDTiles.init();
+		CDTerms.init();
 		CDCommands.init();
 		CDBlocks.init();
 		CDEntityTypes.init();

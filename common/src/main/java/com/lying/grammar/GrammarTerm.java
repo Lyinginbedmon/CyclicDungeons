@@ -5,22 +5,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
+import org.slf4j.Logger;
 
 import com.google.common.collect.Lists;
-import com.lying.CyclicDungeons;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
-import com.lying.utility.CDUtils;
 import com.lying.worldgen.Tile;
+import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.TileSet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -32,10 +32,12 @@ import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.random.Random;
 
 public abstract class GrammarTerm
 {
+	public static final Logger LOGGER = Blueprint.LOGGER;
 	protected static final Codec<GrammarTerm> CODEC = Identifier.CODEC.comapFlatMap(id -> 
 	{
 		Optional<GrammarTerm> type = CDTerms.get(id);
@@ -44,6 +46,15 @@ public abstract class GrammarTerm
 		else
 			return DataResult.error(() -> "Not a recognised type: '"+String.valueOf(id) + "'");
 	}, GrammarTerm::registryName);
+	
+	// TODO Give each tile its own weight map
+	private static final Map<Tile, Float> BASIC_TILE_SET = Map.of(
+			CDTiles.FLOOR.get(), 10000F,
+			CDTiles.AIR.get(), 10F,
+			CDTiles.LIGHT.get(), 1F,
+			CDTiles.SEAT.get(), 1F,
+			CDTiles.TABLE.get(), 1F
+			);
 	
 	private final Identifier registryName;
 	private final int colour;
@@ -102,59 +113,32 @@ public abstract class GrammarTerm
 		return (!isBranchInjector() || inRoom.canAddLink()) && conditions.test(this, inRoom, previous, next, graph);
 	}
 	
-	public boolean generate(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart)
+	public boolean generate(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart, List<BlueprintPassage> passages)
 	{
-		CyclicDungeons.LOGGER.info(" # Generating {} room # ", this.registryName().getPath());
+		long timeMillis = System.currentTimeMillis();
 		
-		TileSet map = TileSet.enclosing(min, max);
-		List<BlockPos> boundaries = map.getBoundaries(Direction.Type.HORIZONTAL.stream().toList());
-		List<BlueprintPassage> passages = Blueprint.getPassagesOf(node, chart).stream().map(p -> new BlueprintPassage(p.asLine(), 1)).toList();
-		boundaries.stream()
-			.filter(p -> passages.stream()
-				.anyMatch(r -> r.asBox().contains(new Vector2i(p.getX(), p.getZ()))))
-					.forEach(p -> map.put(p, CDTiles.PASSAGE.get()));
-		
-		for(Tile t : List.of(CDTiles.WALL.get(), CDTiles.FLOOR.get()))
-			map.applyToAllValid(t);
-		
-		List<BlockPos> slots = map.getBlanks();
-		while(!slots.isEmpty())
-		{
-			/**
-			 * Sort open slots by number of available options
-			 * Pop slot with fewest
-			 * Assign random option to slot
-			 * Repeat until slots are depleted
-			 */
-			slots.sort((a,b) -> 
-			{
-				int eA = map.getOptionsFor(a).size();
-				int eB = map.getOptionsFor(b).size();
-				return eA < eB ? -1 : eA > eB ? 1 : 0;
-			});
-			
-			BlockPos slot = slots.removeFirst();
-			List<Tile> options = map.getOptionsFor(slot);
-			if(options.size() == 1)
-				map.put(slot, options.get(0));
-			else
-				map.put(slot, selectTile(options, world.getRandom()));
-		}
-		map.generate(world);
-		
-		return true;
-	}
-	
-	public Tile selectTile(List<Tile> options, Random rand)
-	{
-		final Map<Identifier, Integer> weights = Map.of(
-				CDTiles.LIGHT.get().registryName(), 1,
-				CDTiles.AIR.get().registryName(), 100
+		BlockPos size = max.subtract(min);
+		size = new BlockPos(
+				Math.floorDiv(size.getX(), Tile.TILE_SIZE),
+				Math.floorDiv(size.getY(), Tile.TILE_SIZE),
+				Math.floorDiv(size.getZ(), Tile.TILE_SIZE)
 				);
-		List<Pair<Tile,Float>> weightedList = Lists.newArrayList();
-		options.forEach(tile -> weightedList.add(Pair.of(tile, (float)weights.get(tile.registryName()))));
+		TileSet map = TileSet.ofSize(size);
+		LOGGER.info(" # Size: {}", map.size().toShortString());
 		
-		return CDUtils.selectFromWeightedList(weightedList, rand.nextFloat());
+		// Pre-seed doorways to connecting rooms
+		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
+		final Predicate<BlockPos> isInDoorway = p -> doorways.stream().anyMatch(r -> r.asBox().contains(new Vec2f(p.getX(), p.getZ())));
+		map.getBoundaries(Direction.Type.HORIZONTAL.stream().toList()).stream()
+			.filter(isInDoorway)
+			.forEach(p -> map.put(p, CDTiles.PASSAGE.get()));
+		
+		// Fill rest of tileset with random generation
+		TileGenerator.generate(map, BASIC_TILE_SET, world.getRandom());
+		
+		map.generate(min, world);
+		LOGGER.info(" ## Completed in {}ms", System.currentTimeMillis() - timeMillis);
+		return true;
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)
