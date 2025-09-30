@@ -10,7 +10,7 @@ import com.google.common.collect.Lists;
 
 public class BlueprintPather
 {
-	public static List<BlueprintRoom> calculateGoldenPath(Blueprint chart)
+	public static List<BlueprintRoom> calculateCriticalPath(Blueprint chart)
 	{
 		Optional<BlueprintRoom> start = chart.start();
 		Optional<BlueprintRoom> end = chart.end();

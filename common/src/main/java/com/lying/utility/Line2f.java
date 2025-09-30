@@ -9,9 +9,9 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 {
 	// Components of the slope intercept equation of this line
 	// y = mx + b OR x = a
-	private final float m, b;
+	public final float m, b;
 	private final Pair<Float, Float> xRange, yRange;
-	private final boolean isVertical;
+	public final boolean isVertical;
 	
 	public Line2f(Vec2f posA, Vec2f posB)
 	{
@@ -40,6 +40,8 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 	{
 		return isVertical == line.isVertical && m == line.m && b == line.b && xRange.equals(line.xRange) && yRange.equals(line.yRange);
 	}
+	
+	public double length() { return getLeft().add(getRight().negate()).length(); }
 	
 	public Vec2f atX(float x)
 	{
@@ -70,14 +72,10 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 	/** Returns true if the given lines are parallel */
 	public static boolean areParallel(Line2f a, Line2f b)
 	{
-		if(a.isVertical && b.isVertical)
-			return true;
-		else if(!a.isVertical && !b.isVertical)
-			return a.m == b.m;
-		return false;
+		return a.isVertical == b.isVertical && a.m == b.m;
 	}
 	
-	public Box2f bounds()
+	public AbstractBox2f bounds()
 	{
 		return new Box2f(xRange.getLeft(), yRange.getLeft(), xRange.getRight(), yRange.getRight());
 	}
@@ -85,6 +83,11 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 	public boolean intersects(Line2f line2)
 	{
 		return intercept(line2) != null;
+	}
+	
+	public boolean isSame(Line2f line2)
+	{
+		return areParallel(this, line2) && inRange(line2.getLeft()) || inRange(line2.getRight());
 	}
 	
 	/** Returns the point that this line intersects with the given line, if at all */
@@ -95,15 +98,15 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 	public Vec2f intercept(Line2f line2, boolean ignoreRange)
 	{
 		Vec2f intercept = null;
+		// Two vertical lines = Parallel: No intercept
 		if(isVertical && line2.isVertical)
 		{
-			// Two vertical lines = Parallel: No intercept
 			// In the unlikely scenario that two vertical lines directly overlap, we treat them as side-by-side
 			return null;
 		}
+		// Handle one vertical and one non-vertical line
 		else if(isVertical != line2.isVertical)
 		{
-			// Handle one vertical and one non-vertical line
 			// X of vertical line determines y = mx + B of non-vertical line
 			// Intercept if within range of both
 			
@@ -113,13 +116,13 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 			// Non-vertical line's position at the X coordinate of the vertical line
 			intercept = hori.atX(vert.m);
 		}
+		// Handle two non-vertical lines
 		else
 		{
 			// Return null if both lines have the same slope and are therefore parallel
 			if(this.m == line2.m)
 				return null;
 			
-			// Handle two non-vertical lines
 			float a = this.m, b = line2.m;
 			float c = this.b, d = line2.b;
 			

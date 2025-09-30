@@ -1,5 +1,6 @@
 package com.lying.blueprint;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,16 @@ public abstract class BlueprintOrganiser
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_planar");
 	private static final int GRID_SIZE = 30;
 	
+	public static final Comparator<BlueprintRoom> descendantSort(List<BlueprintRoom> chart)
+	{
+		return (a,b) -> 
+		{
+			int desA = a.descendantCount(chart);
+			int desB = b.descendantCount(chart);
+			return desA > desB ? -1 : desA < desB ? 1 : 0;
+		};
+	}
+	
 	public final void organise(Blueprint chart, Random rand)
 	{
 		LOGGER.info(" # Applying organiser to {}:{} planar graph", chart.size(), chart.maxDepth());
@@ -41,9 +52,13 @@ public abstract class BlueprintOrganiser
 		
 		public void applyLayout(Blueprint chart, Random rand)
 		{
+			final Comparator<BlueprintRoom> descSort = descendantSort(chart);
 			for(int depth=0; depth<=chart.maxDepth(); depth++)
 			{
-				List<BlueprintRoom> nodes = chart.byDepth(depth);
+				List<BlueprintRoom> nodes = Lists.newArrayList();
+				nodes.addAll(chart.byDepth(depth));
+				nodes.sort(descSort);
+				
 				int y = depth * GRID_SIZE;
 				int rowWidth = (nodes.size() - 1) * GRID_SIZE;
 				int x = -rowWidth / 2;
@@ -62,10 +77,13 @@ public abstract class BlueprintOrganiser
 		
 		public void applyLayout(Blueprint chart, Random rand)
 		{
+			final Comparator<BlueprintRoom> descSort = descendantSort(chart);
 			for(int step = 1; step <= chart.maxDepth(); step++)
 			{
 				// Rooms at this radius
-				List<BlueprintRoom> set = chart.byDepth(step);
+				List<BlueprintRoom> set = Lists.newArrayList();
+				set.addAll(chart.byDepth(step));
+				set.sort(descSort);
 				
 				// Calculate all slots available at this radius
 				int radius = step * GRID_SIZE;
@@ -151,12 +169,7 @@ public abstract class BlueprintOrganiser
 			
 			// Sort by descendant count so the nodes with the most descendants get assigned the clearest positions
 			rooms.addAll(chart.byDepth(depth));
-			rooms.sort((a,b) -> 
-			{
-				int aCount = a.descendantCount(chart);
-				int bCount = b.descendantCount(chart);
-				return aCount > bCount ? -1 : aCount < bCount ? 1 : 0;
-			});
+			rooms.sort(descendantSort(chart));
 			
 			for(BlueprintRoom node : rooms)
 				if(gridMap.isEmpty())

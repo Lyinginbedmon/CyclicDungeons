@@ -24,9 +24,19 @@ public class TileSet
 	public static TileSet ofSize(BlockPos size)
 	{
 		TileSet map = new TileSet();
-		for(int x=0; x<size.getX(); x++)
-			for(int z=0; z<size.getZ(); z++)
-				for(int y=0; y<size.getY(); y++)
+		
+		int sizeX = Math.abs(size.getX());
+		sizeX = sizeX == 0 ? 1 : sizeX;
+		
+		int sizeY = Math.abs(size.getY());
+		sizeY = sizeY == 0 ? 1 : sizeY;
+		
+		int sizeZ = Math.abs(size.getZ());
+		sizeZ = sizeZ == 0 ? 1 : sizeZ;
+		
+		for(int x=0; x<sizeX; x++)
+			for(int z=0; z<sizeZ; z++)
+				for(int y=0; y<sizeY; y++)
 					map.addToVolume(new BlockPos(x, y, z));
 		return map;
 	}
@@ -38,6 +48,12 @@ public class TileSet
 	public TileSet addToVolume(BlockPos pos)
 	{
 		set.put(pos, BLANK);
+		return this;
+	}
+	
+	public TileSet removeFromVolume(BlockPos pos)
+	{
+		set.remove(pos);
 		return this;
 	}
 	
@@ -80,6 +96,8 @@ public class TileSet
 		Collection<BlockPos> points = set.keySet();
 		points.stream().filter(p -> get(p).isBlank() && tile.canExistAt(p, this)).forEach(p -> put(p, tile));
 	}
+	
+	public boolean hasBlanks() { return getBlanks().isEmpty(); }
 	
 	public List<BlockPos> getBlanks()
 	{

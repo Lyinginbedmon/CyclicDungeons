@@ -3,6 +3,7 @@ package com.lying.client.screen;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.joml.Vector2i;
@@ -46,7 +47,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	public static final int GOLD = 0xFFBF00;
 	
 	public static int renderScale = 1;
-	private static boolean showGoldenRoute = false;
+	private static boolean showCriticalPath = false;
 	
 	private final Long randSeed;
 	private Vector2i displayOffset = new Vector2i(0,0);
@@ -62,7 +63,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		super(handler, inventory, title);
 		randSeed = System.currentTimeMillis();
 		renderScale = 16;
-		showGoldenRoute = false;
+		showCriticalPath = false;
 	}
 	
 	protected void init()
@@ -75,7 +76,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		addDrawableChild(scrunchButton = ButtonWidget.builder(Text.literal("Scrunch"), b -> scrunch()).dimensions(0, 90, 60, 20).build());
 		addDrawableChild(collapseButton = ButtonWidget.builder(Text.literal("Collapse"), b -> collapse()).dimensions(0, 110, 60, 20).build());
 		
-		addDrawableChild(routeButton = ButtonWidget.builder(Text.literal("X"), b -> showGoldenRoute = !showGoldenRoute).dimensions(width - 20, 0, 20, 20).build());
+		addDrawableChild(routeButton = ButtonWidget.builder(Text.literal("X"), b -> showCriticalPath = !showCriticalPath).dimensions(width - 20, 0, 20, 20).build());
 	}
 	
 	private void organise(Supplier<BlueprintOrganiser> organiser)
@@ -101,8 +102,13 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	private void cacheErrors()
 	{
+		errorCache.clear();
 		for(ErrorType type : ErrorType.values())
-			errorCache.put(type, Blueprint.tallyErrors(blueprint, type));
+		{
+			int total = Blueprint.tallyErrors(blueprint, type);
+			if(total > 0)
+				errorCache.put(type, total);
+		}
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -120,9 +126,9 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 						blueprint.size(), 
 						blueprint.maxDepth(), 
 						totalErrors, 
-						errorCache.get(ErrorType.COLLISION), 
-						errorCache.get(ErrorType.INTERSECTION), 
-						errorCache.get(ErrorType.TUNNEL)) :
+						errorCache.getOrDefault(ErrorType.COLLISION, 0), 
+						errorCache.getOrDefault(ErrorType.INTERSECTION, 0), 
+						errorCache.getOrDefault(ErrorType.TUNNEL, 0)) :
 					Text.translatable("gui.cydun.dungeon_data", 
 						blueprint.size(), 
 						blueprint.maxDepth(), 0);
@@ -134,28 +140,12 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	{
 		blur();
 		
-		renderBlockGrid(context, mouseX, mouseY);
-		
 		if(blueprint != null && !blueprint.isEmpty())
 		{
 			final Vector2i position = isDragging() ? new Vector2i(displayOffset.x + mouseX - dragStart.x, displayOffset.y + mouseY - dragStart.y) : displayOffset;
 			final Vector2i origin = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5).add(position);
-			NodeRenderUtils.render(blueprint.get(0), context, this.textRenderer, origin, blueprint, mouseX, mouseY, renderScale);
+			NodeRenderUtils.render(blueprint.get(0), context, this.textRenderer, origin, blueprint, errorCache, mouseX, mouseY, renderScale);
 		}
-	}
-	
-	// TODO Render block grid under cursor
-	private void renderBlockGrid(DrawContext context, int mouseX, int mouseY)
-	{
-//		int originX = mouseX - mouseX%renderScale;
-//		int originY = mouseY - mouseY%renderScale;
-//		
-//		for(int i=-3; i<6; i++)
-//		{
-//			int off = i * renderScale;
-//			NodeRenderUtils.renderStraightLine(new Vector2i(originX - off, originY), new Vector2i(originX + off, originY), 1, context, DARK_GRAY);
-//			NodeRenderUtils.renderStraightLine(new Vector2i(originX, originY - off), new Vector2i(originX, originY + off), 1, context, DARK_GRAY);
-//		}
 	}
 	
 	public void handledScreenTick()
@@ -167,18 +157,16 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 					return;
 				
 				blueprint = Blueprint.fromGraph(graph);
-				blueprint.updateGoldenPath();
+				blueprint.updateCriticalPath();
 				Random rand = Random.create(randSeed);
 				blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
 				BlueprintOrganiser.Tree.create().organise(blueprint, rand);
 				cacheErrors();
-				if(blueprint.hasErrors())
-					return;
 			});
 		else
 		{
-			scrunchButton.active = collapseButton.active = routeButton.active = !blueprint.hasErrors();
-			showGoldenRoute = showGoldenRoute && routeButton.active;
+			scrunchButton.active = collapseButton.active = routeButton.active = errorCache.isEmpty();
+			showCriticalPath = showCriticalPath && routeButton.active;
 		}
 	}
 	
@@ -209,29 +197,41 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
 	{
+		int prevScale = renderScale;
 		renderScale = MathHelper.clamp(renderScale + (int)verticalAmount, 1, 500);
+		
+		float delta = (float)renderScale / (float)prevScale;
+		float offX = this.displayOffset.x * delta;
+		float offY = this.displayOffset.y * delta;
+		this.displayOffset = new Vector2i((int)offX, (int)offY);
+		
 		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
 	}
 	
 	public static class NodeRenderUtils
 	{
-		public static void render(BlueprintRoom node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, int mouseX, int mouseY, int renderScale)
+		public static Function<BlueprintPassage,BlueprintPassage> scaleFunc(int renderScale, Vector2i origin)
+		{
+			return p -> new BlueprintPassage(p.parent(), p.child(), p.asLine().scale(renderScale).offset(new Vec2f(origin.x, origin.y)), BlueprintPassage.PASSAGE_WIDTH * renderScale);
+		}
+		
+		public static void render(BlueprintRoom node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, Map<ErrorType,Integer> errors, int mouseX, int mouseY, int renderScale)
 		{
 			// Render node boundaries
 			chart.forEach(n -> renderNodeBounds(n, origin, renderScale, context));
 			// Render links between nodes
-			renderLinks(origin, renderScale, chart, context, mouseX, mouseY);
-			// Render the golden path from the start to the end of the dungeon
-			if(showGoldenRoute)
-				renderGoldenPath(origin, renderScale, chart, context);
+			renderLinks(origin, renderScale, chart, !errors.isEmpty(), context, mouseX, mouseY);
+			// Render the critical path from the start to the end of the dungeon
+			if(showCriticalPath && errors.isEmpty())
+				renderCriticalPath(origin, renderScale, chart, context);
 			// Then render icons & titles
 			chart.forEach(n -> renderNode(n, origin, renderScale, context, textRenderer, mouseX, mouseY));
 		}
 		
-		public static void renderLinks(Vector2i origin, int renderScale, Blueprint chart, DrawContext context, int mouseX, int mouseY)
+		public static void renderLinks(Vector2i origin, int renderScale, Blueprint chart, boolean errorsPresent, DrawContext context, int mouseX, int mouseY)
 		{
-			boolean errorsPresent = chart.hasErrors();
-			Blueprint.getPassages(chart).forEach(p -> 
+			Function<BlueprintPassage,BlueprintPassage> scaleFunc = scaleFunc(renderScale, origin);
+			Blueprint.getPassages(chart).stream().map(scaleFunc).forEach(p -> 
 			{
 				int linkColour = errorsPresent ?
 						(p.hasIntersections(chart) ? 
@@ -240,25 +240,21 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 								LIME_GREEN : 
 								DARK_GRAY) :
 						DARK_GRAY;
-				
-				BlueprintPassage path = new BlueprintPassage(p.asLine().scale(renderScale).offset(new Vec2f(origin.x, origin.y)), BlueprintPassage.PASSAGE_WIDTH * renderScale); 
-				renderPath(path, context, linkColour, path.asBox().contains(new Vec2f(mouseX, mouseY)));
+				 
+				renderPath(p, context, linkColour, p.asBox().contains(new Vec2f(mouseX, mouseY)));
 			});
 		}
 		
-		public static void renderGoldenPath(Vector2i origin, int renderScale, Blueprint chart, DrawContext context)
+		public static void renderCriticalPath(Vector2i origin, int renderScale, Blueprint chart, DrawContext context)
 		{
-			if(chart.getGoldenPath().isEmpty() || chart.hasErrors())
+			List<BlueprintRoom> criticalPath = chart.getCriticalPath();
+			if(criticalPath.isEmpty())
 				return;
 			
-			List<Line2f> links = Blueprint.getPassages(chart).stream().map(BlueprintPassage::asLine).toList();
-			links.stream()
-				.filter(p -> chart.getGoldenPath().stream().anyMatch(n -> n.isAt(p.getLeft()) || n.isAt(p.getRight())))
-				.forEach(path -> 
-				{
-					Line2f link = path.scale(renderScale).offset(new Vec2f(origin.x, origin.y));
-					renderLink(link.getLeft(), link.getRight(), context, GOLD);
-				});
+			Function<BlueprintPassage,BlueprintPassage> scaleFunc = scaleFunc(renderScale, origin);
+			Blueprint.getPassages(criticalPath).stream()
+				.map(scaleFunc)
+				.forEach(path -> renderPath(path, context, GOLD, false));
 		}
 		
 		public static void renderNodeBounds(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context)
@@ -293,10 +289,10 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		
 		private static void renderPath(BlueprintPassage path, DrawContext context, int colour, boolean showBounds)
 		{
-			renderStraightLine(path.asLine().getLeft(), path.asLine().getRight(), 1, context, colour);
+			path.asLines().forEach(l -> renderLink(l.getLeft(), l.getRight(), context, colour));
 			
 			if(showBounds)
-				for(Line2f edge : path.asBox().edges())
+				for(Line2f edge : path.asBox().asEdges())
 					renderStraightLine(edge.getLeft(), edge.getRight(), 1, context, DARK_GRAY);
 		}
 		

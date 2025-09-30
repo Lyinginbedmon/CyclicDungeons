@@ -21,7 +21,7 @@ import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDTerms;
 import com.lying.reference.Reference;
-import com.lying.utility.Box2f;
+import com.lying.utility.AbstractBox2f;
 import com.lying.worldgen.Tile;
 
 import net.minecraft.block.BlockState;
@@ -29,7 +29,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec2f;
 
 @SuppressWarnings("serial")
 public class Blueprint extends ArrayList<BlueprintRoom>
@@ -38,7 +37,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	private static final int ROOM_HEIGHT = Tile.TILE_SIZE * 4;
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
-	private List<BlueprintRoom> goldenPath = Lists.newArrayList();
+	private List<BlueprintRoom> criticalPath = Lists.newArrayList();
 	
 	public static Blueprint fromGraph(GrammarPhrase graphIn)
 	{
@@ -85,13 +84,13 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	/** Returns the deepest level of this dungeon */
 	public int maxDepth() { return maxDepth; }
 	
-	public void updateGoldenPath()
+	public void updateCriticalPath()
 	{
-		goldenPath = BlueprintPather.calculateGoldenPath(this);
+		criticalPath = BlueprintPather.calculateCriticalPath(this);
 	}
 	
 	/** Returns a list of nodes representing the path from the start to the end of this dungeon */
-	public List<BlueprintRoom> getGoldenPath() { return this.goldenPath; }
+	public List<BlueprintRoom> getCriticalPath() { return this.criticalPath; }
 	
 	@NotNull
 	public List<BlueprintRoom> byDepth(int depth) { return byDepth.getOrDefault(depth, Lists.newArrayList()); }
@@ -116,10 +115,14 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		switch(type)
 		{
 			case COLLISION:
-				List<Box2f> bounds = chart.stream().map(BlueprintRoom::bounds).toList();
-				for(Box2f boundA : bounds)	// FIXME Increase proximity limit so rooms are always separated by walls
-					if(bounds.stream().filter(b -> !b.equals(boundA)).anyMatch(b -> boundA.intersects(b.grow(1))))
+				LOGGER.warn("# Checking for room collision errors");
+				for(BlueprintRoom room : chart)
+				{
+					AbstractBox2f bounds = room.bounds();
+					LOGGER.info(" # Comparing {}", bounds.toString());
+					if(chart.stream().filter(r -> !r.equals(room)).map(b -> b.bounds()).anyMatch(bounds::intersects))
 						++tally;
+				}
 				return tally;
 			case TUNNEL:
 				for(BlueprintPassage path : paths)
@@ -146,9 +149,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		buildExteriorShell(position, world);
 		
-		buildRooms(position, world);
+//		buildRooms(position, world);
 		
-//		buildExteriorPaths(position, world);
+		buildExteriorPaths(position, world);
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);
 		return true;
 	}
@@ -158,8 +161,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior shell");
 		
-		// Collect all bounding boxes as tile sets
-		List<Box2f> bounds = stream().map(BlueprintRoom::bounds).toList();
+		// Collect all bounding boxes as positions
+		List<AbstractBox2f> bounds = stream().map(BlueprintRoom::bounds).toList();
 		List<BlockPos> interior = Lists.newArrayList();
 		bounds.stream().forEach(b -> 
 		{
@@ -172,7 +175,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		// Exclude any positions that are in the interior set
 		final Predicate<BlockPos> isExterior = p -> !interior.contains(p);
 		List<BlockPos> points = Lists.newArrayList();
-		bounds.forEach(b -> 
+		bounds.stream().forEach(b -> 
 		{
 			BlockPos start = position.add((int)b.minX() - 1, -1, (int)b.minY() - 1);
 			BlockPos end = position.add((int)b.maxX(), ROOM_HEIGHT, (int)b.maxY());
@@ -220,7 +223,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	{
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior passages");
-		List<Box2f> bounds = stream().map(BlueprintRoom::bounds).toList();
+		List<AbstractBox2f> bounds = stream().map(BlueprintRoom::bounds).toList();
 		getPassages(this).forEach(p -> p.build(position, world, bounds));
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
@@ -237,10 +240,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	{
 		List<BlueprintPassage> paths = Lists.newArrayList();
 		for(BlueprintRoom n : chart)
-		{
-			final Vec2f point = new Vec2f(n.position().x, n.position().y);
-			n.getChildren(chart).stream().map(BlueprintRoom::position).map(v -> new Vec2f(v.x, v.y)).map(c -> new BlueprintPassage(point, c)).forEach(paths::add);
-		}
+			n.getChildren(chart).stream().map(c -> new BlueprintPassage(n, c)).forEach(paths::add);
 		return paths;
 	}
 	

@@ -9,6 +9,7 @@ import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
+import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
 import com.lying.utility.Vector2iUtils;
 
@@ -31,6 +32,8 @@ public class BlueprintRoom
 	}
 	
 	public static BlueprintRoom create(){ return new BlueprintRoom(UUID.randomUUID(), new RoomMetadata(), List.of(), List.of()); }
+	
+	public boolean equals(Object obj) { return obj instanceof BlueprintRoom && ((BlueprintRoom)obj).id.equals(id); }
 	
 	public UUID uuid() { return id; }
 	
@@ -138,24 +141,24 @@ public class BlueprintRoom
 		return set;
 	}
 	
-	public Box2f bounds()
+	public AbstractBox2f bounds()
 	{
 		return bounds(position);
 	}
 	
-	public Box2f bounds(Vector2i position)
+	public AbstractBox2f bounds(Vector2i position)
 	{
-		// TODO Ensure position is central in odd-sized bounds
 		int sizeX = metadata.size().x;
 		int sizeY = metadata.size().y;
-		int minX = position.x - (sizeX / 2);
-		int minY = position.y - (sizeY / 2);
+		
+		int minX = position.x - sizeX / 2;
+		int minY = position.y - sizeY / 2;
 		return new Box2f(minX, minX + sizeX, minY, minY + sizeY);
 	}
 	
-	public boolean intersects(Box2f boundsB)
+	public boolean intersects(AbstractBox2f boundsB)
 	{
-		Box2f bounds = bounds();
+		AbstractBox2f bounds = bounds();
 		return bounds.intersects(boundsB) || boundsB.intersects(bounds);
 	}
 }

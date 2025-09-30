@@ -2,11 +2,9 @@ package com.lying.utility;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
-
 import net.minecraft.util.math.Vec2f;
 
-public class RotaryBox2f
+public class RotaryBox2f extends AbstractBox2f
 {
 	private Vec2f[] points = new Vec2f[4];
 	private Line2f[] edges = new Line2f[4];
@@ -21,6 +19,8 @@ public class RotaryBox2f
 		points[3] = dIn;
 		updateValues();
 	}
+	
+	public String toString() { return "RotBox["+minX+"->"+maxX+", "+minY+"->"+maxY+"]"; }
 	
 	public RotaryBox2f clone()
 	{
@@ -55,6 +55,11 @@ public class RotaryBox2f
 		maxX = mX;
 		maxY = mY;
 	}
+	
+	public float minX() { return minX; }
+	public float minY() { return minY; }
+	public float maxX() { return maxX; }
+	public float maxY() { return maxY; }
 	
 	protected void buildEdges()
 	{
@@ -105,82 +110,33 @@ public class RotaryBox2f
 	}
 	
 	/** Reduces this box to its grid-aligned equivalent */
-	public Box2f simplify()
+	public AbstractBox2f simplify()
 	{
 		return new Box2f(minX, maxX, minY, maxY);
 	}
 	
-	public Line2f[] edges()
+	public List<Line2f> asEdges()
 	{
-		Line2f[] set = new Line2f[4];
-		for(int i=0; i<4; i++)
-			set[i] = edges[i];
-		return set;
+		return List.of(
+				edges[0],
+				edges[1],
+				edges[2],
+				edges[3]
+				);
 	}
 	
-	/**
-	 * Returns true if the given point is within the simple bounds of this box.<br>
-	 * This does not implicitly mean it is within the box itself.
-	 */
-	public boolean inBounds(Vec2f vec)
+	public List<Vec2f> asPoints()
 	{
-		return simplify().contains(vec);
-	}
-	
-	public boolean contains(Vec2f vec)
-	{
-		// A singular point cannot possibly be within the box if it is outside the simplified bounds
-		if(vec.x < minX || vec.x > maxX || vec.y < minY || vec.y > maxY)
-			return false;
-		
-		// Connect point to infinity in each cardinal direction
-		for(Vec2f test : new Vec2f[] { new Vec2f(0, 1), new Vec2f(1, 0) })
-		{
-			// If the number of intersections is odd in any direction, the point must be inside the box
-			
-			Line2f linePos = new Line2f(vec, vec.add(test.multiply(Float.MAX_VALUE)));
-			if(intersections(linePos)%2 > 0)
-				return true;
-			
-			Line2f lineNeg = new Line2f(vec, vec.add(test.multiply(Float.MIN_VALUE)));
-			if(intersections(lineNeg)%2 > 0)
-				return true;
-		}
-		
-		return false;
-	}
-	
-	public int intersections(Line2f line)
-	{
-		int tally = 0;
-		for(Line2f edge : edges)
-			if(edge.intersects(line))
-				tally++;
-		return tally;
-	}
-	
-	public boolean intersects(Line2f line)
-	{
-		return intersections(line) > 0;
-	}
-	
-	public boolean intersects(Box2f box)
-	{
-		if(simplify().intersects(box))
-		{
-			for(Vec2f point : points)
-				if(box.contains(point))
-					return true;
-			
-			for(Line2f edge : edges)
-				if(box.intersects(edge))
-					return true;
-		}
-		return false;
+		return List.of(
+				points[0],
+				points[1],
+				points[2],
+				points[3]
+				);
 	}
 	
 	/** Offsets the box by the given vector */
-	public RotaryBox2f move(Vec2f vec)
+	public AbstractBox2f move(Vec2f vec)
 	{
 		for(int i=0; i<4; i++)
 			points[i] = vec.add(points[i]);
@@ -188,14 +144,23 @@ public class RotaryBox2f
 		return this;
 	}
 	
+	/** Multiplies all values of the box by the given value */
+	public AbstractBox2f mul(float val)
+	{
+		for(int i=0; i<4; i++)
+			points[i] = points[i].multiply(val);
+		updateValues();
+		return this;
+	}
+	
 	/** Rotates the box around its core position */
-	public RotaryBox2f spin(float radians)
+	public AbstractBox2f spin(float radians)
 	{
 		return rotateAround(new Vec2f(minX + (maxX - minX) / 2, minY + (maxY - minY) / 2), radians);
 	}
 	
 	/** Rotates the box around [0,0] */
-	public RotaryBox2f rotate(float radians)
+	public AbstractBox2f rotate(float radians)
 	{
 		for(int i=0; i<4; i++)
 			points[i] = CDUtils.rotate(points[i], radians);
@@ -204,39 +169,13 @@ public class RotaryBox2f
 	}
 	
 	/** Rotates the box around the given position */
-	public RotaryBox2f rotateAround(Vec2f origin, float radians)
+	public AbstractBox2f rotateAround(Vec2f origin, float radians)
 	{
 		return move(origin.negate()).rotate(radians).move(origin);
 	}
 	
-	/** Multiplies all values of the box by the given value */
-	public RotaryBox2f mul(float val)
+	public AbstractBox2f grow(float val)
 	{
-		for(int i=0; i<4; i++)
-			points[i] = points[i].multiply(val);
-		updateValues();
 		return this;
-	}
-	
-	/** Scales the box around its core position */
-	public RotaryBox2f scale(float val)
-	{
-		Vec2f origin = new Vec2f(minX + (maxX - minX) / 2, minY + (maxY - minY) / 2);
-		return move(origin.negate()).mul(val).move(origin);
-	}
-	
-	/** Returns a list of all 2D positions enclosed by this box */
-	public List<Vec2f> enclosedPositions()
-	{
-		List<Vec2f> points = Lists.newArrayList();
-		Box2f simplified = simplify();
-		for(float x=simplified.minX(); x<simplified.maxX(); x++)
-			for(float y=simplified.minY(); y<simplified.maxY(); y++)
-			{
-				Vec2f point = new Vec2f(x,y);
-				if(contains(point))
-					points.add(point);
-			}
-		return points;
 	}
 }

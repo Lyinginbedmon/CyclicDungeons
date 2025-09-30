@@ -55,6 +55,7 @@ public class BlueprintScruncher
 			if(otherNodes.isEmpty())
 				continue;
 			
+			len = 1;
 			while(len-- > 0 && tryMoveTowards(node, toMove, otherNodes, chart, ideal))
 				anyMoved = true;
 		};
