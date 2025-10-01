@@ -115,12 +115,10 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		switch(type)
 		{
 			case COLLISION:
-				LOGGER.warn("# Checking for room collision errors");
 				for(BlueprintRoom room : chart)
 				{
 					AbstractBox2f bounds = room.bounds();
-					LOGGER.info(" # Comparing {}", bounds.toString());
-					if(chart.stream().filter(r -> !r.equals(room)).map(b -> b.bounds()).anyMatch(bounds::intersects))
+					if(chart.stream().filter(r -> !r.equals(room)).map(b -> b.bounds().grow(1F)).anyMatch(bounds::intersects))
 						++tally;
 				}
 				return tally;
@@ -147,9 +145,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Beginning blueprint generation");
 		
-		buildExteriorShell(position, world);
+//		buildExteriorShell(position, world);
 		
-//		buildRooms(position, world);
+		buildRooms(position, world);
 		
 		buildExteriorPaths(position, world);
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);

@@ -16,12 +16,10 @@ import com.lying.utility.CompoundBox2f;
 import com.lying.utility.Line2f;
 import com.lying.utility.RotaryBox2f;
 import com.lying.worldgen.Tile;
-import com.lying.worldgen.TileSet;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 
 public class BlueprintPassage
@@ -51,9 +49,7 @@ public class BlueprintPassage
 		parent = a;
 		child = b;
 		line = lineIn;
-		box = new CompoundBox2f();
-		for(Line2f l : asLines())
-			box.add(RotaryBox2f.fromLine(l, width));
+		box = lineToBox(asLines(), width);
 	}
 	
 	public BlueprintRoom parent() { return parent; }
@@ -63,26 +59,40 @@ public class BlueprintPassage
 	/** Returns this passage as a singular line */
 	public Line2f asLine() { return line; }
 	
-	/** Returns this passage as a set of one or more lines */
+	/** Returns this passage as a set of one or more line segments */
 	public List<Line2f> asLines()
 	{		
 		return LineUtils.trialLines(line.getLeft(), line.getRight(), this::isLineViable);
 	}
 	
+	/** Controls how this passage is shaped to connect its associated rooms */
 	private boolean isLineViable(List<Line2f> line)
 	{
-		if(line.isEmpty() || line.stream().anyMatch(Objects::isNull))
-			return false;
-		// In the event of a single-length line, guarantee viability
-		else if(line.size() == 1)
-			return true;
-		
+		// Terminal bounding boxes (expanded slightly to encourage spacing)
 		AbstractBox2f firstB = parent.bounds().grow(1F);
-		if(line.subList(1, line.size()).stream().anyMatch(firstB::intersects))
+		AbstractBox2f lastB = child.bounds().grow(1F);
+		
+		// Terminal line segments
+		Line2f firstL = line.getFirst();
+		Line2f lastL = line.getLast();
+		
+		// Terminal line segments must not be entirely contained within the terminal bounding boxes
+		final Predicate<Line2f> firstContains = l -> firstB.contains(l.getLeft()) && firstB.contains(l.getRight());
+		final Predicate<Line2f> lastContains = l -> lastB.contains(l.getLeft()) && lastB.contains(l.getRight());
+		if(
+				firstContains.test(firstL) || firstContains.test(lastL) ||
+				lastContains.test(firstL) || lastContains.test(lastL))
 			return false;
 		
-		AbstractBox2f lastB = child.bounds().grow(1F);
-		if(line.subList(0, line.size() - 1).stream().anyMatch(lastB::intersects))
+		// No subsequent line segment bounds may intersect the terminal bounding boxes
+		if(
+				line.subList(1, line.size()).stream().anyMatch(firstB::intersects) || 
+				line.subList(0, line.size() - 1).stream().anyMatch(lastB::intersects))
+			return false;
+		
+		if(
+				firstB.intersects(lineToBox(line.subList(1, line.size()), PASSAGE_WIDTH)) || 
+				lastB.intersects(lineToBox(line.subList(0, line.size()-1), PASSAGE_WIDTH)))
 			return false;
 		
 		return true;
@@ -90,83 +100,31 @@ public class BlueprintPassage
 	
 	public AbstractBox2f asBox() { return box; }
 	
-	public TileSet asTileSet(BlockPos origin, int height, List<AbstractBox2f> boundaries)
+	protected static CompoundBox2f lineToBox(List<Line2f> segments, float width)
 	{
-		BlockPos start = new BlockPos((int)line.getLeft().x, 0, (int)line.getLeft().y);
-		BlockPos end = new BlockPos((int)line.getRight().x, height * Tile.TILE_SIZE, (int)line.getRight().y);
+		CompoundBox2f box = new CompoundBox2f();
+		for(Line2f l : segments)
+			box.add(RotaryBox2f.fromLine(l, width));
 		
-		// TODO Lock off tiles inside or colliding with other rooms
-		List<BlockPos> points = Lists.newArrayList();
-		final Predicate<BlockPos> intersect = p -> boundaries.stream().anyMatch(bounds -> 
-			p.getX() >= bounds.minX() && p.getX() <= bounds.maxX() &&
-			p.getY() >= bounds.minY() && p.getY() <= bounds.maxY());
-		
-		BlockPos.Mutable.iterate(start, end).forEach(p -> 
-		{
-			if(intersect.test(p))
-				return;
-			
-			points.add(p.toImmutable());
-		});
-		
-		TileSet map = new TileSet();
-		points.stream().map(p -> 
-		{
-			BlockPos point = p.subtract(start);
-			return new BlockPos(point.getX() / Tile.TILE_SIZE, point.getY() / Tile.TILE_SIZE, point.getZ() / Tile.TILE_SIZE);
-		}).forEach(map::addToVolume);
-		
-		return map;
+		return box;
 	}
 	
 	public void build(BlockPos origin, ServerWorld world, List<AbstractBox2f> boundaries)
 	{
-//		TileSet map = asTileSet(PASSAGE_WIDTH, boundaries);
-//		if(map.isEmpty() || !map.hasBlanks())
-//			return;
-//		
-//		TileGenerator.generate(map, PASSAGE_TILE_SET, world.getRandom());
+		// FIXME Calculate tile set and generate with WFC
 		
-//		// Add enclosed positions to volume where they exceed the boundaries of rooms
-//		final Predicate<Vec2f> isExterior = p -> boundaries.stream().noneMatch(b -> b.contains(p));
-//		final List<Vec2f> positions = box.enclosedPositions();
-//		if(positions.stream().noneMatch(isExterior))
-//			return;
-//		
-//		positions.stream()
-//			.filter(isExterior)
-//			.forEach(p -> map.addToVolume(origin.add((int)p.x, 0, (int)p.y)));
-//		
-		Vec2f parentPos = line.getLeft();
-		Vec2f childPos = line.getRight();
-		
-		// Populate map
-		Vec2f current = parentPos;
-		while(current.distanceSquared(childPos) > 0)
+		for(Line2f segment : asLines())
 		{
-			double minDist = Double.MAX_VALUE;
-			Direction face = Direction.NORTH;
-			for(Direction facing : Direction.Type.HORIZONTAL)
+			Vec2f offset = segment.getRight().add(segment.getLeft().negate());
+			float len = offset.length();
+			offset = offset.normalize();
+			for(int i=0; i<len; i++)
 			{
-				double dist = current.add(new Vec2f(facing.getOffsetX(), facing.getOffsetZ())).distanceSquared(childPos);
-				if(minDist > dist)
-				{
-					face = facing;
-					minDist = dist;
-				}
-			}
-			
-			current = current.add(new Vec2f(face.getOffsetX(), face.getOffsetZ()));
-			BlockPos pos = origin.add((int)current.x, 0, (int)current.y);
-//			if(map.contains(pos))
-//				map.put(pos, CDTiles.FLOOR.get());
-//			else
+				Vec2f point = segment.getLeft().add(offset.multiply(i));
+				BlockPos pos = origin.add((int)point.x, 0, (int)point.y);
 				Tile.tryPlace(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), pos, world);
+			}
 		}
-		
-		// Generate
-//		BlockPos start = new BlockPos((int)line.getLeft().x, origin.getY(), (int)line.getLeft().y);
-//		map.generate(start, world);
 	}
 	
 	/** Returns true if the given point is either end of this passage */
@@ -239,8 +197,12 @@ public class BlueprintPassage
 			{
 				line = provider.apply(start, end);
 				line.removeIf(l -> l.length() == 0F);
+				line.removeIf(Objects::isNull);
 				
-				if(qualifier.test(line))
+				if(line.isEmpty())
+					continue;
+				
+				if(line.size() == 1 || qualifier.test(line))
 					return line;
 			}
 			

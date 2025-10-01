@@ -52,21 +52,22 @@ public class Box2f extends AbstractBox2f
 	
 	public boolean intersects(AbstractBox2f box)
 	{
-		if(box instanceof Box2f)
-			if(box.asPoints().stream().anyMatch(p -> 
-			{
-				return 
-						p.x >= minX && p.x <= maxX &&
-						p.y >= minY && p.y <= maxY;  
-			}))
-				return true;
+		if(box.asPoints().stream().anyMatch(p -> 
+		{
+			return 
+					p.x >= minX && p.x <= maxX &&
+					p.y >= minY && p.y <= maxY;  
+		}))
+			return true;
 		
 		return super.intersects(box);
 	}
 	
 	public boolean contains(Vec2f vec)
 	{
-		return vec.x > minX && vec.x < maxX && vec.y > minY && vec.y < maxY;
+		return 
+				vec.x >= minX && vec.x <= maxX && 
+				vec.y >= minY && vec.y <= maxY;
 	}
 	
 	public AbstractBox2f move(Vec2f vec)

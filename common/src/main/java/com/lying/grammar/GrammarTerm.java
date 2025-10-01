@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +30,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.random.Random;
 
 public abstract class GrammarTerm
@@ -51,9 +48,9 @@ public abstract class GrammarTerm
 	private static final Map<Tile, Float> BASIC_TILE_SET = Map.of(
 			CDTiles.FLOOR.get(), 10000F,
 			CDTiles.AIR.get(), 10F,
-			CDTiles.LIGHT.get(), 1F,
 			CDTiles.SEAT.get(), 1F,
-			CDTiles.TABLE.get(), 1F
+			CDTiles.TABLE.get(), 1F,
+			CDTiles.TABLE_LIGHT.get(), 1F
 			);
 	
 	private final Identifier registryName;
@@ -123,15 +120,15 @@ public abstract class GrammarTerm
 				Math.floorDiv(size.getY(), Tile.TILE_SIZE),
 				Math.floorDiv(size.getZ(), Tile.TILE_SIZE)
 				);
-		TileSet map = TileSet.ofSize(size);
+		TileSet map = TileSet.ofSize(size, BASIC_TILE_SET.keySet());
 		LOGGER.info(" # Size: {}", map.size().toShortString());
 		
 		// Pre-seed doorways to connecting rooms
-		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
-		final Predicate<BlockPos> isInDoorway = p -> doorways.stream().anyMatch(r -> r.asBox().contains(new Vec2f(p.getX(), p.getZ())));
-		map.getBoundaries(Direction.Type.HORIZONTAL.stream().toList()).stream()
-			.filter(isInDoorway)
-			.forEach(p -> map.put(p, CDTiles.PASSAGE.get()));
+//		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
+//		final Predicate<BlockPos> isInDoorway = p -> doorways.stream().anyMatch(r -> r.asBox().contains(new Vec2f(p.getX(), p.getZ())));
+//		map.getBoundaries(Direction.Type.HORIZONTAL.stream().toList()).stream()
+//			.filter(isInDoorway)
+//			.forEach(p -> map.put(p, CDTiles.PASSAGE.get()));
 		
 		// Fill rest of tileset with random generation
 		TileGenerator.generate(map, BASIC_TILE_SET, world.getRandom());

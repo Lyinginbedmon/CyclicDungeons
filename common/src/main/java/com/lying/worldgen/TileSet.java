@@ -20,10 +20,16 @@ public class TileSet
 	
 	private final Map<BlockPos, Tile> set = new HashMap<>();
 	private final Map<BlockPos, List<Tile>> optionCache = new HashMap<>();
+	private final List<Tile> options = Lists.newArrayList();
 	
-	public static TileSet ofSize(BlockPos size)
+	public TileSet(Collection<Tile> optionsIn)
 	{
-		TileSet map = new TileSet();
+		options.addAll(optionsIn);
+	}
+	
+	public static TileSet ofSize(BlockPos size, Collection<Tile> options)
+	{
+		TileSet map = new TileSet(options);
 		
 		int sizeX = Math.abs(size.getX());
 		sizeX = sizeX == 0 ? 1 : sizeX;
@@ -139,7 +145,7 @@ public class TileSet
 		{
 			BlockPos neighbour = pos.offset(d);
 			if(contains(neighbour))
-				optionCache.put(pos, CDTiles.getUseableTiles().stream().filter(t -> t.canExistAt(pos, this)).toList());
+				optionCache.put(pos, options.stream().filter(t -> t.canExistAt(pos, this)).toList());
 		}
 	}
 	

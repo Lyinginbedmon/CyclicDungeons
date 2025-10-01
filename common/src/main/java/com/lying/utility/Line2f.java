@@ -41,6 +41,11 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 		return isVertical == line.isVertical && m == line.m && b == line.b && xRange.equals(line.xRange) && yRange.equals(line.yRange);
 	}
 	
+	public boolean isEitherPoint(Vec2f vec)
+	{
+		return getLeft().equals(vec) || getRight().equals(vec);
+	}
+	
 	public double length() { return getLeft().add(getRight().negate()).length(); }
 	
 	public Vec2f atX(float x)
@@ -82,12 +87,21 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 	
 	public boolean intersects(Line2f line2)
 	{
-		return intercept(line2) != null;
+		return intercept(line2) != null || isSame(line2);
 	}
 	
 	public boolean isSame(Line2f line2)
 	{
-		return areParallel(this, line2) && inRange(line2.getLeft()) || inRange(line2.getRight());
+		if(!areParallel(this, line2))
+			return false;
+		
+		if(!inRange(line2.getLeft()) && !inRange(line2.getRight()))
+			return false;
+		
+		if(isVertical && line2.isVertical)
+			return m == line2.m;
+		else
+			return b == line2.b;
 	}
 	
 	/** Returns the point that this line intersects with the given line, if at all */

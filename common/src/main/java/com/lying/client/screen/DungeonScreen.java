@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
+import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintOrganiser;
@@ -48,6 +49,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	public static int renderScale = 1;
 	private static boolean showCriticalPath = false;
+	private static List<BlueprintPassage> criticalPath = Lists.newArrayList(), totalPassages = Lists.newArrayList();
 	
 	private final Long randSeed;
 	private Vector2i displayOffset = new Vector2i(0,0);
@@ -83,6 +85,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	{
 		organiser.get().organise(blueprint, Random.create(randSeed));
 		cacheErrors();
+		updatePathCaches();
 		resetDrag();
 	}
 	
@@ -91,6 +94,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		BlueprintScruncher.scrunch(blueprint, false);
 		BlueprintScruncher.scrunch(blueprint, true);
 		cacheErrors();
+		updatePathCaches();
 	}
 	
 	private void collapse()
@@ -98,6 +102,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		BlueprintScruncher.collapse(blueprint, false);
 		BlueprintScruncher.collapse(blueprint, true);
 		cacheErrors();
+		updatePathCaches();
 	}
 	
 	private void cacheErrors()
@@ -109,6 +114,19 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			if(total > 0)
 				errorCache.put(type, total);
 		}
+	}
+	
+	private void updatePathCaches()
+	{
+		totalPassages = Blueprint.getPassages(blueprint);
+		
+		if(!errorCache.isEmpty())
+		{
+			criticalPath.clear();
+			return;
+		}
+		
+		criticalPath = Blueprint.getPassages(blueprint.getCriticalPath());
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -162,6 +180,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
 				BlueprintOrganiser.Tree.create().organise(blueprint, rand);
 				cacheErrors();
+				updatePathCaches();
 			});
 		else
 		{
@@ -222,7 +241,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			// Render links between nodes
 			renderLinks(origin, renderScale, chart, !errors.isEmpty(), context, mouseX, mouseY);
 			// Render the critical path from the start to the end of the dungeon
-			if(showCriticalPath && errors.isEmpty())
+			if(showCriticalPath)
 				renderCriticalPath(origin, renderScale, chart, context);
 			// Then render icons & titles
 			chart.forEach(n -> renderNode(n, origin, renderScale, context, textRenderer, mouseX, mouseY));
@@ -231,28 +250,29 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		public static void renderLinks(Vector2i origin, int renderScale, Blueprint chart, boolean errorsPresent, DrawContext context, int mouseX, int mouseY)
 		{
 			Function<BlueprintPassage,BlueprintPassage> scaleFunc = scaleFunc(renderScale, origin);
-			Blueprint.getPassages(chart).stream().map(scaleFunc).forEach(p -> 
-			{
-				int linkColour = errorsPresent ?
-						(p.hasIntersections(chart) ? 
-							LIGHT_BLUE : 
-							p.hasTunnels(chart) ? 
-								LIME_GREEN : 
-								DARK_GRAY) :
-						DARK_GRAY;
-				 
-				renderPath(p, context, linkColour, p.asBox().contains(new Vec2f(mouseX, mouseY)));
-			});
+			totalPassages.stream()
+				.map(scaleFunc)
+				.forEach(p -> 
+				{
+					int linkColour = errorsPresent ?
+							(p.hasIntersections(chart) ? 
+								LIGHT_BLUE : 
+								p.hasTunnels(chart) ? 
+									LIME_GREEN : 
+									DARK_GRAY) :
+							DARK_GRAY;
+					 
+					renderPath(p, context, linkColour, p.asBox().contains(new Vec2f(mouseX, mouseY)));
+				});
 		}
 		
 		public static void renderCriticalPath(Vector2i origin, int renderScale, Blueprint chart, DrawContext context)
 		{
-			List<BlueprintRoom> criticalPath = chart.getCriticalPath();
 			if(criticalPath.isEmpty())
 				return;
 			
 			Function<BlueprintPassage,BlueprintPassage> scaleFunc = scaleFunc(renderScale, origin);
-			Blueprint.getPassages(criticalPath).stream()
+			criticalPath.stream()
 				.map(scaleFunc)
 				.forEach(path -> renderPath(path, context, GOLD, false));
 		}

@@ -44,7 +44,7 @@ public class TileGenerator
 			/**
 			 * Sort open slots by number of available options
 			 * Pop slot with fewest
-			 * Assign random option to slot
+			 * Assign random viable option (or empty air) to slot
 			 * Repeat until slots are depleted
 			 */
 			slots.sort((a,b) -> 
