@@ -48,7 +48,8 @@ public abstract class GrammarTerm
 	private static final Map<Tile, Float> BASIC_TILE_SET = Map.of(
 			CDTiles.FLOOR.get(), 10000F,
 			CDTiles.AIR.get(), 10F,
-			CDTiles.SEAT.get(), 1F,
+			CDTiles.SEAT.get(), 10F,
+			CDTiles.FLOOR_LIGHT.get(), 1F,
 			CDTiles.TABLE.get(), 1F,
 			CDTiles.TABLE_LIGHT.get(), 1F
 			);

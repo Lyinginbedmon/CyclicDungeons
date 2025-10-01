@@ -147,9 +147,10 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 //		buildExteriorShell(position, world);
 		
+		buildExteriorPaths(position, world);
+		
 		buildRooms(position, world);
 		
-		buildExteriorPaths(position, world);
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);
 		return true;
 	}

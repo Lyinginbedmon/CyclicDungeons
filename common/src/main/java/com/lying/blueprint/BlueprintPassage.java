@@ -123,6 +123,7 @@ public class BlueprintPassage
 				Vec2f point = segment.getLeft().add(offset.multiply(i));
 				BlockPos pos = origin.add((int)point.x, 0, (int)point.y);
 				Tile.tryPlace(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), pos, world);
+				Tile.tryPlace(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), pos.up(), world);
 			}
 		}
 	}

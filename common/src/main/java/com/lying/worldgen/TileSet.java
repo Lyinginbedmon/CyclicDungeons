@@ -140,13 +140,13 @@ public class TileSet
 	{
 		set.put(pos, tile == null ? BLANK : tile);
 		
-		// Update the tile options for neighbouring positions
-		for(Direction d : Direction.values())
-		{
-			BlockPos neighbour = pos.offset(d);
-			if(contains(neighbour))
-				optionCache.put(pos, options.stream().filter(t -> t.canExistAt(pos, this)).toList());
-		}
+		// Update the viable tile options for neighbouring positions
+		Direction.stream()
+			.map(pos::offset)
+			.filter(this::contains)
+			.forEach(p -> optionCache.put(p, options.stream()
+					.filter(t -> t.canExistAt(p, this))
+					.toList()));
 	}
 	
 	public void generate(BlockPos origin, ServerWorld world)

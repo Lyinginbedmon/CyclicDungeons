@@ -21,12 +21,15 @@ import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 
 public class CDTiles
 {
 	private static final Map<Identifier, Supplier<Tile>> TERMS = new HashMap<>();
 	private static int tally = 0;
+	
+	private static final List<Direction> HORIZONTAL_FACES = Direction.Type.HORIZONTAL.stream().toList();
 	
 	public static final Supplier<Tile> BLANK	= register("blank", Tile.of(TilePredicate.Builder.create().never().build(), noOp()));
 	
@@ -38,20 +41,25 @@ public class CDTiles
 			.build(), CDStructurePools.FLOOR_KEY, true));
 	public static final Supplier<Tile> TABLE	= register("table", StructureTile.of(TilePredicate.Builder.create()
 			.onFloor()
-			.nonConsecutive(Direction.Type.HORIZONTAL.stream().toList())
+			.boundary(HORIZONTAL_FACES)
+			.nonConsecutive()
 			.build(), CDStructurePools.TABLE_KEY, true));
-	public static final Supplier<Tile> FLOOR_LIGHT	= register("floor_light", StructureTile.of(TilePredicate.Builder.create()
-			.onFloor()
-			.nonConsecutive(Direction.Type.HORIZONTAL.stream().toList())
-			.build(), CDStructurePools.FLOOR_LIGHT_KEY, true));
 	public static final Supplier<Tile> TABLE_LIGHT	= register("table_light", StructureTile.of(TilePredicate.Builder.create()
 			.onFloor()
-			.nonConsecutive(Direction.Type.HORIZONTAL.stream().toList())
+			.boundary(HORIZONTAL_FACES)
+			.nonConsecutive()
+			.nonAdjacent(List.of(CDTiles.TABLE))
 			.build(), CDStructurePools.TABLE_LIGHT_KEY, true));
 	public static final Supplier<Tile> SEAT		= register("seat", StructureTile.of(TilePredicate.Builder.create()
 			.onFloor()
-			.adjacent(Direction.Type.HORIZONTAL.stream().toList(), List.of(CDTiles.TABLE, CDTiles.TABLE_LIGHT))
+			.adjacent(HORIZONTAL_FACES, List.of(CDTiles.TABLE, CDTiles.TABLE_LIGHT))
 			.build(), CDStructurePools.SEAT_KEY));
+	public static final Supplier<Tile> FLOOR_LIGHT	= register("floor_light", StructureTile.of(TilePredicate.Builder.create()
+			.boundary(HORIZONTAL_FACES)
+			.onFloor()
+			.nonConsecutive()
+			.avoid(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), List.of(CDTiles.TABLE, CDTiles.TABLE_LIGHT, CDTiles.SEAT))
+			.build(), CDStructurePools.FLOOR_LIGHT_KEY, true));
 	
 	protected static BiConsumer<BlockPos,ServerWorld> noOp() { return (a,b) -> {}; }
 	

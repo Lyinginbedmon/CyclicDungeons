@@ -1,12 +1,14 @@
 package com.lying.worldgen;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import com.lying.init.CDTiles;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 
 public class TilePredicate
@@ -105,6 +107,18 @@ public class TilePredicate
 			return this;
 		}
 		
+		public Builder near(Box box, List<Supplier<Tile>> tiles)
+		{
+			conditions.add(Conditions.near(box, tiles));
+			return this;
+		}
+		
+		public Builder avoid(Box box, List<Supplier<Tile>> tiles)
+		{
+			conditions.add(Conditions.avoid(box, tiles));
+			return this;
+		}
+		
 		public TilePredicate build()
 		{
 			TilePredicate predicate = new TilePredicate();
@@ -138,10 +152,23 @@ public class TilePredicate
 						.filter(set::contains)
 						.map(set::get)
 						.filter(tile2 -> !tile2.isBlank())
-						.anyMatch(tile2 -> 
-							tiles.stream()
-							.map(Supplier::get)
-							.anyMatch(tile2::is));
+						.anyMatch(tileAnyMatch(tiles));
+			}
+			
+			/** Withing Y range of N */
+			public static TileCondition near(Box bounds, List<Supplier<Tile>> tiles)
+			{
+				return (tile, pos, set) -> 
+				{
+					List<BlockPos> positions = Lists.newArrayList();
+					BlockPos.Mutable.iterate(bounds).forEach(p -> positions.add(p.toImmutable().add(pos)));
+					
+					return positions.stream()
+							.filter(set::contains)
+							.map(set::get)
+							.filter(t2 -> !t2.isBlank())
+							.anyMatch(tileAnyMatch(tiles));
+				};
 			}
 			
 			/** Adjacent to self */
@@ -160,6 +187,17 @@ public class TilePredicate
 			public static TileCondition nonConsecutive(List<Direction> faces)
 			{
 				return (t,p,s) -> not(adjacent(faces, List.of(() -> t))).test(t, p, s);
+			}
+			
+			/** Not within Y range of N */
+			public static TileCondition avoid(Box bounds, List<Supplier<Tile>> tiles)
+			{
+				return (t,p,s) -> not(near(bounds, tiles)).test(t, p, s);
+			}
+			
+			public static Predicate<Tile> tileAnyMatch(List<Supplier<Tile>> tiles)
+			{
+				return t -> tiles.stream().map(Supplier::get).anyMatch(t::is);
 			}
 		}
 	}
