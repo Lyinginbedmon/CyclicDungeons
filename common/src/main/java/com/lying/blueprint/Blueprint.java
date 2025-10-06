@@ -11,17 +11,16 @@ import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.RoomMetadata;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
-import com.lying.reference.Reference;
 import com.lying.utility.AbstractBox2f;
+import com.lying.utility.DebugLogger;
 import com.lying.worldgen.Tile;
 
 import net.minecraft.block.BlockState;
@@ -33,7 +32,8 @@ import net.minecraft.util.math.BlockPos;
 @SuppressWarnings("serial")
 public class Blueprint extends ArrayList<BlueprintRoom>
 {
-	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_worldgen");
+	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
+	
 	private static final int ROOM_HEIGHT = Tile.TILE_SIZE * 4;
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
@@ -200,6 +200,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	public void buildRooms(BlockPos position, ServerWorld world)
 	{
+		long timeMillis = System.currentTimeMillis();
+		LOGGER.info(" # Generating rooms");
+		
 		final List<BlueprintPassage> passages = getPassages(this);
 		int tally = 0;
 		for(BlueprintRoom node : this)
@@ -213,17 +216,24 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			
 			RoomMetadata meta = node.metadata();
 			GrammarTerm type = meta.type();
-			LOGGER.info(" # Room {}: {}x{} {}", tally++, meta.size().x(), meta.size().y(), type.registryName().getPath());
-			type.generate(min, max, world, node, this, passages);
+			LOGGER.info(" # Room {} of {}: {}x{} {}", ++tally, size(), meta.size().x(), meta.size().y(), type.registryName().getPath());
+			if(type.generate(min, max, world, node, this, passages))
+				LOGGER.info(" ## Finished");
+			else
+				LOGGER.error(" ## Error during room generation");
 		};
+		
+		LOGGER.info(" ## Rooms completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
 	public void buildExteriorPaths(BlockPos position, ServerWorld world)
 	{
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior passages");
+		
 		List<AbstractBox2f> bounds = stream().map(BlueprintRoom::bounds).toList();
 		getPassages(this).forEach(p -> p.build(position, world, bounds));
+		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	

@@ -3,19 +3,18 @@ package com.lying.grammar;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
-import com.lying.reference.Reference;
 import com.lying.utility.CDUtils;
+import com.lying.utility.DebugLogger;
 
 import net.minecraft.util.math.random.Random;
 
 public class CDGrammar
 {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_grammar");
+	private static final DebugLogger LOGGER = CDLoggers.GRAMMAR;
 	
 	public static final List<GrammarTerm> PLACEABLE = CDTerms.placeables();
 	

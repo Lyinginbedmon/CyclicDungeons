@@ -10,12 +10,13 @@ import com.lying.init.CDTiles;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 
 public class TilePredicate
 {
 	private final List<TileCondition> primitives = Lists.newArrayList();
 	
-	public boolean canExistAt(Tile tile, BlockPos pos, TileSet set)
+	public boolean test(Tile tile, BlockPos pos, TileSet set)
 	{
 		return primitives.isEmpty() || primitives.stream().allMatch(p -> p.test(tile, pos, set));
 	}
@@ -29,6 +30,11 @@ public class TilePredicate
 	public static interface TileCondition
 	{
 		public boolean test(Tile tileIn, BlockPos pos, TileSet set);
+	}
+	
+	public static Predicate<Tile> tileAnyMatch(List<Supplier<Tile>> tiles)
+	{
+		return t -> tiles.stream().map(Supplier::get).filter(t2 -> !t2.isBlank()).anyMatch(t::is);
 	}
 	
 	public static class Builder
@@ -155,20 +161,38 @@ public class TilePredicate
 						.anyMatch(tileAnyMatch(tiles));
 			}
 			
-			/** Withing Y range of N */
+			/** Within bounded range of N */
 			public static TileCondition near(Box bounds, List<Supplier<Tile>> tiles)
 			{
+				// Cap the size of the search area to reduce lag
+				int lX = (int)(Math.min(10, bounds.getLengthX()) * 0.5D);
+				int lY = (int)(Math.min(10, bounds.getLengthY()) * 0.5D);
+				int lZ = (int)(Math.min(10, bounds.getLengthZ()) * 0.5D);
+				final Box b = Box.enclosing(new BlockPos(-lX,-lY,-lZ), new BlockPos(lX,lY,lZ));
 				return (tile, pos, set) -> 
 				{
-					List<BlockPos> positions = Lists.newArrayList();
-					BlockPos.Mutable.iterate(bounds).forEach(p -> positions.add(p.toImmutable().add(pos)));
-					
-					return positions.stream()
-							.filter(set::contains)
-							.map(set::get)
-							.filter(t2 -> !t2.isBlank())
-							.anyMatch(tileAnyMatch(tiles));
+					final Box box = bounds.offset(pos);
+					return !set.getTiles((p2,t2) -> box.contains(new Vec3d(p2.getX() + 0.5D, p2.getY() + 0.5D, p2.getZ() + 0.5D)) && tileAnyMatch(tiles).test(t2)).isEmpty();
 				};
+			}
+			
+			/** Within Y range of N */
+			public static TileCondition near(double distance, List<Supplier<Tile>> tiles)
+			{
+				final double d = Math.min(10D, distance);
+				return (t,p,s) -> !s.getTiles((p2,t2) -> p2.isWithinDistance(p, d) && tileAnyMatch(tiles).test(t2)).isEmpty();
+			}
+			
+			/** Not within bounded range of N */
+			public static TileCondition avoid(Box bounds, List<Supplier<Tile>> tiles)
+			{
+				return (t,p,s) -> not(near(bounds, tiles)).test(t, p, s);
+			}
+			
+			/** Not within Y range of N */
+			public static TileCondition avoid(double distance, List<Supplier<Tile>> tiles)
+			{
+				return (t,p,s) -> not(near(distance, tiles)).test(t,p,s);
 			}
 			
 			/** Adjacent to self */
@@ -187,17 +211,6 @@ public class TilePredicate
 			public static TileCondition nonConsecutive(List<Direction> faces)
 			{
 				return (t,p,s) -> not(adjacent(faces, List.of(() -> t))).test(t, p, s);
-			}
-			
-			/** Not within Y range of N */
-			public static TileCondition avoid(Box bounds, List<Supplier<Tile>> tiles)
-			{
-				return (t,p,s) -> not(near(bounds, tiles)).test(t, p, s);
-			}
-			
-			public static Predicate<Tile> tileAnyMatch(List<Supplier<Tile>> tiles)
-			{
-				return t -> tiles.stream().map(Supplier::get).anyMatch(t::is);
 			}
 		}
 	}

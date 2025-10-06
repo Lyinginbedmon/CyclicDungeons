@@ -4,32 +4,36 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiPredicate;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
+import com.lying.utility.DebugLogger;
 
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 
 public class TileSet
 {
+	public static final DebugLogger LOGGER = CDLoggers.WFC;
 	public static final Tile BLANK	= CDTiles.BLANK.get();
+	public static final Random rand = Random.create();
 	
 	private final Map<BlockPos, Tile> set = new HashMap<>();
 	private final Map<BlockPos, List<Tile>> optionCache = new HashMap<>();
-	private final List<Tile> options = Lists.newArrayList();
 	
-	public TileSet(Collection<Tile> optionsIn)
-	{
-		options.addAll(optionsIn);
-	}
+	private final List<TileInstance> finalised = Lists.newArrayList();
 	
-	public static TileSet ofSize(BlockPos size, Collection<Tile> options)
+	public static TileSet ofSize(BlockPos size)
 	{
-		TileSet map = new TileSet(options);
+		TileSet map = new TileSet();
 		
 		int sizeX = Math.abs(size.getX());
 		sizeX = sizeX == 0 ? 1 : sizeX;
@@ -80,7 +84,7 @@ public class TileSet
 	
 	public boolean contains(BlockPos pos)
 	{
-		return set.keySet().stream().anyMatch(k -> isSamePos(k, pos));
+		return set.keySet().stream().anyMatch(k -> k.getSquaredDistance(pos) < 1);
 	}
 	
 	public boolean isBoundary(BlockPos pos, Direction side) { return !contains(pos.offset(side)); }
@@ -97,7 +101,7 @@ public class TileSet
 		return boundaries;
 	}
 	
-	public void applyToAllValid(Tile tile)
+	public void applyToAllValid(Tile tile, List<Tile> options)
 	{
 		Collection<BlockPos> points = set.keySet();
 		points.stream().filter(p -> get(p).isBlank() && tile.canExistAt(p, this)).forEach(p -> put(p, tile));
@@ -128,6 +132,11 @@ public class TileSet
 		return options;
 	}
 	
+	public void clearOptionCache()
+	{
+		optionCache.clear();
+	}
+	
 	@Nullable
 	public Tile get(BlockPos pos)
 	{
@@ -136,27 +145,57 @@ public class TileSet
 		return null;
 	}
 	
+	public List<BlockPos> getTiles(BiPredicate<BlockPos,Tile> predicate)
+	{
+		return set.entrySet().stream().filter(e -> predicate.test(e.getKey(), e.getValue())).map(Entry::getKey).toList();
+	}
+	
 	public void put(BlockPos pos, @Nullable Tile tile)
 	{
+		finalised.clear();
 		set.put(pos, tile == null ? BLANK : tile);
-		
-		// Update the viable tile options for neighbouring positions
-		Direction.stream()
-			.map(pos::offset)
-			.filter(this::contains)
-			.forEach(p -> optionCache.put(p, options.stream()
-					.filter(t -> t.canExistAt(p, this))
-					.toList()));
 	}
 	
-	public void generate(BlockPos origin, ServerWorld world)
+	/** Populates the finalised map with tile instances with appropriate orientations */
+	public void finalise()
 	{
+		LOGGER.info("Finalising tile set...");
+		finalised.clear();
 		set.entrySet().forEach(entry -> 
 		{
-			BlockPos pos = origin.add(entry.getKey().multiply(Tile.TILE_SIZE));
-			entry.getValue().generate(pos, world);
+			Tile tile = entry.getValue();
+			if(tile == null || tile.isFlag())
+				return;
+			
+			BlockPos pos = entry.getKey();
+			BlockRotation rotation = tile.assignRotation(pos, this::get, rand);
+			finalised.add(new TileInstance(pos, tile, rotation));
 		});
+		LOGGER.info("Tile set finalised");
 	}
 	
-	private static boolean isSamePos(BlockPos a, BlockPos b) { return a.getSquaredDistance(b) < 1; }
+	/** Returns the finalised contents of this tile set */
+	public List<TileInstance> contents() { return finalised; }
+	
+	/** Generates the finalised map into the world at the given position */
+	public boolean generate(BlockPos origin, ServerWorld world)
+	{
+		if(finalised.isEmpty())
+		{
+			LOGGER.warn("Attempted to generate empty or non-finalised tile set");
+			return false;
+		}
+		
+		finalised.forEach(entry -> entry.generate(origin.add(entry.pos().multiply(Tile.TILE_SIZE)), world));
+		LOGGER.info("Tile set generated successfully");
+		return true;
+	}
+	
+	public static record TileInstance(BlockPos pos, Tile tile, BlockRotation rotation)
+	{
+		public void generate(BlockPos position, ServerWorld world)
+		{
+			tile.generate(this, position, world);
+		}
+	}
 }

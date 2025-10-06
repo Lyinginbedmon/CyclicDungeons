@@ -10,14 +10,15 @@ import java.util.function.Supplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
-import org.slf4j.Logger;
 
 import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
+import com.lying.utility.DebugLogger;
 import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.TileSet;
@@ -34,7 +35,7 @@ import net.minecraft.util.math.random.Random;
 
 public abstract class GrammarTerm
 {
-	public static final Logger LOGGER = Blueprint.LOGGER;
+	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	protected static final Codec<GrammarTerm> CODEC = Identifier.CODEC.comapFlatMap(id -> 
 	{
 		Optional<GrammarTerm> type = CDTerms.get(id);
@@ -113,16 +114,13 @@ public abstract class GrammarTerm
 	
 	public boolean generate(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart, List<BlueprintPassage> passages)
 	{
-		long timeMillis = System.currentTimeMillis();
-		
 		BlockPos size = max.subtract(min);
 		size = new BlockPos(
 				Math.floorDiv(size.getX(), Tile.TILE_SIZE),
 				Math.floorDiv(size.getY(), Tile.TILE_SIZE),
 				Math.floorDiv(size.getZ(), Tile.TILE_SIZE)
 				);
-		TileSet map = TileSet.ofSize(size, BASIC_TILE_SET.keySet());
-		LOGGER.info(" # Size: {}", map.size().toShortString());
+		TileSet map = TileSet.ofSize(size);
 		
 		// Pre-seed doorways to connecting rooms
 //		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
@@ -131,12 +129,10 @@ public abstract class GrammarTerm
 //			.filter(isInDoorway)
 //			.forEach(p -> map.put(p, CDTiles.PASSAGE.get()));
 		
-		// Fill rest of tileset with random generation
+		// Fill rest of tileset with WFC generation
 		TileGenerator.generate(map, BASIC_TILE_SET, world.getRandom());
-		
-		map.generate(min, world);
-		LOGGER.info(" ## Completed in {}ms", System.currentTimeMillis() - timeMillis);
-		return true;
+		map.finalise();
+		return map.generate(min, world);
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)

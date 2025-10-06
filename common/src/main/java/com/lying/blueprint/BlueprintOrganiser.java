@@ -8,12 +8,11 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Vector2i;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
-import com.lying.reference.Reference;
+import com.lying.init.CDLoggers;
 import com.lying.utility.CDUtils;
+import com.lying.utility.DebugLogger;
 import com.lying.utility.Vector2iUtils;
 
 import net.minecraft.util.math.random.Random;
@@ -21,7 +20,7 @@ import net.minecraft.util.math.random.Random;
 /** Utilities for organising a blueprint, prior to scrunching */
 public abstract class BlueprintOrganiser
 {
-	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_planar");
+	public static final DebugLogger LOGGER = CDLoggers.PLANAR;
 	private static final int GRID_SIZE = 30;
 	
 	public static final Comparator<BlueprintRoom> descendantSort(List<BlueprintRoom> chart)
