@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 
 import org.jetbrains.annotations.Nullable;
@@ -104,7 +105,7 @@ public class TileSet
 	public void applyToAllValid(Tile tile, List<Tile> options)
 	{
 		Collection<BlockPos> points = set.keySet();
-		points.stream().filter(p -> get(p).isBlank() && tile.canExistAt(p, this)).forEach(p -> put(p, tile));
+		points.stream().filter(this::contains).filter(p -> get(p).get().isBlank() && tile.canExistAt(p, this)).forEach(p -> put(p, tile));
 	}
 	
 	public boolean hasBlanks() { return getBlanks().isEmpty(); }
@@ -137,12 +138,9 @@ public class TileSet
 		optionCache.clear();
 	}
 	
-	@Nullable
-	public Tile get(BlockPos pos)
+	public Optional<Tile> get(BlockPos pos)
 	{
-		if(contains(pos))
-			return set.getOrDefault(pos, BLANK);
-		return null;
+		return contains(pos) ? Optional.of(set.getOrDefault(pos, BLANK)) : Optional.empty();
 	}
 	
 	public List<BlockPos> getTiles(BiPredicate<BlockPos,Tile> predicate)

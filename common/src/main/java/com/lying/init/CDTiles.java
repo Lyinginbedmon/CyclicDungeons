@@ -59,6 +59,7 @@ public class CDTiles
 				.boundary(HORIZONTAL_FACES)
 				.nonConsecutive()
 				.nonAdjacent(List.of(CDTiles.TABLE))
+				.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), List.of(CDTiles.TABLE))
 				.build())
 			.asStructure(CDStructurePools.TABLE_LIGHT_KEY)
 			.freeRotation().build());

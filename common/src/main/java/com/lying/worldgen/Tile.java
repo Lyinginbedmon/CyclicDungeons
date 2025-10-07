@@ -36,6 +36,8 @@ import net.minecraft.util.math.random.Random;
 
 public abstract class Tile
 {
+	// FIXME Implement tile tags to group tiles during validity checks
+	
 	public static final int TILE_SIZE = 2;
 	
 	private final Identifier registryName;
@@ -66,7 +68,7 @@ public abstract class Tile
 	
 	/** Returns a valid rotation for an instance of this tile at the given coordinates in the tile set */
 	@NotNull
-	public final BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Tile> getter, Random rand) { return rotator.assignRotation(pos, getter, rand); }
+	public final BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Optional<Tile>> getter, Random rand) { return rotator.assignRotation(pos, getter, rand); }
 	
 	public abstract void generate(TileInstance inst, BlockPos pos, ServerWorld world);
 	
@@ -88,7 +90,7 @@ public abstract class Tile
 	public static interface RotationSupplier
 	{
 		@NotNull
-		public BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Tile> getter, Random rand);
+		public BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Optional<Tile>> getter, Random rand);
 		
 		public static RotationSupplier none() { return (p,g,r) -> BlockRotation.NONE; }
 		
@@ -99,7 +101,6 @@ public abstract class Tile
 			return toFaceAdjacent(tiles, none());
 		}
 		
-		// FIXME Resolve silent crashing during tile set finalisation
 		public static RotationSupplier toFaceAdjacent(List<Supplier<Tile>> tiles, RotationSupplier fallback)
 		{
 			final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
@@ -114,8 +115,8 @@ public abstract class Tile
 			{
 				for(Entry<Direction, BlockRotation> entry : faceToRotationMap.entrySet())
 				{
-					Tile neighbour = getter.apply(pos.offset(entry.getKey()));
-					if(neighbour != null && predicate.test(neighbour))
+					Optional<Tile> neighbour = getter.apply(pos.offset(entry.getKey()));
+					if(neighbour.isPresent() && predicate.test(neighbour.get()))
 						return entry.getValue();
 				}
 				

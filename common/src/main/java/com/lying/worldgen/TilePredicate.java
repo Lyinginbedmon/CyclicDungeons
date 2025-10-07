@@ -1,6 +1,7 @@
 package com.lying.worldgen;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -107,6 +108,12 @@ public class TilePredicate
 			return nonConsecutive(Direction.stream().toList());
 		}
 		
+		public Builder nonConsecutive(Box box)
+		{
+			conditions.add(Conditions.nonConsecutive(box));
+			return this;
+		}
+		
 		public Builder nonConsecutive(List<Direction> faces)
 		{
 			conditions.add(Conditions.nonConsecutive(faces));
@@ -157,6 +164,7 @@ public class TilePredicate
 						.map(face -> pos.offset(face))
 						.filter(set::contains)
 						.map(set::get)
+						.map(Optional::get)
 						.filter(tile2 -> !tile2.isBlank())
 						.anyMatch(tileAnyMatch(tiles));
 			}
@@ -211,6 +219,12 @@ public class TilePredicate
 			public static TileCondition nonConsecutive(List<Direction> faces)
 			{
 				return (t,p,s) -> not(adjacent(faces, List.of(() -> t))).test(t, p, s);
+			}
+			
+			/** Not adjacent to self */
+			public static TileCondition nonConsecutive(Box box)
+			{
+				return (t,p,s) -> avoid(box, List.of(() -> t)).test(t, p, s);
 			}
 		}
 	}

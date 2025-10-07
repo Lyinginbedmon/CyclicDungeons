@@ -44,7 +44,9 @@ public class CDTemplatePoolProvider
 				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.SEAT_KEY, new StructurePool(registry, ImmutableList.of(
 				create("dungeon/seat/plains/seat_01", 1),
-				create("dungeon/seat/plains/seat_02", 1)
+				create("dungeon/seat/plains/seat_02", 1),
+				create("dungeon/seat/plains/seat_03", 1),
+				create("dungeon/seat/plains/seat_04", 1)
 				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.TABLE_KEY, new StructurePool(registry, ImmutableList.of(
 				create("dungeon/table/plains/table_01", 1),
