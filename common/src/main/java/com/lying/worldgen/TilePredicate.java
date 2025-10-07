@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import com.lying.init.CDTileTags.TileTag;
 import com.lying.init.CDTiles;
 
 import net.minecraft.util.math.BlockPos;
@@ -33,9 +34,16 @@ public class TilePredicate
 		public boolean test(Tile tileIn, BlockPos pos, TileSet set);
 	}
 	
+	/** Returns a predicate that matches an input Tile against the supplied list of tiles */
 	public static Predicate<Tile> tileAnyMatch(List<Supplier<Tile>> tiles)
 	{
 		return t -> tiles.stream().map(Supplier::get).filter(t2 -> !t2.isBlank()).anyMatch(t::is);
+	}
+	
+	/** Returns a predicate that matches an input Tile against the supplied list of tags */
+	public static Predicate<Tile> tagAnyMatch(List<TileTag> tags)
+	{
+		return t -> tags.stream().anyMatch(t::isIn);
 	}
 	
 	public static class Builder
@@ -78,28 +86,28 @@ public class TilePredicate
 		
 		public Builder onFloor()
 		{
-			return adjacent(List.of(Direction.DOWN), List.of(CDTiles.FLOOR));
+			return adjacent(List.of(Direction.DOWN), t -> t.is(CDTiles.FLOOR.get()));
 		}
 		
-		public Builder adjacent(List<Supplier<Tile>> tiles)
+		public Builder adjacent(Predicate<Tile> predicate)
 		{
-			return adjacent(Direction.stream().toList(), tiles);
+			return adjacent(Direction.stream().toList(), predicate);
 		}
 		
-		public Builder adjacent(List<Direction> faces, List<Supplier<Tile>> tiles)
+		public Builder adjacent(List<Direction> faces, Predicate<Tile> predicate)
 		{
-			conditions.add(Conditions.adjacent(faces, tiles));
+			conditions.add(Conditions.adjacent(faces, predicate));
 			return this;
 		}
 		
-		public Builder nonAdjacent(List<Supplier<Tile>> tiles)
+		public Builder nonAdjacent(Predicate<Tile> predicate)
 		{
-			return nonAdjacent(Direction.stream().toList(), tiles);
+			return nonAdjacent(Direction.stream().toList(), predicate);
 		}
 		
-		public Builder nonAdjacent(List<Direction> faces, List<Supplier<Tile>> tiles)
+		public Builder nonAdjacent(List<Direction> faces, Predicate<Tile> predicate)
 		{
-			conditions.add(Conditions.nonAdjacent(faces,tiles));
+			conditions.add(Conditions.nonAdjacent(faces, predicate));
 			return this;
 		}
 		
@@ -120,15 +128,15 @@ public class TilePredicate
 			return this;
 		}
 		
-		public Builder near(Box box, List<Supplier<Tile>> tiles)
+		public Builder near(Box box, Predicate<Tile> predicate)
 		{
-			conditions.add(Conditions.near(box, tiles));
+			conditions.add(Conditions.near(box, predicate));
 			return this;
 		}
 		
-		public Builder avoid(Box box, List<Supplier<Tile>> tiles)
+		public Builder avoid(Box box, Predicate<Tile> predicate)
 		{
-			conditions.add(Conditions.avoid(box, tiles));
+			conditions.add(Conditions.avoid(box, predicate));
 			return this;
 		}
 		
@@ -158,7 +166,7 @@ public class TilePredicate
 			}
 			
 			/** Adjacent to N */
-			public static TileCondition adjacent(List<Direction> faces, List<Supplier<Tile>> tiles)
+			public static TileCondition adjacent(List<Direction> faces, Predicate<Tile> predicate)
 			{
 				return (tile, pos, set) -> faces.stream()
 						.map(face -> pos.offset(face))
@@ -166,11 +174,11 @@ public class TilePredicate
 						.map(set::get)
 						.map(Optional::get)
 						.filter(tile2 -> !tile2.isBlank())
-						.anyMatch(tileAnyMatch(tiles));
+						.anyMatch(predicate);
 			}
 			
 			/** Within bounded range of N */
-			public static TileCondition near(Box bounds, List<Supplier<Tile>> tiles)
+			public static TileCondition near(Box bounds, Predicate<Tile> predicate)
 			{
 				// Cap the size of the search area to reduce lag
 				int lX = (int)(Math.min(10, bounds.getLengthX()) * 0.5D);
@@ -180,25 +188,25 @@ public class TilePredicate
 				return (tile, pos, set) -> 
 				{
 					final Box box = bounds.offset(pos);
-					return !set.getTiles((p2,t2) -> box.contains(new Vec3d(p2.getX() + 0.5D, p2.getY() + 0.5D, p2.getZ() + 0.5D)) && tileAnyMatch(tiles).test(t2)).isEmpty();
+					return !set.getTiles((p2,t2) -> box.contains(new Vec3d(p2.getX() + 0.5D, p2.getY() + 0.5D, p2.getZ() + 0.5D)) && predicate.test(t2)).isEmpty();
 				};
 			}
 			
 			/** Within Y range of N */
-			public static TileCondition near(double distance, List<Supplier<Tile>> tiles)
+			public static TileCondition near(double distance, Predicate<Tile> predicate)
 			{
 				final double d = Math.min(10D, distance);
-				return (t,p,s) -> !s.getTiles((p2,t2) -> p2.isWithinDistance(p, d) && tileAnyMatch(tiles).test(t2)).isEmpty();
+				return (t,p,s) -> !s.getTiles((p2,t2) -> p2.isWithinDistance(p, d) && predicate.test(t2)).isEmpty();
 			}
 			
 			/** Not within bounded range of N */
-			public static TileCondition avoid(Box bounds, List<Supplier<Tile>> tiles)
+			public static TileCondition avoid(Box bounds, Predicate<Tile> tiles)
 			{
 				return (t,p,s) -> not(near(bounds, tiles)).test(t, p, s);
 			}
 			
 			/** Not within Y range of N */
-			public static TileCondition avoid(double distance, List<Supplier<Tile>> tiles)
+			public static TileCondition avoid(double distance, Predicate<Tile> tiles)
 			{
 				return (t,p,s) -> not(near(distance, tiles)).test(t,p,s);
 			}
@@ -206,11 +214,11 @@ public class TilePredicate
 			/** Adjacent to self */
 			public static TileCondition consecutive(List<Direction> faces)
 			{
-				return (t,p,s) -> adjacent(faces, List.of(() -> t)).test(t, p, s);
+				return (t,p,s) -> adjacent(faces, t::is).test(t, p, s);
 			}
 			
 			/** Not adjacent to N */
-			public static TileCondition nonAdjacent(List<Direction> faces, List<Supplier<Tile>> tiles)
+			public static TileCondition nonAdjacent(List<Direction> faces, Predicate<Tile> tiles)
 			{
 				return (t,p,s) -> not(adjacent(faces, tiles)).test(t, p, s);
 			}
@@ -218,13 +226,13 @@ public class TilePredicate
 			/** Not adjacent to self */
 			public static TileCondition nonConsecutive(List<Direction> faces)
 			{
-				return (t,p,s) -> not(adjacent(faces, List.of(() -> t))).test(t, p, s);
+				return (t,p,s) -> not(adjacent(faces, t::is)).test(t, p, s);
 			}
 			
 			/** Not adjacent to self */
 			public static TileCondition nonConsecutive(Box box)
 			{
-				return (t,p,s) -> avoid(box, List.of(() -> t)).test(t, p, s);
+				return (t,p,s) -> avoid(box, t::is).test(t, p, s);
 			}
 		}
 	}

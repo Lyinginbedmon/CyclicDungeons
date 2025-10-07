@@ -12,6 +12,7 @@ import com.lying.init.CDParticleTypes;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.init.CDTerms;
+import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
 import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
@@ -43,6 +44,7 @@ public final class CyclicDungeons
 		config.read();
 		
 		CDTiles.init();
+		CDTileTags.init();
 		CDTerms.init();
 		CDCommands.init();
 		CDBlocks.init();

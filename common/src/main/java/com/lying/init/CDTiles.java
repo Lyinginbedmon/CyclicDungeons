@@ -37,7 +37,7 @@ public class CDTiles
 			.asFlag().build());
 	public static final Supplier<Tile> PASSAGE	= register("passage", Tile.Builder
 			.of(TilePredicate.Builder.create().boundary(Direction.Type.HORIZONTAL).build())
-			.asBlock(Blocks.IRON_BARS.getDefaultState()).build());
+			.asBlock(Blocks.ORANGE_STAINED_GLASS.getDefaultState()).build());
 	
 	public static final Supplier<Tile> FLOOR	= register("floor", Tile.Builder
 			.of(TilePredicate.Builder.create()
@@ -49,7 +49,7 @@ public class CDTiles
 			.of(TilePredicate.Builder.create()
 				.onFloor()
 				.boundary(HORIZONTAL_FACES)
-				.nonConsecutive()
+				.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), CDTileTags.TABLES::contains)
 				.build())
 			.asStructure(CDStructurePools.TABLE_KEY)
 			.freeRotation().build());
@@ -58,24 +58,24 @@ public class CDTiles
 				.onFloor()
 				.boundary(HORIZONTAL_FACES)
 				.nonConsecutive()
-				.nonAdjacent(List.of(CDTiles.TABLE))
-				.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), List.of(CDTiles.TABLE))
+				.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), CDTileTags.TABLES::contains)
 				.build())
 			.asStructure(CDStructurePools.TABLE_LIGHT_KEY)
 			.freeRotation().build());
 	public static final Supplier<Tile> SEAT		= register("seat", Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.onFloor()
-				.adjacent(HORIZONTAL_FACES, List.of(CDTiles.TABLE, CDTiles.TABLE_LIGHT))
+				.adjacent(HORIZONTAL_FACES, CDTileTags.TABLES::contains)
 				.build())
 			.asStructure(CDStructurePools.SEAT_KEY)
-			.withRotation(RotationSupplier.toFaceAdjacent(List.of(CDTiles.TABLE, CDTiles.TABLE_LIGHT))).build());
+			.withRotation(RotationSupplier.toFaceAdjacent(CDTileTags.TABLES::contains)).build());
 	public static final Supplier<Tile> FLOOR_LIGHT	= register("floor_light", Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.boundary(HORIZONTAL_FACES)
 				.onFloor()
 				.nonConsecutive()
-				.avoid(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), List.of(CDTiles.TABLE, CDTiles.TABLE_LIGHT, CDTiles.SEAT))
+				.avoid(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), CDTileTags.LIGHTING::contains)
+				.nonAdjacent(CDTileTags.TABLES::contains)
 				.build())
 			.asStructure(CDStructurePools.FLOOR_LIGHT_KEY)
 			.freeRotation().build());

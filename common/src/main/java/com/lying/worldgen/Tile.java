@@ -6,11 +6,11 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import org.jetbrains.annotations.NotNull;
 
 import com.lying.blueprint.Blueprint;
+import com.lying.init.CDTileTags.TileTag;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.TileSet.TileInstance;
 
@@ -36,8 +36,6 @@ import net.minecraft.util.math.random.Random;
 
 public abstract class Tile
 {
-	// FIXME Implement tile tags to group tiles during validity checks
-	
 	public static final int TILE_SIZE = 2;
 	
 	private final Identifier registryName;
@@ -54,11 +52,13 @@ public abstract class Tile
 		this.rotator = rotatorIn;
 	}
 	
-	public boolean equals(Object obj) { return obj instanceof Tile && is((Tile)obj); }
+	public final boolean equals(Object obj) { return obj instanceof Tile && is((Tile)obj); }
 	
-	public boolean is(Tile tile) { return tile.registryName().equals(registryName); }
+	public final boolean is(Tile tile) { return tile.registryName().equals(registryName); }
 	
-	public Identifier registryName() { return this.registryName; }
+	public final Identifier registryName() { return this.registryName; }
+	
+	public final boolean isIn(TileTag tag) { return tag.contains(registryName); }
 	
 	public final boolean isBlank() { return this.registryName.equals(CDTiles.BLANK.get().registryName()); }
 	
@@ -68,7 +68,10 @@ public abstract class Tile
 	
 	/** Returns a valid rotation for an instance of this tile at the given coordinates in the tile set */
 	@NotNull
-	public final BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Optional<Tile>> getter, Random rand) { return rotator.assignRotation(pos, getter, rand); }
+	public final BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Optional<Tile>> getter, Random rand)
+	{
+		return rotator.assignRotation(pos, getter, rand);
+	}
 	
 	public abstract void generate(TileInstance inst, BlockPos pos, ServerWorld world);
 	
@@ -96,12 +99,12 @@ public abstract class Tile
 		
 		public static RotationSupplier random() { return (p,g,r) -> BlockRotation.values()[r.nextInt(BlockRotation.values().length)]; }
 		
-		public static RotationSupplier toFaceAdjacent(List<Supplier<Tile>> tiles)
+		public static RotationSupplier toFaceAdjacent(Predicate<Tile> predicate)
 		{
-			return toFaceAdjacent(tiles, none());
+			return toFaceAdjacent(predicate, none());
 		}
 		
-		public static RotationSupplier toFaceAdjacent(List<Supplier<Tile>> tiles, RotationSupplier fallback)
+		public static RotationSupplier toFaceAdjacent(Predicate<Tile> predicate, RotationSupplier fallback)
 		{
 			final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
 					Direction.NORTH, BlockRotation.NONE,
@@ -109,7 +112,6 @@ public abstract class Tile
 					Direction.SOUTH, BlockRotation.CLOCKWISE_180,
 					Direction.WEST, BlockRotation.COUNTERCLOCKWISE_90
 					);
-			final Predicate<Tile> predicate = TilePredicate.tileAnyMatch(tiles);
 			
 			return (pos, getter, rand) -> 
 			{
