@@ -1,5 +1,6 @@
 package com.lying.blueprint;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,37 @@ public abstract class BlueprintOrganiser
 	}
 	
 	public abstract void applyLayout(Blueprint chart, Random rand);
+	
+	/** Returns a list of all paths between the given nodes */
+	public static List<BlueprintPassage> getPassages(Collection<BlueprintRoom> chart)
+	{
+		List<BlueprintPassage> paths = Lists.newArrayList();
+		for(BlueprintRoom n : chart)
+			n.getChildren(chart).stream().map(c -> new BlueprintPassage(n, c)).forEach(paths::add);
+		return paths;
+	}
+	
+	public static List<BlueprintPassage> mergePassages(Collection<BlueprintPassage> pathsIn)
+	{
+		LOGGER.info(" # Merging entwining paths");
+		
+		List<BlueprintPassage> paths1 = Lists.newArrayList();
+		paths1.addAll(pathsIn);
+		
+		List<BlueprintPassage> paths2 = Lists.newArrayList();
+		while(!paths1.isEmpty())
+		{
+			BlueprintPassage path = paths1.removeFirst();
+			List<BlueprintPassage> merge = paths1.stream().filter(path::canMergeWith).toList();
+			
+			merge.forEach(path::mergeWith);
+			paths2.add(path);
+			paths1.removeAll(merge);
+		}
+		
+		LOGGER.info(" ## Merging complete: reduced {} to {}", pathsIn.size(), paths2.size());
+		return paths2;
+	}
 	
 	public static class Tree extends BlueprintOrganiser
 	{

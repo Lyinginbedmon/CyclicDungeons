@@ -110,7 +110,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public static int tallyErrors(List<BlueprintRoom> chart, ErrorType type)
 	{
 		int tally = 0;
-		List<BlueprintPassage> paths = getPassages(chart);
+		List<BlueprintPassage> paths = BlueprintOrganiser.getPassages(chart);
 		
 		switch(type)
 		{
@@ -205,7 +205,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating rooms");
 		
-		final List<BlueprintPassage> passages = getPassages(this);
+		final List<BlueprintPassage> passages = BlueprintOrganiser.getPassages(this);
 		int tally = 0;
 		for(BlueprintRoom node : this)
 		{
@@ -241,106 +241,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		 * Populate path interior with WFC
 		 */
 		
-//		List<BlueprintPassage> totalPassages = getPassages(this);
-//		
-//		List<BlueprintPassage> intersecting = Lists.newArrayList();
-//		totalPassages.forEach(p -> 
-//		{
-//			if(totalPassages.stream().filter(Predicates.not(p::equals)).anyMatch(p::canMergeWith))
-//				intersecting.add(p);
-//		});
-//		
-//		// List of all paths to actually draw
-//		List<PolyPath> pathsToDraw = Lists.newArrayList();
-//		
-//		// Collect all un-mergeable passages as 2-point poly paths
-//		totalPassages.stream().filter(Predicates.not(intersecting::contains)).map(p -> new PolyPath(p.asLine().getLeft(), p.asLine().getRight())).forEach(pathsToDraw::add);
-//		
-//		// Collect all mergeable passages poly paths
-//		while(!intersecting.isEmpty())
-//		{
-//			BlueprintPassage root = intersecting.removeFirst();
-//			List<BlueprintPassage> buddies = intersecting.stream().filter(Predicates.not(root::equals)).filter(root::canMergeWith).toList();
-//			
-//			PolyPath poly = new PolyPath(root.asLine().getLeft());
-//			buddies.stream().map(BlueprintPassage::asLine).map(Line2f::getRight).forEach(poly::addEnd);
-//			
-//			pathsToDraw.add(poly);
-//			intersecting.removeAll(buddies);
-//		}
-		
-		final BlockState[] concretes = new BlockState[]
-				{
-					Blocks.BLACK_CONCRETE.getDefaultState(),
-					Blocks.BLUE_CONCRETE.getDefaultState(),
-					Blocks.BROWN_CONCRETE.getDefaultState(),
-					Blocks.CYAN_CONCRETE.getDefaultState(),
-					Blocks.GRAY_CONCRETE.getDefaultState(),
-					Blocks.GREEN_CONCRETE.getDefaultState(),
-					Blocks.LIGHT_BLUE_CONCRETE.getDefaultState(),
-					Blocks.LIGHT_GRAY_CONCRETE.getDefaultState(),
-					Blocks.LIME_CONCRETE.getDefaultState(),
-					Blocks.MAGENTA_CONCRETE.getDefaultState(),
-					Blocks.ORANGE_CONCRETE.getDefaultState(),
-					Blocks.PINK_CONCRETE.getDefaultState(),
-					Blocks.PURPLE_CONCRETE.getDefaultState(),
-					Blocks.RED_CONCRETE.getDefaultState(),
-					Blocks.YELLOW_CONCRETE.getDefaultState(),
-					Blocks.WHITE_CONCRETE.getDefaultState()
-				};
-//		List<AbstractBox2f> bounds = stream().map(BlueprintRoom::bounds).toList();
-//		bounds.forEach(box -> 
-//		{
-//			for(int x=(int)box.minX(); x<box.maxX(); x++)
-//				for(int z=(int)box.minY(); z<box.maxY(); z++)
-//					tryPlaceAt(Blocks.IRON_BLOCK.getDefaultState(), position.add(x, 0, z), world);
-//		});
-//		
-//		// Draw all assembled paths
-//		final Predicate<List<Line2f>> qualifier = line -> line.stream()
-//				.anyMatch(segment -> bounds.stream()
-//					.filter(box -> !(box.contains(segment.getLeft()) || box.contains(segment.getRight())))
-//					.anyMatch(box -> box.intersects(segment)));
-//		for(PolyPath path : pathsToDraw)
-//		{
-//			BlockState marker = concretes[world.random.nextInt(concretes.length)];
-//			for(Line2f line : path.asLines(qualifier))
-//			{
-//				// Skip any line fully contained within a bounding box
-//				if(bounds.stream().anyMatch(b -> b.contains(line.getLeft()) && b.contains(line.getRight())))
-//					continue;
-//				
-//				Vec2f start = line.getLeft();
-//				Vec2f end = line.getRight();
-//				
-//				// Clip any line partially intersecting a bounding box to the intersection point
-//				for(AbstractBox2f box : bounds)
-//				{
-//					Optional<Line2f> intersector = box.asEdges().stream().filter(line::intersects).findFirst();
-//					if(intersector.isEmpty())
-//						continue;
-//					
-//					if(box.contains(start))
-//						start = line.intercept(intersector.get());
-//					else if(box.contains(end))
-//						end = line.intercept(intersector.get());
-//				}
-//				
-//				Vec2f offset = end.add(start.negate());
-//				float len = offset.length();
-//				offset = offset.normalize();
-//				
-//				for(int i=0; i<=len; i++)
-//				{
-//					Vec2f point = start.add(offset.multiply(i));
-//					BlockPos block = position.add((int)point.x, 0, (int)point.y);
-//					tryPlaceAt(marker, block, world);
-//				}
-//			}
-//		};
-		
 		List<AbstractBox2f> bounds = stream().map(BlueprintRoom::bounds).toList();
-		getPassages(this).forEach(p -> p.build(position, world, bounds, concretes[world.random.nextInt(concretes.length)]));
+		BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this)).forEach(p -> PassageBuilder.build(p, position, world, bounds));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
@@ -352,18 +254,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			world.setBlockState(pos, state);
 	}
 	
-	/** Returns a list of all paths between the given nodes */
-	public static List<BlueprintPassage> getPassages(Collection<BlueprintRoom> chart)
-	{
-		List<BlueprintPassage> paths = Lists.newArrayList();
-		for(BlueprintRoom n : chart)
-			n.getChildren(chart).stream().map(c -> new BlueprintPassage(n, c)).forEach(paths::add);
-		return paths;
-	}
-	
 	public static List<BlueprintPassage> getPassagesOf(BlueprintRoom room, Collection<BlueprintRoom> chart)
 	{
-		return getPassages(chart).stream().filter(p -> p.isTerminus(room)).toList();
+		return BlueprintOrganiser.getPassages(chart).stream().filter(p -> p.isTerminus(room)).toList();
 	}
 	
 	public static enum ErrorType
