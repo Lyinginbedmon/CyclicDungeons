@@ -229,9 +229,10 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	public static class NodeRenderUtils
 	{
-		public static Function<BlueprintPassage,BlueprintPassage> scaleFunc(int renderScale, Vector2i origin)
+		public static Function<Line2f,Line2f> scaleFunc(int renderScale, Vector2i origin)
 		{
-			return p -> new BlueprintPassage(p.parent(), p.child(), p.asLine().scale(renderScale).offset(new Vec2f(origin.x, origin.y)), BlueprintPassage.PASSAGE_WIDTH * renderScale);
+			Vec2f vec = new Vec2f(origin.x, origin.y);
+			return p -> p.scale(renderScale).offset(vec);
 		}
 		
 		public static void render(BlueprintRoom node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, Map<ErrorType,Integer> errors, int mouseX, int mouseY, int renderScale)
@@ -249,9 +250,8 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		
 		public static void renderLinks(Vector2i origin, int renderScale, Blueprint chart, boolean errorsPresent, DrawContext context, int mouseX, int mouseY)
 		{
-			Function<BlueprintPassage,BlueprintPassage> scaleFunc = scaleFunc(renderScale, origin);
+			final Function<Line2f, Line2f> scaleFunc = scaleFunc(renderScale, origin);
 			totalPassages.stream()
-				.map(scaleFunc)
 				.forEach(p -> 
 				{
 					int linkColour = errorsPresent ?
@@ -262,7 +262,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 									DARK_GRAY) :
 							DARK_GRAY;
 					 
-					renderPath(p, context, linkColour, p.asBox().contains(new Vec2f(mouseX, mouseY)));
+					renderPath(p, scaleFunc, context, linkColour, p.asBox().contains(new Vec2f(mouseX, mouseY)));
 				});
 		}
 		
@@ -271,10 +271,8 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			if(criticalPath.isEmpty())
 				return;
 			
-			Function<BlueprintPassage,BlueprintPassage> scaleFunc = scaleFunc(renderScale, origin);
-			criticalPath.stream()
-				.map(scaleFunc)
-				.forEach(path -> renderPath(path, context, GOLD, false));
+			final Function<Line2f, Line2f> scaleFunc = scaleFunc(renderScale, origin);
+			criticalPath.forEach(path -> renderPath(path, scaleFunc, context, GOLD, false));
 		}
 		
 		public static void renderNodeBounds(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context)
@@ -307,9 +305,9 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			renderStraightLine(start, end, 1, context, colour);
 		}
 		
-		private static void renderPath(BlueprintPassage path, DrawContext context, int colour, boolean showBounds)
+		private static void renderPath(BlueprintPassage path, Function<Line2f,Line2f> scaleFunc, DrawContext context, int colour, boolean showBounds)
 		{
-			path.asLines().forEach(l -> renderLink(l.getLeft(), l.getRight(), context, colour));
+			path.asLines().stream().map(scaleFunc).forEach(l -> renderLink(l.getLeft(), l.getRight(), context, colour));
 			
 			if(showBounds)
 				for(Line2f edge : path.asBox().asEdges())

@@ -41,6 +41,15 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 		return isVertical == line.isVertical && m == line.m && b == line.b && xRange.equals(line.xRange) && yRange.equals(line.yRange);
 	}
 	
+	public String toString()
+	{
+		float aX = (float)(int)(getLeft().x * 100) / 100F;
+		float aY = (float)(int)(getLeft().y * 100) / 100F;
+		float bX = (float)(int)(getRight().x * 100) / 100F;
+		float bY = (float)(int)(getRight().y * 100) / 100F;
+		return "Line[" +  aX + ", " + aY + " to "+ bX + ", " + bY + "]";
+	}
+	
 	public boolean isEitherPoint(Vec2f vec)
 	{
 		return getLeft().equals(vec) || getRight().equals(vec);

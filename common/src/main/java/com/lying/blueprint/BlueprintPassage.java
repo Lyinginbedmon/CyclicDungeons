@@ -1,23 +1,22 @@
 package com.lying.blueprint;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CompoundBox2f;
 import com.lying.utility.Line2f;
+import com.lying.utility.LineUtils;
 import com.lying.utility.RotaryBox2f;
 import com.lying.worldgen.Tile;
 
-import net.minecraft.block.Blocks;
+import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
@@ -30,7 +29,8 @@ public class BlueprintPassage
 			);
 	
 	public static final int PASSAGE_WIDTH = 3;
-	private final BlueprintRoom parent, child;
+	private final BlueprintRoom parent;
+	private final List<BlueprintRoom> children = Lists.newArrayList();
 	private final Line2f line;
 	private final CompoundBox2f box;
 	
@@ -38,7 +38,7 @@ public class BlueprintPassage
 	{
 		this(a, b, PASSAGE_WIDTH);
 	}
-
+	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b, float width)
 	{
 		this(a, b, new Line2f(new Vec2f(a.position().x, a.position().y), new Vec2f(b.position().x, b.position().y)), width);
@@ -47,14 +47,23 @@ public class BlueprintPassage
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b, Line2f lineIn, float width)
 	{
 		parent = a;
-		child = b;
+		children.add(b);
 		line = lineIn;
 		box = lineToBox(asLines(), width);
 	}
 	
 	public BlueprintRoom parent() { return parent; }
 	
-	public BlueprintRoom child() { return child; }
+	public List<BlueprintRoom> children() { return children; }
+	
+	public BlueprintPassage addChild(BlueprintRoom room)
+	{
+		if(children.stream().noneMatch(room::equals))
+			children.add(room);
+		return this;
+	}
+	
+	public int size() { return 1 + children.size(); }
 	
 	/** Returns this passage as a singular line */
 	public Line2f asLine() { return line; }
@@ -68,9 +77,45 @@ public class BlueprintPassage
 	/** Controls how this passage is shaped to connect its associated rooms */
 	private boolean isLineViable(List<Line2f> line)
 	{
-		// Terminal bounding boxes (expanded slightly to encourage spacing)
-		AbstractBox2f firstB = parent.bounds().grow(1F);
-		AbstractBox2f lastB = child.bounds().grow(1F);
+		List<BlueprintRoom> rooms = Lists.newArrayList();
+		rooms.add(parent);
+		rooms.addAll(children);
+		return isLineViable(line, rooms);
+	}
+	
+	public static boolean isLineViable(List<Line2f> line, List<BlueprintRoom> rooms)
+	{
+//		Map<Line2f, List<AbstractBox2f>> terminalMap = new HashMap<>();
+//		line.forEach(l -> 
+//		{
+//			List<AbstractBox2f> terminals = rooms.stream().filter(r -> 
+//			{
+//				Vector2i pos = r.position();
+//				return l.isEitherPoint(new Vec2f(pos.x, pos.y));
+//			}).map(BlueprintRoom::bounds).map(b -> b.grow(1F)).toList();
+//			if(terminals.isEmpty())
+//				return;
+//			
+//			terminalMap.put(l, terminals);
+//		});
+//		
+//		List<Line2f> exteriorLines = Lists.newArrayList();
+//		line.stream().filter(l -> rooms.stream().map(BlueprintRoom::bounds).map(b -> b.grow(1F)).noneMatch(b -> b.intersects(l))).forEach(exteriorLines::add);
+//		
+//		// The sum of all terminal line segments and all external line segments must be equal to the total number of line segments
+//		if(terminalMap.size() + exteriorLines.size() != line.size())
+//			return false;
+//
+//		// Terminal line segments must not be entirely contained within the terminal bounding boxes
+//		if(terminalMap.entrySet().stream().anyMatch(e -> e.getValue().stream().anyMatch(b -> 
+//		{
+//			Line2f l = e.getKey();
+//			return b.contains(l.getLeft()) && b.contains(l.getRight());
+//		})))
+//			return false;
+		
+		AbstractBox2f firstB = rooms.getFirst().bounds().grow(1F);
+		AbstractBox2f lastB = rooms.getLast().bounds().grow(1F);
 		
 		// Terminal line segments
 		Line2f firstL = line.getFirst();
@@ -109,36 +154,17 @@ public class BlueprintPassage
 		return box;
 	}
 	
-	public void build(BlockPos origin, ServerWorld world, List<AbstractBox2f> boundaries)
-	{
-		// FIXME Calculate tile set and generate with WFC
-		
-		for(Line2f segment : asLines())
-		{
-			Vec2f offset = segment.getRight().add(segment.getLeft().negate());
-			float len = offset.length();
-			offset = offset.normalize();
-			for(int i=0; i<len; i++)
-			{
-				Vec2f point = segment.getLeft().add(offset.multiply(i));
-				BlockPos pos = origin.add((int)point.x, 0, (int)point.y);
-				Tile.tryPlace(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), pos, world);
-				Tile.tryPlace(Blocks.GRAY_CONCRETE_POWDER.getDefaultState(), pos.up(), world);
-			}
-		}
-	}
-	
 	/** Returns true if the given point is either end of this passage */
 	public boolean isTerminus(Vec2f point)
 	{
-		return line.getLeft().equals(point) || line.getRight().equals(point);
+		Vector2i vec = new Vector2i((int)point.x, (int)point.y);
+		return parent.position().equals(vec) || children.stream().map(BlueprintRoom::position).anyMatch(vec::equals);
 	}
 	
 	/** Returns true if the given room is either intended end of this passage */
 	public boolean isTerminus(BlueprintRoom room)
 	{
-		Vector2i pos = room.position();
-		return isTerminus(new Vec2f(pos.x, pos.y));
+		return room.equals(parent) || children.stream().anyMatch(room::equals);
 	}
 	
 	public boolean isTerminus(BlueprintPassage b) { return isTerminus(b.line.getLeft()) || isTerminus(b.line.getRight()); }
@@ -159,7 +185,18 @@ public class BlueprintPassage
 	
 	public boolean canShareSpaceWith(BlueprintPassage b)
 	{
-		return b.parent.equals(parent) && b.child.metadata().depth() == child.metadata().depth();
+		Predicate<RoomMetadata> depthMatch = m -> m.depth() == children.get(0).metadata().depth();
+		return b.parent.equals(parent) && b.children.stream().map(BlueprintRoom::metadata).allMatch(depthMatch);
+	}
+	
+	public boolean canMergeWith(BlueprintPassage b)
+	{
+		if(!canShareSpaceWith(b))
+			return false;
+		
+		List<Line2f> linesA = asLines();
+		List<Line2f> linesB = b.asLines();
+		return linesA.stream().anyMatch(l -> linesB.stream().anyMatch(l::intersects));
 	}
 	
 	/** Returns true if this passage intersects with any other passages in the given chart */
@@ -180,97 +217,22 @@ public class BlueprintPassage
 				.anyMatch(this.box::intersects);
 	}
 	
-	private static class LineUtils
+	public void build(BlockPos origin, ServerWorld world, List<AbstractBox2f> boundaries, BlockState placeState)
 	{
-		private static final List<BiFunction<Vec2f,Vec2f,ArrayList<Line2f>>> providers = List.of(
-				LineUtils::xFirstCurved,
-				LineUtils::yFirstCurved,
-				LineUtils::xFirst,
-				LineUtils::yFirst,
-				LineUtils::diagonal
-				);
+		// FIXME Calculate tile set and generate with WFC
 		
-		/** Attempts to generate a viable deterministic line, from the most elegant to the least */
-		public static List<Line2f> trialLines(Vec2f start, Vec2f end, Predicate<List<Line2f>> qualifier)
+		for(Line2f segment : asLines())
 		{
-			ArrayList<Line2f> line = Lists.newArrayList();
-			for(BiFunction<Vec2f,Vec2f,ArrayList<Line2f>> provider : providers)
+			Vec2f offset = segment.getRight().add(segment.getLeft().negate());
+			float len = offset.length();
+			offset = offset.normalize();
+			for(int i=0; i<len; i++)
 			{
-				line = provider.apply(start, end);
-				line.removeIf(l -> l.length() == 0F);
-				line.removeIf(Objects::isNull);
-				
-				if(line.isEmpty())
-					continue;
-				
-				if(line.size() == 1 || qualifier.test(line))
-					return line;
+				Vec2f point = segment.getLeft().add(offset.multiply(i));
+				BlockPos pos = origin.add((int)point.x, 0, (int)point.y);
+				Tile.tryPlace(placeState, pos, world);
+				Tile.tryPlace(placeState, pos.up(), world);
 			}
-			
-			return line;
-		}
-		
-		private static ArrayList<Line2f> diagonal(Vec2f start, Vec2f end)
-		{
-			return Lists.newArrayList(new Line2f(start, end));
-		}
-		
-		private static ArrayList<Line2f> xFirst(Vec2f start, Vec2f end)
-		{
-			Vec2f offset = end.add(start.negate());
-			Vec2f mid = start.add(new Vec2f(offset.x, 0F));
-			return Lists.newArrayList(
-					new Line2f(start, mid),
-					new Line2f(mid, end)
-					);
-		}
-		
-		private static ArrayList<Line2f> yFirst(Vec2f start, Vec2f end)
-		{
-			Vec2f offset = end.add(start.negate());
-			Vec2f mid = start.add(new Vec2f(0F, offset.y));
-			return Lists.newArrayList(
-					new Line2f(start, mid),
-					new Line2f(mid, end)
-					);
-		}
-		
-		private static ArrayList<Line2f> xFirstCurved(Vec2f start, Vec2f end)
-		{
-			Line2f direct = new Line2f(start, end);
-			if(Math.abs(direct.m) != 1)
-				return Lists.newArrayList();
-			
-			ArrayList<Line2f> lines = Lists.newArrayList();
-			
-			Vec2f toX = new Vec2f(end.x - start.x, 0F).multiply(0.5F);
-			Vec2f toY = new Vec2f(0F, end.y - start.y).multiply(0.5F);
-			
-			Vec2f a = start.add(toX);
-			Vec2f b = end.add(toY.negate());
-			lines.add(new Line2f(start, a));
-			lines.add(new Line2f(a, b));
-			lines.add(new Line2f(b, end));
-			return lines;
-		}
-		
-		private static ArrayList<Line2f> yFirstCurved(Vec2f start, Vec2f end)
-		{
-			Line2f direct = new Line2f(start, end);
-			if(Math.abs(direct.m) != 1)
-				return Lists.newArrayList();
-			
-			ArrayList<Line2f> lines = Lists.newArrayList();
-			
-			Vec2f toX = new Vec2f(end.x - start.x, 0F).multiply(0.5F);
-			Vec2f toY = new Vec2f(0F, end.y - start.y).multiply(0.5F);
-			
-			Vec2f a = start.add(toY);
-			Vec2f b = end.add(toX.negate());
-			lines.add(new Line2f(start, a));
-			lines.add(new Line2f(a, b));
-			lines.add(new Line2f(b, end));
-			return lines;
 		}
 	}
 }

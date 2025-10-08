@@ -104,6 +104,28 @@ public abstract class Tile
 			return toFaceAdjacent(predicate, none());
 		}
 		
+		public static RotationSupplier againstBoundary(RotationSupplier fallback)
+		{
+			final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
+					Direction.NORTH, BlockRotation.NONE,
+					Direction.EAST, BlockRotation.CLOCKWISE_90,
+					Direction.SOUTH, BlockRotation.CLOCKWISE_180,
+					Direction.WEST, BlockRotation.COUNTERCLOCKWISE_90
+					);
+			
+			return (pos, getter, rand) -> 
+			{
+				for(Entry<Direction, BlockRotation> entry : faceToRotationMap.entrySet())
+				{
+					Optional<Tile> neighbour = getter.apply(pos.offset(entry.getKey()));
+					if(neighbour.isEmpty())
+						return entry.getValue();
+				}
+				
+				return fallback.assignRotation(pos, getter, rand);
+			};
+		}
+		
 		public static RotationSupplier toFaceAdjacent(Predicate<Tile> predicate, RotationSupplier fallback)
 		{
 			final Map<Direction, BlockRotation> faceToRotationMap = Map.of(

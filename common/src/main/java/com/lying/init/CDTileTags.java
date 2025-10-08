@@ -2,7 +2,10 @@ package com.lying.init;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
@@ -14,30 +17,42 @@ public class CDTileTags
 {
 	private static int tally = 0;
 	
-	public static final TileTag FLOORING	= make("flooring", 
+	private static final Map<Identifier, TileTag> TAGS	= new HashMap<>();
+	
+	public static final TileTag SOLID_FLOORING	= make("solid_flooring", 
 			prefix("floor"));
-	public static final TileTag CEILING		= make("ceiling");
-	public static final TileTag TABLES		= make("tables", 
+	public static final TileTag CEILING			= make("ceiling");
+	public static final TileTag TABLES			= make("tables", 
 			prefix("table"), 
 			prefix("table_light"));
-	public static final TileTag LIGHTING	= make("lighting", 
+	public static final TileTag LIGHTING		= make("lighting", 
 			prefix("floor_light"), 
 			prefix("table_light"));
-	public static final TileTag DECOR		= make("decor", 
+	public static final TileTag DECOR			= make("decor", 
 			prefix("floor_light"), 
 			prefix("table"), 
 			prefix("table_light"), 
-			prefix("seat"));
-	public static final TileTag OBTRUSIVE	= make("obtrusive", 
+			prefix("seat"),
+			prefix("workstation"));
+	public static final TileTag OBTRUSIVE		= make("obtrusive", 
 			prefix("table"), 
 			prefix("table_light"), 
 			prefix("seat"));
 	
-	public static TileTag make(String name, Identifier... idsIn)
+	private static TileTag make(String name, Identifier... idsIn)
+	{
+		return make(prefix(name), idsIn);
+	}
+	
+	public static TileTag make(Identifier registryName, Identifier... idsIn)
 	{
 		tally++;
-		return new TileTag(prefix(name), idsIn);
+		TileTag tag = new TileTag(registryName, idsIn);
+		TAGS.put(registryName, tag);
+		return tag;
 	}
+	
+	public Optional<TileTag> get(Identifier registryName) { return TAGS.containsKey(registryName) ? Optional.of(TAGS.get(registryName)) : Optional.empty(); }
 	
 	public static void init()
 	{

@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.google.common.base.Predicates;
 import com.lying.CyclicDungeons;
 import com.lying.data.CDStructurePools;
 import com.lying.worldgen.Tile;
@@ -28,10 +29,12 @@ public class CDTiles
 	
 	private static final List<Direction> HORIZONTAL_FACES = Direction.Type.HORIZONTAL.stream().toList();
 	
+	// Blank tile, used during generation
 	public static final Supplier<Tile> BLANK	= register("blank", Tile.Builder
 			.of(TilePredicate.Builder.create().never().build())
 			.asFlag().build());
 	
+	// Flag tiles, usually empty
 	public static final Supplier<Tile> AIR		= register("air", Tile.Builder
 			.of(TilePredicate.Builder.create().always().build())
 			.asFlag().build());
@@ -39,12 +42,28 @@ public class CDTiles
 			.of(TilePredicate.Builder.create().boundary(Direction.Type.HORIZONTAL).build())
 			.asBlock(Blocks.ORANGE_STAINED_GLASS.getDefaultState()).build());
 	
+	// Flooring tiles
 	public static final Supplier<Tile> FLOOR	= register("floor", Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.boundary(List.of(Direction.DOWN))
 				.build())
 			.asStructure(CDStructurePools.FLOOR_KEY)
 			.freeRotation().build());
+	public static final Supplier<Tile> PUDDLE	= register("puddle", Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.boundary(List.of(Direction.DOWN))
+				.build())
+			.asStructure(CDStructurePools.PUDDLE_KEY)
+			.freeRotation().build());
+	public static final Supplier<Tile> POOL		= register("pool", Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.boundary(List.of(Direction.DOWN))
+				.nonAdjacent(t -> t.is(CDTiles.PASSAGE.get()))
+				.build())
+			.asBlock(Blocks.WATER.getDefaultState())
+			.build());
+	
+	// Decoration & content tiles
 	public static final Supplier<Tile> TABLE	= register("table", Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.onFloor()
@@ -58,7 +77,7 @@ public class CDTiles
 				.onFloor()
 				.boundary(HORIZONTAL_FACES)
 				.nonConsecutive()
-				.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), CDTileTags.TABLES::contains)
+				.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), Predicates.or(CDTileTags.TABLES::contains, CDTileTags.LIGHTING::contains))
 				.build())
 			.asStructure(CDStructurePools.TABLE_LIGHT_KEY)
 			.freeRotation().build());
@@ -79,6 +98,16 @@ public class CDTiles
 				.build())
 			.asStructure(CDStructurePools.FLOOR_LIGHT_KEY)
 			.freeRotation().build());
+	public static final Supplier<Tile> WORKSTATION	= register("workstation", Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.boundary(HORIZONTAL_FACES)
+				.onFloor()
+				.nonConsecutive()
+				.avoid(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), CDTileTags.DECOR::contains)
+				.build())
+			.asStructure(CDStructurePools.WORKSTATION_KEY)
+			.withRotation(RotationSupplier.againstBoundary(RotationSupplier.random()))
+			.build());
 	
 	private static Supplier<Tile> register(String name, Function<Identifier,Tile> funcIn)
 	{

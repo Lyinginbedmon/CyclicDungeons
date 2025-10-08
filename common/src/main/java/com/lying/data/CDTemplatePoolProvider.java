@@ -36,6 +36,11 @@ public class CDTemplatePoolProvider
 				create("dungeon/light/plains/lantern", 1),
 				create("dungeon/light/plains/tiki_torch", 1)
 				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.PUDDLE_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/puddle/plains/puddle_01", 1),
+				create("dungeon/puddle/plains/puddle_02", 1),
+				create("dungeon/puddle/plains/puddle_03", 1)
+				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.TABLE_LIGHT_KEY, new StructurePool(registry, ImmutableList.of(
 				create("dungeon/table_light/plains/table_01", 1),
 				create("dungeon/table_light/plains/table_02", 1),
@@ -51,6 +56,11 @@ public class CDTemplatePoolProvider
 		context.register(CDStructurePools.TABLE_KEY, new StructurePool(registry, ImmutableList.of(
 				create("dungeon/table/plains/table_01", 1),
 				create("dungeon/table/plains/table_02", 1)
+				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.WORKSTATION_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/workstation/plains/workstation_01", 1),
+				create("dungeon/workstation/plains/workstation_02", 1),
+				create("dungeon/workstation/plains/workstation_03", 1)
 				), StructurePool.Projection.RIGID));
 	}
 	

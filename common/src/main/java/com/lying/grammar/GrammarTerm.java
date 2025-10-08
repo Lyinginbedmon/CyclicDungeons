@@ -18,7 +18,9 @@ import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
+import com.lying.utility.AbstractBox2f;
 import com.lying.utility.DebugLogger;
+import com.lying.utility.Line2f;
 import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.TileSet;
@@ -31,6 +33,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.random.Random;
 
 public abstract class GrammarTerm
@@ -45,14 +49,17 @@ public abstract class GrammarTerm
 			return DataResult.error(() -> "Not a recognised type: '"+String.valueOf(id) + "'");
 	}, GrammarTerm::registryName);
 	
-	// TODO Give each tile its own weight map
+	// TODO Give each term its own weight map
 	private static final Map<Tile, Float> BASIC_TILE_SET = Map.of(
 			CDTiles.FLOOR.get(), 10000F,
+			CDTiles.PUDDLE.get(), 1000F,
+			CDTiles.POOL.get(), 100F,
 			CDTiles.AIR.get(), 10F,
 			CDTiles.SEAT.get(), 10F,
 			CDTiles.FLOOR_LIGHT.get(), 1F,
 			CDTiles.TABLE.get(), 1F,
-			CDTiles.TABLE_LIGHT.get(), 1F
+			CDTiles.TABLE_LIGHT.get(), 1F,
+			CDTiles.WORKSTATION.get(), 1F
 			);
 	
 	private final Identifier registryName;
@@ -112,7 +119,7 @@ public abstract class GrammarTerm
 		return (!isBranchInjector() || inRoom.canAddLink()) && conditions.test(this, inRoom, previous, next, graph);
 	}
 	
-	public boolean generate(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart, List<BlueprintPassage> passages)
+	public boolean generate(BlockPos position, BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart, List<BlueprintPassage> passages)
 	{
 		BlockPos size = max.subtract(min);
 		size = new BlockPos(
@@ -123,16 +130,57 @@ public abstract class GrammarTerm
 		TileSet map = TileSet.ofSize(size);
 		
 		// Pre-seed doorways to connecting rooms
-//		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
-//		final Predicate<BlockPos> isInDoorway = p -> doorways.stream().anyMatch(r -> r.asBox().contains(new Vec2f(p.getX(), p.getZ())));
-//		map.getBoundaries(Direction.Type.HORIZONTAL.stream().toList()).stream()
-//			.filter(isInDoorway)
-//			.forEach(p -> map.put(p, CDTiles.PASSAGE.get()));
+		preseedDoorways(position, min, node, map, passages);
 		
 		// Fill rest of tileset with WFC generation
 		TileGenerator.generate(map, BASIC_TILE_SET, world.getRandom());
 		map.finalise();
 		return map.generate(min, world);
+	}
+	
+	protected static void preseedDoorways(BlockPos position, BlockPos min, BlueprintRoom node, TileSet map, List<BlueprintPassage> passages)
+	{
+		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
+		
+		// Find all line segments that intersect the bounds of the room
+		AbstractBox2f bounds = node.bounds();
+		List<Line2f> lines = Lists.newArrayList();
+		doorways.stream()
+			.map(BlueprintPassage::asLines)
+			.forEach(set -> 
+				set.stream()
+				.filter(bounds::intersects)
+				.forEach(lines::add));
+		
+		// Offset line segments to world coordinates
+		Vec2f toWorld = new Vec2f(position.getX(), position.getZ());
+		Vec2f toRoom = new Vec2f(min.getX(), min.getZ()).negate();
+		lines.stream()
+			// Convert graph to world space
+			.map(v -> v.offset(toWorld))
+			// Convert world space to room space
+			.map(v -> v.offset(toRoom))
+			.forEach(l -> 
+			{
+				// Segment points in room local coordinates
+				Vec2f startV = l.getLeft();
+				Vec2f endV = l.getRight();
+				
+				// March between points until intersecting boundary
+				Vec2f offset = endV.add(startV.negate());
+				float len = offset.length();
+				offset = offset.normalize();
+				for(int i=0; i<len; i++)
+				{
+					Vec2f point = startV.add(offset.multiply(i));
+					BlockPos tile = new BlockPos((int)(point.x / Tile.TILE_SIZE), 1, (int)(point.y / Tile.TILE_SIZE));
+					if(map.contains(tile) && Direction.Type.HORIZONTAL.stream().anyMatch(d -> map.isBoundary(tile, d)))
+					{
+						map.put(tile, CDTiles.PASSAGE.get());
+						break;
+					}
+				}
+			});
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)
