@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -12,6 +13,7 @@ import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
+import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CDUtils;
 import com.lying.utility.DebugLogger;
 import com.lying.utility.Vector2iUtils;
@@ -46,6 +48,11 @@ public abstract class BlueprintOrganiser
 	
 	public abstract void applyLayout(Blueprint chart, Random rand);
 	
+	public static List<AbstractBox2f> getBounds(Collection<BlueprintRoom> chart)
+	{
+		return chart.stream().map(BlueprintRoom::bounds).toList();
+	}
+	
 	/** Returns a list of all paths between the given nodes */
 	public static List<BlueprintPassage> getPassages(Collection<BlueprintRoom> chart)
 	{
@@ -55,26 +62,32 @@ public abstract class BlueprintOrganiser
 		return paths;
 	}
 	
-	public static List<BlueprintPassage> mergePassages(Collection<BlueprintPassage> pathsIn)
+	public static List<BlueprintPassage> mergePassages(Collection<BlueprintPassage> pathsIn, Collection<AbstractBox2f> bounds)
 	{
 		LOGGER.info(" # Merging entwining paths");
 		
-		List<BlueprintPassage> paths1 = Lists.newArrayList();
-		paths1.addAll(pathsIn);
+		List<BlueprintPassage> pathsToMerge = Lists.newArrayList();
 		
-		List<BlueprintPassage> paths2 = Lists.newArrayList();
-		while(!paths1.isEmpty())
+		// Subtract the bounds from all paths to limit to outside of rooms
+		pathsToMerge.addAll(pathsIn.stream().map(p -> 
 		{
-			BlueprintPassage path = paths1.removeFirst();
-			List<BlueprintPassage> merge = paths1.stream().filter(path::canMergeWith).toList();
+			bounds.forEach(p::exclude);
+			return p;
+		}).filter(Objects::nonNull).toList());
+		
+		List<BlueprintPassage> mergedPaths = Lists.newArrayList();
+		while(!pathsToMerge.isEmpty())
+		{
+			BlueprintPassage path = pathsToMerge.removeFirst();
+			List<BlueprintPassage> merge = pathsToMerge.stream().filter(path::canMergeWith).toList();
 			
 			merge.forEach(path::mergeWith);
-			paths2.add(path);
-			paths1.removeAll(merge);
+			mergedPaths.add(path);
+			pathsToMerge.removeAll(merge);
 		}
 		
-		LOGGER.info(" ## Merging complete: reduced {} to {}", pathsIn.size(), paths2.size());
-		return paths2;
+		LOGGER.info(" ## Merging complete: reduced {} to {}", pathsIn.size(), mergedPaths.size());
+		return mergedPaths;
 	}
 	
 	public static class Tree extends BlueprintOrganiser

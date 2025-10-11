@@ -42,6 +42,11 @@ public abstract class AbstractBox2f
 		return false;
 	}
 	
+	public boolean contains(Line2f line)
+	{
+		return contains(line.getLeft()) && contains(line.getRight());
+	}
+	
 	/** Returns the number of edges intersected by the given line */
 	public int intersections(Line2f line)
 	{

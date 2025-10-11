@@ -108,7 +108,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	private void updatePathCaches()
 	{
-		totalPassages = BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(blueprint));
+		totalPassages = BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(blueprint), BlueprintOrganiser.getBounds(blueprint));
 		
 		if(!errorCache.isEmpty())
 		{

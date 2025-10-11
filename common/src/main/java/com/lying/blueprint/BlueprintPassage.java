@@ -3,6 +3,7 @@ package com.lying.blueprint;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.joml.Vector2i;
@@ -33,6 +34,8 @@ public class BlueprintPassage
 	private final List<BlueprintRoom> children = Lists.newArrayList();
 	private final float width;
 	private CompoundBox2f box;
+	
+	private List<Line2f> linesCached = Lists.newArrayList();
 	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b)
 	{
@@ -71,6 +74,16 @@ public class BlueprintPassage
 	/** Returns this passage as a set of one or more line segments */
 	public List<Line2f> asLines()
 	{
+		if(linesCached.isEmpty())
+			cacheLines();
+		
+		return linesCached;
+	}
+	
+	public void cacheLines()
+	{
+		linesCached.clear();
+		
 		List<Line2f> lines = Lists.newArrayList();
 		Vec2f parentPos = new Vec2f(parent.position().x, parent.position().y);
 		children.stream()
@@ -79,7 +92,47 @@ public class BlueprintPassage
 			.map(p -> LineUtils.trialLines(parentPos, p, this::isLineViable))
 			.forEach(lines::addAll);
 		
-		return lines;
+		if(linesCached.isEmpty())
+			linesCached.addAll(lines);
+	}
+	
+	public static List<Vec2f> asPoints(List<Line2f> lines)
+	{
+		List<Vec2f> points = Lists.newArrayList();
+		lines.stream().forEach(l -> 
+		{
+			Vec2f left = l.getLeft();
+			if(!points.contains(left))
+				points.add(left);
+			
+			Vec2f right = l.getRight();
+			if(!points.contains(right))
+				points.add(right);
+		});
+		return points;
+	}
+	
+	/** Subtracts the given bounding box from all lines in this passage */
+	public BlueprintPassage exclude(AbstractBox2f box)
+	{
+		if(linesCached.isEmpty())
+		{
+			asLines();
+			
+			if(linesCached.isEmpty())
+				return this;
+		}
+		
+		// Remove any lines that exist wholly within the bounding box
+		linesCached.removeIf(box::contains);
+		
+		List<Line2f> clipped = Lists.newArrayList();
+		linesCached.stream().map(l -> l.clip(box)).filter(Objects::nonNull).forEach(clipped::add);
+		
+		linesCached.clear();
+		linesCached.addAll(clipped);
+		
+		return this;
 	}
 	
 	/** Controls how this passage is shaped to connect its associated rooms */
@@ -165,17 +218,24 @@ public class BlueprintPassage
 	/** Returns true if any line segment in this passage intersects any line segment in the other passage */
 	public boolean intersects(BlueprintPassage other)
 	{
+		// The passages as line segments
 		List<Line2f> 
 			aLines = this.asLines(), 
 			bLines = other.asLines();
 		
+		// Return true if any two lines intersect
 		return aLines.stream().anyMatch(l -> bLines.stream().anyMatch(l::intersects));
 	}
 	
 	/** Returns true if this passage can merge with the other passage */
 	public boolean canMergeWith(BlueprintPassage b)
 	{
-		return canShareSpaceWith(b) && intersects(b);
+		List<Line2f>
+			aLines = b.asLines(),
+			bLines = b.asLines();
+		return 
+				canShareSpaceWith(b) && 
+				bLines.stream().anyMatch(l -> aLines.stream().anyMatch(l::intersectsAtAll));
 	}
 	
 	public BlueprintPassage mergeWith(BlueprintPassage b)
@@ -186,7 +246,11 @@ public class BlueprintPassage
 				children.add(child);
 		
 		if(children.size() != previous)
+		{
 			box = lineToBox(asLines(), width);
+			cacheLines();
+		}
+		
 		return this;
 	}
 	

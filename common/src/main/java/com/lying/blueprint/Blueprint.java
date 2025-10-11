@@ -163,7 +163,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		LOGGER.info(" # Generating exterior shell");
 		
 		// Collect all bounding boxes as positions
-		List<AbstractBox2f> bounds = stream().map(BlueprintRoom::bounds).toList();
+		List<AbstractBox2f> bounds = BlueprintOrganiser.getBounds(this);
 		List<BlockPos> interior = Lists.newArrayList();
 		bounds.stream().forEach(b -> 
 		{
@@ -241,8 +241,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		 * Populate path interior with WFC
 		 */
 		
-		List<AbstractBox2f> bounds = stream().map(BlueprintRoom::bounds).toList();
-		BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this)).forEach(p -> PassageBuilder.build(p, position, world, bounds));
+		List<AbstractBox2f> bounds = BlueprintOrganiser.getBounds(this);
+		BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this), bounds).forEach(p -> PassageBuilder.build(p, position, world, bounds));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}

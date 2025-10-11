@@ -50,9 +50,14 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 		return "Line[" +  aX + ", " + aY + " to "+ bX + ", " + bY + "]";
 	}
 	
+	public Vec2f[] toPoints() { return new Vec2f[] { getLeft(), getRight() }; }
+	
 	public boolean isEitherPoint(Vec2f vec)
 	{
-		return getLeft().equals(vec) || getRight().equals(vec);
+		for(Vec2f point : toPoints())
+			if(point.distanceSquared(vec) == 0F)
+				return true;
+		return false;
 	}
 	
 	public double length() { return getLeft().add(getRight().negate()).length(); }
@@ -94,9 +99,58 @@ public class Line2f extends Pair<Vec2f, Vec2f>
 		return new Box2f(xRange.getLeft(), yRange.getLeft(), xRange.getRight(), yRange.getRight());
 	}
 	
-	public boolean intersects(Line2f line2)
+	@Nullable
+	public Line2f clip(AbstractBox2f box)
 	{
-		return intercept(line2) != null || isSame(line2);
+		if(!box.intersects(this))
+			return this;
+		
+		boolean 
+			leftInside = box.contains(getLeft()),
+			rightInside = box.contains(getRight());
+		
+		// Eliminate entirely if line is wholly within the box
+		if(leftInside && rightInside)
+			return null;
+		
+		// Exchange internal point with intercept
+		if(leftInside || rightInside)
+		{
+			Vec2f intercept = null;
+			for(Line2f edge : box.asEdges())
+			{
+				intercept = edge.intercept(this);
+				if(intercept != null)
+					break;
+			}
+			
+			if(intercept != null)
+			{
+				Line2f clipped = new Line2f(leftInside ? intercept : getLeft(), rightInside ? intercept : getRight());
+				return clipped.length() > 0 ? clipped : null;
+			}
+		}
+		
+		return this;
+	}
+	
+	public boolean intersects(Line2f other)
+	{
+		return 
+				isSame(other) || 
+				intercept(other) != null;
+	}
+	
+	public boolean sharesAnyPoint(Line2f other)
+	{
+		return 
+				isEitherPoint(other.getLeft()) || 
+				isEitherPoint(other.getRight());
+	}
+	
+	public boolean intersectsAtAll(Line2f other)
+	{
+		return sharesAnyPoint(other) || intersects(other);
 	}
 	
 	public boolean isSame(Line2f line2)
