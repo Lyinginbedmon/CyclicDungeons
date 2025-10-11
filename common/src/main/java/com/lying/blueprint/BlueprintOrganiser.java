@@ -80,13 +80,16 @@ public abstract class BlueprintOrganiser
 		{
 			BlueprintPassage path = pathsToMerge.removeFirst();
 			List<BlueprintPassage> merge = pathsToMerge.stream().filter(path::canMergeWith).toList();
-			
-			merge.forEach(path::mergeWith);
+			if(!merge.isEmpty())
+			{
+				merge.forEach(path::mergeWith);
+				bounds.forEach(path::exclude);
+			}
 			mergedPaths.add(path);
 			pathsToMerge.removeAll(merge);
 		}
 		
-		LOGGER.info(" ## Merging complete: reduced {} to {}", pathsIn.size(), mergedPaths.size());
+		LOGGER.info(" ## Merging complete: reduced from {} to {}", pathsIn.size(), mergedPaths.size());
 		return mergedPaths;
 	}
 	

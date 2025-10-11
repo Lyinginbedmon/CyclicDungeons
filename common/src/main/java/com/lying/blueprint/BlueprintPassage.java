@@ -212,7 +212,9 @@ public class BlueprintPassage
 	{
 		final int endDepth = this.children.get(0).metadata().depth();
 		final Predicate<RoomMetadata> depthMatch = m -> m.depth() == endDepth;
-		return other.parent.equals(this.parent) && other.children.stream().map(BlueprintRoom::metadata).allMatch(depthMatch);
+		return 
+				other.parent.equals(this.parent) && 
+				other.children.stream().map(BlueprintRoom::metadata).allMatch(depthMatch);
 	}
 	
 	/** Returns true if any line segment in this passage intersects any line segment in the other passage */
@@ -228,14 +230,16 @@ public class BlueprintPassage
 	}
 	
 	/** Returns true if this passage can merge with the other passage */
-	public boolean canMergeWith(BlueprintPassage b)
+	public boolean canMergeWith(BlueprintPassage other)
 	{
+		if(!canShareSpaceWith(other))
+			return false;
+		
 		List<Line2f>
-			aLines = b.asLines(),
-			bLines = b.asLines();
+			aLines = this.asLines(),
+			bLines = other.asLines();
 		return 
-				canShareSpaceWith(b) && 
-				bLines.stream().anyMatch(l -> aLines.stream().anyMatch(l::intersectsAtAll));
+				aLines.stream().anyMatch(l -> bLines.stream().anyMatch(l::intersectsAtAll));
 	}
 	
 	public BlueprintPassage mergeWith(BlueprintPassage b)
@@ -247,8 +251,8 @@ public class BlueprintPassage
 		
 		if(children.size() != previous)
 		{
-			box = lineToBox(asLines(), width);
 			cacheLines();
+			box = lineToBox(asLines(), width);
 		}
 		
 		return this;
