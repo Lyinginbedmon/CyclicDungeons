@@ -118,19 +118,24 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 				for(BlueprintRoom room : chart)
 				{
 					AbstractBox2f bounds = room.bounds();
-					if(chart.stream().filter(r -> !r.equals(room)).map(b -> b.bounds().grow(1F)).anyMatch(bounds::intersects))
+					if(chart.stream().filter(r -> !r.equals(room)).map(b -> b.bounds().grow(0.5F)).anyMatch(bounds::intersects))
 						++tally;
 				}
 				return tally;
 			case TUNNEL:
 				for(BlueprintPassage path : paths)
-					if(path.hasTunnels(chart))
+					if(path.intersectsOtherRooms(chart))
 						++tally;
 				return tally;
 			case INTERSECTION:
 				for(BlueprintPassage path : paths)
-					if(path.hasIntersections(chart))
+				{
+					path.exclude(path.parent().bounds());
+					path.children().stream().map(BlueprintRoom::bounds).forEach(path::exclude);
+					
+					if(path.intersectsOtherPassages(chart))
 						++tally;
+				}
 				return tally;
 		}
 		

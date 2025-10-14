@@ -15,40 +15,49 @@ import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintScruncher;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
+import com.lying.utility.Box2f;
+import com.lying.utility.LineSegment2f;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.random.Random;
 
 public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 {
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
 	public static final Identifier ICON_TEX = Reference.ModInfo.prefix("textures/gui/tree_node.png");
-	public static final int LIGHT_BLUE = 0x1D77F5;
-	public static final int LIME_GREEN = 0x1DF537;
-	public static final int DARK_GRAY = 0x6E6E6E;
-	public static final int GOLD = 0xFFBF00;
+	
+	private State state = State.BLUEPRINT;
 	
 	public static int renderScale = 1;
 	static boolean showCriticalPath = false;
-	static List<BlueprintPassage> criticalPath = Lists.newArrayList();
-	static List<BlueprintPassage> totalPassages = Lists.newArrayList();
+	public static List<BlueprintPassage> criticalPath = Lists.newArrayList();
+	public static List<BlueprintPassage> totalPassages = Lists.newArrayList();
 	
 	private final Long randSeed;
 	private Vector2i displayOffset = new Vector2i(0,0);
 	private Vector2i dragStart = null;
 	
-	private ButtonWidget scrunchButton, collapseButton, routeButton;
+	private ButtonWidget scrunchButton, collapseButton, criticalButton;
+	private ButtonWidget[] blueprintButtons;
 	
 	private Blueprint blueprint = null;
 	private Map<ErrorType,Integer> errorCache = new HashMap<>();
+	
+	private Box2f originBox = null;
+	private List<LineSegment2f> originLines = Lists.newArrayList();
 	
 	public DungeonScreen(DungeonScreenHandler handler, PlayerInventory inventory, Text title)
 	{
@@ -60,15 +69,29 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	protected void init()
 	{
-		addDrawableChild(ButtonWidget.builder(Text.literal("Tree"), b -> organise(BlueprintOrganiser.Tree::create)).dimensions(0, 0, 60, 20).build());
-		addDrawableChild(ButtonWidget.builder(Text.literal("4x Grid"), b -> organise(BlueprintOrganiser.Grid.Square::create)).dimensions(0, 20, 60, 20).build());
-		addDrawableChild(ButtonWidget.builder(Text.literal("8x Grid"), b -> organise(BlueprintOrganiser.Grid.Octagonal::create)).dimensions(0, 40, 60, 20).build());
-		addDrawableChild(ButtonWidget.builder(Text.literal("Concentric"), b -> organise(BlueprintOrganiser.Circular::create)).dimensions(0, 60, 60, 20).build());
+		ButtonWidget tree, x4, x8, circle;
+		addDrawableChild(tree = ButtonWidget.builder(Text.literal("Tree"), b -> organise(BlueprintOrganiser.Tree::create)).dimensions(0, 0, 60, 20).build());
+		addDrawableChild(x4 = ButtonWidget.builder(Text.literal("4x Grid"), b -> organise(BlueprintOrganiser.Grid.Square::create)).dimensions(0, 20, 60, 20).build());
+		addDrawableChild(x8 = ButtonWidget.builder(Text.literal("8x Grid"), b -> organise(BlueprintOrganiser.Grid.Octagonal::create)).dimensions(0, 40, 60, 20).build());
+		addDrawableChild(circle = ButtonWidget.builder(Text.literal("Concentric"), b -> organise(BlueprintOrganiser.Circular::create)).dimensions(0, 60, 60, 20).build());
 		
 		addDrawableChild(scrunchButton = ButtonWidget.builder(Text.literal("Scrunch"), b -> scrunch()).dimensions(0, 90, 60, 20).build());
 		addDrawableChild(collapseButton = ButtonWidget.builder(Text.literal("Collapse"), b -> collapse()).dimensions(0, 110, 60, 20).build());
 		
-		addDrawableChild(routeButton = ButtonWidget.builder(Text.literal("X"), b -> showCriticalPath = !showCriticalPath).dimensions(width - 20, 0, 20, 20).build());
+		ButtonWidget goStart;
+		addDrawableChild(goStart = ButtonWidget.builder(Text.literal("O"), b -> resetDrag())
+				.tooltip(Tooltip.of(Text.literal("Focus Start")))
+				.dimensions(width - 20, 0, 20, 20).build());
+		addDrawableChild(criticalButton = ButtonWidget.builder(Text.literal("X"), b -> showCriticalPath = !showCriticalPath)
+				.tooltip(Tooltip.of(Text.literal("Toggle Critical Path")))
+				.dimensions(width - 20, 25, 20, 20).build());
+		
+		blueprintButtons = new ButtonWidget[] 
+				{
+					tree, x4, x8, circle, scrunchButton, collapseButton, goStart, criticalButton
+				};
+		
+		addDrawableChild(ButtonWidget.builder(Text.literal("Mode"), b -> state = State.values()[(state.ordinal() + 1)%State.values().length]).dimensions(width - 60, height - 20, 60, 20).build());
 	}
 	
 	private void organise(Supplier<BlueprintOrganiser> organiser)
@@ -121,65 +144,154 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
 	{
-		context.drawText(textRenderer, this.title, (mc.getWindow().getScaledWidth() - textRenderer.getWidth(this.title)) / 2, 10, 0xFFFFFF, false);
-		
-		if(blueprint != null && !blueprint.isEmpty())
+		switch(state)
 		{
-			int totalErrors = 0;
-			for(int val : errorCache.values())
-				totalErrors += val;
-			
-			MutableText details = totalErrors > 0 ? 
-					Text.translatable("gui.cydun.dungeon_data_long", 
-						blueprint.size(), 
-						blueprint.maxDepth(), 
-						totalErrors, 
-						errorCache.getOrDefault(ErrorType.COLLISION, 0), 
-						errorCache.getOrDefault(ErrorType.INTERSECTION, 0), 
-						errorCache.getOrDefault(ErrorType.TUNNEL, 0)) :
-					Text.translatable("gui.cydun.dungeon_data", 
-						blueprint.size(), 
-						blueprint.maxDepth(), 0);
-			context.drawText(textRenderer, details, (mc.getWindow().getScaledWidth() - textRenderer.getWidth(details)) / 2, 20, 0xFFFFFF, false);
+			case BLUEPRINT:
+				context.drawText(textRenderer, this.title, (mc.getWindow().getScaledWidth() - textRenderer.getWidth(this.title)) / 2, 10, 0xFFFFFF, false);
+				
+				if(blueprint != null && !blueprint.isEmpty())
+				{
+					int totalErrors = 0;
+					for(int val : errorCache.values())
+						totalErrors += val;
+					boolean errors = totalErrors > 0;
+					
+					MutableText details = errors ? 
+							Text.translatable("gui.cydun.dungeon_data_long", 
+								blueprint.size(), 
+								blueprint.maxDepth(), 
+								totalErrors, 
+								errorCache.getOrDefault(ErrorType.COLLISION, 0), 
+								errorCache.getOrDefault(ErrorType.INTERSECTION, 0), 
+								errorCache.getOrDefault(ErrorType.TUNNEL, 0)) :
+							Text.translatable("gui.cydun.dungeon_data", 
+								blueprint.size(), 
+								blueprint.maxDepth(), 0);
+					context.drawText(textRenderer, details, (mc.getWindow().getScaledWidth() - textRenderer.getWidth(details)) / 2, 20, 0xFFFFFF, false);
+					
+					if(errors)
+					{
+						int y = mc.getWindow().getScaledHeight();
+						for(Text line : new Text[] 
+								{
+									Text.literal("Dark Gray - Errors detected elsewhere"),
+									Text.literal("Lime Green - Path intersects with unrelated room"),
+									Text.literal("Light Blue - Path intersects with unrelated path")
+								})
+						{
+							y -= textRenderer.fontHeight;
+							context.drawText(textRenderer, line, 10, y, Formatting.GRAY.getColorValue(), false);
+						}
+					}
+				}
+				break;
+			case DEBUG:
+				context.drawText(textRenderer, Text.literal("Geometry testing"), (mc.getWindow().getScaledWidth() - textRenderer.getWidth(this.title)) / 2, 10, 0xFFFFFF, false);
+				break;
 		}
+		
 	}
 	
 	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY)
 	{
 		blur();
 		
-		if(blueprint != null && !blueprint.isEmpty())
+		switch(state)
 		{
-			final Vector2i position = isDragging() ? new Vector2i(displayOffset.x + mouseX - dragStart.x, displayOffset.y + mouseY - dragStart.y) : displayOffset;
-			final Vector2i origin = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5).add(position);
-			NodeRenderUtils.render(blueprint.get(0), context, this.textRenderer, origin, blueprint, errorCache, mouseX, mouseY, renderScale);
+			case BLUEPRINT:
+				if(blueprint == null || blueprint.isEmpty())
+					return;
+				
+				final Vector2i position = isDragging() ? new Vector2i(displayOffset.x + mouseX - dragStart.x, displayOffset.y + mouseY - dragStart.y) : displayOffset;
+				final Vector2i drawOrigin = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5).add(position);
+				NodeRenderUtils.render(blueprint.get(0), context, this.textRenderer, drawOrigin, blueprint, errorCache, mouseX, mouseY, renderScale);
+				break;
+			case DEBUG:
+				Vec2f lineStart = new Vec2f(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5);
+				Vec2f lineEnd = new Vec2f(mouseX, mouseY);
+				LineSegment2f line = new LineSegment2f(lineStart, lineEnd);
+				NodeRenderUtils.renderStraightLine(line, context, ColorHelper.withAlpha(175, Formatting.AQUA.getColorValue()));
+				Vec2f textPoint = lineStart.add(lineEnd.add(lineStart.negate()).multiply(0.5F));
+				
+				// Test boundary box
+				List<Pair<LineSegment2f,Vec2f>> intercepts = Lists.newArrayList();
+				for(LineSegment2f edge : originLines)
+				{
+					Vec2f intercept = LineSegment2f.segmentIntercept(edge, line);
+					boolean hasIntercept = intercept != null;
+					int colour = hasIntercept ? NodeRenderUtils.GOLD : NodeRenderUtils.DARK_GRAY;
+					NodeRenderUtils.renderStraightLine(edge, context, colour);
+					
+					if(hasIntercept)
+						intercepts.add(new Pair<LineSegment2f,Vec2f>(edge, intercept));
+				}
+				
+				intercepts.forEach(p -> 
+				{
+					LineSegment2f edge = p.getLeft();
+					Vec2f intercept = p.getRight();
+					
+					Box2f pointBox = new Box2f(intercept.x - 1, intercept.x + 1, intercept.y - 1, intercept.y + 1);
+					NodeRenderUtils.renderBox(pointBox, context, ColorHelper.withAlpha(255, Formatting.DARK_RED.getColorValue()));
+					
+					context.drawText(
+							textRenderer, 
+							Text.literal(edge.asEquation()), 
+							(int)(edge.isVertical ? edge.getLeft().x + 5 : (edge.getLeft().x + edge.getRight().x) / 2), 
+							(int)(edge.isVertical ? (edge.getLeft().y + edge.getRight().y) / 2 : edge.getLeft().y + 5), 
+							Formatting.DARK_RED.getColorValue(), 
+							false);
+				});
+				
+				context.drawText(textRenderer, Text.literal(line.asEquation()), (int)textPoint.x, (int)textPoint.y, 0xFFFFFF, false);
+				break;
 		}
 	}
 	
 	public void handledScreenTick()
 	{
-		if(blueprint == null)
-			getScreenHandler().graph().ifPresent(graph -> 
-			{
-				if(graph.isEmpty())
-					return;
-				
-				blueprint = Blueprint.fromGraph(graph);
-				blueprint.updateCriticalPath();
-				Random rand = Random.create(randSeed);
-				blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
-				BlueprintOrganiser.Tree.create().organise(blueprint, rand);
-				cacheErrors();
-				updatePathCaches();
-			});
-		else
+		switch(state)
 		{
-			scrunchButton.active = collapseButton.active = routeButton.active = errorCache.isEmpty();
-			showCriticalPath = showCriticalPath && routeButton.active;
+			case BLUEPRINT:
+				for(ButtonWidget button : blueprintButtons)
+					button.visible = true;
+				
+				if(blueprint == null)
+					getScreenHandler().graph().ifPresent(graph -> 
+					{
+						if(graph.isEmpty())
+							return;
+						
+						blueprint = Blueprint.fromGraph(graph);
+						blueprint.updateCriticalPath();
+						Random rand = Random.create(randSeed);
+						blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
+						BlueprintOrganiser.Tree.create().organise(blueprint, rand);
+						cacheErrors();
+						updatePathCaches();
+					});
+				else
+				{
+					scrunchButton.active = collapseButton.active = criticalButton.active = errorCache.isEmpty();
+					showCriticalPath = showCriticalPath && criticalButton.active;
+				}
+				break;
+			case DEBUG:
+				for(ButtonWidget button : blueprintButtons)
+					button.visible = false;
+				
+				if(originBox == null)
+				{
+					final Vector2i screenMid = new Vector2i(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 2);
+					originBox = new Box2f(screenMid.x - 50, screenMid.x + 50, screenMid.y - 50, screenMid.y + 50);
+					originLines.clear();
+					originLines.addAll(originBox.asEdges());
+				}
+				break;
 		}
 	}
 	
-	public void resetDrag() { this.displayOffset = new Vector2i(0,0); }
+	public void resetDrag() { blueprint.start().ifPresent(s -> displayOffset = s.position()); }
 	
 	public boolean mouseClicked(double mouseX, double mouseY, int button)
 	{
@@ -215,5 +327,11 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		this.displayOffset = new Vector2i((int)offX, (int)offY);
 		
 		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+	}
+	
+	public static enum State
+	{
+		BLUEPRINT,
+		DEBUG;
 	}
 }

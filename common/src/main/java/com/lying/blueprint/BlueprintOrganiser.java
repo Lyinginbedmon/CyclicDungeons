@@ -26,6 +26,7 @@ public abstract class BlueprintOrganiser
 	public static final DebugLogger LOGGER = CDLoggers.PLANAR;
 	private static final int GRID_SIZE = 30;
 	
+	/** Returns a comparator of rooms by their total number of descendant rooms */
 	public static final Comparator<BlueprintRoom> descendantSort(List<BlueprintRoom> chart)
 	{
 		return (a,b) -> 
@@ -75,6 +76,7 @@ public abstract class BlueprintOrganiser
 			return p;
 		}).filter(Objects::nonNull).toList());
 		
+		// Merge all paths together with applicable paths
 		List<BlueprintPassage> mergedPaths = Lists.newArrayList();
 		while(!pathsToMerge.isEmpty())
 		{
@@ -322,7 +324,7 @@ public abstract class BlueprintOrganiser
 			for(GridPosition offset : moveSet.apply(position))
 			{
 				Vector2i neighbour = offset.get(position, gridMap, gridSize);
-				if(!gridMap.containsKey(neighbour))
+				if(!gridMap.containsKey(neighbour) && neighbour.y >= 0)
 				{
 					// Ensure the position has at least as many moves itself as the node has children
 					if(minExits > 0 && getAvailableOptions(neighbour, -1, moveSet, gridSize, gridMap).size() <= minExits)

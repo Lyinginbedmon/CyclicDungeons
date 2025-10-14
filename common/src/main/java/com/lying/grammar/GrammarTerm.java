@@ -20,7 +20,7 @@ import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.DebugLogger;
-import com.lying.utility.Line2f;
+import com.lying.utility.LineSegment2f;
 import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.TileSet;
@@ -144,7 +144,7 @@ public abstract class GrammarTerm
 		
 		// Find all line segments that intersect the bounds of the room
 		AbstractBox2f bounds = node.bounds();
-		List<Line2f> lines = Lists.newArrayList();
+		List<LineSegment2f> lines = Lists.newArrayList();
 		doorways.stream()
 			.map(BlueprintPassage::asLines)
 			.forEach(set -> 

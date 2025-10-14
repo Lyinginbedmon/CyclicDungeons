@@ -32,11 +32,13 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.random.Random;
 
 public abstract class Tile
 {
 	public static final int TILE_SIZE = 2;
+	public static final Vec2f TILE = new Vec2f(TILE_SIZE, TILE_SIZE);
 	
 	private final Identifier registryName;
 	private final TilePredicate predicate;

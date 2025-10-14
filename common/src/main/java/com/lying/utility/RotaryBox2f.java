@@ -7,7 +7,7 @@ import net.minecraft.util.math.Vec2f;
 public class RotaryBox2f extends AbstractBox2f
 {
 	private Vec2f[] points = new Vec2f[4];
-	private Line2f[] edges = new Line2f[4];
+	private LineSegment2f[] edges = new LineSegment2f[4];
 	
 	private float minX, minY, maxX, maxY;
 	
@@ -63,12 +63,12 @@ public class RotaryBox2f extends AbstractBox2f
 	
 	protected void buildEdges()
 	{
-		edges = new Line2f[] 
+		edges = new LineSegment2f[] 
 				{
-					new Line2f(points[0], points[1]), 
-					new Line2f(points[1], points[2]), 
-					new Line2f(points[2], points[3]), 
-					new Line2f(points[3], points[0])
+					new LineSegment2f(points[0], points[1]), 
+					new LineSegment2f(points[1], points[2]), 
+					new LineSegment2f(points[2], points[3]), 
+					new LineSegment2f(points[3], points[0])
 				};
 	}
 	
@@ -86,7 +86,7 @@ public class RotaryBox2f extends AbstractBox2f
 		return new RotaryBox2f(new Vec2f(0, 0), new Vec2f(width, 0), new Vec2f(width, height), new Vec2f(0, height));
 	}
 	
-	public static RotaryBox2f fromLine(Line2f line, float height)
+	public static RotaryBox2f fromLine(LineSegment2f line, float height)
 	{
 		Vec2f p1 = new Vec2f(line.getLeft().x, line.getLeft().y);
 		Vec2f p2 = new Vec2f(line.getRight().x, line.getRight().y);
@@ -115,7 +115,7 @@ public class RotaryBox2f extends AbstractBox2f
 		return new Box2f(minX, maxX, minY, maxY);
 	}
 	
-	public List<Line2f> asEdges()
+	public List<LineSegment2f> asEdges()
 	{
 		return List.of(
 				edges[0],

@@ -1,6 +1,7 @@
 package com.lying.utility;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.google.common.collect.Lists;
 
@@ -13,8 +14,10 @@ public abstract class AbstractBox2f
 	public abstract float maxX();
 	public abstract float maxY();
 	
-	public abstract List<Line2f> asEdges();
+	/** Returns a set of lines representing the edges of the box's bounds */
+	public abstract List<LineSegment2f> asEdges();
 	
+	/** Returns the list of vectors representing the corners of the box */
 	public abstract List<Vec2f> asPoints();
 	
 	public abstract String toString();
@@ -30,11 +33,11 @@ public abstract class AbstractBox2f
 		{
 			// If the number of intersections is odd in any direction, the point must be inside the box
 			
-			Line2f linePos = new Line2f(vec, vec.add(test.multiply(Float.MAX_VALUE)));
+			LineSegment2f linePos = new LineSegment2f(vec, vec.add(test.multiply(Float.MAX_VALUE)));
 			if(intersections(linePos)%2 > 0)
 				return true;
 			
-			Line2f lineNeg = new Line2f(vec, vec.add(test.multiply(Float.MIN_VALUE)));
+			LineSegment2f lineNeg = new LineSegment2f(vec, vec.add(test.multiply(Float.MIN_VALUE)));
 			if(intersections(lineNeg)%2 > 0)
 				return true;
 		}
@@ -42,17 +45,17 @@ public abstract class AbstractBox2f
 		return false;
 	}
 	
-	public boolean contains(Line2f line)
+	public boolean contains(LineSegment2f line)
 	{
 		return contains(line.getLeft()) && contains(line.getRight());
 	}
 	
 	/** Returns the number of edges intersected by the given line */
-	public int intersections(Line2f line)
+	public int intersections(LineSegment2f line)
 	{
 		int tally = 0;
-		for(Line2f edge : asEdges())
-			if(edge.intersects(line))
+		for(LineSegment2f edge : asEdges())
+			if(LineSegment2f.doSegmentsIntersect(edge, line))
 				tally++;
 		return tally;
 	}
@@ -60,17 +63,18 @@ public abstract class AbstractBox2f
 	/** Returns true if the given box intersects this one */
 	public boolean intersects(AbstractBox2f box)
 	{
-		return box.asPoints().stream().anyMatch(this::contains) || asEdges().stream().anyMatch(e1 -> box.asEdges().stream().anyMatch(e1::intersects));
+		return box.asPoints().stream().anyMatch(this::contains) || asEdges().stream().anyMatch(e1 -> box.asEdges().stream().anyMatch(e2 -> LineSegment2f.doSegmentsIntersect(e1, e2)));
 	}
 	
-	public boolean intersects(Line2f line)
+	public boolean intersects(LineSegment2f line)
 	{
 		// If the bounds contain either point of a line, it must intersect
 		if(contains(line.getLeft()) || contains(line.getRight()))
 			return true;
 		
 		// If the line intersects any boundary line of the bounds, it must intersect
-		return asEdges().stream().anyMatch(line::intersects);
+		final Predicate<LineSegment2f> predicate = a -> LineSegment2f.doSegmentsIntersect(line, a);
+		return asEdges().stream().anyMatch(predicate);
 	}
 	
 	/** Returns a list of all 2D positions enclosed by this box */

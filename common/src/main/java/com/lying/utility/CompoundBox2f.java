@@ -59,9 +59,9 @@ public class CompoundBox2f extends AbstractBox2f
 		return boxes.stream().anyMatch(b -> b.contains(vec));
 	}
 	
-	public List<Line2f> asEdges()
+	public List<LineSegment2f> asEdges()
 	{
-		List<Line2f> edges = Lists.newArrayList();
+		List<LineSegment2f> edges = Lists.newArrayList();
 		boxes.forEach(b -> edges.addAll(b.asEdges()));
 		return edges;
 	}
@@ -71,6 +71,11 @@ public class CompoundBox2f extends AbstractBox2f
 		List<Vec2f> points = Lists.newArrayList();
 		boxes.stream().map(AbstractBox2f::asPoints).forEach(points::addAll);
 		return points;
+	}
+	
+	public List<AbstractBox2f> asBoxes()
+	{
+		return boxes;
 	}
 	
 	public AbstractBox2f move(Vec2f vec)

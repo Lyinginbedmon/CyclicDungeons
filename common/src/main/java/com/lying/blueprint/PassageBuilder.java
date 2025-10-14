@@ -3,7 +3,7 @@ package com.lying.blueprint;
 import java.util.List;
 
 import com.lying.utility.AbstractBox2f;
-import com.lying.utility.Line2f;
+import com.lying.utility.LineSegment2f;
 import com.lying.worldgen.Tile;
 
 import net.minecraft.block.BlockState;
@@ -36,10 +36,14 @@ public class PassageBuilder
 	
 	public static void build(BlueprintPassage passage, BlockPos origin, ServerWorld world, List<AbstractBox2f> boundaries)
 	{
+		// Any passage that is shorter than twice the thickness of the exterior walls is functionally internal and doesn't need special generation
+		if(passage.length() <= 2D)
+			return;
+		
 		// FIXME Calculate tile set and generate with WFC
 		BlockState placeState = CONCRETE[world.random.nextInt(CONCRETE.length)];
 		
-		for(Line2f segment : passage.asLines())
+		for(LineSegment2f segment : passage.asLines())
 		{
 			Vec2f offset = segment.getRight().add(segment.getLeft().negate());
 			float len = offset.length();

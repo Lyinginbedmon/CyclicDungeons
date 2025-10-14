@@ -24,7 +24,7 @@ public class Box2f extends AbstractBox2f
 	public final float maxX() { return maxX; }
 	public final float maxY() { return maxY; }
 	
-	public List<Line2f> asEdges()
+	public List<LineSegment2f> asEdges()
 	{
 		Vec2f 
 			a = new Vec2f(minX, minY), 
@@ -33,10 +33,10 @@ public class Box2f extends AbstractBox2f
 			d = new Vec2f(minX, maxY);
 		
 		return List.of(
-				new Line2f(a, b),
-				new Line2f(b, c),
-				new Line2f(c, d),
-				new Line2f(d, a)
+				new LineSegment2f(a, b),
+				new LineSegment2f(b, c),
+				new LineSegment2f(c, d),
+				new LineSegment2f(d, a)
 				);
 	}
 	

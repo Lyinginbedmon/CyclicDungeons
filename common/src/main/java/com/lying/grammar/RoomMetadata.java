@@ -65,7 +65,7 @@ public class RoomMetadata
 		size = new Vector2i(x, y);
 		return this;
 	}
-	public Vector2i size() { return size; }
+	public Vector2i size() { return new Vector2i(size.x, size.y); }
 	
 	public RoomMetadata setType(GrammarTerm term) { type = term; return this; }
 	public GrammarTerm type() { return type; }

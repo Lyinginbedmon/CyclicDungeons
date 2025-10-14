@@ -14,7 +14,7 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CompoundBox2f;
-import com.lying.utility.Line2f;
+import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
 import com.lying.utility.RotaryBox2f;
 import com.lying.utility.Vector2iUtils;
@@ -29,13 +29,13 @@ public class BlueprintPassage
 			CDTiles.AIR.get(), 10F
 			);
 	
-	public static final int PASSAGE_WIDTH = 3;
+	public static final int PASSAGE_WIDTH = 3 * Tile.TILE_SIZE;
 	private final BlueprintRoom parent;
 	private final List<BlueprintRoom> children = Lists.newArrayList();
 	private final float width;
 	private CompoundBox2f box;
 	
-	private List<Line2f> linesCached = Lists.newArrayList();
+	private List<LineSegment2f> linesCached = Lists.newArrayList();
 	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b)
 	{
@@ -44,10 +44,10 @@ public class BlueprintPassage
 	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b, float width)
 	{
-		this(a, b, new Line2f(new Vec2f(a.position().x, a.position().y), new Vec2f(b.position().x, b.position().y)), width);
+		this(a, b, new LineSegment2f(a.position(), b.position()), width);
 	}
 	
-	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b, Line2f lineIn, float widthIn)
+	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b, LineSegment2f lineIn, float widthIn)
 	{
 		parent = a;
 		children.add(b);
@@ -71,8 +71,18 @@ public class BlueprintPassage
 	
 	public int size() { return 1 + children.size(); }
 	
+	public int lineSegments() { return asLines().size(); }
+	
+	public double length()
+	{
+		double len = 0D;
+		for(LineSegment2f line : asLines())
+			len += line.length();
+		return len;
+	}
+	
 	/** Returns this passage as a set of one or more line segments */
-	public List<Line2f> asLines()
+	public List<LineSegment2f> asLines()
 	{
 		if(linesCached.isEmpty())
 			cacheLines();
@@ -84,19 +94,16 @@ public class BlueprintPassage
 	{
 		linesCached.clear();
 		
-		List<Line2f> lines = Lists.newArrayList();
-		Vec2f parentPos = new Vec2f(parent.position().x, parent.position().y);
+		List<LineSegment2f> lines = Lists.newArrayList();
 		children.stream()
-			.map(BlueprintRoom::position)
-			.map(p -> new Vec2f(p.x, p.y))
-			.map(p -> LineUtils.trialLines(parentPos, p, this::isLineViable))
+			.map(p -> LineUtils.trialLines(parent, p, this::isLineViable))
 			.forEach(lines::addAll);
 		
 		if(linesCached.isEmpty())
 			linesCached.addAll(lines);
 	}
 	
-	public static List<Vec2f> asPoints(List<Line2f> lines)
+	public static List<Vec2f> asPoints(List<LineSegment2f> lines)
 	{
 		List<Vec2f> points = Lists.newArrayList();
 		lines.stream().forEach(l -> 
@@ -118,7 +125,6 @@ public class BlueprintPassage
 		if(linesCached.isEmpty())
 		{
 			asLines();
-			
 			if(linesCached.isEmpty())
 				return this;
 		}
@@ -126,7 +132,7 @@ public class BlueprintPassage
 		// Remove any lines that exist wholly within the bounding box
 		linesCached.removeIf(box::contains);
 		
-		List<Line2f> clipped = Lists.newArrayList();
+		List<LineSegment2f> clipped = Lists.newArrayList();
 		linesCached.stream().map(l -> l.clip(box)).filter(Objects::nonNull).forEach(clipped::add);
 		
 		linesCached.clear();
@@ -136,7 +142,7 @@ public class BlueprintPassage
 	}
 	
 	/** Controls how this passage is shaped to connect its associated rooms */
-	private boolean isLineViable(List<Line2f> line)
+	private boolean isLineViable(List<LineSegment2f> line)
 	{
 		List<BlueprintRoom> rooms = Lists.newArrayList();
 		rooms.add(parent);
@@ -144,14 +150,19 @@ public class BlueprintPassage
 		return isLineViable(line, rooms);
 	}
 	
-	public static boolean isLineViable(List<Line2f> segments, List<BlueprintRoom> rooms)
+	public static boolean isLineViable(List<LineSegment2f> segments, List<BlueprintRoom> rooms)
 	{
+		if(segments.size() == 1)
+			return true;
+		
+		final List<AbstractBox2f> bounds = BlueprintOrganiser.getBounds(rooms);
+		
 		// Map of line segments that start or end within a terminal bounding box
-		Map<Line2f, List<AbstractBox2f>> terminalMap = new HashMap<>();
+		Map<LineSegment2f, List<AbstractBox2f>> terminalMap = new HashMap<>();
 		segments.forEach(l -> 
 		{
 			List<AbstractBox2f> terminals = rooms.stream()
-				.filter(r -> l.isEitherPoint(Vector2iUtils.toVec2f(r.position())))
+				.filter(r -> l.contains(Vector2iUtils.toVec2f(r.position())))
 				.map(BlueprintRoom::bounds)
 				.map(b -> b.grow(1F)).toList();
 			
@@ -162,18 +173,17 @@ public class BlueprintPassage
 		// Terminal line segments must not be entirely contained within any single terminal bounding box
 		if(terminalMap.entrySet().stream().anyMatch(e -> e.getValue().stream().anyMatch(b -> 
 		{
-			Line2f l = e.getKey();
+			LineSegment2f l = e.getKey();
 			return b.contains(l.getLeft()) && b.contains(l.getRight());
 		})))
 			return false;
 		
 		// List of line segments that do not intersect any terminal bounding boxes
-		List<Line2f> exteriorLines = segments.stream()
+		List<LineSegment2f> exteriorLines = segments.stream()
 				.filter(l -> 
 				{
 					AbstractBox2f box = RotaryBox2f.fromLine(l, PASSAGE_WIDTH);
-					return rooms.stream()
-						.map(BlueprintRoom::bounds)
+					return bounds.stream()
 						.map(b -> b.grow(1F))
 						.noneMatch(Predicates.not(box::intersects)); 
 				}).toList();
@@ -185,10 +195,10 @@ public class BlueprintPassage
 	
 	public AbstractBox2f asBox() { return box; }
 	
-	protected static CompoundBox2f lineToBox(List<Line2f> segments, float width)
+	protected static CompoundBox2f lineToBox(List<LineSegment2f> segments, float width)
 	{
 		CompoundBox2f box = new CompoundBox2f();
-		for(Line2f l : segments)
+		for(LineSegment2f l : segments)
 			box.add(RotaryBox2f.fromLine(l, width));
 		
 		return box;
@@ -220,26 +230,20 @@ public class BlueprintPassage
 	/** Returns true if any line segment in this passage intersects any line segment in the other passage */
 	public boolean intersects(BlueprintPassage other)
 	{
-		// The passages as line segments
-		List<Line2f> 
-			aLines = this.asLines(), 
-			bLines = other.asLines();
-		
-		// Return true if any two lines intersect
-		return aLines.stream().anyMatch(l -> bLines.stream().anyMatch(l::intersects));
+		return 
+				asLines().stream().anyMatch(l -> 
+					other.asLines().stream()
+					.anyMatch(l2 -> LineSegment2f.doSegmentsIntersect(l, l2)));
 	}
 	
 	/** Returns true if this passage can merge with the other passage */
 	public boolean canMergeWith(BlueprintPassage other)
 	{
-		if(!canShareSpaceWith(other))
-			return false;
-		
-		List<Line2f>
-			aLines = this.asLines(),
-			bLines = other.asLines();
 		return 
-				aLines.stream().anyMatch(l -> bLines.stream().anyMatch(l::intersectsAtAll));
+				canShareSpaceWith(other) &&
+				asLines().stream().anyMatch(l -> 
+					other.asLines().stream()
+					.anyMatch(l2 -> LineSegment2f.doSegmentsIntersect(l, l2)));
 	}
 	
 	public BlueprintPassage mergeWith(BlueprintPassage b)
@@ -259,7 +263,7 @@ public class BlueprintPassage
 	}
 	
 	/** Returns true if this passage intersects with any other unrelated passages in the given chart */
-	public boolean hasIntersections(List<BlueprintRoom> chart)
+	public boolean intersectsOtherPassages(List<BlueprintRoom> chart)
 	{
 		List<BlueprintPassage> paths = BlueprintOrganiser.getPassages(chart);
 		return paths.stream()
@@ -270,11 +274,15 @@ public class BlueprintPassage
 	}
 	
 	/** Returns true if this passage intersects any unrelated rooms in the given chart */
-	public boolean hasTunnels(List<BlueprintRoom> chart)
+	public boolean intersectsOtherRooms(List<BlueprintRoom> chart)
 	{
-		return chart.stream()
-				.filter(Predicates.not(this::isTerminus))
+		List<BlueprintRoom> unrelatedRooms = chart.stream()
+				.filter(Predicates.not(parent::equals))
+				.filter(Predicates.not(children::contains)).toList();
+		
+		return unrelatedRooms.stream()
 				.map(BlueprintRoom::bounds)
+				.map(b -> b.grow(1F))
 				.anyMatch(this.box::intersects);
 	}
 }
