@@ -62,10 +62,33 @@ public class TileSet
 		return this;
 	}
 	
+	public TileSet addToVolume(BlockPos from, BlockPos to)
+	{
+		BlockPos.Mutable.iterate(from, to).forEach(p -> addToVolume(p.toImmutable()));
+		return this;
+	}
+	
 	public TileSet removeFromVolume(BlockPos pos)
 	{
 		set.remove(pos);
 		return this;
+	}
+	
+	/** Expands the map in the given direction from all pre-existing positions */
+	public void grow(Direction direction)
+	{
+		grow(direction, 1);
+	}
+	
+	/** Expands the map in the given direction from all pre-existing positions */
+	public void grow(Direction direction, int size)
+	{
+		// Filter to boundary positions to reduce excessive calls
+		set.keySet().stream().filter(p -> isBoundary(p,direction)).toList().forEach(p -> 
+		{
+			for(int i=0; i<size; i++)
+				addToVolume(p.offset(direction));
+		});
 	}
 	
 	public BlockPos size()
@@ -102,7 +125,7 @@ public class TileSet
 		return boundaries;
 	}
 	
-	public void applyToAllValid(Tile tile, List<Tile> options)
+	public void applyToAllValid(Tile tile)
 	{
 		Collection<BlockPos> points = set.keySet();
 		points.stream().filter(this::contains).filter(p -> get(p).get().isBlank() && tile.canExistAt(p, this)).forEach(p -> put(p, tile));

@@ -39,6 +39,7 @@ public class BlueprintScruncher
 		boolean anyMoved = false;
 		for(BlueprintRoom node : nodes)
 		{
+			// TODO Rework to try to reduce connecting path complexity/length rather than distance to room origin positions
 			// Calculated "ideal" position, ie. right on top of or between the parents
 			Vector2i ideal = node.getParentPosition(chart);
 			
@@ -128,6 +129,7 @@ public class BlueprintScruncher
 			return false;
 		
 		// Move the cluster, check for errors, revert if any are found
+		// Taxing but effective without any greater checking
 		cluster.forEach(n -> n.offset(move));
 		
 		if(chart.hasErrors())

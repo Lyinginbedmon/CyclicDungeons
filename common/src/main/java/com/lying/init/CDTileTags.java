@@ -20,24 +20,25 @@ public class CDTileTags
 	private static final Map<Identifier, TileTag> TAGS	= new HashMap<>();
 	
 	public static final TileTag SOLID_FLOORING	= make("solid_flooring", 
-			prefix("floor"));
+			CDTiles.ID_FLOOR_ROOM,
+			CDTiles.ID_FLOOR_PASSAGE);
 	public static final TileTag CEILING			= make("ceiling");
 	public static final TileTag TABLES			= make("tables", 
-			prefix("table"), 
-			prefix("table_light"));
+			CDTiles.ID_TABLE, 
+			CDTiles.ID_LIGHT_TABLE);
 	public static final TileTag LIGHTING		= make("lighting", 
-			prefix("floor_light"), 
-			prefix("table_light"));
+			CDTiles.ID_LIGHT_FLOOR, 
+			CDTiles.ID_LIGHT_TABLE);
 	public static final TileTag DECOR			= make("decor", 
-			prefix("floor_light"), 
-			prefix("table"), 
-			prefix("table_light"), 
-			prefix("seat"),
-			prefix("workstation"));
+			CDTiles.ID_LIGHT_FLOOR, 
+			CDTiles.ID_TABLE, 
+			CDTiles.ID_LIGHT_TABLE, 
+			CDTiles.ID_SEAT,
+			CDTiles.ID_WORKSTATION);
 	public static final TileTag OBTRUSIVE		= make("obtrusive", 
-			prefix("table"), 
-			prefix("table_light"), 
-			prefix("seat"));
+			CDTiles.ID_TABLE, 
+			CDTiles.ID_LIGHT_TABLE, 
+			CDTiles.ID_SEAT);
 	
 	private static TileTag make(String name, Identifier... idsIn)
 	{

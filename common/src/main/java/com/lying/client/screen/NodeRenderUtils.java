@@ -138,24 +138,38 @@ public class NodeRenderUtils
 		Vector2i size = metadata.size();
 		
 		// Main bounds
-		renderBoundary(pos, size, renderScale, context, ColorHelper.withAlpha(255, metadata.type().colour()));
+		int mX = pos.x;
+		int mY = pos.y;
+		
+		mX -= (Math.floorDiv(size.x, Tile.TILE_SIZE) / 2 * Tile.TILE_SIZE) * renderScale;
+		mY -= (Math.floorDiv(size.y, Tile.TILE_SIZE) / 2 * Tile.TILE_SIZE) * renderScale;
+		
+		int MX = mX + size.x * renderScale;
+		int MY = mY + size.y * renderScale;
+		renderBoundary(new Vector2i(mX, mY), new Vector2i(MX, MY), 1, context, ColorHelper.withAlpha(255, metadata.type().colour()));
 		
 		// Exterior shell
-		renderBoundary(pos, Vector2iUtils.add(size, new Vector2i(2,2)), renderScale, context, ColorHelper.withAlpha(130, DARK_GRAY));
+		Vector2i shellWidth = new Vector2i(1,1).mul(renderScale);
+		renderBoundary(new Vector2i(mX, mY).add(-shellWidth.x, -shellWidth.y), new Vector2i(MX, MY).add(shellWidth.x, shellWidth.y), 1, context, ColorHelper.withAlpha(130, DARK_GRAY));
 		
 		// Tile grid
-		int tilesX = size.x / Tile.TILE_SIZE;
-		int tilesY = size.y / Tile.TILE_SIZE;
+		int tilesX = metadata.size().x / Tile.TILE_SIZE;
+		int tilesY = metadata.size().y / Tile.TILE_SIZE;
 		Vector2i tile = new Vector2i(Tile.TILE_SIZE, Tile.TILE_SIZE);
-		Vector2i corner = Vector2iUtils.add(pos, new Vector2i(size.x / 2 - 1, size.y / 2 - 1).negate().mul(renderScale));
 		for(int x=0; x<tilesX; x++)
 			for( int y=0; y<tilesY; y++)
-				renderBoundary(Vector2iUtils.add(corner, new Vector2i(x, y).mul(Tile.TILE_SIZE * renderScale)), tile, renderScale, context, ColorHelper.withAlpha(75, DARK_GRAY));
+			{
+				Vector2i min = new Vector2i(mX, mY).add(tile.x * x * renderScale, tile.y * y * renderScale);
+				Vector2i max = Vector2iUtils.add(min, Vector2iUtils.mul(tile, renderScale));
+				renderBoundary(min, max, 1, context, ColorHelper.withAlpha(75, DARK_GRAY));
+			}
 	}
 	
-	public static void renderBoundary(Vector2i pos, Vector2i size, int renderScale, DrawContext context, int colour)
+	public static void renderBoundary(Vector2i min, Vector2i max, int renderScale, DrawContext context, int colour)
 	{
-		context.drawBorder(pos.x - (size.x / 2) * renderScale, pos.y - (size.y / 2) * renderScale, size.x * renderScale, size.y * renderScale, colour);
+		int sizeX = max.x - min.x;
+		int sizeY = max.y - min.y;
+		context.drawBorder(min.x, min.y, sizeX, sizeY, colour);
 	}
 	
 	public static void renderBox(Box2f box, DrawContext context, int colour)

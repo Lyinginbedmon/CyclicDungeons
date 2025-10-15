@@ -141,8 +141,8 @@ public class CDCommands
 		if(blueprint.hasErrors())
 			throw GRAPH_FAILED_EXCEPTION.create();
 		
-		BlueprintScruncher.collapse(blueprint, false);
-		BlueprintScruncher.collapse(blueprint, true);
+//		BlueprintScruncher.collapse(blueprint, false);
+//		BlueprintScruncher.collapse(blueprint, true);
 		if(blueprint.hasErrors())
 			throw SCRUNCH_FAILED_EXCEPTION.create();
 		

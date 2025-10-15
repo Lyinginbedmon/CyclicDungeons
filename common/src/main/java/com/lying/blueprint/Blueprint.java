@@ -34,7 +34,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 {
 	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	
-	private static final int ROOM_HEIGHT = Tile.TILE_SIZE * 4;
+	public static final int ROOM_HEIGHT = Tile.TILE_SIZE * 4;
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
 	private List<BlueprintRoom> criticalPath = Lists.newArrayList();
@@ -214,12 +214,11 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		int tally = 0;
 		for(BlueprintRoom node : this)
 		{
-			Vector2i nodePos = node.position();
-			BlockPos pos = position.add(nodePos.x, 0, nodePos.y);
-			Vector2i scale = node.metadata().size();
+			Vector2i minScale = node.min();
+			Vector2i maxScale = node.max();
 			
-			BlockPos min = pos.add(-scale.x / 2, 0, -scale.y / 2);
-			BlockPos max = min.add(scale.x, ROOM_HEIGHT, scale.y);
+			BlockPos min = position.add(minScale.x, 0, minScale.y);
+			BlockPos max = position.add(maxScale.x, ROOM_HEIGHT, maxScale.y);
 			
 			RoomMetadata meta = node.metadata();
 			GrammarTerm type = meta.type();
@@ -247,7 +246,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		 */
 		
 		List<AbstractBox2f> bounds = BlueprintOrganiser.getBounds(this);
-		BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this), bounds).forEach(p -> PassageBuilder.build(p, position, world, bounds));
+		List<BlueprintPassage> paths = BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this), bounds);
+		
+		paths.forEach(p -> PassageBuilder.build(p, position, world, bounds));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}

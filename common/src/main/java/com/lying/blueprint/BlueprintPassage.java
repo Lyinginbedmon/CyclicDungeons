@@ -81,6 +81,18 @@ public class BlueprintPassage
 		return len;
 	}
 	
+	public double lengthManhattan()
+	{
+		double dX = 0D, dY = 0D;
+		for(LineSegment2f line : asLines())
+		{
+			Vec2f delta = line.direction();
+			dX += Math.abs(delta.x);
+			dY += Math.abs(delta.y);
+		}
+		return dX + dY;
+	}
+	
 	/** Returns this passage as a set of one or more line segments */
 	public List<LineSegment2f> asLines()
 	{
@@ -239,8 +251,23 @@ public class BlueprintPassage
 	/** Returns true if this passage can merge with the other passage */
 	public boolean canMergeWith(BlueprintPassage other)
 	{
+		if(!canShareSpaceWith(other))
+			return false;
+		
+		// Test if any two points are within a tile of each-other
+		List<Vec2f> p1 = Lists.newArrayList(), p2 = Lists.newArrayList();
+		asLines().stream().map(LineSegment2f::toPoints).forEach(a -> { p1.add(a[0]); p1.add(a[1]); });
+		other.asLines().stream().map(LineSegment2f::toPoints).forEach(a -> { p2.add(a[0]); p2.add(a[1]); });
+		
+		// FIXME Ensure paths in sufficiently-adjacent tiles merge together
+		float pathSeparation = Tile.TILE_SIZE * 3;
+		final float minDist = pathSeparation * pathSeparation;
+		
+		if(p1.stream().anyMatch(q1 -> p2.stream().anyMatch(q2 -> q2.distanceSquared(q1) <= minDist)))
+			return true;
+		
+		// Test if any line segments directly intersect
 		return 
-				canShareSpaceWith(other) &&
 				asLines().stream().anyMatch(l -> 
 					other.asLines().stream()
 					.anyMatch(l2 -> LineSegment2f.doSegmentsIntersect(l, l2)));

@@ -12,11 +12,12 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
 import com.lying.utility.Vector2iUtils;
-
-import net.minecraft.util.math.Vec2f;
+import com.lying.worldgen.Tile;
 
 public class BlueprintRoom
 {
+	private static final int GRID_SIZE = Tile.TILE_SIZE;
+	
 	private final UUID id;
 	private final RoomMetadata metadata;
 	private List<UUID> childLinks = Lists.newArrayList();
@@ -48,13 +49,15 @@ public class BlueprintRoom
 	
 	public BlueprintRoom setPosition(int x, int y)
 	{
-		return setPosition(new Vector2i(x, y));
+		x -= x%GRID_SIZE;
+		y -= y%GRID_SIZE;
+		position = new Vector2i(x, y);
+		return this;
 	}
 	
 	public BlueprintRoom setPosition(Vector2i vec)
 	{
-		position = vec;
-		return this;
+		return setPosition(vec.x, vec.y);
 	}
 	
 	public BlueprintRoom offset(Vector2i vec)
@@ -64,23 +67,11 @@ public class BlueprintRoom
 	
 	public BlueprintRoom offset(int x, int y)
 	{
+		x = (int)Math.signum(x) * GRID_SIZE;
+		y = (int)Math.signum(y) * GRID_SIZE;
+		
 		position = position.add(x, y);
 		return this;
-	}
-	
-	public boolean isAt(int x, int y)
-	{
-		return position.x == x && position.y == y;
-	}
-	
-	public boolean isAt(Vector2i vec)
-	{
-		return isAt(vec.x, vec.y);
-	}
-	
-	public boolean isAt(Vec2f vec)
-	{
-		return isAt((int)vec.x, (int)vec.y);
 	}
 	
 	public boolean hasParents() { return !parentLinks.isEmpty(); }
@@ -112,6 +103,48 @@ public class BlueprintRoom
 			return defaultPos;
 	}
 	
+	public Vector2i min()
+	{
+		return min(position);
+	}
+	
+	public Vector2i min(Vector2i position)
+	{
+		Vector2i size = metadata().size();
+		int tX = (Math.floorDiv(size.x, GRID_SIZE) / 2) * GRID_SIZE;
+		int tY = (Math.floorDiv(size.y, GRID_SIZE) / 2) * GRID_SIZE;
+		return new Vector2i(position.x - tX, position.y - tY);
+	}
+	
+	public Vector2i max()
+	{
+		return max(position);
+	}
+	
+	public Vector2i max(Vector2i position)
+	{
+		Vector2i size = metadata().size();
+		return min(position).add(size.x, size.y);
+	}
+	
+	public AbstractBox2f bounds()
+	{
+		return bounds(position);
+	}
+	
+	public AbstractBox2f bounds(Vector2i position)
+	{
+		Vector2i min = min(position);
+		Vector2i max = max(position);
+		return new Box2f(min.x, max.x, min.y, max.y);
+	}
+	
+	public boolean intersects(AbstractBox2f boundsB)
+	{
+		AbstractBox2f bounds = bounds();
+		return bounds.intersects(boundsB) || boundsB.intersects(bounds);
+	}
+	
 	public boolean hasChildren() { return !childLinks.isEmpty(); }
 	
 	public int childrenCount() { return childLinks.size(); }
@@ -139,26 +172,5 @@ public class BlueprintRoom
 		List<BlueprintRoom> set = Lists.newArrayList();
 		set.addAll(graph.stream().filter(n -> childLinks.contains(n.id)).toList());
 		return set;
-	}
-	
-	public AbstractBox2f bounds()
-	{
-		return bounds(position);
-	}
-	
-	public AbstractBox2f bounds(Vector2i position)
-	{
-		int sizeX = metadata.size().x;
-		int sizeY = metadata.size().y;
-		
-		int minX = position.x - sizeX / 2;
-		int minY = position.y - sizeY / 2;
-		return new Box2f(minX, minX + sizeX, minY, minY + sizeY);
-	}
-	
-	public boolean intersects(AbstractBox2f boundsB)
-	{
-		AbstractBox2f bounds = bounds();
-		return bounds.intersects(boundsB) || boundsB.intersects(bounds);
 	}
 }

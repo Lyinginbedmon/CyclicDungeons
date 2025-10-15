@@ -29,33 +29,47 @@ public class CDTiles
 	
 	private static final List<Direction> HORIZONTAL_FACES = Direction.Type.HORIZONTAL.stream().toList();
 	
+	public static final Identifier 
+		ID_BLANK			= prefix("blank"), 
+		ID_AIR				= prefix("air"), 
+		ID_PASSAGE			= prefix("passage_flag"), 
+		ID_FLOOR_ROOM		= prefix("floor_room"),
+		ID_FLOOR_PASSAGE	= prefix("floor_passage"),
+		ID_PUDDLE			= prefix("puddle"),
+		ID_POOL				= prefix("pool"),
+		ID_TABLE			= prefix("table"),
+		ID_SEAT				= prefix("seat"),
+		ID_LIGHT_FLOOR		= prefix("light_floor"),
+		ID_LIGHT_TABLE		= prefix("light_table"),
+		ID_WORKSTATION		= prefix("workstation");
+	
 	// Blank tile, used during generation
-	public static final Supplier<Tile> BLANK	= register("blank", Tile.Builder
+	public static final Supplier<Tile> BLANK	= register(ID_BLANK, Tile.Builder
 			.of(TilePredicate.Builder.create().never().build())
 			.asFlag().build());
 	
 	// Flag tiles, usually empty
-	public static final Supplier<Tile> AIR		= register("air", Tile.Builder
+	public static final Supplier<Tile> AIR		= register(ID_AIR, Tile.Builder
 			.of(TilePredicate.Builder.create().always().build())
 			.asFlag().build());
-	public static final Supplier<Tile> PASSAGE	= register("passage", Tile.Builder
+	public static final Supplier<Tile> PASSAGE	= register(ID_PASSAGE, Tile.Builder
 			.of(TilePredicate.Builder.create().boundary(Direction.Type.HORIZONTAL).build())
 			.asBlock(Blocks.ORANGE_STAINED_GLASS.getDefaultState()).build());
 	
 	// Flooring tiles
-	public static final Supplier<Tile> FLOOR	= register("floor", Tile.Builder
+	public static final Supplier<Tile> FLOOR	= register(ID_FLOOR_ROOM, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.boundary(List.of(Direction.DOWN))
 				.build())
 			.asStructure(CDStructurePools.FLOOR_KEY)
 			.freeRotation().build());
-	public static final Supplier<Tile> PUDDLE	= register("puddle", Tile.Builder
+	public static final Supplier<Tile> PUDDLE	= register(ID_PUDDLE, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.boundary(List.of(Direction.DOWN))
 				.build())
 			.asStructure(CDStructurePools.PUDDLE_KEY)
 			.freeRotation().build());
-	public static final Supplier<Tile> POOL		= register("pool", Tile.Builder
+	public static final Supplier<Tile> POOL		= register(ID_POOL, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.boundary(List.of(Direction.DOWN))
 				.nonAdjacent(t -> t.is(CDTiles.PASSAGE.get()))
@@ -63,8 +77,16 @@ public class CDTiles
 			.asBlock(Blocks.WATER.getDefaultState())
 			.build());
 	
+	// Passage tiles
+	public static final Supplier<Tile> PASSAGE_FLOOR	= register(ID_FLOOR_PASSAGE, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.boundary(List.of(Direction.DOWN))
+				.build())
+			.asStructure(CDStructurePools.PASSAGE_FLOOR_KEY)
+			.freeRotation().build());
+	
 	// Decoration & content tiles
-	public static final Supplier<Tile> TABLE	= register("table", Tile.Builder
+	public static final Supplier<Tile> TABLE	= register(ID_TABLE, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.onFloor()
 				.boundary(HORIZONTAL_FACES)
@@ -72,7 +94,7 @@ public class CDTiles
 				.build())
 			.asStructure(CDStructurePools.TABLE_KEY)
 			.freeRotation().build());
-	public static final Supplier<Tile> TABLE_LIGHT	= register("table_light", Tile.Builder
+	public static final Supplier<Tile> TABLE_LIGHT	= register(ID_LIGHT_TABLE, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.onFloor()
 				.boundary(HORIZONTAL_FACES)
@@ -81,14 +103,14 @@ public class CDTiles
 				.build())
 			.asStructure(CDStructurePools.TABLE_LIGHT_KEY)
 			.freeRotation().build());
-	public static final Supplier<Tile> SEAT		= register("seat", Tile.Builder
+	public static final Supplier<Tile> SEAT		= register(ID_SEAT, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.onFloor()
 				.adjacent(HORIZONTAL_FACES, CDTileTags.TABLES::contains)
 				.build())
 			.asStructure(CDStructurePools.SEAT_KEY)
 			.withRotation(RotationSupplier.toFaceAdjacent(CDTileTags.TABLES::contains)).build());
-	public static final Supplier<Tile> FLOOR_LIGHT	= register("floor_light", Tile.Builder
+	public static final Supplier<Tile> FLOOR_LIGHT	= register(ID_LIGHT_FLOOR, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.boundary(HORIZONTAL_FACES)
 				.onFloor()
@@ -98,7 +120,7 @@ public class CDTiles
 				.build())
 			.asStructure(CDStructurePools.FLOOR_LIGHT_KEY)
 			.freeRotation().build());
-	public static final Supplier<Tile> WORKSTATION	= register("workstation", Tile.Builder
+	public static final Supplier<Tile> WORKSTATION	= register(ID_WORKSTATION, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.boundary(HORIZONTAL_FACES)
 				.onFloor()
@@ -109,9 +131,14 @@ public class CDTiles
 			.withRotation(RotationSupplier.againstBoundary(RotationSupplier.random()))
 			.build());
 	
+	@SuppressWarnings("unused")
 	private static Supplier<Tile> register(String name, Function<Identifier,Tile> funcIn)
 	{
-		final Identifier id = prefix(name);
+		return register(prefix(name), funcIn);
+	}
+	
+	private static Supplier<Tile> register(final Identifier id, Function<Identifier,Tile> funcIn)
+	{
 		Supplier<Tile> sup = () -> funcIn.apply(id);
 		TILES.put(id, sup);
 		tally++;

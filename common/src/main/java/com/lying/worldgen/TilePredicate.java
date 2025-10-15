@@ -6,8 +6,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import com.lying.init.CDTileTags;
 import com.lying.init.CDTileTags.TileTag;
-import com.lying.init.CDTiles;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -86,7 +86,7 @@ public class TilePredicate
 		
 		public Builder onFloor()
 		{
-			return adjacent(List.of(Direction.DOWN), t -> t.is(CDTiles.FLOOR.get()));
+			return adjacent(List.of(Direction.DOWN), CDTileTags.SOLID_FLOORING::contains);
 		}
 		
 		public Builder adjacent(Predicate<Tile> predicate)

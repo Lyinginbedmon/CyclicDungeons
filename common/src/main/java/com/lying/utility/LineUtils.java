@@ -30,7 +30,7 @@ public class LineUtils
 			);
 	private static final float TILE_SIZE = Tile.TILE_SIZE;
 	/** Minimum length required to calculate "fancy" passages */
-	private static final float MIN_LENGTH = 2F + TILE_SIZE;
+	private static final float MIN_LENGTH = 2F + TILE_SIZE + 1F;
 	private static final float MIN_LENGTH_SQR = MIN_LENGTH * MIN_LENGTH;
 	
 	/** Attempts to generate a viable deterministic line, from the most elegant to the least */
@@ -96,9 +96,10 @@ public class LineUtils
 		 * Then connect each external point
 		 */
 		
+		float outLen = TILE_SIZE * 2F;
 		Vec2f 
-			outOfStart = startDoor.add(findPerpendicularExteriorDirection(startFace, startBox).multiply(2F)), 
-			outOfEnd = endDoor.add(findPerpendicularExteriorDirection(endFace, endBox).multiply(2F));
+			outOfStart = startDoor.add(findPerpendicularExteriorDirection(startFace, startBox).multiply(outLen)), 
+			outOfEnd = endDoor.add(findPerpendicularExteriorDirection(endFace, endBox).multiply(outLen));
 		
 		if(endBox.contains(outOfEnd))
 			return List.of(new LineSegment2f(startDoor, outOfStart));
