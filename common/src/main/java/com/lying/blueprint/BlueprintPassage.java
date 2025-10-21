@@ -20,6 +20,8 @@ import com.lying.utility.RotaryBox2f;
 import com.lying.utility.Vector2iUtils;
 import com.lying.worldgen.Tile;
 
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 
 public class BlueprintPassage
@@ -36,6 +38,7 @@ public class BlueprintPassage
 	private CompoundBox2f box;
 	
 	private List<LineSegment2f> linesCached = Lists.newArrayList();
+	private List<Vector2i> tilesCached = Lists.newArrayList();
 	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b)
 	{
@@ -115,6 +118,12 @@ public class BlueprintPassage
 			linesCached.addAll(lines);
 	}
 	
+	public void cacheTiles()
+	{
+		tilesCached.clear();
+		tilesCached.addAll(toTiles());
+	}
+	
 	public static List<Vec2f> asPoints(List<LineSegment2f> lines)
 	{
 		List<Vec2f> points = Lists.newArrayList();
@@ -129,6 +138,13 @@ public class BlueprintPassage
 				points.add(right);
 		});
 		return points;
+	}
+	
+	public List<Vector2i> asTiles()
+	{
+		if(tilesCached.isEmpty())
+			cacheTiles();
+		return tilesCached;
 	}
 	
 	/** Subtracts the given bounding box from all lines in this passage */
@@ -151,6 +167,16 @@ public class BlueprintPassage
 		linesCached.addAll(clipped);
 		
 		return this;
+	}
+	
+	public Vec2f getStart()
+	{
+		return asLines().getFirst().getLeft();
+	}
+	
+	public Vec2f getEnd()
+	{
+		return asLines().getLast().getRight();
 	}
 	
 	/** Controls how this passage is shaped to connect its associated rooms */
@@ -243,9 +269,9 @@ public class BlueprintPassage
 	public boolean intersects(BlueprintPassage other)
 	{
 		return 
-				asLines().stream().anyMatch(l -> 
-					other.asLines().stream()
-					.anyMatch(l2 -> LineSegment2f.doSegmentsIntersect(l, l2)));
+				asTiles().stream().anyMatch(l -> 
+					other.asTiles().stream()
+					.anyMatch(l2 -> l.distance(l2) == 0));
 	}
 	
 	/** Returns true if this passage can merge with the other passage */
@@ -311,5 +337,48 @@ public class BlueprintPassage
 				.map(BlueprintRoom::bounds)
 				.map(b -> b.grow(1F))
 				.anyMatch(this.box::intersects);
+	}
+	
+	public List<Vector2i> toTiles()
+	{
+		List<Vector2i> tiles = Lists.newArrayList();
+		for(LineSegment2f line : asLines())
+		{
+			Vec2f a = line.getLeft();
+			Vec2f dir = line.direction().normalize();
+			
+			// List of moves available based on line direction
+			List<Direction> moves = Direction.Type.HORIZONTAL.stream().filter(d -> 
+			{
+				return d.getOffsetX() == Math.signum(dir.x) || d.getOffsetZ() == Math.signum(dir.y);
+			}).toList();
+			
+			Vector2i point = new Vector2i((int)a.x, (int)a.y);
+			Vector2i end = new Vector2i((int)line.getRight().x, (int)line.getRight().y);
+			Direction bestMove = null;
+			while(point.distance(end) > 0)
+			{
+				double minDist = Double.MAX_VALUE;
+				for(Direction move : moves)
+				{
+					Vector2i tile = Vector2iUtils.copy(point).add(move.getOffsetX(), move.getOffsetZ());
+					double dist = tile.distance(end);
+					if(dist < minDist)
+					{
+						bestMove = move;
+						minDist = dist;
+					}
+				}
+				
+				tiles.add(Vector2iUtils.copy(point));
+				
+				Vector2i step = point.add(bestMove.getOffsetX(), bestMove.getOffsetZ());
+				if(tiles.stream().noneMatch(t -> t.distance(step) == 0))
+					tiles.add(step);
+			}
+			tiles.add(Vector2iUtils.copy(point));
+		}
+		
+		return tiles;
 	}
 }

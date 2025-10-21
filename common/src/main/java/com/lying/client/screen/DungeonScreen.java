@@ -131,7 +131,8 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	private void updatePathCaches()
 	{
-		totalPassages = BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(blueprint), BlueprintOrganiser.getBounds(blueprint));
+		totalPassages = BlueprintOrganiser.getPassages(blueprint);
+//		totalPassages = BlueprintOrganiser.mergePassages(totalPassages, BlueprintOrganiser.getBounds(blueprint));
 		
 		if(!errorCache.isEmpty())
 		{
@@ -210,7 +211,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				Vec2f lineStart = new Vec2f(mc.getWindow().getScaledWidth() / 2, mc.getWindow().getScaledHeight() / 5);
 				Vec2f lineEnd = new Vec2f(mouseX, mouseY);
 				LineSegment2f line = new LineSegment2f(lineStart, lineEnd);
-				NodeRenderUtils.renderStraightLine(line, context, ColorHelper.withAlpha(175, Formatting.AQUA.getColorValue()));
+				NodeRenderUtils.renderGradientStraightLine(line, context, ColorHelper.withAlpha(175, Formatting.AQUA.getColorValue()));
 				Vec2f textPoint = lineStart.add(lineEnd.add(lineStart.negate()).multiply(0.5F));
 				
 				// Test boundary box
@@ -220,7 +221,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 					Vec2f intercept = LineSegment2f.segmentIntercept(edge, line);
 					boolean hasIntercept = intercept != null;
 					int colour = hasIntercept ? NodeRenderUtils.GOLD : NodeRenderUtils.DARK_GRAY;
-					NodeRenderUtils.renderStraightLine(edge, context, colour);
+					NodeRenderUtils.renderGradientStraightLine(edge, context, colour);
 					
 					if(hasIntercept)
 						intercepts.add(new Pair<LineSegment2f,Vec2f>(edge, intercept));

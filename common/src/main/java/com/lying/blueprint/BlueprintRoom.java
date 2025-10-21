@@ -145,6 +145,11 @@ public class BlueprintRoom
 		return bounds.intersects(boundsB) || boundsB.intersects(bounds);
 	}
 	
+	public boolean intersects(BlueprintRoom other)
+	{
+		return intersects(other.bounds());
+	}
+	
 	public boolean hasChildren() { return !childLinks.isEmpty(); }
 	
 	public int childrenCount() { return childLinks.size(); }

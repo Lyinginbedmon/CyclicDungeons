@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.joml.Matrix4f;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
@@ -21,9 +22,12 @@ import com.lying.utility.RotaryBox2f;
 import com.lying.utility.Vector2iUtils;
 import com.lying.worldgen.Tile;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -36,6 +40,7 @@ public class NodeRenderUtils
 	public static final int LIGHT_BLUE = 0x1D77F5;
 	public static final int LIME_GREEN = 0x1DF537;
 	public static final int DARK_GRAY = 0x6E6E6E;
+	public static final int PALE_RED = 0xB83434;
 	public static final int GOLD = 0xFFBF00;
 	public static final Formatting[] LINE_COLOURS = new Formatting[] 
 			{
@@ -67,7 +72,7 @@ public class NodeRenderUtils
 	public static void render(BlueprintRoom node, DrawContext context, TextRenderer textRenderer, Vector2i origin, Blueprint chart, Map<ErrorType,Integer> errors, int mouseX, int mouseY, int renderScale)
 	{
 		// Render node boundaries
-		chart.forEach(n -> renderNodeBounds(n, origin, renderScale, context));
+		chart.forEach(n -> renderNodeBounds(n, chart.stream().filter(n2 -> !n2.equals(n)).anyMatch(n::intersects), origin, renderScale, context));
 		// Render links between nodes
 		colourIndex = 0;
 		renderLinks(origin, renderScale, chart, !errors.isEmpty(), context, mouseX, mouseY);
@@ -131,11 +136,14 @@ public class NodeRenderUtils
 		DungeonScreen.criticalPath.forEach(path -> renderPath(path, scaleFunc, context, GOLD, false));
 	}
 	
-	public static void renderNodeBounds(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context)
+	public static void renderNodeBounds(BlueprintRoom node, boolean isColliding, Vector2i origin, int renderScale, DrawContext context)
 	{
 		Vector2i pos = Vector2iUtils.add(origin, Vector2iUtils.mul(node.position(), renderScale));
 		RoomMetadata metadata = node.metadata();
 		Vector2i size = metadata.size();
+		
+		int mainColour = isColliding ? PALE_RED : metadata.type().colour();
+		int borderColour = isColliding ? PALE_RED : DARK_GRAY;
 		
 		// Main bounds
 		int mX = pos.x;
@@ -146,11 +154,11 @@ public class NodeRenderUtils
 		
 		int MX = mX + size.x * renderScale;
 		int MY = mY + size.y * renderScale;
-		renderBoundary(new Vector2i(mX, mY), new Vector2i(MX, MY), 1, context, ColorHelper.withAlpha(255, metadata.type().colour()));
+		renderBoundary(new Vector2i(mX, mY), new Vector2i(MX, MY), 1, context, ColorHelper.withAlpha(255, mainColour));
 		
 		// Exterior shell
 		Vector2i shellWidth = new Vector2i(1,1).mul(renderScale);
-		renderBoundary(new Vector2i(mX, mY).add(-shellWidth.x, -shellWidth.y), new Vector2i(MX, MY).add(shellWidth.x, shellWidth.y), 1, context, ColorHelper.withAlpha(130, DARK_GRAY));
+		renderBoundary(new Vector2i(mX, mY).add(-shellWidth.x, -shellWidth.y), new Vector2i(MX, MY).add(shellWidth.x, shellWidth.y), 1, context, ColorHelper.withAlpha(130, borderColour));
 		
 		// Tile grid
 		int tilesX = metadata.size().x / Tile.TILE_SIZE;
@@ -161,7 +169,7 @@ public class NodeRenderUtils
 			{
 				Vector2i min = new Vector2i(mX, mY).add(tile.x * x * renderScale, tile.y * y * renderScale);
 				Vector2i max = Vector2iUtils.add(min, Vector2iUtils.mul(tile, renderScale));
-				renderBoundary(min, max, 1, context, ColorHelper.withAlpha(75, DARK_GRAY));
+				renderBoundary(min, max, 1, context, ColorHelper.withAlpha(75, borderColour));
 			}
 	}
 	
@@ -194,15 +202,64 @@ public class NodeRenderUtils
 	
 	public static void renderPath(BlueprintPassage path, Function<LineSegment2f,LineSegment2f> scaleFunc, DrawContext context, int colour, boolean showBounds)
 	{
-		path.asLines().stream().map(scaleFunc).forEach(l -> renderStraightLine(l, context, colour));
-		
 		if(showBounds)
 			path.asBox().asEdges().stream().map(scaleFunc).forEach(l -> renderStraightLine(l, 1, context, DARK_GRAY));
+		
+		path.asLines().stream().map(scaleFunc).forEach(l -> renderGradientStraightLine(l, context, colour, 0xFFFFFF));
 	}
 	
-	public static void renderStraightLine(LineSegment2f line, DrawContext context, int colour)
+	public static void renderGradientStraightLine(LineSegment2f line, DrawContext context, int startRGB, int endRGB)
 	{
-		renderStraightLine(line, 1, context, colour);
+		renderGradientStraightLine(line, 1, context, startRGB, endRGB);
+	}
+	
+	public static void renderGradientStraightLine(LineSegment2f line, DrawContext context, int startRGB)
+	{
+		renderGradientStraightLine(line, 1, context, startRGB, startRGB);
+	}
+	
+	public static void renderGradientStraightLine(LineSegment2f line, int thickness, DrawContext context, int startRGB, int endRGB)
+	{
+		renderGradientStraightLine(line.getLeft(), line.getRight(), thickness, context, startRGB, endRGB);
+	}
+	
+	public static void renderGradientStraightLine(Vec2f start, Vec2f end, int thickness, DrawContext context, int startRGB, int endRGB)
+	{
+		Vec2f st = new Vec2f(start.x, start.y);
+		Vec2f en = new Vec2f(end.x, end.y);
+		Vec2f dir = en.add(st.negate());
+		Vec2f nor = new Vec2f(-dir.y, dir.x).normalize();
+		
+		int colStart = ColorHelper.getArgb(
+				255, 
+				ColorHelper.getRed(startRGB), 
+				ColorHelper.getGreen(startRGB), 
+				ColorHelper.getBlue(startRGB));
+		int colEnd = ColorHelper.getArgb(
+				255, 
+				ColorHelper.getRed(endRGB), 
+				ColorHelper.getGreen(endRGB), 
+				ColorHelper.getBlue(endRGB));
+		
+		MatrixStack matrixStack = context.getMatrices();
+		matrixStack.push();
+			matrixStack.translate(start.x, start.y, 0);
+			matrixStack.multiply(RotationAxis.POSITIVE_Z.rotation((float)Math.atan2(end.y - start.y, end.x - start.x)));
+			
+			Vec2f 
+				a = st.add(nor.negate()), 
+				b = st.add(nor), 
+				c = en.add(nor), 
+				d = en.add(nor.negate());
+			
+			Matrix4f matrix4f = new MatrixStack().peek().getPositionMatrix();
+			VertexConsumerProvider provider = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+			VertexConsumer vertexConsumer = provider.getBuffer(RenderLayer.getGui());
+			vertexConsumer.vertex(matrix4f, a.x, a.y, 0).color(colStart);
+			vertexConsumer.vertex(matrix4f, b.x, b.y, 0).color(colStart);
+			vertexConsumer.vertex(matrix4f, c.x, c.y, 0).color(colEnd);
+			vertexConsumer.vertex(matrix4f, d.x, d.y, 0).color(colEnd);
+		matrixStack.pop();
 	}
 	
 	public static void renderStraightLine(LineSegment2f line, int thickness, DrawContext context, int rgb)
@@ -217,7 +274,7 @@ public class NodeRenderUtils
 		Vec2f dir = en.add(st.negate());
 		float len = dir.length();
 		
-		int col = ColorHelper.getArgb(
+		int colStart = ColorHelper.getArgb(
 				255, 
 				ColorHelper.getRed(rgb), 
 				ColorHelper.getGreen(rgb), 
@@ -227,7 +284,7 @@ public class NodeRenderUtils
 		matrixStack.push();
 			matrixStack.translate(start.x, start.y, 0);
 			matrixStack.multiply(RotationAxis.POSITIVE_Z.rotation((float)Math.atan2(end.y - start.y, end.x - start.x)));
-			context.fill(0, -thickness, (int)len, thickness, col);
+			context.fill(0, -thickness, (int)len, thickness, colStart);
 		matrixStack.pop();
 	}
 }

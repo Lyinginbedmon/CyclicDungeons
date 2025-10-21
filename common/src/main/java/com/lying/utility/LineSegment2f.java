@@ -109,7 +109,19 @@ public class LineSegment2f extends Line2f
 		return new LineSegment2f(left.multiply(scalar), right.multiply(scalar));
 	}
 	
-	public float length() { return left.add(right.negate()).length(); }
+	public float length()
+	{
+		Vec2f dir = direction();
+		float a = Math.abs(dir.x);
+		float b = Math.abs(dir.y);
+		return (float)Math.sqrt(a * a + b * b);
+	}
+	
+	public float manhattanLength()
+	{
+		Vec2f dir = direction();
+		return Math.abs(dir.x) + Math.abs(dir.y);
+	}
 	
 	/** Returns the grid-aligned bounds occupied by this line segment */
 	public AbstractBox2f bounds()

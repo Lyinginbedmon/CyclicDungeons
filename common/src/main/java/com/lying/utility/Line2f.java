@@ -50,6 +50,12 @@ public class Line2f
 	/** Returns true if these two lines have identical complex properties */
 	public boolean equals(Line2f line)
 	{
+		return alignsWith(line);
+	}
+	
+	/** Returns true if the line shares the same equation as this one */
+	public boolean alignsWith(Line2f line)
+	{
 		return 
 				isVertical == line.isVertical && 
 				m == line.m && 

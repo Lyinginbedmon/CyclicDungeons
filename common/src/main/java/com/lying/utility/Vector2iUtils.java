@@ -9,6 +9,8 @@ public class Vector2iUtils
 {
 	public static Vec2f toVec2f(Vector2i vec) { return new Vec2f(vec.x, vec.y); }
 	
+	public static Vector2i copy(Vector2i vec) { return new Vector2i(vec.x, vec.y); }
+	
 	public static Vector2i add(Vector2i a, Vector2i b)
 	{
 		return new Vector2i(a.x + b.x, a.y + b.y);

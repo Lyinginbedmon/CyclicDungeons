@@ -116,11 +116,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		{
 			case COLLISION:
 				for(BlueprintRoom room : chart)
-				{
-					AbstractBox2f bounds = room.bounds();
-					if(chart.stream().filter(r -> !r.equals(room)).map(b -> b.bounds().grow(0.5F)).anyMatch(bounds::intersects))
+					if(chart.stream().filter(r -> !r.equals(room)).anyMatch(room::intersects))
 						++tally;
-				}
 				return tally;
 			case TUNNEL:
 				for(BlueprintPassage path : paths)

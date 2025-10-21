@@ -29,9 +29,48 @@ public class LineUtils
 			LineUtils::diagonal
 			);
 	private static final float TILE_SIZE = Tile.TILE_SIZE;
-	/** Minimum length required to calculate "fancy" passages */
-	private static final float MIN_LENGTH = 2F + TILE_SIZE + 1F;
-	private static final float MIN_LENGTH_SQR = MIN_LENGTH * MIN_LENGTH;
+	
+	public static List<LineSegment2f> simplifyLines(List<LineSegment2f> linesIn)
+	{
+		if(linesIn.size() <= 1)
+			return linesIn;
+		
+		List<LineSegment2f> output = Lists.newArrayList();
+		boolean anyMerged = false;
+		for(int i=1; i<linesIn.size(); i++)
+		{
+			LineSegment2f a = linesIn.get(i - 1);
+			LineSegment2f b = linesIn.get(i);
+			
+			LineSegment2f merged = mergeLines(a,b);
+			if(merged == null)
+				output.add(a);
+			else
+			{
+				output.add(merged);
+				anyMerged = true;
+			}
+		}
+		return anyMerged == true ? simplifyLines(output) : linesIn;
+	}
+	
+	@Nullable
+	public static LineSegment2f mergeLines(LineSegment2f a, LineSegment2f b)
+	{
+		if(!a.linksTo(b) || !a.alignsWith(b))
+			return null;
+		
+		List<Vec2f> points = Lists.newArrayList();
+		for(Vec2f point : new Vec2f[] {a.getLeft(), a.getRight(), b.getLeft(), b.getRight()})
+		{
+			if(points.contains(point))
+				points.remove(point);
+			else
+				points.add(point);
+		}
+		
+		return new LineSegment2f(points.getFirst(), points.getLast());
+	}
 	
 	/** Attempts to generate a viable deterministic line, from the most elegant to the least */
 	public static List<LineSegment2f> trialLines(BlueprintRoom start, BlueprintRoom end, Predicate<List<LineSegment2f>> qualifier)
@@ -86,28 +125,37 @@ public class LineUtils
 		Vec2f 
 			startDoor = startFace.getLeft().add(startDir.normalize().multiply(startLen)),
 			endDoor = endFace.getLeft().add(endDir.normalize().multiply(endLen));
+		LineSegment2f startToEnd = new LineSegment2f(startDoor, endDoor);
 		
 		// If the intercepts are as close together as rooms can be, reduce the passage to a direct connection
-		if(startDoor.distanceSquared(endDoor) <= MIN_LENGTH_SQR)
-			return List.of(new LineSegment2f(startDoor, endDoor));
+		float manhattan = Math.abs(endDoor.x - startDoor.x) + Math.abs(endDoor.y - startDoor.y); 
+		if(manhattan <= TILE_SIZE)
+			return List.of(startToEnd);
 		
 		/**
 		 * Step outside of each box based on perpendicular of intercepted face
 		 * Then connect each external point
 		 */
 		
-		float outLen = TILE_SIZE * 2F;
+		float outLen = TILE_SIZE;
 		Vec2f 
 			outOfStart = startDoor.add(findPerpendicularExteriorDirection(startFace, startBox).multiply(outLen)), 
 			outOfEnd = endDoor.add(findPerpendicularExteriorDirection(endFace, endBox).multiply(outLen));
 		
-		if(endBox.contains(outOfEnd))
-			return List.of(new LineSegment2f(startDoor, outOfStart));
+		if(outOfStart.distanceSquared(endDoor) < outOfEnd.distanceSquared(endDoor))
+			return List.of(startToEnd);
+		
+		LineSegment2f startLine = new LineSegment2f(startDoor, outOfStart);
+		LineSegment2f endLine = new LineSegment2f(outOfEnd, endDoor);
+		if(endBox.intersects(startLine))
+			return List.of(startLine);
+		else if(outOfStart.distanceSquared(outOfEnd) < 1 && startLine.isParallel(endLine))
+			return List.of(startToEnd);
 		
 		return List.of(
-				new LineSegment2f(startDoor, outOfStart), 
+				startLine, 
 				new LineSegment2f(outOfStart, outOfEnd), 
-				new LineSegment2f(outOfEnd, endDoor));
+				endLine);
 	}
 	
 	private static Vec2f findPerpendicularExteriorDirection(LineSegment2f face, AbstractBox2f bounds)
