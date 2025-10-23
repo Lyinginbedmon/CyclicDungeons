@@ -4,6 +4,7 @@ import org.joml.Vector2i;
 
 import com.lying.init.CDTerms;
 import com.lying.reference.Reference;
+import com.lying.utility.Vector2iUtils;
 import com.lying.worldgen.Tile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -15,6 +16,7 @@ import net.minecraft.text.MutableText;
 /** Metadata describing non-structural details of a dungeon room */
 public class RoomMetadata
 {
+	public static final int TILE_SIZE = Tile.TILE_SIZE;
 	public static final Codec<Vector2i> VEC_CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Codec.INT.fieldOf("X").forGetter(Vector2i::x),
 			Codec.INT.fieldOf("Y").forGetter(Vector2i::y)
@@ -26,7 +28,7 @@ public class RoomMetadata
 			).apply(instance, (d,s,t) -> new RoomMetadata().setDepth(d).setSize(s).setType(t)));
 	
 	private GrammarTerm type = CDTerms.BLANK.get();
-	private Vector2i size = new Vector2i(3, 3);
+	private Vector2i tileSize = new Vector2i(3, 3);
 	private int depth = 0;
 	
 	public NbtElement toNbt()
@@ -46,26 +48,34 @@ public class RoomMetadata
 	
 	public final String asString()
 	{
-		return vec2ToString(size) + " " + type.name().getString()+" ("+depth+")";
+		return vec2ToString(tileSize) + " " + type.name().getString()+" ("+depth+")";
 	}
 	
 	public final MutableText name()
 	{
-		return Reference.ModInfo.translate("debug", "room", vec2ToString(size), type.name(), depth);
+		return Reference.ModInfo.translate("debug", "room", vec2ToString(tileSize), type.name(), depth);
 	}
 	
 	public RoomMetadata setDepth(int d) { depth = d; return this; }
 	public int depth() { return depth; }
 	
-	public RoomMetadata setSize(int x, int y) { return setSize(new Vector2i(x, y)); }
 	public RoomMetadata setSize(Vector2i sizeIn)
 	{
-		int x = Math.ceilDiv(sizeIn.x(), Tile.TILE_SIZE) * Tile.TILE_SIZE;
-		int y = Math.ceilDiv(sizeIn.y(), Tile.TILE_SIZE) * Tile.TILE_SIZE;
-		size = new Vector2i(x, y);
+		return setSize(sizeIn.x, sizeIn.y);
+	}
+	public RoomMetadata setSize(int x, int y)
+	{
+		x = Math.ceilDiv(x, TILE_SIZE);
+		y = Math.ceilDiv(y, TILE_SIZE);
+		return setTileSize(x, y);
+	}
+	public RoomMetadata setTileSize(int x, int y)
+	{
+		tileSize = new Vector2i(x, y);
 		return this;
 	}
-	public Vector2i size() { return new Vector2i(size.x, size.y); }
+	public Vector2i tileSize() { return Vector2iUtils.copy(tileSize); }
+	public Vector2i size() { return Vector2iUtils.mul(tileSize, TILE_SIZE); }
 	
 	public RoomMetadata setType(GrammarTerm term) { type = term; return this; }
 	public GrammarTerm type() { return type; }

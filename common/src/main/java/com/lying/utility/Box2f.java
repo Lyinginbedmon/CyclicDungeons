@@ -2,6 +2,9 @@ package com.lying.utility;
 
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 
 /** A grid-aligned 2D bounding box */
@@ -83,5 +86,20 @@ public class Box2f extends AbstractBox2f
 	public AbstractBox2f grow(float v)
 	{
 		return new Box2f(minX - v, maxX + v, minY - v, maxY + v);
+	}
+	
+	@Nullable
+	public LineSegment2f getEdge(Direction dir)
+	{
+		if(dir.getOffsetY() != 0)
+			return null;
+		
+		Vec2f core = new Vec2f(minX + maxX, minY + maxY).multiply(0.5F);
+		Vec2f dirVec = new Vec2f(dir.getOffsetX(), dir.getOffsetZ());
+		LineSegment2f line = new LineSegment2f(core, core.add(dirVec.multiply(Float.MAX_VALUE)));
+		for(LineSegment2f edge : asEdges())
+			if(edge.intersects(line))
+				return edge;
+		return null;
 	}
 }

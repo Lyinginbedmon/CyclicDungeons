@@ -155,11 +155,11 @@ public class BlueprintScruncher
 		
 		// Move the cluster, check for errors, revert if any are found
 		// Taxing but effective without any greater checking
-		node.offset(move);
+		node.nudge(move);
 		
 		if(chart.hasErrors())
 		{
-			node.offset(Vector2iUtils.negate(move));
+			node.nudge(Vector2iUtils.negate(move));
 			return false;
 		}
 		

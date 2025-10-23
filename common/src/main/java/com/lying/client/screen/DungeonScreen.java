@@ -132,7 +132,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	private void updatePathCaches()
 	{
 		totalPassages = BlueprintOrganiser.getPassages(blueprint);
-//		totalPassages = BlueprintOrganiser.mergePassages(totalPassages, BlueprintOrganiser.getBounds(blueprint));
+		totalPassages = BlueprintOrganiser.mergePassages(totalPassages, BlueprintOrganiser.getBounds(blueprint));
 		
 		if(!errorCache.isEmpty())
 		{

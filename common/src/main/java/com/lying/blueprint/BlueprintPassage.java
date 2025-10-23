@@ -1,6 +1,5 @@
 package com.lying.blueprint;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,13 +13,12 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CompoundBox2f;
+import com.lying.utility.GridTile;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
 import com.lying.utility.RotaryBox2f;
-import com.lying.utility.Vector2iUtils;
 import com.lying.worldgen.Tile;
 
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 
@@ -31,14 +29,15 @@ public class BlueprintPassage
 			CDTiles.AIR.get(), 10F
 			);
 	
-	public static final int PASSAGE_WIDTH = 3 * Tile.TILE_SIZE;
+	public static final int TILE_SIZE = Tile.TILE_SIZE;
+	public static final int PASSAGE_WIDTH = 3 * TILE_SIZE;
 	private final BlueprintRoom parent;
 	private final List<BlueprintRoom> children = Lists.newArrayList();
 	private final float width;
 	private CompoundBox2f box;
 	
 	private List<LineSegment2f> linesCached = Lists.newArrayList();
-	private List<Vector2i> tilesCached = Lists.newArrayList();
+	private List<GridTile> tilesCached = Lists.newArrayList();
 	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b)
 	{
@@ -109,19 +108,41 @@ public class BlueprintPassage
 	{
 		linesCached.clear();
 		
-		List<LineSegment2f> lines = Lists.newArrayList();
-		children.stream()
-			.map(p -> LineUtils.trialLines(parent, p, this::isLineViable))
-			.forEach(lines::addAll);
+		if(children.size() <= 1)
+		{
+			linesCached.addAll(LineUtils.trialLines(parent, children.getFirst(), this::isLineViable));
+			return;
+		}
 		
-		if(linesCached.isEmpty())
-			linesCached.addAll(lines);
+		// FIXME Refine merge behaviour
+		List<GridTile> positions = Lists.newArrayList();
+		positions.add(parent.tilePosition());
+		children.stream().map(BlueprintRoom::tilePosition).forEach(positions::add);
+		GridTile median = GridTile.median(positions.toArray(new GridTile[0]));
+		
+		BlueprintRoom junction = BlueprintRoom.create();
+		junction.setTilePosition(median);
+		junction.metadata().setTileSize(1, 1);
+		
+		linesCached.addAll(LineUtils.trialLines(parent, junction, this::isLineViable));
+		
+		children.stream()
+			.map(child -> LineUtils.trialLines(junction, child, this::isLineViable))
+			.forEach(linesCached::addAll);
+	}
+	
+	public List<GridTile> asTiles()
+	{
+		if(tilesCached.isEmpty())
+			cacheTiles();
+		
+		return tilesCached;
 	}
 	
 	public void cacheTiles()
 	{
 		tilesCached.clear();
-		tilesCached.addAll(toTiles());
+		tilesCached.addAll(toTiles(asLines()));
 	}
 	
 	public static List<Vec2f> asPoints(List<LineSegment2f> lines)
@@ -138,13 +159,6 @@ public class BlueprintPassage
 				points.add(right);
 		});
 		return points;
-	}
-	
-	public List<Vector2i> asTiles()
-	{
-		if(tilesCached.isEmpty())
-			cacheTiles();
-		return tilesCached;
 	}
 	
 	/** Subtracts the given bounding box from all lines in this passage */
@@ -193,42 +207,15 @@ public class BlueprintPassage
 		if(segments.size() == 1)
 			return true;
 		
-		final List<AbstractBox2f> bounds = BlueprintOrganiser.getBounds(rooms);
+		List<GridTile> tilesInSegment = toTiles(segments);
+		List<GridTile> tilesInRooms = Lists.newArrayList();
+		rooms.stream().map(BlueprintRoom::tiles).forEach(tilesInRooms::addAll);
 		
-		// Map of line segments that start or end within a terminal bounding box
-		Map<LineSegment2f, List<AbstractBox2f>> terminalMap = new HashMap<>();
-		segments.forEach(l -> 
-		{
-			List<AbstractBox2f> terminals = rooms.stream()
-				.filter(r -> l.contains(Vector2iUtils.toVec2f(r.position())))
-				.map(BlueprintRoom::bounds)
-				.map(b -> b.grow(1F)).toList();
-			
-			if(!terminals.isEmpty())
-				terminalMap.put(l, terminals);
-		});
+		int adjacentTally = 0;
+		for(GridTile tile : tilesInRooms)
+			adjacentTally += tilesInSegment.stream().filter(tile::isAdjacentTo).count();
 		
-		// Terminal line segments must not be entirely contained within any single terminal bounding box
-		if(terminalMap.entrySet().stream().anyMatch(e -> e.getValue().stream().anyMatch(b -> 
-		{
-			LineSegment2f l = e.getKey();
-			return b.contains(l.getLeft()) && b.contains(l.getRight());
-		})))
-			return false;
-		
-		// List of line segments that do not intersect any terminal bounding boxes
-		List<LineSegment2f> exteriorLines = segments.stream()
-				.filter(l -> 
-				{
-					AbstractBox2f box = RotaryBox2f.fromLine(l, PASSAGE_WIDTH);
-					return bounds.stream()
-						.map(b -> b.grow(1F))
-						.noneMatch(Predicates.not(box::intersects)); 
-				}).toList();
-		
-		// The sum of all terminal line segments and all external line segments must be equal to the total number of line segments
-		// That is, all line segments must be EITHER terminal OR external
-		return (terminalMap.size() + exteriorLines.size()) == segments.size();
+		return adjacentTally <= rooms.size();
 	}
 	
 	public AbstractBox2f asBox() { return box; }
@@ -258,7 +245,7 @@ public class BlueprintPassage
 	/** Returns true if this passage shares a parent with the other passage and all end points share the same depth */
 	public boolean canShareSpaceWith(BlueprintPassage other)
 	{
-		final int endDepth = this.children.get(0).metadata().depth();
+		final int endDepth = parent.metadata().depth() + 1;
 		final Predicate<RoomMetadata> depthMatch = m -> m.depth() == endDepth;
 		return 
 				other.parent.equals(this.parent) && 
@@ -268,10 +255,11 @@ public class BlueprintPassage
 	/** Returns true if any line segment in this passage intersects any line segment in the other passage */
 	public boolean intersects(BlueprintPassage other)
 	{
+		List<GridTile> otherTiles = other.asTiles();
 		return 
 				asTiles().stream().anyMatch(l -> 
-					other.asTiles().stream()
-					.anyMatch(l2 -> l.distance(l2) == 0));
+					otherTiles.stream()
+						.anyMatch(l::isAdjacentTo));
 	}
 	
 	/** Returns true if this passage can merge with the other passage */
@@ -280,23 +268,8 @@ public class BlueprintPassage
 		if(!canShareSpaceWith(other))
 			return false;
 		
-		// Test if any two points are within a tile of each-other
-		List<Vec2f> p1 = Lists.newArrayList(), p2 = Lists.newArrayList();
-		asLines().stream().map(LineSegment2f::toPoints).forEach(a -> { p1.add(a[0]); p1.add(a[1]); });
-		other.asLines().stream().map(LineSegment2f::toPoints).forEach(a -> { p2.add(a[0]); p2.add(a[1]); });
-		
-		// FIXME Ensure paths in sufficiently-adjacent tiles merge together
-		float pathSeparation = Tile.TILE_SIZE * 3;
-		final float minDist = pathSeparation * pathSeparation;
-		
-		if(p1.stream().anyMatch(q1 -> p2.stream().anyMatch(q2 -> q2.distanceSquared(q1) <= minDist)))
-			return true;
-		
-		// Test if any line segments directly intersect
-		return 
-				asLines().stream().anyMatch(l -> 
-					other.asLines().stream()
-					.anyMatch(l2 -> LineSegment2f.doSegmentsIntersect(l, l2)));
+		List<GridTile> myTiles = asTiles();
+		return other.asTiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo));
 	}
 	
 	public BlueprintPassage mergeWith(BlueprintPassage b)
@@ -309,6 +282,7 @@ public class BlueprintPassage
 		if(children.size() != previous)
 		{
 			cacheLines();
+			cacheTiles();
 			box = lineToBox(asLines(), width);
 		}
 		
@@ -329,39 +303,60 @@ public class BlueprintPassage
 	/** Returns true if this passage intersects any unrelated rooms in the given chart */
 	public boolean intersectsOtherRooms(List<BlueprintRoom> chart)
 	{
-		List<BlueprintRoom> unrelatedRooms = chart.stream()
+		List<GridTile> myTiles = asTiles();
+		return chart.stream()
 				.filter(Predicates.not(parent::equals))
-				.filter(Predicates.not(children::contains)).toList();
-		
-		return unrelatedRooms.stream()
-				.map(BlueprintRoom::bounds)
-				.map(b -> b.grow(1F))
-				.anyMatch(this.box::intersects);
+				.filter(Predicates.not(children::contains))
+				.map(BlueprintRoom::tiles)
+				.anyMatch(l -> l.stream().anyMatch(p1 -> myTiles.stream().anyMatch(p1::isAdjacentTo)));
 	}
 	
-	public List<Vector2i> toTiles()
+	public static List<GridTile> toTiles(List<LineSegment2f> lines)
 	{
-		List<Vector2i> tiles = Lists.newArrayList();
-		for(LineSegment2f line : asLines())
+		List<GridTile> tiles = Lists.newArrayList();
+		for(LineSegment2f line : lines)
+			lineToTiles(line).stream().filter(Predicates.not(tiles::contains)).forEach(tiles::add);
+		
+		return tiles;
+	}
+	
+	public static List<GridTile> lineToTiles(LineSegment2f line)
+	{
+		List<GridTile> set = Lists.newArrayList(); 
+		GridTile startTile = new GridTile(Math.floorDiv((int)line.getLeft().x, TILE_SIZE), Math.floorDiv((int)line.getLeft().y, TILE_SIZE));
+		GridTile endTile = new GridTile(Math.floorDiv((int)line.getRight().x, TILE_SIZE), Math.floorDiv((int)line.getRight().y, TILE_SIZE));
+		
+		// Initial tile population
+		int len = (int)(line.length() / TILE_SIZE);
+		Vec2f dir = line.direction().normalize();
+		for(int i=0; i<len; i++)
 		{
-			Vec2f a = line.getLeft();
-			Vec2f dir = line.direction().normalize();
+			GridTile offset = GridTile.fromVec(dir.multiply(i));
+			GridTile tile = startTile.add(offset);
+			if(set.stream().noneMatch(tile::equals))
+				set.add(tile);
+		}
+		
+		set.add(endTile);
+		
+		// Walk through population to find each successive tile
+		List<GridTile> additions = Lists.newArrayList();
+		for(int i=1; i<set.size(); i++)
+		{
+			GridTile start = set.get(i-1);
+			GridTile end = set.get(i);
 			
-			// List of moves available based on line direction
-			List<Direction> moves = Direction.Type.HORIZONTAL.stream().filter(d -> 
-			{
-				return d.getOffsetX() == Math.signum(dir.x) || d.getOffsetZ() == Math.signum(dir.y);
-			}).toList();
+			List<Direction> moves = Direction.Type.HORIZONTAL.stream()
+					.filter(d -> d.getOffsetX() == Math.signum(dir.x) || d.getOffsetZ() == Math.signum(dir.y))
+					.toList();
 			
-			Vector2i point = new Vector2i((int)a.x, (int)a.y);
-			Vector2i end = new Vector2i((int)line.getRight().x, (int)line.getRight().y);
-			Direction bestMove = null;
-			while(point.distance(end) > 0)
+			while(start.distance(end) > 0)
 			{
+				Direction bestMove = null;
 				double minDist = Double.MAX_VALUE;
 				for(Direction move : moves)
 				{
-					Vector2i tile = Vector2iUtils.copy(point).add(move.getOffsetX(), move.getOffsetZ());
+					GridTile tile = start.offset(move);
 					double dist = tile.distance(end);
 					if(dist < minDist)
 					{
@@ -370,15 +365,14 @@ public class BlueprintPassage
 					}
 				}
 				
-				tiles.add(Vector2iUtils.copy(point));
-				
-				Vector2i step = point.add(bestMove.getOffsetX(), bestMove.getOffsetZ());
-				if(tiles.stream().noneMatch(t -> t.distance(step) == 0))
-					tiles.add(step);
+				start = start.offset(bestMove);
+				if(additions.stream().noneMatch(start::equals))
+					additions.add(start);
 			}
-			tiles.add(Vector2iUtils.copy(point));
 		}
 		
-		return tiles;
+		additions.removeIf(set::contains);
+		set.addAll(additions);
+		return set;
 	}
 }

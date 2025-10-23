@@ -111,6 +111,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	{
 		int tally = 0;
 		List<BlueprintPassage> paths = BlueprintOrganiser.getPassages(chart);
+		paths = BlueprintOrganiser.mergePassages(paths, BlueprintOrganiser.getBounds(chart));
 		
 		switch(type)
 		{

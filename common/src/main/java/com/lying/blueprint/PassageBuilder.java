@@ -61,17 +61,16 @@ public class PassageBuilder
 		map.generate(origin.add(toTileIndex(lines.getFirst().getLeft(), Vec2f.ZERO).multiply(TILE_SIZE)), world);
 	}
 	
-	public static TileSet buildTileSet(BlueprintPassage lines, Vec2f mapOrigin)
+	public static TileSet buildTileSet(BlueprintPassage passage, Vec2f mapOrigin)
 	{
 		TileSet map = new TileSet();
-		lines.asTiles().forEach(t -> 
-		{
-			BlockPos pos = new BlockPos((int)mapOrigin.x + (t.x / TILE_SIZE), 0, (int)mapOrigin.y + (t.y / TILE_SIZE));
-			map.addToVolume(pos);
-			
-		});
+//		passage.asTiles().forEach(t -> 
+//		{
+//			BlockPos pos = new BlockPos((int)mapOrigin.x + (t.x / TILE_SIZE), 0, (int)mapOrigin.y + (t.y / TILE_SIZE));
+//			map.addToVolume(pos);
+//		});
 		
-		for(LineSegment2f line : lines)
+		for(LineSegment2f line : passage.asLines())
 		{
 			// Tile index of line start
 			BlockPos startIndex = toTileIndex(line.getLeft(), mapOrigin);

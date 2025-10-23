@@ -9,14 +9,13 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CDUtils;
 import com.lying.utility.DebugLogger;
-import com.lying.utility.Vector2iUtils;
+import com.lying.utility.GridTile;
 
 import net.minecraft.util.math.random.Random;
 
@@ -146,14 +145,14 @@ public abstract class BlueprintOrganiser
 				double rot = Math.toRadians(180D / pop);
 				double cos = Math.cos(rot), sin = Math.sin(rot);
 				
-				Vector2i point = new Vector2i(radius, 0);
-				List<Vector2i> positions = Lists.newArrayList();
+				GridTile point = new GridTile(radius, 0);
+				List<GridTile> positions = Lists.newArrayList();
 				for(int i=0; i<pop; i++)
 				{
 					positions.add(point);
-					point = new Vector2i(
-							(int)(point.x() * cos - point.y() * sin),
-							(int)(point.x() * sin + point.y() * cos)
+					point = new GridTile(
+							(int)(point.x * cos - point.y * sin),
+							(int)(point.x * sin + point.y * cos)
 							);
 				}
 				
@@ -163,19 +162,19 @@ public abstract class BlueprintOrganiser
 					if(positions.isEmpty())
 						break;
 					
-					Vector2i parent = room.getParentPosition(chart);
+					GridTile parent = room.getParentPosition(chart);
 					positions.sort((a,b) -> 
 					{
 						double dA = a.distance(parent);
 						double dB = b.distance(parent);
 						if(dA == dB)
 						{
-							int mA = Math.abs(a.x()) + Math.abs(a.y());
-							int mB = Math.abs(b.x()) + Math.abs(b.y());
+							int mA = Math.abs(a.x) + Math.abs(a.y);
+							int mB = Math.abs(b.x) + Math.abs(b.y);
 							if(mA == mB)
 							{
-								int yA = Math.abs(a.y());
-								int yB = Math.abs(b.y());
+								int yA = Math.abs(a.y);
+								int yB = Math.abs(b.y);
 								return yA > yB ? -1 : yA < yB ? 1 : 0;
 							}
 							
@@ -185,7 +184,7 @@ public abstract class BlueprintOrganiser
 							return dA < dB ? -1 : dA > dB ? 1 : 0;
 					});
 					
-					room.setPosition(positions.removeFirst());
+					room.setTilePosition(positions.removeFirst());
 				}
 			}
 		}
@@ -193,17 +192,17 @@ public abstract class BlueprintOrganiser
 	
 	public static abstract class Grid extends BlueprintOrganiser
 	{
-		protected abstract GridPosition[] moveSet(Vector2i position);
+		protected abstract GridPosition[] moveSet(GridTile position);
 		
 		@FunctionalInterface
 		public interface GridPosition
 		{
-			public Vector2i get(Vector2i position, Map<Vector2i,BlueprintRoom> occupancies, int gridSize);
+			public GridTile get(GridTile position, Map<GridTile,BlueprintRoom> occupancies, int gridSize);
 		}
 		
 		public void applyLayout(Blueprint chart, Random rand)
 		{
-			Map<Vector2i, BlueprintRoom> gridMap = new HashMap<>();;
+			Map<GridTile, BlueprintRoom> gridMap = new HashMap<>();;
 			
 			for(int step = 0; step <= chart.maxDepth(); step++)
 				organiseByGrid(chart, step, gridMap, this::moveSet, GRID_SIZE, rand);
@@ -212,7 +211,7 @@ public abstract class BlueprintOrganiser
 				LOGGER.warn("Grid layout size ({}) differs from input blueprint size ({})", gridMap.size(), chart.size());
 		}
 		
-		private static void organiseByGrid(Blueprint chart, int depth, Map<Vector2i,BlueprintRoom> gridMap, Function<Vector2i,GridPosition[]> moveSet, int gridSize, Random rand)
+		private static void organiseByGrid(Blueprint chart, int depth, Map<GridTile,BlueprintRoom> gridMap, Function<GridTile,GridPosition[]> moveSet, int gridSize, Random rand)
 		{
 			List<BlueprintRoom> rooms = Lists.newArrayList();
 			
@@ -224,33 +223,33 @@ public abstract class BlueprintOrganiser
 				if(gridMap.isEmpty())
 				{
 					node.setPosition(0, 0);
-					gridMap.put(node.position(), node);
+					gridMap.put(node.tilePosition(), node);
 				}
 				else if(node.hasParents())
 				{
-					Vector2i position = new Vector2i(0,0);
+					GridTile position = new GridTile(0,0);
 					
 					// Find unoccupied position adjacent to parent(s)
 					List<BlueprintRoom> parents = node.getParents(chart);
 					if(!parents.isEmpty())
 					{
-						List<Vector2i> options = getAvailableOptions(parents, node.childrenCount(), moveSet, gridSize, gridMap);
+						List<GridTile> options = getAvailableOptions(parents, node.childrenCount(), moveSet, gridSize, gridMap);
 						if(options.isEmpty())
 							continue;	// FIXME Resolve contexts where nodes have nowhere to go
 						
 						position = selectOption(options, parents, chart, rand);
 					}
 					
-					gridMap.put(position, node.setPosition(position));
+					gridMap.put(position, node.setTilePosition(position));
 				}
 		}
 		
-		private static Vector2i selectOption(List<Vector2i> options, List<BlueprintRoom> parents, Blueprint chart, Random rand)
+		private static GridTile selectOption(List<GridTile> options, List<BlueprintRoom> parents, Blueprint chart, Random rand)
 		{
 			if(options.size() > 1)
 			{
 				// FIXME Moderate distance function to reduce influence as nodes get farther from dungeon start
-//				Function<Vector2i, Double> distFunc = v -> 
+//				Function<GridTile, Double> distFunc = v -> 
 //				{
 //					double dist = 0D;
 //					for(BlueprintRoom room : chart)
@@ -266,14 +265,23 @@ public abstract class BlueprintOrganiser
 //				return options.get(0);
 				
 				// Prioritise viable position farthest from parents of parent nodes
-				List<Vector2i> gPositions = Lists.newArrayList();
+				List<GridTile> gPositions = Lists.newArrayList();
 				parents.forEach(n -> gPositions.add(n.getParentPosition(chart)));
 				if(!gPositions.isEmpty())
 				{
-					Vector2i gPos = Vector2iUtils.avg(gPositions.toArray(new Vector2i[0]));
+					int gX = 0, gY = 0;
+					for(GridTile gPos : gPositions)
+					{
+						gX += gPos.x;
+						gY += gPos.y;
+					}
+					gX /= gPositions.size();
+					gY /= gPositions.size();
+					
+					GridTile gPos = new GridTile(gX, gY);
 					double maxDist = -1;
-					Map<Vector2i, Double> distMap = new HashMap<>();
-					for(Vector2i option : options)
+					Map<GridTile, Double> distMap = new HashMap<>();
+					for(GridTile option : options)
 					{
 						double dist = option.distance(gPos);
 						distMap.put(option, dist);
@@ -282,7 +290,7 @@ public abstract class BlueprintOrganiser
 					}
 					
 					final double optimalDist = maxDist;
-					List<Pair<Vector2i,Float>> weights = Lists.newArrayList();
+					List<Pair<GridTile,Float>> weights = Lists.newArrayList();
 					distMap.entrySet().forEach(e -> weights.add(Pair.of(e.getKey(), (float)(e.getValue() / optimalDist))));
 					
 					return CDUtils.selectFromWeightedList(weights, rand.nextFloat());
@@ -294,11 +302,11 @@ public abstract class BlueprintOrganiser
 				return options.get(0);
 		}
 		
-		public static List<Vector2i> getAvailableOptions(List<BlueprintRoom> parents, int childTally, Function<Vector2i, GridPosition[]> moveSet, int gridSize, Map<Vector2i,BlueprintRoom> gridMap)
+		public static List<GridTile> getAvailableOptions(List<BlueprintRoom> parents, int childTally, Function<GridTile, GridPosition[]> moveSet, int gridSize, Map<GridTile,BlueprintRoom> gridMap)
 		{
-			List<Vector2i> options = Lists.newArrayList();
+			List<GridTile> options = Lists.newArrayList();
 			for(BlueprintRoom parent : parents)
-				getAvailableOptions(parent.position(), childTally, moveSet, gridSize, gridMap).stream().filter(p -> !options.contains(p)).forEach(options::add);
+				getAvailableOptions(parent.tilePosition(), childTally, moveSet, gridSize, gridMap).stream().filter(p -> !options.contains(p)).forEach(options::add);
 			
 			// Copy of the blueprint presently represented by the gridMap's values
 			List<BlueprintRoom> posit = Lists.newArrayList();
@@ -311,19 +319,19 @@ public abstract class BlueprintOrganiser
 			
 			options.removeIf(pos -> 
 			{
-				concept.setPosition(pos);
+				concept.setTilePosition(pos);
 				return Blueprint.hasErrors(posit);
 			});
 			
 			return options;
 		}
 		
-		public static List<Vector2i> getAvailableOptions(Vector2i position, int minExits, Function<Vector2i,GridPosition[]> moveSet, int gridSize, Map<Vector2i,BlueprintRoom> gridMap)
+		public static List<GridTile> getAvailableOptions(GridTile position, int minExits, Function<GridTile,GridPosition[]> moveSet, int gridSize, Map<GridTile,BlueprintRoom> gridMap)
 		{
-			List<Vector2i> options = Lists.newArrayList();
+			List<GridTile> options = Lists.newArrayList();
 			for(GridPosition offset : moveSet.apply(position))
 			{
-				Vector2i neighbour = offset.get(position, gridMap, gridSize);
+				GridTile neighbour = offset.get(position, gridMap, gridSize);
 				if(!gridMap.containsKey(neighbour) && neighbour.y >= 0)
 				{
 					// Ensure the position has at least as many moves itself as the node has children
@@ -350,10 +358,10 @@ public abstract class BlueprintOrganiser
 			
 			public static GridPosition of(double val, int x, int y) { return new ScaledGridPosition(x, y, val); }
 			
-			public Vector2i get(Vector2i position, Map<Vector2i,BlueprintRoom> occupancies, int gridSize)
+			public GridTile get(GridTile position, Map<GridTile,BlueprintRoom> occupancies, int gridSize)
 			{
 				int size = (int)((double)gridSize * scale);
-				return Vector2iUtils.add(position, new Vector2i(x * size, y * size));
+				return position.add(x * size, y * size);
 			}
 		}
 		
@@ -361,25 +369,25 @@ public abstract class BlueprintOrganiser
 		{
 			public static final GridPosition[] QUAD_GRID = new GridPosition[]
 					{
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(g, 0)),
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(-g, 0)),
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(0, g)),
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(0, -g))
+						(p,o,g) -> p.add(g, 0),
+						(p,o,g) -> p.add(-g, 0),
+						(p,o,g) -> p.add(0, g),
+						(p,o,g) -> p.add(0, -g)
 					};
 			
 			public static Square create() { return new Square(); }
 			
-			protected GridPosition[] moveSet(Vector2i position) { return QUAD_GRID; }
+			protected GridPosition[] moveSet(GridTile position) { return QUAD_GRID; }
 		}
 		
 		public static class Octagonal extends Grid
 		{
 			public static final GridPosition[] OCT_GRID_A = new GridPosition[]
 					{
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(g, 0)),
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(-g, 0)),
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(0, g)),
-						(p,o,g) -> Vector2iUtils.add(p, new Vector2i(0, -g)),
+						(p,o,g) -> p.add(g, 0),
+						(p,o,g) -> p.add(-g, 0),
+						(p,o,g) -> p.add(0, g),
+						(p,o,g) -> p.add(0, -g),
 						
 						ScaledGridPosition.of(0.5D, 1, 1),
 						ScaledGridPosition.of(0.5D, 1, -1),
@@ -396,7 +404,7 @@ public abstract class BlueprintOrganiser
 			
 			public static Octagonal create() { return new Octagonal(); }
 			
-			protected GridPosition[] moveSet(Vector2i position)
+			protected GridPosition[] moveSet(GridTile position)
 			{
 				return position.y%1 == 0 ? OCT_GRID_A : OCT_GRID_B;
 			}

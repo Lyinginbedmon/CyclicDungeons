@@ -11,8 +11,10 @@ import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
-import com.lying.utility.Vector2iUtils;
+import com.lying.utility.GridTile;
 import com.lying.worldgen.Tile;
+
+import net.minecraft.util.math.MathHelper;
 
 public class BlueprintRoom
 {
@@ -22,7 +24,7 @@ public class BlueprintRoom
 	private final RoomMetadata metadata;
 	private List<UUID> childLinks = Lists.newArrayList();
 	private List<UUID> parentLinks = Lists.newArrayList();
-	private Vector2i position = new Vector2i(0,0);
+	private GridTile position = new GridTile(0, 0);
 	
 	public BlueprintRoom(UUID idIn, RoomMetadata termIn, List<UUID> childLinksIn, List<UUID> parentLinksIn)
 	{
@@ -40,24 +42,32 @@ public class BlueprintRoom
 	
 	public BlueprintRoom clone()
 	{
-		return new BlueprintRoom(id, metadata, childLinks, parentLinks).setPosition(position);
+		return new BlueprintRoom(id, metadata, childLinks, parentLinks).setTilePosition(position);
 	}
 	
 	public RoomMetadata metadata() { return metadata; }
 	
-	public Vector2i position() { return new Vector2i(position.x, position.y); }
+	public Vector2i position() { return position.mul(GRID_SIZE).toVec2i(); }
+	
+	public GridTile tilePosition() { return position; }
 	
 	public BlueprintRoom setPosition(int x, int y)
 	{
 		x -= x%GRID_SIZE;
 		y -= y%GRID_SIZE;
-		position = new Vector2i(x, y);
+		setTilePosition(new GridTile(Math.floorDiv(x, GRID_SIZE), Math.floorDiv(y, GRID_SIZE)));
 		return this;
 	}
 	
 	public BlueprintRoom setPosition(Vector2i vec)
 	{
 		return setPosition(vec.x, vec.y);
+	}
+	
+	public BlueprintRoom setTilePosition(GridTile tile)
+	{
+		position = tile;
+		return this;
 	}
 	
 	public BlueprintRoom offset(Vector2i vec)
@@ -69,16 +79,28 @@ public class BlueprintRoom
 	{
 		x = (int)Math.signum(x) * GRID_SIZE;
 		y = (int)Math.signum(y) * GRID_SIZE;
-		
 		position = position.add(x, y);
+		return this;
+	}
+	
+	public BlueprintRoom nudge(Vector2i vec)
+	{
+		return nudge(vec.x, vec.y);
+	}
+	
+	public BlueprintRoom nudge(int x, int y)
+	{
+		x = MathHelper.clamp(x, -1, 1);
+		y = MathHelper.clamp(y, -1, 1);
+		setTilePosition(position.add(x, y));
 		return this;
 	}
 	
 	public boolean hasParents() { return !parentLinks.isEmpty(); }
 	
-	public Vector2i getParentPosition(Blueprint chart)
+	public GridTile getParentPosition(Blueprint chart)
 	{
-		Vector2i defaultPos = Vector2iUtils.add(position, new Vector2i(0, 1));
+		GridTile defaultPos = position.add(0, 1);
 		if(!hasParents())
 			return defaultPos;
 		
@@ -93,19 +115,19 @@ public class BlueprintRoom
 			
 			x /= parentLinks.size();
 			y /= parentLinks.size();
-			return new Vector2i(x, y);
+			return new GridTile(x, y);
 		}
 		
 		Optional<BlueprintRoom> parentOpt = chart.stream().filter(n->n.uuid().equals(parentLinks.get(0))).findAny();
 		if(parentOpt.isPresent())
-			return parentOpt.get().position();
+			return parentOpt.get().tilePosition();
 		else
 			return defaultPos;
 	}
 	
 	public Vector2i min()
 	{
-		return min(position);
+		return min(position());
 	}
 	
 	public Vector2i min(Vector2i position)
@@ -118,7 +140,7 @@ public class BlueprintRoom
 	
 	public Vector2i max()
 	{
-		return max(position);
+		return max(position());
 	}
 	
 	public Vector2i max(Vector2i position)
@@ -129,7 +151,7 @@ public class BlueprintRoom
 	
 	public AbstractBox2f bounds()
 	{
-		return bounds(position);
+		return bounds(position());
 	}
 	
 	public AbstractBox2f bounds(Vector2i position)
@@ -137,6 +159,31 @@ public class BlueprintRoom
 		Vector2i min = min(position);
 		Vector2i max = max(position);
 		return new Box2f(min.x, max.x, min.y, max.y);
+	}
+	
+	public List<GridTile> tiles()
+	{
+		List<GridTile> tiles = Lists.newArrayList();
+		
+		GridTile pos = tilePosition();
+		int mX = pos.x;
+		int mY = pos.y;
+		
+		Vector2i size = metadata().tileSize();
+		int tilesX = size.x;
+		int tilesY = size.y;
+		
+		mX -= (tilesX / 2);
+		mY -= (tilesY / 2);
+		
+		for(int x = 0; x<tilesX; x++)
+			for(int y = 0; y<tilesY; y++)
+			{
+				GridTile tile = new GridTile(mX + x, mY + y);
+				if(tiles.stream().noneMatch(t -> t.distance(tile) == 0))
+					tiles.add(tile);
+			}
+		return tiles;
 	}
 	
 	public boolean intersects(AbstractBox2f boundsB)
@@ -147,7 +194,8 @@ public class BlueprintRoom
 	
 	public boolean intersects(BlueprintRoom other)
 	{
-		return intersects(other.bounds());
+		List<GridTile> myTiles = tiles();
+		return other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo));
 	}
 	
 	public boolean hasChildren() { return !childLinks.isEmpty(); }

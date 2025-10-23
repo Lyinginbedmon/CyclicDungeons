@@ -11,10 +11,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDLoggers;
 import com.lying.worldgen.Tile;
 
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 
@@ -82,13 +84,13 @@ public class LineUtils
 		 * Connect identified slots
 		 */
 		
-		// The bounding boxes of both rooms
-		AbstractBox2f 
-			startBox = start.bounds(start.position()), 
-			endBox = end.bounds(end.position());
+		// The bounding boxes of both rooms, which are always grid-aligned
+		Box2f 
+			startBox = (Box2f)start.bounds(), 
+			endBox = (Box2f)end.bounds();
 		
 		// The direct line between the origin points of both rooms
-		LineSegment2f direct = new LineSegment2f(start.position(), end.position());
+		LineSegment2f direct = new LineSegment2f(start.tilePosition().mul(Tile.TILE_SIZE), end.tilePosition().mul(Tile.TILE_SIZE));
 		
 		Optional<Pair<LineSegment2f,Vec2f>> 
 			startIntercepts = findFaceIntersection(direct, startBox),
@@ -129,7 +131,7 @@ public class LineUtils
 		
 		// If the intercepts are as close together as rooms can be, reduce the passage to a direct connection
 		float manhattan = Math.abs(endDoor.x - startDoor.x) + Math.abs(endDoor.y - startDoor.y); 
-		if(manhattan <= TILE_SIZE)
+		if(manhattan <= TILE_SIZE && qualifier.test(List.of(startToEnd)))
 			return List.of(startToEnd);
 		
 		/**
@@ -137,19 +139,19 @@ public class LineUtils
 		 * Then connect each external point
 		 */
 		
-		float outLen = TILE_SIZE;
+		float outLen = TILE_SIZE * 2;
 		Vec2f 
-			outOfStart = startDoor.add(findPerpendicularExteriorDirection(startFace, startBox).multiply(outLen)), 
-			outOfEnd = endDoor.add(findPerpendicularExteriorDirection(endFace, endBox).multiply(outLen));
+			outOfStart = startDoor.add(findPerpendicularExteriorDir(startFace, startBox).multiply(outLen)), 
+			outOfEnd = endDoor.add(findPerpendicularExteriorDir(endFace, endBox).multiply(outLen));
 		
-		if(outOfStart.distanceSquared(endDoor) < outOfEnd.distanceSquared(endDoor))
+		if(outOfStart.distanceSquared(endDoor) < outOfEnd.distanceSquared(endDoor) && qualifier.test(List.of(startToEnd)))
 			return List.of(startToEnd);
 		
 		LineSegment2f startLine = new LineSegment2f(startDoor, outOfStart);
 		LineSegment2f endLine = new LineSegment2f(outOfEnd, endDoor);
-		if(endBox.intersects(startLine))
+		if(endBox.intersects(startLine) && qualifier.test(List.of(startLine)))
 			return List.of(startLine);
-		else if(outOfStart.distanceSquared(outOfEnd) < 1 && startLine.isParallel(endLine))
+		else if(outOfStart.distanceSquared(outOfEnd) < 1 && startLine.isParallel(endLine) && qualifier.test(List.of(startToEnd)))
 			return List.of(startToEnd);
 		
 		return List.of(
@@ -158,7 +160,89 @@ public class LineUtils
 				endLine);
 	}
 	
-	private static Vec2f findPerpendicularExteriorDirection(LineSegment2f face, AbstractBox2f bounds)
+	/** Attempts to generate a viable deterministic line, from the most elegant to the least */
+	public static List<GridTile> trialTiles(BlueprintRoom start, BlueprintRoom end)
+	{
+		/**
+		 * Draw a straight line from start to end
+		 * Identify which bounding box faces the line passes through
+		 * Find the closest tile "slot" along those faces to the intersection point
+		 * Connect identified slots
+		 */
+		
+		// The bounding boxes of both rooms
+		Box2f 
+			startBox = (Box2f)start.bounds(), 
+			endBox = (Box2f)end.bounds();
+		
+		// The direct line between the origin points of both rooms
+		LineSegment2f direct = new LineSegment2f(start.tilePosition().mul(Tile.TILE_SIZE).toVec2f(), end.tilePosition().mul(Tile.TILE_SIZE).toVec2f());
+		
+		Optional<Pair<LineSegment2f,Vec2f>> 
+			startIntercepts = findFaceIntersection(direct, startBox),
+			endIntercepts = findFaceIntersection(direct, endBox);
+		
+		if(startIntercepts.isEmpty() || endIntercepts.isEmpty())
+			return List.of();
+		
+		// The face of each room's bounding box that the direct line intersects
+		LineSegment2f 
+			startEdge = startIntercepts.get().getLeft(), 
+			endEdge = endIntercepts.get().getLeft();
+		
+		// The point on those faces the direct line intersects
+		Vec2f 
+			startIntercept = startIntercepts.get().getRight(),
+			endIntercept = endIntercepts.get().getRight();
+		
+		// Door tiles = nearest multiple of tile size from either end of the face
+		Vec2f 
+			startDir = startIntercept.add(startEdge.getLeft().negate()),
+			endDir = endIntercept.add(endEdge.getLeft().negate());
+		
+		// Adjust direction of door from face start when it is too close
+		if(startDir.length() == 0F)
+			startDir = startEdge.direction().normalize();
+		if(endDir.length() == 0F)
+			endDir = endEdge.direction().normalize();
+		
+		float startLen = fitLengthToTile(startDir, startEdge);
+		float endLen = fitLengthToTile(endDir, endEdge);
+		
+		// Middle of the tile grid position where each end of the path enters/exits the room bounds
+		Vec2f 
+			startDoor = startEdge.getLeft().add(startDir.normalize().multiply(startLen)),
+			endDoor = endEdge.getLeft().add(endDir.normalize().multiply(endLen));
+		
+		GridTile startTile = GridTile.fromVec(startDoor);
+		GridTile endTile = GridTile.fromVec(endDoor);
+		
+		// If the start and end tiles are the same, return the singular tile
+		if(startTile.equals(endTile))
+			return List.of(startTile);
+		// If distance between start and end tiles is 1, they are immediately adjacent
+		else if(startTile.manhattanDistance(endTile) == 1)
+			return List.of(startTile, endTile);
+		
+		GridTile outOfStart = startTile.offset(identifyEdgeOfFace(startEdge, startBox));
+		GridTile outOfEnd = endTile.offset(identifyEdgeOfFace(endEdge, endBox));
+		if(outOfStart.distance(endTile) == 1)
+			return List.of(startTile, outOfStart, endTile);
+		else if(outOfEnd.distance(startTile) == 1)
+			return List.of(startTile, outOfEnd, endTile);
+		
+		// Comprehensive calculation
+		List<GridTile> tilesOccupied = Lists.newArrayList();
+		tilesOccupied.add(startTile);
+		
+		LineSegment2f startToEnd = new LineSegment2f(outOfStart, outOfEnd);
+		tilesOccupied.addAll(BlueprintPassage.lineToTiles(startToEnd));
+		
+		tilesOccupied.add(endTile);
+		return tilesOccupied;
+	}
+	
+	private static Vec2f findPerpendicularExteriorDir(LineSegment2f face, Box2f bounds)
 	{
 		Vec2f faceMid = face.midPoint();
 		Vec2f normal = face.normal();
@@ -172,6 +256,15 @@ public class LineUtils
 			return normal.negate();
 		else
 			return normal;
+	}
+	
+	private static Direction identifyEdgeOfFace(LineSegment2f face, Box2f bounds)
+	{
+		for(Direction edge : Direction.Type.HORIZONTAL)
+			if(face.equals(bounds.getEdge(edge)))
+				return edge;
+		
+		return Direction.NORTH;
 	}
 	
 	@Nullable

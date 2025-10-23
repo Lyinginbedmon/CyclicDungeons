@@ -10,6 +10,11 @@ public class LineSegment2f extends Line2f
 	protected final Vec2f left, right;
 	protected final float minX, maxX, minY, maxY;
 	
+	public LineSegment2f(GridTile tileA, GridTile tileB)
+	{
+		this(new Vec2f(tileA.x, tileA.y).add(0.5F), new Vec2f(tileB.x, tileB.y).add(0.5F));
+	}
+	
 	public LineSegment2f(Vector2i posA, Vector2i posB)
 	{
 		this(new Vec2f(posA.x, posA.y), new Vec2f(posB.x, posB.y));
