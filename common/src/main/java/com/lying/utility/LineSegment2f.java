@@ -3,6 +3,8 @@ package com.lying.utility;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
+import com.lying.grid.GridTile;
+
 import net.minecraft.util.math.Vec2f;
 
 public class LineSegment2f extends Line2f
@@ -12,7 +14,7 @@ public class LineSegment2f extends Line2f
 	
 	public LineSegment2f(GridTile tileA, GridTile tileB)
 	{
-		this(new Vec2f(tileA.x, tileA.y).add(0.5F), new Vec2f(tileB.x, tileB.y).add(0.5F));
+		this(tileA.toVec2f(), tileB.toVec2f());
 	}
 	
 	public LineSegment2f(Vector2i posA, Vector2i posB)
@@ -127,6 +129,8 @@ public class LineSegment2f extends Line2f
 		Vec2f dir = direction();
 		return Math.abs(dir.x) + Math.abs(dir.y);
 	}
+	
+	public boolean isStraightLine() { return isHorizontal || isVertical; }
 	
 	/** Returns the grid-aligned bounds occupied by this line segment */
 	public AbstractBox2f bounds()

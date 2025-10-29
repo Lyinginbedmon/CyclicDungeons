@@ -14,10 +14,10 @@ import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grid.GridTile;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
 import com.lying.utility.CompoundBox2f;
-import com.lying.utility.GridTile;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.RotaryBox2f;
 import com.lying.utility.Vector2iUtils;
@@ -141,19 +141,11 @@ public class NodeRenderUtils
 	public static void renderNodeBounds(BlueprintRoom node, boolean isColliding, Vector2i origin, int renderScale, DrawContext context)
 	{
 		RoomMetadata metadata = node.metadata();
-		Vector2i size = metadata.tileSize();
-		
 		int mainColour = isColliding ? PALE_RED : metadata.type().colour();
 		int borderColour = isColliding ? PALE_RED : DARK_GRAY;
 		
-		// Position and sizing in 1-to-1 scaling, not tile scaling
-		GridTile tilePos = node.tilePosition();
-		int minX = tilePos.x - (size.x / 2);
-		int minY = tilePos.y - (size.y / 2);
-		int maxX = minX + size.x;
-		int maxY = minY + size.y;
-		Vector2i boundsMin = new Vector2i(minX, minY).mul(TILE_SIZE);
-		Vector2i boundsMax = new Vector2i(maxX, maxY).mul(TILE_SIZE);
+		Vector2i boundsMin = node.tileMin().toVec2i().mul(TILE_SIZE);
+		Vector2i boundsMax = node.tileMax().toVec2i().mul(TILE_SIZE);
 		
 		// Exterior shell
 		Vector2i shellWidth = new Vector2i(1, 1);
@@ -168,7 +160,7 @@ public class NodeRenderUtils
 				ColorHelper.withAlpha(130, borderColour));
 		
 		// Tile grid
-		node.tiles().forEach(tile -> renderTile(tile, origin, renderScale, context, ColorHelper.withAlpha(75, borderColour)));
+		node.tileGrid().contents().forEach(tile -> renderTile(tile, origin, renderScale, context, ColorHelper.withAlpha(75, borderColour)));
 		
 		// Main bounds
 		boundsMin = boundsMin.mul(renderScale).add(origin);
@@ -195,7 +187,7 @@ public class NodeRenderUtils
 	public static void renderNode(BlueprintRoom node, Vector2i origin, int renderScale, DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY)
 	{
 		RoomMetadata metadata = node.metadata();
-		GridTile pos = node.tilePosition().mul(TILE_SIZE).mul(renderScale).add(origin);
+		Vector2i pos = node.position().mul(renderScale).add(origin);
 		int iconColour = ColorHelper.withAlpha(255, metadata.type().colour());
 		
 		context.drawTexture(RenderLayer::getGuiTextured, DungeonScreen.ICON_TEX, pos.x - 8, pos.y - 8, 0F, 0F, 16, 16, 16, 16, iconColour);
@@ -210,7 +202,7 @@ public class NodeRenderUtils
 	public static void renderPath(BlueprintPassage path, Function<LineSegment2f,LineSegment2f> scaleFunc, Vector2i origin, int renderScale, DrawContext context, int colour, boolean showBounds)
 	{
 //		if(showBounds)
-			path.asTiles().forEach(tile -> renderTile(tile, origin, renderScale, context, ColorHelper.withAlpha(75, DARK_GRAY)));
+			path.tiles().forEach(tile -> renderTile(tile, origin, renderScale, context, ColorHelper.withAlpha(75, colour)));
 		
 		path.asLines().stream().map(scaleFunc).forEach(l -> renderGradientStraightLine(l, context, colour, 0xFFFFFF));
 	}
@@ -220,8 +212,8 @@ public class NodeRenderUtils
 		GridTile min = tile.copy();
 		GridTile max = min.add(1, 1);
 		renderBoundary(
-				min.mul(TILE_SIZE).mul(renderScale).add(origin).toVec2i(), 
-				max.mul(TILE_SIZE).mul(renderScale).add(origin).toVec2i(), 
+				min.toVec2i().mul(TILE_SIZE).mul(renderScale).add(origin), 
+				max.toVec2i().mul(TILE_SIZE).mul(renderScale).add(origin), 
 				context, 
 				colour);
 	}

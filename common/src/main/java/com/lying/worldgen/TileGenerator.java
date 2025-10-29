@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Lists;
+import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.utility.CDUtils;
@@ -21,7 +22,7 @@ public class TileGenerator
 	public static final DebugLogger LOGGER = CDLoggers.WFC;
 	public static boolean DEBUG = false;
 	
-	public static void generate(TileSet map, Map<Tile,Float> tiles, Random rand)
+	public static void generate(BlueprintTileGrid map, Map<Tile,Float> tiles, Random rand)
 	{
 		if(map.isEmpty())
 		{
@@ -58,11 +59,11 @@ public class TileGenerator
 		LOGGER.info("WFC complete");
 	}
 	
-	private static void processSet(List<BlockPos> slots, TileSet map, Map<Tile,Float> tiles, Random rand)
+	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, Map<Tile,Float> tiles, Random rand)
 	{
 		if(slots.isEmpty() || tiles.isEmpty())
 		{
-			LOGGER.forceWarn(" = Position set empty or no tiles were provided =");
+			LOGGER.forceWarn("Position set empty or no tiles were provided");
 			return;
 		}
 		
@@ -76,15 +77,7 @@ public class TileGenerator
 		while(!slots.isEmpty())
 		{
 			map.clearOptionCache();
-			MapEntry entry = MapEntry.of(slots.get(0), map, candidates);
-			for(int i=1; i<slots.size(); i++)
-			{
-				BlockPos pos = slots.get(i);
-				MapEntry entryB = new MapEntry(i, pos, map.getOptionsFor(pos, candidates));
-				if(entryB.isMoreConstrained(entry))
-					entry = entryB;
-			}
-			
+			MapEntry entry = getMostConstrained(slots, map, candidates);
 			Tile tile;
 			switch(entry.options().size())
 			{
@@ -104,7 +97,7 @@ public class TileGenerator
 		}
 	}
 	
-	protected static MapEntry getMostConstrained(List<BlockPos> slots, TileSet map, List<Tile> candidates)
+	protected static MapEntry getMostConstrained(List<BlockPos> slots, BlueprintTileGrid map, List<Tile> candidates)
 	{
 		map.clearOptionCache();
 		MapEntry most = MapEntry.of(slots.get(0), map, candidates);
@@ -112,7 +105,7 @@ public class TileGenerator
 		{
 			BlockPos slotB = slots.get(i);
 			MapEntry entry = new MapEntry(i, slotB, map.getOptionsFor(slotB, candidates));
-			if(entry.isMoreConstrained(most))
+			if(entry.size() < most.size())
 				most = entry;
 		}
 		return most;
@@ -130,11 +123,7 @@ public class TileGenerator
 	{
 		public int size() { return options.size(); }
 		
-		public boolean isMoreConstrained(MapEntry other) { return size() < other.size(); }
-		
-		public static int compare(MapEntry a, MapEntry b) { return a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0; }
-		
-		public static MapEntry of(BlockPos pos, TileSet map, List<Tile> options)
+		public static MapEntry of(BlockPos pos, BlueprintTileGrid map, List<Tile> options)
 		{
 			return new MapEntry(0, pos, map.getOptionsFor(pos, options));
 		}

@@ -9,10 +9,12 @@ import java.util.function.Predicate;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.lying.blueprint.Blueprint;
+import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.BlueprintTileGrid.TileInstance;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDTileTags.TileTag;
 import com.lying.init.CDTiles;
-import com.lying.worldgen.TileSet.TileInstance;
+import com.lying.utility.DebugLogger;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.DynamicRegistryManager;
@@ -37,6 +39,7 @@ import net.minecraft.util.math.random.Random;
 
 public abstract class Tile
 {
+	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	public static final int TILE_SIZE = 2;
 	public static final Vec2f TILE = new Vec2f(TILE_SIZE, TILE_SIZE);
 	
@@ -66,7 +69,10 @@ public abstract class Tile
 	
 	public final boolean isFlag() { return type == GenStyle.FLAG; }
 	
-	public final boolean canExistAt(BlockPos pos, TileSet set) { return predicate.test(this, pos, set); }
+	public final boolean canExistAt(BlockPos pos, BlueprintTileGrid set)
+	{
+		return predicate.test(this, pos, set);
+	}
 	
 	/** Returns a valid rotation for an instance of this tile at the given coordinates in the tile set */
 	@NotNull
@@ -233,7 +239,7 @@ public abstract class Tile
 							Optional<StructurePool> poolOpt = Optional.of(structureKey).flatMap(key -> registry.getOptionalValue(alias.lookup(key)));
 							if(poolOpt.isEmpty())
 							{
-								Blueprint.LOGGER.warn(" # Blank structure pool: {}", structureKey.getValue().toString());
+								LOGGER.warn("Blank structure pool: {}", structureKey.getValue().toString());
 								return;
 							}
 							

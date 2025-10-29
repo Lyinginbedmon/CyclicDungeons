@@ -1,8 +1,12 @@
-package com.lying.utility;
+package com.lying.grid;
 
+import java.util.Comparator;
+
+import org.jetbrains.annotations.Nullable;
 import org.joml.Math;
 import org.joml.Vector2i;
 
+import com.lying.utility.Box2f;
 import com.lying.worldgen.Tile;
 
 import net.minecraft.util.math.BlockPos;
@@ -11,6 +15,8 @@ import net.minecraft.util.math.Vec2f;
 
 public class GridTile
 {
+	public static final int GRID_SIZE	= Tile.TILE_SIZE;
+	public static final GridTile ZERO	= new GridTile(0,0);
 	public final int x, y;
 	
 	public GridTile(int x, int y)
@@ -24,6 +30,16 @@ public class GridTile
 	public boolean equals(Object obj) { return obj instanceof GridTile && manhattanDistance((GridTile)obj) == 0; }
 	
 	public GridTile copy() { return new GridTile(x, y); }
+	
+	public static Comparator<GridTile> distSort(GridTile target)
+	{
+		return (a,b) -> 
+		{
+			double aD = a.distance(target);
+			double bD = b.distance(target);
+			return aD < bD ? -1 : aD > bD ? 1 : 0;
+		};
+	}
 	
 	public static GridTile median(GridTile... tiles)
 	{
@@ -40,15 +56,22 @@ public class GridTile
 		return fromVec(new Vec2f(x, y));
 	}
 	
+	public static GridTile worldVecToGrid(Vec2f vec)
+	{
+		return fromVec(vec.multiply(1 / GRID_SIZE));
+	}
+	
 	public static GridTile fromVec(Vec2f vec)
 	{
 		return new GridTile(
-				(int)(vec.x - vec.x%Tile.TILE_SIZE), 
-				(int)(vec.y - vec.y%Tile.TILE_SIZE)
+				(int)(vec.x - vec.x%GRID_SIZE), 
+				(int)(vec.y - vec.y%GRID_SIZE)
 				);
 	}
 	
 	public Vec2f toVec2f() { return new Vec2f(x, y).add(0.5F); }
+	
+	public Vec2f gridToWorldVec() { return mul(GRID_SIZE).toVec2f(); }
 	
 	public Vector2i toVec2i() { return new Vector2i(x, y); }
 	
@@ -80,14 +103,17 @@ public class GridTile
 		return new Box2f(x, x + 1, y, y + 1);
 	}
 	
-	public GridTile offset(Direction dir)
+	public GridTile offset(@Nullable Direction dir)
 	{
 		return offset(dir, 1);
 	}
 	
-	public GridTile offset(Direction dir, int distance)
+	public GridTile offset(@Nullable Direction dir, int distance)
 	{
-		return new GridTile(x + dir.getOffsetX() * distance, y + dir.getOffsetZ() * distance);
+		if(dir == null || distance == 0)
+			return copy();
+		else
+			return new GridTile(x + dir.getOffsetX() * distance, y + dir.getOffsetZ() * distance);
 	}
 	
 	public GridTile add(Vector2i vec) { return add(vec.x, vec.y); }

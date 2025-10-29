@@ -9,9 +9,10 @@ import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grid.GraphTileGrid;
+import com.lying.grid.GridTile;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
-import com.lying.utility.GridTile;
 import com.lying.worldgen.Tile;
 
 import net.minecraft.util.math.MathHelper;
@@ -24,7 +25,7 @@ public class BlueprintRoom
 	private final RoomMetadata metadata;
 	private List<UUID> childLinks = Lists.newArrayList();
 	private List<UUID> parentLinks = Lists.newArrayList();
-	private GridTile position = new GridTile(0, 0);
+	private GridTile tilePosition = GridTile.ZERO.copy();
 	
 	public BlueprintRoom(UUID idIn, RoomMetadata termIn, List<UUID> childLinksIn, List<UUID> parentLinksIn)
 	{
@@ -42,21 +43,20 @@ public class BlueprintRoom
 	
 	public BlueprintRoom clone()
 	{
-		return new BlueprintRoom(id, metadata, childLinks, parentLinks).setTilePosition(position);
+		return new BlueprintRoom(id, metadata.clone(), childLinks, parentLinks).setTilePosition(tilePosition);
 	}
 	
 	public RoomMetadata metadata() { return metadata; }
 	
-	public Vector2i position() { return position.mul(GRID_SIZE).toVec2i(); }
+	/** Tile-grid position, in the same scale and relation to the rest of the dungeon */
+	public GridTile tilePosition() { return tilePosition; }
 	
-	public GridTile tilePosition() { return position; }
-	
-	public BlueprintRoom setPosition(int x, int y)
+	/** World-grid position, calculated as the core of the tile closest to the center of the room */
+	public Vector2i position()
 	{
-		x -= x%GRID_SIZE;
-		y -= y%GRID_SIZE;
-		setTilePosition(new GridTile(Math.floorDiv(x, GRID_SIZE), Math.floorDiv(y, GRID_SIZE)));
-		return this;
+		Vector2i tileSize = metadata().tileSize();
+		GridTile tile = tileMin().add(tileSize.div(2));
+		return tile.toVec2i().mul(GRID_SIZE).add(GRID_SIZE / 2, GRID_SIZE / 2);
 	}
 	
 	public BlueprintRoom setPosition(Vector2i vec)
@@ -64,9 +64,14 @@ public class BlueprintRoom
 		return setPosition(vec.x, vec.y);
 	}
 	
+	public BlueprintRoom setPosition(int x, int y)
+	{
+		return setTilePosition(new GridTile(Math.floorDiv(x, GRID_SIZE), Math.floorDiv(y, GRID_SIZE)));
+	}
+	
 	public BlueprintRoom setTilePosition(GridTile tile)
 	{
-		position = tile;
+		tilePosition = tile;
 		return this;
 	}
 	
@@ -79,7 +84,7 @@ public class BlueprintRoom
 	{
 		x = (int)Math.signum(x) * GRID_SIZE;
 		y = (int)Math.signum(y) * GRID_SIZE;
-		position = position.add(x, y);
+		tilePosition = tilePosition.add(x, y);
 		return this;
 	}
 	
@@ -90,9 +95,17 @@ public class BlueprintRoom
 	
 	public BlueprintRoom nudge(int x, int y)
 	{
-		x = MathHelper.clamp(x, -1, 1);
-		y = MathHelper.clamp(y, -1, 1);
-		setTilePosition(position.add(x, y));
+		return move(MathHelper.clamp(x, -1, 1), MathHelper.clamp(y, -1, 1));
+	}
+	
+	public BlueprintRoom move(Vector2i vec)
+	{
+		return move(vec.x, vec.y);
+	}
+	
+	public BlueprintRoom move(int x, int y)
+	{
+		setTilePosition(tilePosition.add(x, y));
 		return this;
 	}
 	
@@ -100,7 +113,7 @@ public class BlueprintRoom
 	
 	public GridTile getParentPosition(Blueprint chart)
 	{
-		GridTile defaultPos = position.add(0, 1);
+		GridTile defaultPos = tilePosition.add(0, 1);
 		if(!hasParents())
 			return defaultPos;
 		
@@ -125,70 +138,60 @@ public class BlueprintRoom
 			return defaultPos;
 	}
 	
-	public Vector2i min()
+	public GridTile tileMin()
 	{
-		return min(position());
+		return metadata().tileMin(tilePosition());
 	}
 	
-	public Vector2i min(Vector2i position)
+	public GridTile tileMax()
 	{
-		Vector2i size = metadata().size();
-		int tX = (Math.floorDiv(size.x, GRID_SIZE) / 2) * GRID_SIZE;
-		int tY = (Math.floorDiv(size.y, GRID_SIZE) / 2) * GRID_SIZE;
-		return new Vector2i(position.x - tX, position.y - tY);
+		return metadata().tileMax(tilePosition());
 	}
 	
-	public Vector2i max()
+	public AbstractBox2f tileBounds()
 	{
-		return max(position());
+		return tileBounds(tilePosition());
 	}
 	
-	public Vector2i max(Vector2i position)
+	public AbstractBox2f tileBounds(GridTile position)
 	{
-		Vector2i size = metadata().size();
-		return min(position).add(size.x, size.y);
+		GridTile min = metadata().tileMin(position);
+		GridTile max = metadata().tileMax(position);
+		return new Box2f(min.x, max.x, min.y, max.y);
 	}
 	
-	public AbstractBox2f bounds()
+	public AbstractBox2f worldBounds()
 	{
-		return bounds(position());
-	}
-	
-	public AbstractBox2f bounds(Vector2i position)
-	{
-		Vector2i min = min(position);
-		Vector2i max = max(position);
+		GridTile min = metadata().tileMin(tilePosition()).mul(GRID_SIZE);
+		GridTile max = metadata().tileMax(tilePosition()).mul(GRID_SIZE);
 		return new Box2f(min.x, max.x, min.y, max.y);
 	}
 	
 	public List<GridTile> tiles()
 	{
-		List<GridTile> tiles = Lists.newArrayList();
-		
-		GridTile pos = tilePosition();
-		int mX = pos.x;
-		int mY = pos.y;
-		
-		Vector2i size = metadata().tileSize();
-		int tilesX = size.x;
-		int tilesY = size.y;
-		
-		mX -= (tilesX / 2);
-		mY -= (tilesY / 2);
-		
-		for(int x = 0; x<tilesX; x++)
-			for(int y = 0; y<tilesY; y++)
-			{
-				GridTile tile = new GridTile(mX + x, mY + y);
-				if(tiles.stream().noneMatch(t -> t.distance(tile) == 0))
-					tiles.add(tile);
-			}
-		return tiles;
+		return metadata().tileFootprint(tilePosition);
+	}
+	
+	public GraphTileGrid tileGrid()
+	{
+		return (GraphTileGrid)new GraphTileGrid().addAllToVolume(tiles());
+	}
+	
+	/** Returns true if the given tile is occupied by this room */
+	public boolean occupies(GridTile tile)
+	{
+		return tiles().contains(tile);
+	}
+	
+	/** Returns true if the given tile is adjacent or equal to any tile in this room */
+	public boolean isAdjacent(GridTile tile)
+	{
+		return tiles().stream().anyMatch(tile::isAdjacentTo);
 	}
 	
 	public boolean intersects(AbstractBox2f boundsB)
 	{
-		AbstractBox2f bounds = bounds();
+		AbstractBox2f bounds = tileBounds();
 		return bounds.intersects(boundsB) || boundsB.intersects(bounds);
 	}
 	

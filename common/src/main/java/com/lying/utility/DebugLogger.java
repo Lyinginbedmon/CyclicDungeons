@@ -42,14 +42,14 @@ public class DebugLogger
 	public void info(String format, Object... args) { if(!isActive) return; logger.info(format, args); }
 	
 	// Errors - Always transmitted
-	public void error(String msg) { logger.error(msg); }
-	public void error(String format, Object... args) { logger.error(format, args); }
+	public void error(String msg) { logger.error(" !! "+msg); }
+	public void error(String format, Object... args) { logger.error(" !! "+format, args); }
 	
 	// Warnings - Conditionally transmitted
-	public void warn(String msg) { if(!isActive) return; logger.warn(msg); }
-	public void warn(String format, Object... args) { if(!isActive) return; logger.warn(format, args); }
+	public void warn(String msg) { if(!isActive) return; logger.warn(" ? "+msg); }
+	public void warn(String format, Object... args) { if(!isActive) return; logger.warn(" ? "+format, args); }
 	
 	// Vital warnings - Always transmitted
-	public void forceWarn(String msg) { logger.warn(msg); }
-	public void forceWarn(String format, Object... args) { logger.warn(format, args); }
+	public void forceWarn(String msg) { logger.warn(" ?? "+msg); }
+	public void forceWarn(String format, Object... args) { logger.warn(" ?? "+format, args); }
 }

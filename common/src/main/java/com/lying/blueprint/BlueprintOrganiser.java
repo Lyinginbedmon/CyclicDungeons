@@ -11,11 +11,11 @@ import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Lists;
+import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CDUtils;
 import com.lying.utility.DebugLogger;
-import com.lying.utility.GridTile;
 
 import net.minecraft.util.math.random.Random;
 
@@ -50,10 +50,19 @@ public abstract class BlueprintOrganiser
 	
 	public static List<AbstractBox2f> getBounds(Collection<BlueprintRoom> chart)
 	{
-		return chart.stream().map(BlueprintRoom::bounds).toList();
+		return chart.stream().map(BlueprintRoom::tileBounds).toList();
 	}
 	
-	/** Returns a list of all paths between the given nodes */
+	/** Returns a list of all paths between the given nodes, with post-processing applied */
+	public static List<BlueprintPassage> getFinalisedPassages(Collection<BlueprintRoom> chart)
+	{
+		List<BlueprintPassage> passages = getPassages(chart);
+		// FIXME Re-enable after merging is finalised
+//		mergePassages(passages, getBounds(chart));
+		return passages;
+	}
+	
+	/** Returns a list of all paths between the given nodes, without post-processing */
 	public static List<BlueprintPassage> getPassages(Collection<BlueprintRoom> chart)
 	{
 		List<BlueprintPassage> paths = Lists.newArrayList();
@@ -202,7 +211,7 @@ public abstract class BlueprintOrganiser
 		
 		public void applyLayout(Blueprint chart, Random rand)
 		{
-			Map<GridTile, BlueprintRoom> gridMap = new HashMap<>();;
+			Map<GridTile, BlueprintRoom> gridMap = new HashMap<>();
 			
 			for(int step = 0; step <= chart.maxDepth(); step++)
 				organiseByGrid(chart, step, gridMap, this::moveSet, GRID_SIZE, rand);
@@ -248,22 +257,6 @@ public abstract class BlueprintOrganiser
 		{
 			if(options.size() > 1)
 			{
-				// FIXME Moderate distance function to reduce influence as nodes get farther from dungeon start
-//				Function<GridTile, Double> distFunc = v -> 
-//				{
-//					double dist = 0D;
-//					for(BlueprintRoom room : chart)
-//						dist += Math.abs(v.x() - room.position().x()) + Math.abs(v.y() - room.position().y());
-//					return dist / chart.size();
-//				};
-//				options.sort((a,b) -> 
-//				{
-//					double dA = distFunc.apply(a);
-//					double dB = distFunc.apply(b);
-//					return dA > dB ? -1 : dA < dB ? 1 : 0;
-//				});
-//				return options.get(0);
-				
 				// Prioritise viable position farthest from parents of parent nodes
 				List<GridTile> gPositions = Lists.newArrayList();
 				parents.forEach(n -> gPositions.add(n.getParentPosition(chart)));

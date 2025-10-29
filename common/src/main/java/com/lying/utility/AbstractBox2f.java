@@ -77,6 +77,17 @@ public abstract class AbstractBox2f
 		return asEdges().stream().anyMatch(predicate);
 	}
 	
+	public Vec2f intercept(LineSegment2f line)
+	{
+		for(LineSegment2f face : asEdges())
+		{
+			Vec2f intercept = LineSegment2f.segmentIntercept(face, line);
+			if(intercept != null)
+				return intercept;
+		}
+		return null;
+	}
+	
 	/** Returns a list of all 2D positions enclosed by this box */
 	public final List<Vec2f> enclosedPositions()
 	{

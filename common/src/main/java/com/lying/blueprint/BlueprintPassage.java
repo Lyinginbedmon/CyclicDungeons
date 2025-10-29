@@ -10,27 +10,34 @@ import org.joml.Vector2i;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GraphTileGrid;
+import com.lying.grid.GridTile;
+import com.lying.grid.TileUtils;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CompoundBox2f;
-import com.lying.utility.GridTile;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
 import com.lying.utility.RotaryBox2f;
 import com.lying.worldgen.Tile;
+import com.lying.worldgen.TileGenerator;
 
-import net.minecraft.util.math.Direction;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
 
 public class BlueprintPassage
 {
-	public static final Map<Tile,Float> PASSAGE_TILE_SET = Map.of(
-			CDTiles.FLOOR.get(), 10000F,
-			CDTiles.AIR.get(), 10F
-			);
-	
+	public static final int PASSAGE_HEIGHT = 2;
 	public static final int TILE_SIZE = Tile.TILE_SIZE;
 	public static final int PASSAGE_WIDTH = 3 * TILE_SIZE;
+	public static final Map<Tile, Float> PASSAGE_TILE_SET = Map.of(
+			CDTiles.PASSAGE_FLOOR.get(), 10000F,
+			CDTiles.AIR.get(), 10F,
+			CDTiles.FLOOR_LIGHT.get(), 1F
+			);
+	
 	private final BlueprintRoom parent;
 	private final List<BlueprintRoom> children = Lists.newArrayList();
 	private final float width;
@@ -110,7 +117,7 @@ public class BlueprintPassage
 		
 		if(children.size() <= 1)
 		{
-			linesCached.addAll(LineUtils.trialLines(parent, children.getFirst(), this::isLineViable));
+			linesCached.addAll(LineUtils.trialLines(parent, children.getFirst()));
 			return;
 		}
 		
@@ -124,14 +131,14 @@ public class BlueprintPassage
 		junction.setTilePosition(median);
 		junction.metadata().setTileSize(1, 1);
 		
-		linesCached.addAll(LineUtils.trialLines(parent, junction, this::isLineViable));
+		linesCached.addAll(LineUtils.trialLines(parent, junction));
 		
 		children.stream()
-			.map(child -> LineUtils.trialLines(junction, child, this::isLineViable))
+			.map(child -> LineUtils.trialLines(junction, child))
 			.forEach(linesCached::addAll);
 	}
 	
-	public List<GridTile> asTiles()
+	public List<GridTile> tiles()
 	{
 		if(tilesCached.isEmpty())
 			cacheTiles();
@@ -142,7 +149,15 @@ public class BlueprintPassage
 	public void cacheTiles()
 	{
 		tilesCached.clear();
-		tilesCached.addAll(toTiles(asLines()));
+		children.forEach(child -> 
+			TileUtils.trialTiles(parent, child).stream()
+				.filter(Predicates.not(tilesCached::contains))
+				.forEach(tilesCached::add));
+	}
+	
+	public GraphTileGrid asTiles()
+	{
+		return (GraphTileGrid)new GraphTileGrid().addAllToVolume(tiles());
 	}
 	
 	public static List<Vec2f> asPoints(List<LineSegment2f> lines)
@@ -193,31 +208,6 @@ public class BlueprintPassage
 		return asLines().getLast().getRight();
 	}
 	
-	/** Controls how this passage is shaped to connect its associated rooms */
-	private boolean isLineViable(List<LineSegment2f> line)
-	{
-		List<BlueprintRoom> rooms = Lists.newArrayList();
-		rooms.add(parent);
-		rooms.addAll(children);
-		return isLineViable(line, rooms);
-	}
-	
-	public static boolean isLineViable(List<LineSegment2f> segments, List<BlueprintRoom> rooms)
-	{
-		if(segments.size() == 1)
-			return true;
-		
-		List<GridTile> tilesInSegment = toTiles(segments);
-		List<GridTile> tilesInRooms = Lists.newArrayList();
-		rooms.stream().map(BlueprintRoom::tiles).forEach(tilesInRooms::addAll);
-		
-		int adjacentTally = 0;
-		for(GridTile tile : tilesInRooms)
-			adjacentTally += tilesInSegment.stream().filter(tile::isAdjacentTo).count();
-		
-		return adjacentTally <= rooms.size();
-	}
-	
 	public AbstractBox2f asBox() { return box; }
 	
 	protected static CompoundBox2f lineToBox(List<LineSegment2f> segments, float width)
@@ -255,9 +245,9 @@ public class BlueprintPassage
 	/** Returns true if any line segment in this passage intersects any line segment in the other passage */
 	public boolean intersects(BlueprintPassage other)
 	{
-		List<GridTile> otherTiles = other.asTiles();
+		List<GridTile> otherTiles = other.tiles();
 		return 
-				asTiles().stream().anyMatch(l -> 
+				tiles().stream().anyMatch(l -> 
 					otherTiles.stream()
 						.anyMatch(l::isAdjacentTo));
 	}
@@ -268,8 +258,8 @@ public class BlueprintPassage
 		if(!canShareSpaceWith(other))
 			return false;
 		
-		List<GridTile> myTiles = asTiles();
-		return other.asTiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo));
+		List<GridTile> myTiles = tiles();
+		return other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo));
 	}
 	
 	public BlueprintPassage mergeWith(BlueprintPassage b)
@@ -303,76 +293,28 @@ public class BlueprintPassage
 	/** Returns true if this passage intersects any unrelated rooms in the given chart */
 	public boolean intersectsOtherRooms(List<BlueprintRoom> chart)
 	{
-		List<GridTile> myTiles = asTiles();
+		List<GridTile> myTiles = tiles();
 		return chart.stream()
-				.filter(Predicates.not(parent::equals))
-				.filter(Predicates.not(children::contains))
-				.map(BlueprintRoom::tiles)
-				.anyMatch(l -> l.stream().anyMatch(p1 -> myTiles.stream().anyMatch(p1::isAdjacentTo)));
-	}
-	
-	public static List<GridTile> toTiles(List<LineSegment2f> lines)
-	{
-		List<GridTile> tiles = Lists.newArrayList();
-		for(LineSegment2f line : lines)
-			lineToTiles(line).stream().filter(Predicates.not(tiles::contains)).forEach(tiles::add);
-		
-		return tiles;
-	}
-	
-	public static List<GridTile> lineToTiles(LineSegment2f line)
-	{
-		List<GridTile> set = Lists.newArrayList(); 
-		GridTile startTile = new GridTile(Math.floorDiv((int)line.getLeft().x, TILE_SIZE), Math.floorDiv((int)line.getLeft().y, TILE_SIZE));
-		GridTile endTile = new GridTile(Math.floorDiv((int)line.getRight().x, TILE_SIZE), Math.floorDiv((int)line.getRight().y, TILE_SIZE));
-		
-		// Initial tile population
-		int len = (int)(line.length() / TILE_SIZE);
-		Vec2f dir = line.direction().normalize();
-		for(int i=0; i<len; i++)
-		{
-			GridTile offset = GridTile.fromVec(dir.multiply(i));
-			GridTile tile = startTile.add(offset);
-			if(set.stream().noneMatch(tile::equals))
-				set.add(tile);
-		}
-		
-		set.add(endTile);
-		
-		// Walk through population to find each successive tile
-		List<GridTile> additions = Lists.newArrayList();
-		for(int i=1; i<set.size(); i++)
-		{
-			GridTile start = set.get(i-1);
-			GridTile end = set.get(i);
-			
-			List<Direction> moves = Direction.Type.HORIZONTAL.stream()
-					.filter(d -> d.getOffsetX() == Math.signum(dir.x) || d.getOffsetZ() == Math.signum(dir.y))
-					.toList();
-			
-			while(start.distance(end) > 0)
-			{
-				Direction bestMove = null;
-				double minDist = Double.MAX_VALUE;
-				for(Direction move : moves)
+				.filter(p -> !parent.equals(p) && children.stream().noneMatch(p::equals))
+				.anyMatch(r -> 
 				{
-					GridTile tile = start.offset(move);
-					double dist = tile.distance(end);
-					if(dist < minDist)
-					{
-						bestMove = move;
-						minDist = dist;
-					}
-				}
-				
-				start = start.offset(bestMove);
-				if(additions.stream().noneMatch(start::equals))
-					additions.add(start);
-			}
-		}
+					// Intersection if we occupy any of the same tiles as the room
+					// Intersection if any of our tiles are adjacent to any tile of the room
+					// This is avoided to keep passages navigable, given potential intrusion by the exterior shell
+					return r.tiles().stream()
+							.anyMatch(t -> myTiles.stream()
+								.anyMatch(t::isAdjacentTo));
+				});
+	}
+	
+	public void generate(BlockPos origin, ServerWorld world)
+	{
+		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(asTiles(), PASSAGE_HEIGHT);
 		
-		additions.removeIf(set::contains);
-		set.addAll(additions);
-		return set;
+		// FIXME Pre-seed doorway from parent room
+		
+		TileGenerator.generate(map, PASSAGE_TILE_SET, world.random);
+		map.finalise();
+		map.generate(origin, world);
 	}
 }

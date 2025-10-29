@@ -6,17 +6,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.utility.AbstractBox2f;
@@ -34,7 +36,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 {
 	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	
-	public static final int ROOM_HEIGHT = Tile.TILE_SIZE * 4;
+	public static final int ROOM_TILE_HEIGHT	= 4;
+	public static final int ROOM_HEIGHT			= ROOM_TILE_HEIGHT * Tile.TILE_SIZE;
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
 	private List<BlueprintRoom> criticalPath = Lists.newArrayList();
@@ -53,6 +56,13 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		if(room.hasLinks())
 			room.getChildRooms(graphIn).forEach(r -> addNodeToBlueprint(r, parent, graph, graphIn));
 		return node;
+	}
+	
+	public Blueprint clone()
+	{
+		Blueprint clone = new Blueprint();
+		stream().map(BlueprintRoom::clone).forEach(clone::add);
+		return clone;
 	}
 	
 	public Optional<BlueprintRoom> start() { return stream().filter(n -> n.metadata().is(CDTerms.START.get())).findFirst(); }
@@ -81,6 +91,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		return result;
 	}
 	
+	public Optional<BlueprintRoom> getRoom(UUID id) { return stream().filter(r -> r.uuid().equals(id)).findFirst(); }
+	
 	/** Returns the deepest level of this dungeon */
 	public int maxDepth() { return maxDepth; }
 	
@@ -101,18 +113,51 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	/** Returns true if the set of rooms contains any errors that may interfere with generation */
 	public static boolean hasErrors(List<BlueprintRoom> chart)
 	{
-		for(ErrorType type : ErrorType.values())
-			if(tallyErrors(chart, type) > 0)
-				return true;
+		return ErrorType.stream().anyMatch(e -> anyErrors(chart, e));
+	}
+	
+	public static boolean anyErrors(List<BlueprintRoom> chart, ErrorType type)
+	{
+		List<BlueprintPassage> paths = BlueprintOrganiser.getFinalisedPassages(chart);
+		switch(type)
+		{
+			case COLLISION:
+				for(BlueprintRoom room : chart)
+					if(chart.stream().filter(r -> !r.equals(room)).anyMatch(room::intersects))
+						return true;
+				break;
+			case TUNNEL:
+				for(BlueprintRoom room : chart)
+				{
+					List<GridTile> roomTiles = room.tiles();
+					List<BlueprintPassage> passages = paths.stream().filter(p -> !p.isTerminus(room)).toList();
+					if(passages.stream().anyMatch(p -> 
+					{
+						List<GridTile> pathTiles = p.tiles();
+						return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentTo));
+					}))
+						return true;
+				}
+				break;
+			case INTERSECTION:
+				for(BlueprintPassage path : paths)
+				{
+					path.exclude(path.parent().tileBounds());
+					path.children().stream().map(BlueprintRoom::tileBounds).forEach(path::exclude);
+					
+					if(path.intersectsOtherPassages(chart))
+						return true;
+				}
+				break;
+		}
+		
 		return false;
 	}
 	
 	public static int tallyErrors(List<BlueprintRoom> chart, ErrorType type)
 	{
 		int tally = 0;
-		List<BlueprintPassage> paths = BlueprintOrganiser.getPassages(chart);
-		paths = BlueprintOrganiser.mergePassages(paths, BlueprintOrganiser.getBounds(chart));
-		
+		List<BlueprintPassage> paths = BlueprintOrganiser.getFinalisedPassages(chart);
 		switch(type)
 		{
 			case COLLISION:
@@ -121,15 +166,23 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 						++tally;
 				return tally;
 			case TUNNEL:
-				for(BlueprintPassage path : paths)
-					if(path.intersectsOtherRooms(chart))
-						++tally;
+				for(BlueprintRoom room : chart)
+				{
+					List<GridTile> roomTiles = room.tiles();
+					List<BlueprintPassage> passages = paths.stream().filter(p -> !p.isTerminus(room)).toList();
+					if(passages.stream().anyMatch(p -> 
+					{
+						List<GridTile> pathTiles = p.tiles();
+						return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentTo));
+					}))
+						tally++;
+				}
 				return tally;
 			case INTERSECTION:
 				for(BlueprintPassage path : paths)
 				{
-					path.exclude(path.parent().bounds());
-					path.children().stream().map(BlueprintRoom::bounds).forEach(path::exclude);
+					path.exclude(path.parent().tileBounds());
+					path.children().stream().map(BlueprintRoom::tileBounds).forEach(path::exclude);
 					
 					if(path.intersectsOtherPassages(chart))
 						++tally;
@@ -148,9 +201,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Beginning blueprint generation");
 		
-//		buildExteriorShell(position, world);
-		
-		// FIXME Finalise paths (trim, merge, etc) before generating
+//		buildExteriorShell(position, world);	FIXME Update exterior shell generation to reflect positioning changes
 		
 		buildExteriorPaths(position, world);
 		
@@ -208,20 +259,14 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating rooms");
 		
-		final List<BlueprintPassage> passages = BlueprintOrganiser.getPassages(this);
+		final List<BlueprintPassage> passages = BlueprintOrganiser.getFinalisedPassages(this);
 		int tally = 0;
 		for(BlueprintRoom node : this)
 		{
-			Vector2i minScale = node.min();
-			Vector2i maxScale = node.max();
-			
-			BlockPos min = position.add(minScale.x, 0, minScale.y);
-			BlockPos max = position.add(maxScale.x, ROOM_HEIGHT, maxScale.y);
-			
 			RoomMetadata meta = node.metadata();
 			GrammarTerm type = meta.type();
 			LOGGER.info(" # Room {} of {}: {}x{} {}", ++tally, size(), meta.size().x(), meta.size().y(), type.registryName().getPath());
-			if(type.generate(position, min, max, world, node, this, passages))
+			if(type.generate(position, world, node, passages))
 				LOGGER.info(" ## Finished");
 			else
 				LOGGER.error(" ## Error during room generation");
@@ -235,18 +280,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior passages");
 		
-		/**
-		 * Merge intersecting paths together
-		 * Calculate total volume of each path
-		 * Subtract any tiles occupied by rooms OR exterior shell
-		 * Generate exterior shell of each path
-		 * Populate path interior with WFC
-		 */
-		
-		List<AbstractBox2f> bounds = BlueprintOrganiser.getBounds(this);
-		List<BlueprintPassage> paths = BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this), bounds);
-		
-		paths.forEach(p -> PassageBuilder.build(p, position, world, bounds));
+		BlueprintOrganiser.getFinalisedPassages(this)
+			.forEach(p -> p.generate(position, world));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
@@ -271,5 +306,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		INTERSECTION,
 		/** Passages that pass through unrelated rooms */
 		TUNNEL;
+		
+		public static Stream<ErrorType> stream() { return List.of(values()).stream(); }
 	}
 }

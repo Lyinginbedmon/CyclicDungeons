@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
+import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
@@ -23,7 +24,6 @@ import com.lying.utility.DebugLogger;
 import com.lying.utility.LineSegment2f;
 import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
-import com.lying.worldgen.TileSet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -119,31 +119,26 @@ public abstract class GrammarTerm
 		return (!isBranchInjector() || inRoom.canAddLink()) && conditions.test(this, inRoom, previous, next, graph);
 	}
 	
-	public boolean generate(BlockPos position, BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom node, Blueprint chart, List<BlueprintPassage> passages)
+	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, List<BlueprintPassage> passages)
 	{
-		BlockPos size = max.subtract(min);
-		size = new BlockPos(
-				Math.floorDiv(size.getX(), Tile.TILE_SIZE),
-				Math.floorDiv(size.getY(), Tile.TILE_SIZE),
-				Math.floorDiv(size.getZ(), Tile.TILE_SIZE)
-				);
-		TileSet map = TileSet.ofSize(size);
+		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT);
 		
 		// Pre-seed doorways to connecting rooms
-		preseedDoorways(position, min, node, map, passages);
+//		preseedDoorways(position, min, node, map, passages);	FIXME Update passage preseeding
 		
 		// Fill rest of tileset with WFC generation
 		TileGenerator.generate(map, BASIC_TILE_SET, world.getRandom());
+		
 		map.finalise();
-		return map.generate(min, world);
+		return map.generate(position, world);
 	}
 	
-	protected static void preseedDoorways(BlockPos position, BlockPos min, BlueprintRoom node, TileSet map, List<BlueprintPassage> passages)
+	protected static void preseedDoorways(BlockPos position, BlockPos min, BlueprintRoom node, BlueprintTileGrid map, List<BlueprintPassage> passages)
 	{
 		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
 		
 		// Find all line segments that intersect the bounds of the room
-		AbstractBox2f bounds = node.bounds();
+		AbstractBox2f bounds = node.tileBounds();
 		List<LineSegment2f> lines = Lists.newArrayList();
 		doorways.stream()
 			.map(BlueprintPassage::asLines)
