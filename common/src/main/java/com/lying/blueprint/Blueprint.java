@@ -1,12 +1,12 @@
 package com.lying.blueprint;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -35,11 +35,12 @@ import net.minecraft.util.math.BlockPos;
 public class Blueprint extends ArrayList<BlueprintRoom>
 {
 	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
-	
 	public static final int ROOM_TILE_HEIGHT	= 4;
 	public static final int ROOM_HEIGHT			= ROOM_TILE_HEIGHT * Tile.TILE_SIZE;
+	
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
+	protected List<BlueprintPassage> passageCache = Lists.newArrayList();
 	private List<BlueprintRoom> criticalPath = Lists.newArrayList();
 	
 	public static Blueprint fromGraph(GrammarPhrase graphIn)
@@ -55,6 +56,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		graph.add(node);
 		if(room.hasLinks())
 			room.getChildRooms(graphIn).forEach(r -> addNodeToBlueprint(r, parent, graph, graphIn));
+		graph.clearPassageCache();
 		return node;
 	}
 	
@@ -74,6 +76,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		boolean result = super.add(node);
 		if(result)
 		{
+			node.attachToBlueprint(this);
+			
 			// Update the depth range
 			maxDepth = 0;
 			for(BlueprintRoom n : this)
@@ -111,86 +115,19 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public boolean hasErrors() { return hasErrors(this); }
 	
 	/** Returns true if the set of rooms contains any errors that may interfere with generation */
-	public static boolean hasErrors(List<BlueprintRoom> chart)
+	public static boolean hasErrors(Blueprint chart)
 	{
 		return ErrorType.stream().anyMatch(e -> anyErrors(chart, e));
 	}
 	
-	public static boolean anyErrors(List<BlueprintRoom> chart, ErrorType type)
+	public static boolean anyErrors(Blueprint chart, ErrorType type)
 	{
-		List<BlueprintPassage> paths = BlueprintOrganiser.getFinalisedPassages(chart);
-		switch(type)
-		{
-			case COLLISION:
-				for(BlueprintRoom room : chart)
-					if(chart.stream().filter(r -> !r.equals(room)).anyMatch(room::intersects))
-						return true;
-				break;
-			case TUNNEL:
-				for(BlueprintRoom room : chart)
-				{
-					List<GridTile> roomTiles = room.tiles();
-					List<BlueprintPassage> passages = paths.stream().filter(p -> !p.isTerminus(room)).toList();
-					if(passages.stream().anyMatch(p -> 
-					{
-						List<GridTile> pathTiles = p.tiles();
-						return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentTo));
-					}))
-						return true;
-				}
-				break;
-			case INTERSECTION:
-				for(BlueprintPassage path : paths)
-				{
-					path.exclude(path.parent().tileBounds());
-					path.children().stream().map(BlueprintRoom::tileBounds).forEach(path::exclude);
-					
-					if(path.intersectsOtherPassages(chart))
-						return true;
-				}
-				break;
-		}
-		
-		return false;
+		return type.anyExist(chart);
 	}
 	
-	public static int tallyErrors(List<BlueprintRoom> chart, ErrorType type)
+	public static int tallyErrors(Blueprint chart, ErrorType type)
 	{
-		int tally = 0;
-		List<BlueprintPassage> paths = BlueprintOrganiser.getFinalisedPassages(chart);
-		switch(type)
-		{
-			case COLLISION:
-				for(BlueprintRoom room : chart)
-					if(chart.stream().filter(r -> !r.equals(room)).anyMatch(room::intersects))
-						++tally;
-				return tally;
-			case TUNNEL:
-				for(BlueprintRoom room : chart)
-				{
-					List<GridTile> roomTiles = room.tiles();
-					List<BlueprintPassage> passages = paths.stream().filter(p -> !p.isTerminus(room)).toList();
-					if(passages.stream().anyMatch(p -> 
-					{
-						List<GridTile> pathTiles = p.tiles();
-						return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentTo));
-					}))
-						tally++;
-				}
-				return tally;
-			case INTERSECTION:
-				for(BlueprintPassage path : paths)
-				{
-					path.exclude(path.parent().tileBounds());
-					path.children().stream().map(BlueprintRoom::tileBounds).forEach(path::exclude);
-					
-					if(path.intersectsOtherPassages(chart))
-						++tally;
-				}
-				return tally;
-		}
-		
-		return 0;
+		return type.tally(chart, -1);
 	}
 	
 	public boolean build(BlockPos position, ServerWorld world)
@@ -286,6 +223,19 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
+	public List<BlueprintPassage> passages()
+	{
+		if(passageCache.isEmpty() && size() > 1)
+			passageCache.addAll(BlueprintOrganiser.getPassages(this));
+		
+		return passageCache;
+	}
+	
+	public void clearPassageCache()
+	{
+		passageCache.clear();
+	}
+	
 	public static void tryPlaceAt(BlockState state, BlockPos pos, ServerWorld world)
 	{
 		BlockState stateAt = world.getBlockState(pos);
@@ -293,20 +243,69 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			world.setBlockState(pos, state);
 	}
 	
-	public static List<BlueprintPassage> getPassagesOf(BlueprintRoom room, Collection<BlueprintRoom> chart)
+	public static List<BlueprintPassage> getPassagesOf(BlueprintRoom room, Blueprint chart)
 	{
-		return BlueprintOrganiser.getPassages(chart).stream().filter(p -> p.isTerminus(room)).toList();
+		return chart.passages().stream().filter(p -> p.isTerminus(room)).toList();
 	}
 	
 	public static enum ErrorType
 	{
 		/** Rooms that share space with other rooms */
-		COLLISION,
+		COLLISION((chart,limit) -> 
+		{
+			int tally = 0;
+			for(BlueprintRoom room : chart)
+				if(chart.stream().filter(r -> !r.equals(room)).anyMatch(room::intersects))
+					if(++tally >= limit && limit > 0)
+						return tally;
+			return tally;
+		}),
 		/** Passages that intersect other passages */
-		INTERSECTION,
+		INTERSECTION((chart,limit) -> 
+		{
+			int tally = 0;
+			List<BlueprintPassage> paths = BlueprintOrganiser.getFinalisedPassages(chart);
+			for(BlueprintRoom room : chart)
+			{
+				List<GridTile> roomTiles = room.tiles();
+				List<BlueprintPassage> passages = paths.stream().filter(p -> !p.isTerminus(room)).toList();
+				if(passages.stream().anyMatch(p -> 
+				{
+					List<GridTile> pathTiles = p.tiles();
+					return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentTo));
+				}))
+					if(++tally >= limit && limit > 0)
+						return tally;
+			}
+			return tally;
+		}),
 		/** Passages that pass through unrelated rooms */
-		TUNNEL;
+		TUNNEL((chart,limit) -> 
+		{
+			int tally = 0;
+			for(BlueprintPassage path : BlueprintOrganiser.getFinalisedPassages(chart))
+			{
+				path.exclude(path.parent().tileBounds());
+				path.children().stream().map(BlueprintRoom::tileBounds).forEach(path::exclude);
+				
+				if(path.intersectsOtherPassages(chart))
+					if(++tally >= limit && limit > 0)
+						return tally;
+			}
+			return tally;
+		});
 		
 		public static Stream<ErrorType> stream() { return List.of(values()).stream(); }
+		
+		private final BiFunction<Blueprint,Integer,Integer> tallyFunc;
+		
+		private ErrorType(BiFunction<Blueprint,Integer,Integer> funcIn)
+		{
+			tallyFunc = funcIn;
+		}
+		
+		public boolean anyExist(Blueprint chart) { return tally(chart, 1) == 1; }
+		
+		public int tally(Blueprint chart, int limit) { return tallyFunc.apply(chart, limit); }
 	}
 }

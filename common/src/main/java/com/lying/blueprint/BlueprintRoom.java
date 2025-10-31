@@ -27,6 +27,8 @@ public class BlueprintRoom
 	private List<UUID> parentLinks = Lists.newArrayList();
 	private GridTile tilePosition = GridTile.ZERO.copy();
 	
+	private Optional<Blueprint> blueprint = Optional.empty();
+	
 	public BlueprintRoom(UUID idIn, RoomMetadata termIn, List<UUID> childLinksIn, List<UUID> parentLinksIn)
 	{
 		id = idIn;
@@ -45,6 +47,8 @@ public class BlueprintRoom
 	{
 		return new BlueprintRoom(id, metadata.clone(), childLinks, parentLinks).setTilePosition(tilePosition);
 	}
+	
+	public void attachToBlueprint(Blueprint blueprint) { this.blueprint = Optional.of(blueprint); }
 	
 	public RoomMetadata metadata() { return metadata; }
 	
@@ -72,6 +76,7 @@ public class BlueprintRoom
 	public BlueprintRoom setTilePosition(GridTile tile)
 	{
 		tilePosition = tile;
+		blueprint.ifPresent(b -> b.clearPassageCache());
 		return this;
 	}
 	
@@ -84,8 +89,7 @@ public class BlueprintRoom
 	{
 		x = (int)Math.signum(x) * GRID_SIZE;
 		y = (int)Math.signum(y) * GRID_SIZE;
-		tilePosition = tilePosition.add(x, y);
-		return this;
+		return setTilePosition(tilePosition.add(x, y));
 	}
 	
 	public BlueprintRoom nudge(Vector2i vec)
@@ -105,8 +109,7 @@ public class BlueprintRoom
 	
 	public BlueprintRoom move(int x, int y)
 	{
-		setTilePosition(tilePosition.add(x, y));
-		return this;
+		return setTilePosition(tilePosition.add(x, y));
 	}
 	
 	public boolean hasParents() { return !parentLinks.isEmpty(); }

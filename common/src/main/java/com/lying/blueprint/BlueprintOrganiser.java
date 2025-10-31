@@ -54,9 +54,9 @@ public abstract class BlueprintOrganiser
 	}
 	
 	/** Returns a list of all paths between the given nodes, with post-processing applied */
-	public static List<BlueprintPassage> getFinalisedPassages(Collection<BlueprintRoom> chart)
+	public static List<BlueprintPassage> getFinalisedPassages(Blueprint chart)
 	{
-		List<BlueprintPassage> passages = getPassages(chart);
+		List<BlueprintPassage> passages = chart.passages();
 		// FIXME Re-enable after merging is finalised
 //		mergePassages(passages, getBounds(chart));
 		return passages;
@@ -302,8 +302,8 @@ public abstract class BlueprintOrganiser
 				getAvailableOptions(parent.tilePosition(), childTally, moveSet, gridSize, gridMap).stream().filter(p -> !options.contains(p)).forEach(options::add);
 			
 			// Copy of the blueprint presently represented by the gridMap's values
-			List<BlueprintRoom> posit = Lists.newArrayList();
-			posit.addAll(gridMap.values().stream().map(BlueprintRoom::clone).toList());
+			Blueprint posit = new Blueprint();
+			gridMap.values().stream().map(BlueprintRoom::clone).forEach(posit::add);
 			
 			// Hypothetical room we are trying to place, with the same parent nodes
 			BlueprintRoom concept = BlueprintRoom.create();

@@ -280,9 +280,9 @@ public class BlueprintPassage
 	}
 	
 	/** Returns true if this passage intersects with any other unrelated passages in the given chart */
-	public boolean intersectsOtherPassages(List<BlueprintRoom> chart)
+	public boolean intersectsOtherPassages(Blueprint chart)
 	{
-		List<BlueprintPassage> paths = BlueprintOrganiser.getPassages(chart);
+		List<BlueprintPassage> paths = chart.passages();
 		return paths.stream()
 				// Allow intersection if both passages start from the same parent
 				// This promotes the generation of junctions and reduces overall doorway counts

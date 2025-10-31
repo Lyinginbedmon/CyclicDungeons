@@ -6,6 +6,8 @@ import java.util.function.Supplier;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.init.CDLoggers;
+import com.lying.utility.DebugLogger;
 import com.lying.utility.LineSegment2f;
 import com.lying.worldgen.Tile;
 
@@ -14,6 +16,8 @@ import net.minecraft.util.math.Vec2f;
 /** Utility class for reducing the footprint of a blueprint */
 public class BlueprintScruncher
 {
+	public static DebugLogger LOGGER = CDLoggers.PLANAR;
+	
 	/** Applies scrunch algorithm until failure */
 	public static void collapse(Blueprint chart, boolean reverse)
 	{
@@ -142,14 +146,20 @@ public class BlueprintScruncher
 		if(move.length() == 0)
 			return false;
 		
+		// Clone blueprint and simulate movement
+		// Apply movement to all descendants as well to minimise processing time
 		Blueprint sim = chart.clone();
-		BlueprintRoom simNode = sim.getRoom(node.uuid()).get();
+		List<BlueprintRoom> simNodes = Lists.newArrayList();
+		simNodes.add(sim.getRoom(node.uuid()).get());
+		simNodes.addAll(gatherDescendantsOf(simNodes.getFirst(), sim));
 		
-		simNode.move(move);
+		simNodes.forEach(n -> n.move(move));
 		if(sim.hasErrors())
 			return false;
 		
+		// If the simulation caused no errors, apply it to the live blueprint
 		node.move(move);
+		gatherDescendantsOf(node, chart).forEach(n -> n.move(move));
 		
 		return true;
 	}
