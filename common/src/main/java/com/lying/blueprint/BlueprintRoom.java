@@ -15,6 +15,7 @@ import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
 import com.lying.worldgen.Tile;
 
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 
 public class BlueprintRoom
@@ -168,6 +169,13 @@ public class BlueprintRoom
 		GridTile min = metadata().tileMin(tilePosition()).mul(GRID_SIZE);
 		GridTile max = metadata().tileMax(tilePosition()).mul(GRID_SIZE);
 		return new Box2f(min.x, max.x, min.y, max.y);
+	}
+	
+	public Box worldBox()
+	{
+		GridTile min = metadata().tileMin(tilePosition()).mul(GRID_SIZE);
+		GridTile max = metadata().tileMax(tilePosition()).mul(GRID_SIZE);
+		return new Box(min.x, 0, min.y, max.x, Blueprint.ROOM_HEIGHT, max.y);
 	}
 	
 	public List<GridTile> tiles()

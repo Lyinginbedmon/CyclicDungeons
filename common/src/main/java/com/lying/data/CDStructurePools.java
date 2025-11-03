@@ -9,6 +9,7 @@ import net.minecraft.structure.pool.StructurePools;
 public class CDStructurePools
 {
 	public static final RegistryKey<StructurePool>	FLOOR_KEY		= of("dungeon/floor/plains");
+	public static final RegistryKey<StructurePool>	DOORWAY_KEY		= of("dungeon/doorway/plains");
 	public static final RegistryKey<StructurePool>	FLOOR_LIGHT_KEY	= of("dungeon/floor_light/plains");
 	public static final RegistryKey<StructurePool>	PUDDLE_KEY		= of("dungeon/puddle/plains");
 	public static final RegistryKey<StructurePool>	TABLE_KEY		= of("dungeon/table/plains");

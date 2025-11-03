@@ -32,6 +32,7 @@ public class CDTiles
 		ID_BLANK			= prefix("blank"), 
 		ID_AIR				= prefix("air"), 
 		ID_PASSAGE			= prefix("passage_flag"), 
+		ID_DOORWAY			= prefix("doorway"),
 		ID_FLOOR_ROOM		= prefix("floor_room"),
 		ID_FLOOR_PASSAGE	= prefix("floor_passage"),
 		ID_PUDDLE			= prefix("puddle"),
@@ -47,13 +48,17 @@ public class CDTiles
 			.of(TilePredicate.fromCondition(TileConditions.never()))
 			.asFlag().build());
 	
-	// Flag tiles, usually empty
+	// Flag tiles, usually empty air
 	public static final Supplier<Tile> AIR		= register(ID_AIR, Tile.Builder
 			.of(TilePredicate.fromCondition(TileConditions.always()))
-			.asFlag().build());
+			.asAir().build());
 	public static final Supplier<Tile> PASSAGE	= register(ID_PASSAGE, Tile.Builder
 			.of(TilePredicate.fromCondition(TileConditions.boundary(Direction.Type.HORIZONTAL)))
-			.asBlock(Blocks.ORANGE_STAINED_GLASS.getDefaultState()).build());
+			.asAir().build());
+	public static final Supplier<Tile> DOORWAY	= register(ID_DOORWAY, Tile.Builder
+			.of(TilePredicate.fromCondition(TileConditions.boundary(Direction.Type.HORIZONTAL)))
+			.asStructure(CDStructurePools.DOORWAY_KEY)
+			.build());
 	
 	// Flooring tiles
 	public static final Supplier<Tile> FLOOR	= register(ID_FLOOR_ROOM, Tile.Builder

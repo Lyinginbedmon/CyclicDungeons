@@ -16,12 +16,12 @@ import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GraphTileGrid;
+import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
-import com.lying.utility.AbstractBox2f;
 import com.lying.utility.DebugLogger;
-import com.lying.utility.LineSegment2f;
 import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
 import com.mojang.serialization.Codec;
@@ -34,7 +34,6 @@ import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.random.Random;
 
 public abstract class GrammarTerm
@@ -124,7 +123,7 @@ public abstract class GrammarTerm
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT);
 		
 		// Pre-seed doorways to connecting rooms
-//		preseedDoorways(position, min, node, map, passages);	FIXME Update passage preseeding
+		preseedDoorways(node, map, passages);
 		
 		// Fill rest of tileset with WFC generation
 		TileGenerator.generate(map, BASIC_TILE_SET, world.getRandom());
@@ -133,49 +132,23 @@ public abstract class GrammarTerm
 		return map.generate(position, world);
 	}
 	
-	protected static void preseedDoorways(BlockPos position, BlockPos min, BlueprintRoom node, BlueprintTileGrid map, List<BlueprintPassage> passages)
+	protected static void preseedDoorways(BlueprintRoom node, BlueprintTileGrid map, List<BlueprintPassage> passages)
 	{
-		List<BlueprintPassage> doorways = passages.stream().filter(p -> p.isTerminus(node)).toList();
-		
-		// Find all line segments that intersect the bounds of the room
-		AbstractBox2f bounds = node.tileBounds();
-		List<LineSegment2f> lines = Lists.newArrayList();
-		doorways.stream()
-			.map(BlueprintPassage::asLines)
-			.forEach(set -> 
-				set.stream()
-				.filter(bounds::intersects)
-				.forEach(lines::add));
-		
-		// Offset line segments to world coordinates
-		Vec2f toWorld = new Vec2f(position.getX(), position.getZ());
-		Vec2f toRoom = new Vec2f(min.getX(), min.getZ()).negate();
-		lines.stream()
-			// Convert graph to world space
-			.map(v -> v.offset(toWorld))
-			// Convert world space to room space
-			.map(v -> v.offset(toRoom))
-			.forEach(l -> 
+		/**
+		 * Find all passages that connect to the given room
+		 * Convert those passages to tile grids
+		 * Mark any tile in the given room adjacent to a tile in the passages as PASSAGE
+		 * 
+		 * This improves room navigability by reducing occlusion of doorways
+		 */
+		final List<GraphTileGrid> connectingPassages = passages.stream().filter(p -> p.isTerminus(node)).map(BlueprintPassage::asTiles).toList();
+		map.getBoundaries(Direction.Type.HORIZONTAL.stream().toList()).stream()
+			.filter(t -> 
 			{
-				// Segment points in room local coordinates
-				Vec2f startV = l.getLeft();
-				Vec2f endV = l.getRight();
-				
-				// March between points until intersecting boundary
-				Vec2f offset = endV.add(startV.negate());
-				float len = offset.length();
-				offset = offset.normalize();
-				for(int i=0; i<len; i++)
-				{
-					Vec2f point = startV.add(offset.multiply(i));
-					BlockPos tile = new BlockPos((int)(point.x / Tile.TILE_SIZE), 1, (int)(point.y / Tile.TILE_SIZE));
-					if(map.contains(tile) && Direction.Type.HORIZONTAL.stream().anyMatch(d -> map.isBoundary(tile, d)))
-					{
-						map.put(tile, CDTiles.PASSAGE.get());
-						break;
-					}
-				}
-			});
+				GridTile tile = new GridTile(t.getX(), t.getZ());
+				return connectingPassages.stream().anyMatch(g -> g.containsAdjacent(tile));
+			})
+			.forEach(t -> map.put(t.withY(1), CDTiles.PASSAGE.get()));
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)

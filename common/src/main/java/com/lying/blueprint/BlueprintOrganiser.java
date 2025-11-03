@@ -199,6 +199,7 @@ public abstract class BlueprintOrganiser
 		}
 	}
 	
+	// FIXME Restore grid organisation
 	public static abstract class Grid extends BlueprintOrganiser
 	{
 		protected abstract GridPosition[] moveSet(GridTile position);

@@ -21,7 +21,6 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
-import com.lying.utility.AbstractBox2f;
 import com.lying.utility.DebugLogger;
 import com.lying.worldgen.Tile;
 
@@ -30,6 +29,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 
 @SuppressWarnings("serial")
 public class Blueprint extends ArrayList<BlueprintRoom>
@@ -37,6 +38,13 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	public static final int ROOM_TILE_HEIGHT	= 4;
 	public static final int ROOM_HEIGHT			= ROOM_TILE_HEIGHT * Tile.TILE_SIZE;
+	public static final BlockState[] SHELL_PALETTES = new BlockState[] 
+			{
+				Blocks.DEEPSLATE_BRICKS.getDefaultState(),
+				Blocks.CRACKED_DEEPSLATE_BRICKS.getDefaultState(),
+				Blocks.DEEPSLATE_TILES.getDefaultState(),
+				Blocks.CRACKED_DEEPSLATE_TILES.getDefaultState()
+			};
 	
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
@@ -138,7 +146,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Beginning blueprint generation");
 		
-//		buildExteriorShell(position, world);	FIXME Update exterior shell generation to reflect positioning changes
+		buildExteriorShell(position, world);
 		
 		buildExteriorPaths(position, world);
 		
@@ -153,40 +161,23 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior shell");
 		
-		// Collect all bounding boxes as positions
-		List<AbstractBox2f> bounds = BlueprintOrganiser.getBounds(this);
-		List<BlockPos> interior = Lists.newArrayList();
-		bounds.stream().forEach(b -> 
-		{
-			BlockPos start = position.add((int)b.minX(), 0, (int)b.minY());
-			BlockPos end = position.add((int)b.maxX(), ROOM_HEIGHT, (int)b.maxY());
-			BlockPos.Mutable.iterate(start, end.add(-1, -1, -1)).forEach(p -> interior.add(p.toImmutable()));
-		});
+		// Collect all bounding boxes
+		List<Box> bounds = Lists.newArrayList();
+		stream().map(BlueprintRoom::worldBox).forEach(bounds::add);
+		passages().stream().map(BlueprintPassage::worldBox).forEach(bounds::addAll);
 		
-		// Expand the bounding boxes 1 block in all directions and collect the new positions
-		// Exclude any positions that are in the interior set
-		final Predicate<BlockPos> isExterior = p -> !interior.contains(p);
-		List<BlockPos> points = Lists.newArrayList();
-		bounds.stream().forEach(b -> 
-		{
-			BlockPos start = position.add((int)b.minX() - 1, -1, (int)b.minY() - 1);
-			BlockPos end = position.add((int)b.maxX(), ROOM_HEIGHT, (int)b.maxY());
-			BlockPos.Mutable.iterate(start, end).forEach(p -> 
-			{
-				if(isExterior.test(p))
-					points.add(p.toImmutable());
-			});
-		});
-		
-		// Generate wall tile at all remaining positions
-		final BlockState[] states = new BlockState[] 
+		// Expand the bounding boxes 1 block in all directions
+		final Predicate<BlockPos> isExterior = p -> bounds.stream().noneMatch(b -> b.contains(new Vec3d(p.getX(), p.getY(), p.getZ()).add(0.5D)));
+		bounds.stream().map(b -> b.offset(position).expand(1)).forEach(b -> 
+			BlockPos.Mutable.iterate(
+					new BlockPos((int)b.minX, (int)b.minY, (int)b.minZ), 
+					new BlockPos((int)b.maxX, (int)b.maxY, (int)b.maxZ))
+				.forEach(p -> 
 				{
-					Blocks.DEEPSLATE_BRICKS.getDefaultState(),
-					Blocks.CRACKED_DEEPSLATE_BRICKS.getDefaultState(),
-					Blocks.DEEPSLATE_TILES.getDefaultState(),
-					Blocks.CRACKED_DEEPSLATE_TILES.getDefaultState()
-				};
-		points.forEach(p -> Tile.tryPlace(states[world.random.nextInt(states.length)], p, world));
+					// Place walling at any position outside the original boundaries
+					if(isExterior.test(p))
+						Tile.tryPlace(SHELL_PALETTES[world.random.nextInt(SHELL_PALETTES.length)], p, world);
+				}));
 		
 		LOGGER.info(" ## Exterior shell completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}

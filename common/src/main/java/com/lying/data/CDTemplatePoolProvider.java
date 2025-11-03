@@ -68,6 +68,12 @@ public class CDTemplatePoolProvider
 				create("dungeon/passage_floor/plains/floor_03", 1),
 				create("dungeon/passage_floor/plains/floor_04", 1)
 				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.DOORWAY_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/doorway/plains/door_01", 1),
+				create("dungeon/doorway/plains/door_02", 1),
+				create("dungeon/doorway/plains/door_03", 1),
+				create("dungeon/doorway/plains/door_04", 1)
+				), StructurePool.Projection.RIGID));
 	}
 	
 	private static Pair<Function<Projection, ? extends StructurePoolElement>, Integer> create(String name, int weight)

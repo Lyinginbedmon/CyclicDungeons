@@ -22,6 +22,11 @@ public class GraphTileGrid extends AbstractTileGrid<GridTile>
 		return this;
 	}
 	
+	public boolean containsAdjacent(GridTile pos)
+	{
+		return set.keySet().stream().anyMatch(p2 -> p2.manhattanDistance(pos) == 1);
+	}
+	
 	public void grow(Direction direction, int size)
 	{
 		getBoundaries(List.of(direction)).forEach(p -> 

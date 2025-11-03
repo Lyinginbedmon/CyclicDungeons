@@ -64,6 +64,13 @@ public abstract class AbstractTileGrid<T extends Object>
 		return set.keySet().stream().anyMatch(pos::equals);
 	}
 	
+	public abstract boolean containsAdjacent(T pos);
+	
+	public final boolean containsOrAdjacent(T pos)
+	{
+		return contains(pos) || containsAdjacent(pos);
+	}
+	
 	public final Optional<Tile> get(T pos)
 	{
 		if(contains(pos))

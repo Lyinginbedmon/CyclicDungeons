@@ -6,10 +6,12 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Math;
 import org.joml.Vector2i;
 
+import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
 import com.lying.worldgen.Tile;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 
@@ -17,6 +19,8 @@ public class GridTile
 {
 	public static final int GRID_SIZE	= Tile.TILE_SIZE;
 	public static final GridTile ZERO	= new GridTile(0,0);
+	public static final AbstractBox2f BOUNDS	= new Box2f(0, GRID_SIZE, 0, GRID_SIZE);
+	public static final Box BOX					= new Box(0, 0, 0, GRID_SIZE, GRID_SIZE, GRID_SIZE);
 	public final int x, y;
 	
 	public GridTile(int x, int y)

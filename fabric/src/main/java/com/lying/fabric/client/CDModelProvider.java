@@ -46,12 +46,12 @@ public class CDModelProvider extends FabricModelProvider
 	
 	private static void registerParentedItem(Block block, Identifier modelIn, BlockStateModelGenerator generator)
 	{
-		generator.registerParentedItemModel(block, modelIn);
+//		generator.registerParentedItemModel(block, modelIn);
 	}
 	
 	private static void registerBlockModel(BlockItem item, ItemModelGenerator itemModelGenerator)
 	{
-		itemModelGenerator.register(item, makeBlockModel(item));
+//		itemModelGenerator.register(item, makeBlockModel(item));
 	}
 	
 	private static Model makeBlockModel(BlockItem item)
@@ -64,24 +64,24 @@ public class CDModelProvider extends FabricModelProvider
 	
 	private static void registerStairs(Block stairs, Block full, BlockStateModelGenerator blockStateModelGenerator)
 	{
-		TexturedModel textured = TexturedModel.CUBE_ALL.get(full);
-		Identifier innerModel = Models.INNER_STAIRS.upload(stairs, textured.getTextures(), blockStateModelGenerator.modelCollector);
-		Identifier regularModel = Models.STAIRS.upload(stairs, textured.getTextures(), blockStateModelGenerator.modelCollector);
-		Identifier outerModel = Models.OUTER_STAIRS.upload(stairs, textured.getTextures(), blockStateModelGenerator.modelCollector);
-		blockStateModelGenerator.blockStateCollector.accept(BlockStateModelGenerator.createStairsBlockState(stairs, innerModel, regularModel, outerModel));
+//		TexturedModel textured = TexturedModel.CUBE_ALL.get(full);
+//		Identifier innerModel = Models.INNER_STAIRS.upload(stairs, textured.getTextures(), blockStateModelGenerator.modelCollector);
+//		Identifier regularModel = Models.STAIRS.upload(stairs, textured.getTextures(), blockStateModelGenerator.modelCollector);
+//		Identifier outerModel = Models.OUTER_STAIRS.upload(stairs, textured.getTextures(), blockStateModelGenerator.modelCollector);
+//		blockStateModelGenerator.blockStateCollector.accept(BlockStateModelGenerator.createStairsBlockState(stairs, innerModel, regularModel, outerModel));
 	}
 	
 	private static void registerSlab(Block slab, Block full, BlockStateModelGenerator blockStateModelGenerator)
 	{
-		TexturedModel textured = TexturedModel.CUBE_ALL.get(full);
-		Identifier bottomModel = Models.SLAB.upload(slab, textured.getTextures(), blockStateModelGenerator.modelCollector);
-		Identifier topModel = Models.SLAB_TOP.upload(slab, textured.getTextures(), blockStateModelGenerator.modelCollector);
-		Identifier fullModel = ModelIds.getBlockModelId(full);
-		BlockStateVariantMap map = BlockStateVariantMap.create(SlabBlock.TYPE)
-				.register(SlabType.BOTTOM, BlockStateVariant.create().put(VariantSettings.MODEL, bottomModel))
-				.register(SlabType.TOP, BlockStateVariant.create().put(VariantSettings.MODEL, topModel))
-				.register(SlabType.DOUBLE, BlockStateVariant.create().put(VariantSettings.MODEL, fullModel));
-		blockStateModelGenerator.blockStateCollector.accept(VariantsBlockStateSupplier.create(slab).coordinate(map));
+//		TexturedModel textured = TexturedModel.CUBE_ALL.get(full);
+//		Identifier bottomModel = Models.SLAB.upload(slab, textured.getTextures(), blockStateModelGenerator.modelCollector);
+//		Identifier topModel = Models.SLAB_TOP.upload(slab, textured.getTextures(), blockStateModelGenerator.modelCollector);
+//		Identifier fullModel = ModelIds.getBlockModelId(full);
+//		BlockStateVariantMap map = BlockStateVariantMap.create(SlabBlock.TYPE)
+//				.register(SlabType.BOTTOM, BlockStateVariant.create().put(VariantSettings.MODEL, bottomModel))
+//				.register(SlabType.TOP, BlockStateVariant.create().put(VariantSettings.MODEL, topModel))
+//				.register(SlabType.DOUBLE, BlockStateVariant.create().put(VariantSettings.MODEL, fullModel));
+//		blockStateModelGenerator.blockStateCollector.accept(VariantsBlockStateSupplier.create(slab).coordinate(map));
 	}
 	
 	private static BlockStateVariantMap createBooleanModelMap(BooleanProperty property, Identifier trueModel, Identifier falseModel) {

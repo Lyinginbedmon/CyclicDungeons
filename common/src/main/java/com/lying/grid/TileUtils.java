@@ -22,7 +22,6 @@ public class TileUtils
 	{
 		List<GridTile> tiles = Lists.newArrayList();
 		tiles.addAll(toTiles(LineUtils.trialLines(start, end)));
-		// TODO Ensure tiles of passage don't include those occupied by either room
 		tiles.removeIf(t -> start.tileGrid().contains(t) || end.tileGrid().contains(t));
 		return tiles;
 	}

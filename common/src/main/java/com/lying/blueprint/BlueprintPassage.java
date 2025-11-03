@@ -11,6 +11,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
 import com.lying.grid.TileUtils;
@@ -21,10 +22,13 @@ import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
 import com.lying.utility.RotaryBox2f;
 import com.lying.worldgen.Tile;
+import com.lying.worldgen.Tile.RotationSupplier;
 import com.lying.worldgen.TileGenerator;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 
 public class BlueprintPassage
@@ -40,7 +44,6 @@ public class BlueprintPassage
 	
 	private final BlueprintRoom parent;
 	private final List<BlueprintRoom> children = Lists.newArrayList();
-	private final float width;
 	private CompoundBox2f box;
 	
 	private List<LineSegment2f> linesCached = Lists.newArrayList();
@@ -60,8 +63,7 @@ public class BlueprintPassage
 	{
 		parent = a;
 		children.add(b);
-		width = widthIn;
-		box = lineToBox(asLines(), width);
+		buildBounds();
 	}
 	
 	public BlueprintRoom parent() { return parent; }
@@ -73,7 +75,7 @@ public class BlueprintPassage
 		if(children.stream().noneMatch(room::equals))
 		{
 			children.add(room);
-			box = lineToBox(asLines(), width);
+			buildBounds();
 		}
 		return this;
 	}
@@ -208,7 +210,22 @@ public class BlueprintPassage
 		return asLines().getLast().getRight();
 	}
 	
-	public AbstractBox2f asBox() { return box; }
+	public AbstractBox2f tileBounds() { return box; }
+	
+	public List<Box> worldBox()
+	{
+		List<Box> boxes = Lists.newArrayList();
+		for(GridTile tile : tiles())
+			boxes.add(GridTile.BOX.offset(tile.x * GridTile.GRID_SIZE, 0, tile.y * GridTile.GRID_SIZE).expand(0, (PASSAGE_HEIGHT - 1) * GridTile.GRID_SIZE, 0));
+		return boxes;
+	}
+	
+	protected void buildBounds()
+	{
+		box = new CompoundBox2f();
+		for(GridTile tile : tiles())
+			box.add(GridTile.BOUNDS.move(new Vec2f(tile.x, tile.y)));
+	}
 	
 	protected static CompoundBox2f lineToBox(List<LineSegment2f> segments, float width)
 	{
@@ -273,7 +290,7 @@ public class BlueprintPassage
 		{
 			cacheLines();
 			cacheTiles();
-			box = lineToBox(asLines(), width);
+			buildBounds();
 		}
 		
 		return this;
@@ -311,10 +328,34 @@ public class BlueprintPassage
 	{
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(asTiles(), PASSAGE_HEIGHT);
 		
-		// FIXME Pre-seed doorway from parent room
+		// Pre-seed doorway from parent room before generating
+		final GraphTileGrid parent = parent().tileGrid();
+		BlockPos doorPos = null;
+		GridTile doorGrid = null;
+		for(BlockPos p : map.contents())
+		{
+			doorGrid = new GridTile(p.getX(), p.getZ());
+			if(!parent.containsAdjacent(doorGrid))
+				continue;
+			
+			doorPos = p.withY(1);
+			map.put(doorPos.down(), CDTiles.PASSAGE_FLOOR.get());
+			map.put(doorPos, CDTiles.DOORWAY.get());
+			break;
+		}
 		
 		TileGenerator.generate(map, PASSAGE_TILE_SET, world.random);
 		map.finalise();
+		
+		// Ensure doorway from parent room has correct orientation
+		if(doorPos != null)
+			for(Direction face : Direction.Type.HORIZONTAL)
+				if(parent.contains(doorGrid.offset(face)))
+				{
+					map.finalise(new TileInstance(doorPos, CDTiles.DOORWAY.get(), RotationSupplier.faceToRotationMap.get(face)));
+					break;
+				}
+		
 		map.generate(origin, world);
 	}
 }

@@ -91,7 +91,7 @@ public class NodeRenderUtils
 		final Vec2f mousePos = new Vec2f(mouseX, mouseY);
 		final Predicate<BlueprintPassage> showBounds = p -> 
 		{
-			CompoundBox2f box = (CompoundBox2f)p.asBox();
+			CompoundBox2f box = (CompoundBox2f)p.tileBounds();
 			for(AbstractBox2f sub : box.asBoxes())
 			{
 				List<Vec2f> points = Lists.newArrayList();

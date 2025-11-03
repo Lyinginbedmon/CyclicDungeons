@@ -62,6 +62,11 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return this;
 	}
 	
+	public boolean containsAdjacent(BlockPos pos)
+	{
+		return set.keySet().stream().anyMatch(p2 -> p2.getManhattanDistance(pos) == 1);
+	}
+	
 	/** Expands the map in the given direction from all pre-existing positions */
 	public void grow(Direction direction, int size)
 	{
@@ -139,6 +144,12 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			LOGGER.info("Tile set finalised");
 		else
 			LOGGER.warn("Error while finalising tile set");
+	}
+	
+	public void finalise(TileInstance instance)
+	{
+		finalised.removeIf(i -> i.pos().getManhattanDistance(instance.pos()) == 0);
+		finalised.add(instance);
 	}
 	
 	/** Returns the finalised contents of this tile set */

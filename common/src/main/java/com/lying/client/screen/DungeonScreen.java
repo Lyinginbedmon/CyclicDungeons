@@ -113,7 +113,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	private void collapse()
 	{
 		BlueprintScruncher.collapse(blueprint, false);
-//		BlueprintScruncher.collapse(blueprint, true);
+		BlueprintScruncher.collapse(blueprint, true);
 		cacheErrors();
 		updatePathCaches();
 	}

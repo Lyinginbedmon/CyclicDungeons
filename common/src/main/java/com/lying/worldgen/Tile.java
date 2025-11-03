@@ -17,6 +17,7 @@ import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -100,6 +101,13 @@ public abstract class Tile
 	@FunctionalInterface
 	public static interface RotationSupplier
 	{
+		public static final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
+				Direction.NORTH, BlockRotation.NONE,
+				Direction.EAST, BlockRotation.CLOCKWISE_90,
+				Direction.SOUTH, BlockRotation.CLOCKWISE_180,
+				Direction.WEST, BlockRotation.COUNTERCLOCKWISE_90
+				);
+		
 		@NotNull
 		public BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Optional<Tile>> getter, Random rand);
 		
@@ -114,12 +122,6 @@ public abstract class Tile
 		
 		public static RotationSupplier againstBoundary(RotationSupplier fallback)
 		{
-			final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
-					Direction.NORTH, BlockRotation.NONE,
-					Direction.EAST, BlockRotation.CLOCKWISE_90,
-					Direction.SOUTH, BlockRotation.CLOCKWISE_180,
-					Direction.WEST, BlockRotation.COUNTERCLOCKWISE_90
-					);
 			
 			return (pos, getter, rand) -> 
 			{
@@ -183,6 +185,13 @@ public abstract class Tile
 		{
 			style = GenStyle.BLOCK;
 			blockStates = states;
+			return this;
+		}
+		
+		public Builder asAir()
+		{
+			style = GenStyle.BLOCK;
+			blockStates = new BlockState[] { Blocks.AIR.getDefaultState() };
 			return this;
 		}
 		

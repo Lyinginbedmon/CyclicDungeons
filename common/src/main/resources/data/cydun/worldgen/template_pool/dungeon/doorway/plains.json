@@ -1,0 +1,42 @@
+{
+	"name": "cydun:dungeon/doorway/plains",
+	"elements": [
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/doorway/plains/door_01",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/doorway/plains/door_02",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/doorway/plains/door_03",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/doorway/plains/door_04",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		}
+	],
+	"fallback": "minecraft:empty"
+}
