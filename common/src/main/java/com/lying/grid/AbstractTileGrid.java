@@ -7,7 +7,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
@@ -24,6 +26,7 @@ public abstract class AbstractTileGrid<T extends Object>
 	public static final Tile BLANK	= CDTiles.BLANK.get();
 	
 	protected final Map<T, Tile> set = new HashMap<>();
+	protected final Map<Tile, Integer> tally = new HashMap<>();
 	protected final Map<T, List<Tile>> optionCache = new HashMap<>();
 	
 	public final int volume() { return set.size(); }
@@ -32,7 +35,7 @@ public abstract class AbstractTileGrid<T extends Object>
 	
 	public final AbstractTileGrid<T> addToVolume(T pos)
 	{
-		set.put(pos, BLANK);
+		setTile(pos, BLANK);
 		return this;
 	}
 	
@@ -91,7 +94,16 @@ public abstract class AbstractTileGrid<T extends Object>
 			LOGGER.warn("Attempted to set position outside of grid volume");
 			return;
 		}
-		set.put(pos, tile == null ? BLANK : tile);
+		
+		setTile(pos, tile == null ? BLANK : tile);
+	}
+	
+	private final void setTile(T pos, @NotNull Tile tile)
+	{
+		get(pos).ifPresent(t -> tally.put(t, tallyOf(t) - 1));
+		
+		set.put(pos, tile);
+		tally.put(tile, tallyOf(tile) + 1);
 	}
 	
 	public final Collection<T> contents() { return set.keySet(); }
@@ -103,7 +115,18 @@ public abstract class AbstractTileGrid<T extends Object>
 	
 	public abstract List<T> getBoundaries(List<Direction> faces);
 	
-	public final boolean hasBlanks() { return getBlanks().isEmpty(); }
+	public final boolean hasBlanks() { return tallyOf(BLANK) > 0; }
+	
+	public final int tallyOf(Tile tile) { return tally.getOrDefault(tile, 0); }
+	
+	public final int tallyMatching(Predicate<Tile> predicate)
+	{
+		int val = 0;
+		for(Entry<Tile,Integer> entry : tally.entrySet())
+			if(predicate.test(entry.getKey()))
+				val += entry.getValue();
+		return val;
+	}
 	
 	public final List<T> getBlanks()
 	{
