@@ -31,10 +31,21 @@ public class CDTemplatePoolProvider
 				create("dungeon/floor/plains/flooring_04", 1),
 				create("dungeon/floor/plains/flooring_05", 1)
 				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.PRISTINE_FLOOR_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/pristine_floor/plains/floor_1", 1)
+				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.FLOOR_LIGHT_KEY, new StructurePool(registry, ImmutableList.of(
-				create("dungeon/light/plains/desk_lamp", 1),
-				create("dungeon/light/plains/lantern", 1),
-				create("dungeon/light/plains/tiki_torch", 1)
+				create("dungeon/floor_light/plains/desk_lamp", 1),
+				create("dungeon/floor_light/plains/lantern", 1),
+				create("dungeon/floor_light/plains/tiki_torch", 1)
+				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.WET_FLOOR_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/floor_wet/plains/floor_1", 1)
+				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.HOT_FLOOR_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/floor_hot/plains/flooring_01", 1),
+				create("dungeon/floor_hot/plains/flooring_02", 1),
+				create("dungeon/floor_hot/plains/flooring_03", 1)
 				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.PUDDLE_KEY, new StructurePool(registry, ImmutableList.of(
 				create("dungeon/puddle/plains/puddle_01", 1),
@@ -73,6 +84,11 @@ public class CDTemplatePoolProvider
 				create("dungeon/doorway/plains/door_02", 1),
 				create("dungeon/doorway/plains/door_03", 1),
 				create("dungeon/doorway/plains/door_04", 1)
+				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.TREASURE_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/treasure/plains/chest_01", 1),
+				create("dungeon/treasure/plains/chest_02", 1),
+				create("dungeon/treasure/plains/chest_03", 1)
 				), StructurePool.Projection.RIGID));
 	}
 	

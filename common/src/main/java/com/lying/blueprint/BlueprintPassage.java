@@ -339,7 +339,7 @@ public class BlueprintPassage
 				continue;
 			
 			doorPos = p.withY(1);
-			map.put(doorPos.down(), CDTiles.PASSAGE_FLOOR.get());
+			map.put(doorPos.down(), CDTiles.FLOOR_PRISTINE.get());
 			map.put(doorPos, CDTiles.DOORWAY.get());
 			break;
 		}

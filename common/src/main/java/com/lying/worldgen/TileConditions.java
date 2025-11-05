@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import com.google.common.base.Predicates;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileTags;
+import com.lying.init.CDTiles;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -45,6 +46,26 @@ public class TileConditions
 	public static Condition onFloor()
 	{
 		return adjacent(List.of(Direction.DOWN), CDTileTags.SOLID_FLOORING::contains);
+	}
+	
+	public static Condition onBottomLayer()
+	{
+		return boundary(List.of(Direction.DOWN));
+	}
+	
+	public static Condition onTopLayer()
+	{
+		return boundary(List.of(Direction.UP));
+	}
+	
+	public static Condition nonPassage()
+	{
+		return not(passage());
+	}
+	
+	public static Condition passage()
+	{
+		return adjacent(t -> t.registryName().equals(CDTiles.ID_PASSAGE));
 	}
 	
 	public static Condition adjacent(Predicate<Tile> predicate)

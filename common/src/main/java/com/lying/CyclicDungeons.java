@@ -9,6 +9,7 @@ import com.lying.init.CDBlocks;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDParticleTypes;
+import com.lying.init.CDRoomTileSets;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.init.CDTerms;
@@ -45,6 +46,7 @@ public final class CyclicDungeons
 		
 		CDTiles.init();
 		CDTileTags.init();
+		CDRoomTileSets.init();
 		CDTerms.init();
 		CDCommands.init();
 		CDBlocks.init();

@@ -9,6 +9,7 @@ import net.minecraft.structure.pool.StructurePools;
 public class CDStructurePools
 {
 	public static final RegistryKey<StructurePool>	FLOOR_KEY		= of("dungeon/floor/plains");
+	public static final RegistryKey<StructurePool>	PRISTINE_FLOOR_KEY	= of("dungeon/pristine_floor/plains");
 	public static final RegistryKey<StructurePool>	DOORWAY_KEY		= of("dungeon/doorway/plains");
 	public static final RegistryKey<StructurePool>	FLOOR_LIGHT_KEY	= of("dungeon/floor_light/plains");
 	public static final RegistryKey<StructurePool>	PUDDLE_KEY		= of("dungeon/puddle/plains");
@@ -16,6 +17,9 @@ public class CDStructurePools
 	public static final RegistryKey<StructurePool>	TABLE_LIGHT_KEY	= of("dungeon/table_light/plains");
 	public static final RegistryKey<StructurePool>	SEAT_KEY		= of("dungeon/seat/plains");
 	public static final RegistryKey<StructurePool>	WORKSTATION_KEY	= of("dungeon/workstation/plains");
+	public static final RegistryKey<StructurePool>	WET_FLOOR_KEY	= of("dungeon/floor_wet/plains");
+	public static final RegistryKey<StructurePool>	HOT_FLOOR_KEY	= of("dungeon/floor_hot/plains");
+	public static final RegistryKey<StructurePool>	TREASURE_KEY	= of("dungeon/treasure/plains");
 	
 	public static final RegistryKey<StructurePool>	PASSAGE_FLOOR_KEY		= of("dungeon/passage_floor/plains");
 	

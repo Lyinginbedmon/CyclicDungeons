@@ -20,8 +20,20 @@ public class CDTileTags
 	private static final Map<Identifier, TileTag> TAGS	= new HashMap<>();
 	
 	public static final TileTag SOLID_FLOORING	= make("solid_flooring", 
+			CDTiles.ID_FLOOR_PRISTINE,
 			CDTiles.ID_FLOOR_ROOM,
-			CDTiles.ID_FLOOR_PASSAGE);
+			CDTiles.ID_FLOOR_PASSAGE,
+			CDTiles.ID_HOT_FLOOR);
+	public static final TileTag WET				= make("wet",
+			CDTiles.ID_WET_FLOOR,
+			CDTiles.ID_POOL);
+	public static final TileTag DAMP			= make("damp",
+			CDTiles.ID_PUDDLE,
+			CDTiles.ID_WET_FLOOR,
+			CDTiles.ID_POOL);
+	public static final TileTag HOT				= make("hot",
+			CDTiles.ID_LAVA,
+			CDTiles.ID_HOT_FLOOR);
 	public static final TileTag CEILING			= make("ceiling");
 	public static final TileTag TABLES			= make("tables", 
 			CDTiles.ID_TABLE, 
@@ -34,11 +46,13 @@ public class CDTileTags
 			CDTiles.ID_TABLE, 
 			CDTiles.ID_LIGHT_TABLE, 
 			CDTiles.ID_SEAT,
-			CDTiles.ID_WORKSTATION);
+			CDTiles.ID_WORKSTATION,
+			CDTiles.ID_TREASURE);
 	public static final TileTag OBTRUSIVE		= make("obtrusive", 
 			CDTiles.ID_TABLE, 
 			CDTiles.ID_LIGHT_TABLE, 
-			CDTiles.ID_SEAT);
+			CDTiles.ID_SEAT,
+			CDTiles.ID_TREASURE);
 	
 	private static TileTag make(String name, Identifier... idsIn)
 	{

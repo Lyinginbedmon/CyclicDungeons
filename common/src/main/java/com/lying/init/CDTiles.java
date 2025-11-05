@@ -13,8 +13,8 @@ import com.google.common.base.Predicates;
 import com.lying.CyclicDungeons;
 import com.lying.data.CDStructurePools;
 import com.lying.worldgen.Tile;
-import com.lying.worldgen.TileConditions;
 import com.lying.worldgen.Tile.RotationSupplier;
+import com.lying.worldgen.TileConditions;
 import com.lying.worldgen.TilePredicate;
 
 import net.minecraft.block.Blocks;
@@ -33,15 +33,23 @@ public class CDTiles
 		ID_AIR				= prefix("air"), 
 		ID_PASSAGE			= prefix("passage_flag"), 
 		ID_DOORWAY			= prefix("doorway"),
+		ID_FLOOR_PRISTINE	= prefix("floor_room_pristine"),
 		ID_FLOOR_ROOM		= prefix("floor_room"),
 		ID_FLOOR_PASSAGE	= prefix("floor_passage"),
 		ID_PUDDLE			= prefix("puddle"),
+		ID_WET_FLOOR		= prefix("wet_floor"),
 		ID_POOL				= prefix("pool"),
 		ID_TABLE			= prefix("table"),
 		ID_SEAT				= prefix("seat"),
 		ID_LIGHT_FLOOR		= prefix("light_floor"),
 		ID_LIGHT_TABLE		= prefix("light_table"),
-		ID_WORKSTATION		= prefix("workstation");
+		ID_WORKSTATION		= prefix("workstation"),
+		ID_PILLAR_BASE		= prefix("pillar_base"),
+		ID_PILLAR			= prefix("pillar"),
+		ID_PILLAR_CAP		= prefix("pillar_cap"),
+		ID_LAVA				= prefix("lava"),
+		ID_HOT_FLOOR		= prefix("hot_floor"),
+		ID_TREASURE			= prefix("treasure");
 	
 	// Blank tile, used during generation
 	public static final Supplier<Tile> BLANK	= register(ID_BLANK, Tile.Builder
@@ -50,7 +58,7 @@ public class CDTiles
 	
 	// Flag tiles, usually empty air
 	public static final Supplier<Tile> AIR		= register(ID_AIR, Tile.Builder
-			.of(TilePredicate.fromCondition(TileConditions.always()))
+			.of(TilePredicate.fromCondition(TileConditions.not(TileConditions.onBottomLayer())))
 			.asAir().build());
 	public static final Supplier<Tile> PASSAGE	= register(ID_PASSAGE, Tile.Builder
 			.of(TilePredicate.fromCondition(TileConditions.boundary(Direction.Type.HORIZONTAL)))
@@ -61,22 +69,43 @@ public class CDTiles
 			.build());
 	
 	// Flooring tiles
+	public static final Supplier<Tile> FLOOR_PRISTINE	= register(ID_FLOOR_PRISTINE, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.nonAdjacent(CDTileTags.DAMP::contains))
+				.build())
+			.asStructure(CDStructurePools.PRISTINE_FLOOR_KEY)
+			.freeRotation().build());
 	public static final Supplier<Tile> FLOOR	= register(ID_FLOOR_ROOM, Tile.Builder
 			.of(TilePredicate.Builder.create()
-				.condition(TileConditions.boundary(List.of(Direction.DOWN)))
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.nonAdjacent(CDTileTags.WET::contains))
 				.build())
 			.asStructure(CDStructurePools.FLOOR_KEY)
 			.freeRotation().build());
 	public static final Supplier<Tile> PUDDLE	= register(ID_PUDDLE, Tile.Builder
 			.of(TilePredicate.Builder.create()
-				.condition(TileConditions.boundary(List.of(Direction.DOWN)))
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.nonAdjacent(t -> t.registryName().equals(ID_POOL)))
+				.condition(TileConditions.nonPassage())
 				.build())
 			.asStructure(CDStructurePools.PUDDLE_KEY)
 			.freeRotation().build());
+	public static final Supplier<Tile> WET_FLOOR	= register(ID_WET_FLOOR, Tile.Builder.
+			of(TilePredicate.Builder.create()
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.adjacent(CDTileTags.DAMP::contains))
+				.condition(TileConditions.nonAdjacent(CDTileTags.SOLID_FLOORING::contains))
+				.condition(TileConditions.nonPassage())
+				.build())
+			.asStructure(CDStructurePools.WET_FLOOR_KEY)
+			.freeRotation().build());
 	public static final Supplier<Tile> POOL		= register(ID_POOL, Tile.Builder
 			.of(TilePredicate.Builder.create()
-				.condition(TileConditions.boundary(List.of(Direction.DOWN)))
-				.condition(TileConditions.nonAdjacent(t -> t.is(CDTiles.PASSAGE.get())))
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.adjacent(CDTileTags.WET::contains))
+				.condition(TileConditions.nonAdjacent(CDTileTags.SOLID_FLOORING::contains))
+				.condition(TileConditions.nonPassage())
 				.build())
 			.asBlock(Blocks.WATER.getDefaultState())
 			.build());
@@ -84,7 +113,7 @@ public class CDTiles
 	// Passage tiles
 	public static final Supplier<Tile> PASSAGE_FLOOR	= register(ID_FLOOR_PASSAGE, Tile.Builder
 			.of(TilePredicate.Builder.create()
-				.condition(TileConditions.boundary(List.of(Direction.DOWN)))
+				.condition(TileConditions.onBottomLayer())
 				.build())
 			.asStructure(CDStructurePools.PASSAGE_FLOOR_KEY)
 			.freeRotation().build());
@@ -134,6 +163,63 @@ public class CDTiles
 			.asStructure(CDStructurePools.WORKSTATION_KEY)
 			.withRotation(RotationSupplier.againstBoundary(RotationSupplier.random()))
 			.build());
+	public static final Supplier<Tile> PILLAR_BASE	= register(ID_PILLAR_BASE, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.onFloor())
+				.condition(TileConditions.nonBoundary())
+				.condition((tile,pos,set) -> Direction.Type.HORIZONTAL.stream().filter(d -> set.isBoundary(pos.offset(d),d)).count() >= 2)
+				.condition(TileConditions.nonConsecutive())
+				.build())
+			.asBlock(Blocks.CHISELED_QUARTZ_BLOCK.getDefaultState())
+			.freeRotation()
+			.build());
+	public static final Supplier<Tile> PILLAR		= register(ID_PILLAR, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.nonBoundary())
+				.condition(TileConditions.adjacent(List.of(Direction.DOWN), t -> t.registryName().equals(ID_PILLAR_BASE) || t.registryName().equals(ID_PILLAR)))
+				.build())
+			.asBlock(Blocks.QUARTZ_PILLAR.getDefaultState())
+			.freeRotation()
+			.build());
+	public static final Supplier<Tile> PILLAR_CAP	= register(ID_PILLAR_CAP, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.onTopLayer())
+				.condition(TileConditions.adjacent(List.of(Direction.DOWN), t -> t.registryName().equals(ID_PILLAR_BASE) || t.registryName().equals(ID_PILLAR)))
+				.build())
+			.asBlock(Blocks.CHISELED_QUARTZ_BLOCK.getDefaultState())
+			.freeRotation()
+			.build());
+	
+	// Loot
+	public static final Supplier<Tile> TREASURE	= register(ID_TREASURE, Tile.Builder
+			.of(
+				TilePredicate.Builder.create()
+				.condition(TileConditions.nonBoundary())
+				.condition(TileConditions.onFloor())
+				.build())
+			.asStructure(CDStructurePools.TREASURE_KEY)
+			.freeRotation()
+			.build());
+	
+	// Hazards
+	public static final Supplier<Tile> LAVA		= register(ID_LAVA, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.nonAdjacent(CDTileTags.DAMP::contains))
+				.condition(TileConditions.adjacent(CDTileTags.HOT::contains))
+				.condition(TileConditions.nonPassage())
+				.build())
+			.asBlock(Blocks.LAVA.getDefaultState())
+			.build());
+	public static final Supplier<Tile> HOT_FLOOR	= register(ID_HOT_FLOOR, Tile.Builder.
+			of(TilePredicate.Builder.create()
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.nonAdjacent(CDTileTags.DAMP::contains))
+				.condition(TileConditions.adjacent(CDTileTags.SOLID_FLOORING::contains))
+				.condition(TileConditions.nonPassage())
+				.build())
+			.asStructure(CDStructurePools.HOT_FLOOR_KEY)
+			.freeRotation().build());
 	
 	@SuppressWarnings("unused")
 	private static Supplier<Tile> register(String name, Function<Identifier,Tile> funcIn)

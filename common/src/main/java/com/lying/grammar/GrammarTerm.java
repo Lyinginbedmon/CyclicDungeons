@@ -1,5 +1,6 @@
 package com.lying.grammar;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,18 +49,21 @@ public abstract class GrammarTerm
 			return DataResult.error(() -> "Not a recognised type: '"+String.valueOf(id) + "'");
 	}, GrammarTerm::registryName);
 	
-	// TODO Give each term its own weight map
-	private static final Map<Tile, Float> BASIC_TILE_SET = Map.of(
-			CDTiles.FLOOR.get(), 10000F,
-			CDTiles.PUDDLE.get(), 1000F,
-			CDTiles.POOL.get(), 100F,
-			CDTiles.AIR.get(), 10F,
-			CDTiles.SEAT.get(), 10F,
-			CDTiles.FLOOR_LIGHT.get(), 1F,
-			CDTiles.TABLE.get(), 1F,
-			CDTiles.TABLE_LIGHT.get(), 1F,
-			CDTiles.WORKSTATION.get(), 1F
-			);
+	private static final Map<Tile, Float> BASIC_TILE_SET = new HashMap<>();
+	static
+	{
+		BASIC_TILE_SET.put(CDTiles.FLOOR_PRISTINE.get(), 3000F);
+		BASIC_TILE_SET.put(CDTiles.FLOOR.get(), 1000F);
+		BASIC_TILE_SET.put(CDTiles.PUDDLE.get(), 1000F);
+		BASIC_TILE_SET.put(CDTiles.WET_FLOOR.get(), 750F);
+		BASIC_TILE_SET.put(CDTiles.POOL.get(), 100F);
+		BASIC_TILE_SET.put(CDTiles.AIR.get(), 10F);
+		BASIC_TILE_SET.put(CDTiles.SEAT.get(), 10F);
+		BASIC_TILE_SET.put(CDTiles.FLOOR_LIGHT.get(), 1F);
+		BASIC_TILE_SET.put(CDTiles.TABLE.get(), 1F);
+		BASIC_TILE_SET.put(CDTiles.TABLE_LIGHT.get(), 1F);
+		BASIC_TILE_SET.put(CDTiles.WORKSTATION.get(), 1F);
+	}
 	
 	private final Identifier registryName;
 	private final int colour;
@@ -68,6 +72,7 @@ public abstract class GrammarTerm
 	private final boolean isReplaceable, isPlaceable, isBranchInjector;
 	private final TermConditions conditions;
 	private final Function<Random, Vector2i> sizeFunc;
+	private final Map<Tile,Float> tileSet;
 	
 	private GrammarTerm(
 			Identifier idIn, 
@@ -78,7 +83,8 @@ public abstract class GrammarTerm
 			boolean placeable, 
 			boolean replaceable, 
 			boolean injectsBranch,
-			TermConditions conditionsIn)
+			TermConditions conditionsIn,
+			Map<Tile,Float> tileSetIn)
 	{
 		registryName = idIn;
 		weight = weightIn;
@@ -86,6 +92,7 @@ public abstract class GrammarTerm
 		color = colorIn;
 		sizeFunc = sizeFuncIn;
 		conditions = conditionsIn;
+		tileSet = tileSetIn;
 		isPlaceable = placeable;
 		isReplaceable = replaceable;
 		isBranchInjector = injectsBranch;
@@ -126,7 +133,7 @@ public abstract class GrammarTerm
 		preseedDoorways(node, map, passages);
 		
 		// Fill rest of tileset with WFC generation
-		TileGenerator.generate(map, BASIC_TILE_SET, world.getRandom());
+		TileGenerator.generate(map, tileSet, world.getRandom());
 		
 		map.finalise();
 		return map.generate(position, world);
@@ -210,6 +217,7 @@ public abstract class GrammarTerm
 		private List<Supplier<GrammarTerm>> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
 		private TermApplyFunc applyFunc = (t,r,g) -> {};
 		private Function<Random, Vector2i> sizeFunc = r -> new Vector2i(3 + r.nextInt(4), 3 + r.nextInt(4));
+		private Map<Tile,Float> tileSet = BASIC_TILE_SET;
 		
 		private Builder(int colourIn, DyeColor colorIn)
 		{
@@ -322,6 +330,12 @@ public abstract class GrammarTerm
 			return this;
 		}
 		
+		public Builder withTileSet(Map<Tile,Float> tileSetIn)
+		{
+			tileSet = tileSetIn;
+			return this;
+		}
+		
 		public GrammarTerm build(Identifier registryName)
 		{
 			TermConditions conditions = TermConditions.create()
@@ -333,7 +347,7 @@ public abstract class GrammarTerm
 					.onlyAfter(after).neverAfter(notAfter)
 					.onlyBefore(before).neverBefore(notBefore);
 			
-			return new GrammarTerm(registryName, weight, colour, color, sizeFunc, placeable, replaceable, injects, conditions)
+			return new GrammarTerm(registryName, weight, colour, color, sizeFunc, placeable, replaceable, injects, conditions, tileSet)
 				{
 					public void onApply(GrammarRoom room, GrammarPhrase graph) { applyFunc.apply(this, room, graph); }
 				};

@@ -1,0 +1,33 @@
+{
+	"name": "cydun:dungeon/floor_hot/plains",
+	"elements": [
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/floor_hot/plains/flooring_01",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/floor_hot/plains/flooring_02",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/floor_hot/plains/flooring_03",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		}
+	],
+	"fallback": "minecraft:empty"
+}
