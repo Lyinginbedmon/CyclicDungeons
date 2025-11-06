@@ -216,7 +216,7 @@ public class BlueprintPassage
 	{
 		List<Box> boxes = Lists.newArrayList();
 		for(GridTile tile : tiles())
-			boxes.add(GridTile.BOX.offset(tile.x * GridTile.GRID_SIZE, 0, tile.y * GridTile.GRID_SIZE).expand(0, (PASSAGE_HEIGHT - 1) * GridTile.GRID_SIZE, 0));
+			boxes.add(GridTile.BOX.offset(tile.x * GridTile.GRID_SIZE, 0, tile.y * GridTile.GRID_SIZE).withMaxY((PASSAGE_HEIGHT - 1) * GridTile.GRID_SIZE));
 		return boxes;
 	}
 	

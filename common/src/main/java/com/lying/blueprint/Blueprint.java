@@ -18,11 +18,15 @@ import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
+import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
 import com.lying.worldgen.Tile;
+import com.lying.worldgen.TileGenerator;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -31,6 +35,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
 
 @SuppressWarnings("serial")
 public class Blueprint extends ArrayList<BlueprintRoom>
@@ -152,6 +157,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		buildRooms(position, world);
 		
+		buildEntrance(position, world);
+		
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);
 		return true;
 	}
@@ -164,7 +171,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		// Collect all bounding boxes
 		List<Box> bounds = Lists.newArrayList();
 		stream().map(BlueprintRoom::worldBox).forEach(bounds::add);
-		passages().stream().map(BlueprintPassage::worldBox).map(b -> b.stream().map(b2 -> b2.offset(0, 2, 0)).toList()).forEach(bounds::addAll);
+		passages().stream().map(BlueprintPassage::worldBox).map(b -> b.stream().toList()).forEach(bounds::addAll);
 		
 		// Expand the bounding boxes 1 block in all directions
 		final Predicate<BlockPos> isExterior = p -> bounds.stream().noneMatch(b -> b.contains(new Vec3d(p.getX(), p.getY(), p.getZ()).add(0.5D)));
@@ -212,6 +219,28 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			.forEach(p -> p.generate(position, world));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
+	}
+	
+	public void buildEntrance(BlockPos position, ServerWorld world)
+	{
+		BlueprintRoom start = stream().filter(r -> r.metadata().type() == CDTerms.START.get()).findFirst().get();
+		GridTile tilePos = start.tilePosition();
+		for(int i=0; i<start.metadata().size().y; i++)
+		{
+			GridTile pos = tilePos.sub(0, i);
+			if(!start.isAdjacent(pos))
+				break;
+			
+			tilePos = pos;
+		}
+		
+		GraphTileGrid graph = new GraphTileGrid();
+		graph.addToVolume(tilePos);
+		
+		BlueprintTileGrid grid = BlueprintTileGrid.fromGraphGrid(graph, 2);
+		TileGenerator.generate(grid, Map.of(CDTiles.FLOOR_PRISTINE.get(), 1F), Random.create());
+		grid.finalise();
+		grid.generate(position, world);
 	}
 	
 	public List<BlueprintPassage> passages()
