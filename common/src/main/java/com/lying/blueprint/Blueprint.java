@@ -164,14 +164,14 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		// Collect all bounding boxes
 		List<Box> bounds = Lists.newArrayList();
 		stream().map(BlueprintRoom::worldBox).forEach(bounds::add);
-		passages().stream().map(BlueprintPassage::worldBox).forEach(bounds::addAll);
+		passages().stream().map(BlueprintPassage::worldBox).map(b -> b.stream().map(b2 -> b2.offset(0, 2, 0)).toList()).forEach(bounds::addAll);
 		
 		// Expand the bounding boxes 1 block in all directions
 		final Predicate<BlockPos> isExterior = p -> bounds.stream().noneMatch(b -> b.contains(new Vec3d(p.getX(), p.getY(), p.getZ()).add(0.5D)));
 		bounds.stream().map(b -> b.offset(position).expand(1)).forEach(b -> 
 			BlockPos.Mutable.iterate(
 					new BlockPos((int)b.minX, (int)b.minY, (int)b.minZ), 
-					new BlockPos((int)b.maxX, (int)b.maxY, (int)b.maxZ))
+					new BlockPos((int)b.maxX - 1, (int)b.minY + 4, (int)b.maxZ - 1))
 				.forEach(p -> 
 				{
 					// Place walling at any position outside the original boundaries
@@ -283,6 +283,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 					if(++tally >= limit && limit > 0)
 						return tally;
 			}
+			
+			// FIXME Include instances of passages with too many tiles adjacent to parent/child rooms
 			return tally;
 		});
 		

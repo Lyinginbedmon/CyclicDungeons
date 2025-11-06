@@ -40,7 +40,16 @@ public class CDTemplatePoolProvider
 				create("dungeon/floor_light/plains/tiki_torch", 1)
 				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.WET_FLOOR_KEY, new StructurePool(registry, ImmutableList.of(
-				create("dungeon/floor_wet/plains/floor_1", 1)
+				create("dungeon/floor_wet/plains/floor_01", 1)
+				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.PILLAR_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/pillar/plains/pillar_01", 1)
+				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.PILLAR_BASE_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/pillar_base/plains/pillar_01", 1)
+				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.PILLAR_CAP_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/pillar_cap/plains/pillar_01", 1)
 				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.HOT_FLOOR_KEY, new StructurePool(registry, ImmutableList.of(
 				create("dungeon/floor_hot/plains/flooring_01", 1),

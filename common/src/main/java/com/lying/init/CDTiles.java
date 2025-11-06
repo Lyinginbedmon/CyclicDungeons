@@ -169,24 +169,25 @@ public class CDTiles
 				.condition(TileConditions.nonBoundary())
 				.condition((tile,pos,set) -> Direction.Type.HORIZONTAL.stream().filter(d -> set.isBoundary(pos.offset(d),d)).count() >= 2)
 				.condition(TileConditions.nonConsecutive())
+				.condition(TileConditions.maxOf(4))
 				.build())
-			.asBlock(Blocks.CHISELED_QUARTZ_BLOCK.getDefaultState())
+			.asStructure(CDStructurePools.PILLAR_BASE_KEY)
 			.freeRotation()
 			.build());
 	public static final Supplier<Tile> PILLAR		= register(ID_PILLAR, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.nonBoundary())
-				.condition(TileConditions.adjacent(List.of(Direction.DOWN), t -> t.registryName().equals(ID_PILLAR_BASE) || t.registryName().equals(ID_PILLAR)))
+				.condition(TileConditions.adjacent(List.of(Direction.DOWN), TileConditions.isAnyOf(ID_PILLAR_BASE, ID_PILLAR)))
 				.build())
-			.asBlock(Blocks.QUARTZ_PILLAR.getDefaultState())
+			.asStructure(CDStructurePools.PILLAR_KEY)
 			.freeRotation()
 			.build());
 	public static final Supplier<Tile> PILLAR_CAP	= register(ID_PILLAR_CAP, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.onTopLayer())
-				.condition(TileConditions.adjacent(List.of(Direction.DOWN), t -> t.registryName().equals(ID_PILLAR_BASE) || t.registryName().equals(ID_PILLAR)))
+				.condition(TileConditions.adjacent(List.of(Direction.DOWN), TileConditions.isAnyOf(ID_PILLAR_BASE, ID_PILLAR)))
 				.build())
-			.asBlock(Blocks.CHISELED_QUARTZ_BLOCK.getDefaultState())
+			.asStructure(CDStructurePools.PILLAR_CAP_KEY)
 			.freeRotation()
 			.build());
 	

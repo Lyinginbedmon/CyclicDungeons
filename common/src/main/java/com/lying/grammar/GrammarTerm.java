@@ -1,6 +1,5 @@
 package com.lying.grammar;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +19,7 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
+import com.lying.init.CDRoomTileSets;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
@@ -48,22 +48,6 @@ public abstract class GrammarTerm
 		else
 			return DataResult.error(() -> "Not a recognised type: '"+String.valueOf(id) + "'");
 	}, GrammarTerm::registryName);
-	
-	private static final Map<Tile, Float> BASIC_TILE_SET = new HashMap<>();
-	static
-	{
-		BASIC_TILE_SET.put(CDTiles.FLOOR_PRISTINE.get(), 3000F);
-		BASIC_TILE_SET.put(CDTiles.FLOOR.get(), 1000F);
-		BASIC_TILE_SET.put(CDTiles.PUDDLE.get(), 1000F);
-		BASIC_TILE_SET.put(CDTiles.WET_FLOOR.get(), 750F);
-		BASIC_TILE_SET.put(CDTiles.POOL.get(), 100F);
-		BASIC_TILE_SET.put(CDTiles.AIR.get(), 10F);
-		BASIC_TILE_SET.put(CDTiles.SEAT.get(), 10F);
-		BASIC_TILE_SET.put(CDTiles.FLOOR_LIGHT.get(), 1F);
-		BASIC_TILE_SET.put(CDTiles.TABLE.get(), 1F);
-		BASIC_TILE_SET.put(CDTiles.TABLE_LIGHT.get(), 1F);
-		BASIC_TILE_SET.put(CDTiles.WORKSTATION.get(), 1F);
-	}
 	
 	private final Identifier registryName;
 	private final int colour;
@@ -217,7 +201,7 @@ public abstract class GrammarTerm
 		private List<Supplier<GrammarTerm>> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
 		private TermApplyFunc applyFunc = (t,r,g) -> {};
 		private Function<Random, Vector2i> sizeFunc = r -> new Vector2i(3 + r.nextInt(4), 3 + r.nextInt(4));
-		private Map<Tile,Float> tileSet = BASIC_TILE_SET;
+		private Map<Tile,Float> tileSet = CDRoomTileSets.DEFAULT_TILESET;
 		
 		private Builder(int colourIn, DyeColor colorIn)
 		{

@@ -20,6 +20,9 @@ public class CDStructurePools
 	public static final RegistryKey<StructurePool>	WET_FLOOR_KEY	= of("dungeon/floor_wet/plains");
 	public static final RegistryKey<StructurePool>	HOT_FLOOR_KEY	= of("dungeon/floor_hot/plains");
 	public static final RegistryKey<StructurePool>	TREASURE_KEY	= of("dungeon/treasure/plains");
+	public static final RegistryKey<StructurePool>	PILLAR_KEY		= of("dungeon/pillar/plains");
+	public static final RegistryKey<StructurePool>	PILLAR_BASE_KEY	= of("dungeon/pillar_base/plains");
+	public static final RegistryKey<StructurePool>	PILLAR_CAP_KEY	= of("dungeon/pillar_cap/plains");
 	
 	public static final RegistryKey<StructurePool>	PASSAGE_FLOOR_KEY		= of("dungeon/passage_floor/plains");
 	

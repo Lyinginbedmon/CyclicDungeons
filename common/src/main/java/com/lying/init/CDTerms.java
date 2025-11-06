@@ -29,9 +29,11 @@ public class CDTerms
 	// Initial building blocks
 	public static final Supplier<GrammarTerm> START		= register("start", () -> GrammarTerm.Builder.create(0xFFFFFF, DyeColor.WHITE)
 			.size(size(6, 6, 8, 8))
+			.withTileSet(CDRoomTileSets.START_ROOM_TILESET)
 			.unplaceable());
 	public static final Supplier<GrammarTerm> END		= register("end", () -> GrammarTerm.Builder.create(0xFFFFFF, DyeColor.WHITE)
 			.size(size(6, 6, 8, 8))
+			.withTileSet(CDRoomTileSets.END_ROOM_TILESET)
 			.unplaceable());
 	
 	/** Completely blank, only used to mark errors in generation */
@@ -69,6 +71,7 @@ public class CDTerms
 			.weight(3));
 	public static final Supplier<GrammarTerm> TRAP			= register("trap", () -> GrammarTerm.Builder.create(0xAE31DE, DyeColor.MAGENTA)
 			.size(size(6, 6, 8, 8))
+			.withTileSet(CDRoomTileSets.TRAP_ROOM_TILESET)
 			.nonconsecutive()
 			.weight(2));
 	public static final Supplier<GrammarTerm> BIG_PUZZLE	= register("big_puzzle", () -> GrammarTerm.Builder.create(0x3136DE, DyeColor.BLUE)

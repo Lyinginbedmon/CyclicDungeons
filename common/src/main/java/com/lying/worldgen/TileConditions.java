@@ -8,6 +8,7 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
 
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -19,6 +20,18 @@ public class TileConditions
 	public static interface Condition
 	{
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set);
+	}
+	
+	public static Predicate<Tile> isAnyOf(Identifier... idsIn)
+	{
+		return t -> 
+		{
+			Identifier id = t.registryName();
+			for(Identifier test : idsIn)
+				if(id.equals(test))
+					return true;
+			return false;
+		};
 	}
 	
 	public static Condition always() { return (t,p,s) -> true; }
@@ -157,5 +170,15 @@ public class TileConditions
 	public static Condition nonConsecutive(Box box)
 	{
 		return (t,p,s) -> avoid(box, t::is).test(t, p, s);
+	}
+	
+	public static Condition maxOf(int i)
+	{
+		return (t,p,s) -> s.tallyOf(t) < i;
+	}
+	
+	public static Condition maxOf(int i, Predicate<Tile> condition)
+	{
+		return (t,p,s) -> s.tallyMatching(condition) < i;
 	}
 }

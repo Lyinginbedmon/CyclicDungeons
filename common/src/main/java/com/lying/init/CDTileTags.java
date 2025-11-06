@@ -23,7 +23,8 @@ public class CDTileTags
 			CDTiles.ID_FLOOR_PRISTINE,
 			CDTiles.ID_FLOOR_ROOM,
 			CDTiles.ID_FLOOR_PASSAGE,
-			CDTiles.ID_HOT_FLOOR);
+			CDTiles.ID_HOT_FLOOR,
+			CDTiles.ID_PILLAR_CAP);
 	public static final TileTag WET				= make("wet",
 			CDTiles.ID_WET_FLOOR,
 			CDTiles.ID_POOL);
@@ -34,7 +35,8 @@ public class CDTileTags
 	public static final TileTag HOT				= make("hot",
 			CDTiles.ID_LAVA,
 			CDTiles.ID_HOT_FLOOR);
-	public static final TileTag CEILING			= make("ceiling");
+	public static final TileTag CEILING			= make("ceiling",
+			CDTiles.ID_PILLAR_CAP);
 	public static final TileTag TABLES			= make("tables", 
 			CDTiles.ID_TABLE, 
 			CDTiles.ID_LIGHT_TABLE);
@@ -47,12 +49,15 @@ public class CDTileTags
 			CDTiles.ID_LIGHT_TABLE, 
 			CDTiles.ID_SEAT,
 			CDTiles.ID_WORKSTATION,
-			CDTiles.ID_TREASURE);
+			CDTiles.ID_TREASURE,
+			CDTiles.ID_PILLAR_BASE);
 	public static final TileTag OBTRUSIVE		= make("obtrusive", 
 			CDTiles.ID_TABLE, 
 			CDTiles.ID_LIGHT_TABLE, 
 			CDTiles.ID_SEAT,
-			CDTiles.ID_TREASURE);
+			CDTiles.ID_TREASURE,
+			CDTiles.ID_PILLAR_BASE);
+	public static final TileTag TRAPS			= make("traps");
 	
 	private static TileTag make(String name, Identifier... idsIn)
 	{
