@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
 
 import dev.architectury.registry.registries.DeferredRegister;
@@ -25,6 +26,24 @@ public class CDBlocks
 	public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.BLOCK);
 	
 	public static final List<RegistrySupplier<Block>> ALL_BLOCKS = Lists.newArrayList(), SOLID_CUBES = Lists.newArrayList();
+	
+	/*
+	 * Trap sensors
+	 * * Proximity
+	 * * Area
+	 * * Line-of-sight
+	 * * Sound
+	 * * Redstone power
+	 * Trap actors
+	 * * Flamethrower
+	 * * Spikes
+	 * * Dart trap
+	 * * Hatch
+	 * * Entity spawner (mobs, potion clouds, etc.)
+	 * * Redstone emitter
+	 */
+	
+	public static RegistrySupplier<Block> TRAP_LOGIC	= registerSolidCube("trap_logic", s -> new TrapLogicBlock(s));
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

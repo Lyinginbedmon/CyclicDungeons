@@ -25,6 +25,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
 
 @SuppressWarnings("unused")
 public class CDItems
@@ -38,6 +39,12 @@ public class CDItems
 	public static final RegistrySupplier<ItemGroup> CYDUN_TAB = TABS.register(Reference.ModInfo.MOD_ID, () -> CreativeTabRegistry.create(
 			Text.translatable("itemGroup."+Reference.ModInfo.MOD_ID+".item_group"), 
 			() -> new ItemStack(Items.SPAWNER)));
+	
+	/*
+	 * Trap wiring tool (WireMod Gun!)
+	 */
+	
+	public static final RegistrySupplier<Item> WIRE_GUN	= register("wire_gun", s -> new Item(s.maxCount(1).fireproof().rarity(Rarity.EPIC)));
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)
 	{
