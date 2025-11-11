@@ -40,15 +40,27 @@ public class CDItems
 			Text.translatable("itemGroup."+Reference.ModInfo.MOD_ID+".item_group"), 
 			() -> new ItemStack(Items.SPAWNER)));
 	
-	/*
-	 * Trap wiring tool (WireMod Gun!)
-	 */
-	
 	public static final RegistrySupplier<Item> WIRE_GUN	= register("wire_gun", s -> new Item(s.maxCount(1).fireproof().rarity(Rarity.EPIC)));
+	
+	// Block items
+	public static final RegistrySupplier<Item> TRAP_LOGIC		= registerRareBlock("trap_logic", CDBlocks.TRAP_LOGIC, Rarity.EPIC);
+	public static final RegistrySupplier<Item> TRAP_LOGIC_DECOY	= registerBlockNoItem("trap_logic_decoy", CDBlocks.TRAP_LOGIC_DECOY, s -> s.rarity(Rarity.RARE));
+	public static final RegistrySupplier<Item> SENSOR_REDSTONE	= registerRareBlockNoItem("redstone_sensor", CDBlocks.SENSOR_REDSTONE, Rarity.RARE);
+	public static final RegistrySupplier<Item> ACTOR_REDSTONE	= registerRareBlockNoItem("redstone_actor", CDBlocks.ACTOR_REDSTONE, Rarity.RARE);
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)
 	{
 		return registerBlock(nameIn, blockIn, UnaryOperator.identity());
+	}
+	
+	private static RegistrySupplier<Item> registerRareBlock(String nameIn, RegistrySupplier<Block> blockIn, Rarity rarity)
+	{
+		return registerBlock(nameIn, blockIn, s -> s.rarity(rarity));
+	}
+	
+	private static RegistrySupplier<Item> registerRareBlockNoItem(String nameIn, RegistrySupplier<Block> blockIn, Rarity rarity)
+	{
+		return registerBlockNoItem(nameIn, blockIn, s -> s.rarity(rarity));
 	}
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn, UnaryOperator<Item.Settings> settingsOp)

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "cydun:block/redstone_actor"
+    },
+    "powered=true": {
+      "model": "cydun:block/redstone_actor_on"
+    }
+  }
+}

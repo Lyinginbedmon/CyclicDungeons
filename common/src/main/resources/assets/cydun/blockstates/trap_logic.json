@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "cydun:block/trap_logic"
+    }
+  }
+}

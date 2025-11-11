@@ -5,6 +5,8 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.block.RedstoneActorBlock;
+import com.lying.block.RedstoneSensorBlock;
 import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
 
@@ -29,21 +31,29 @@ public class CDBlocks
 	
 	/*
 	 * Trap sensors
+	 * * Redstone power
 	 * * Proximity
 	 * * Area
 	 * * Line-of-sight
 	 * * Sound
-	 * * Redstone power
-	 * Trap actors
+	 * Trap 
+	 * * Redstone emitter
 	 * * Flamethrower
 	 * * Spikes
 	 * * Dart trap
 	 * * Hatch
 	 * * Entity spawner (mobs, potion clouds, etc.)
-	 * * Redstone emitter
 	 */
 	
-	public static RegistrySupplier<Block> TRAP_LOGIC	= registerSolidCube("trap_logic", s -> new TrapLogicBlock(s));
+	// Primary logic block for managing trap functions
+	public static final RegistrySupplier<Block> TRAP_LOGIC			= register("trap_logic", s -> new TrapLogicBlock(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
+	public static final RegistrySupplier<Block> TRAP_LOGIC_DECOY	= register("trap_logic_decoy", s -> new Block(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
+	
+	// Sensors
+	public static final RegistrySupplier<Block> SENSOR_REDSTONE		= register("redstone_sensor", RedstoneSensorBlock::new);
+	
+	// Actors
+	public static final RegistrySupplier<Block> ACTOR_REDSTONE		= register("redstone_actor", RedstoneActorBlock::new);
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "cydun:block/redstone_sensor"
+    },
+    "powered=true": {
+      "model": "cydun:block/redstone_sensor_on"
+    }
+  }
+}

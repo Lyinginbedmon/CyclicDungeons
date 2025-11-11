@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
+import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
@@ -50,6 +51,7 @@ public final class CyclicDungeons
 		CDTerms.init();
 		CDCommands.init();
 		CDBlocks.init();
+		CDBlockEntityTypes.init();
 		CDEntityTypes.init();
 		CDItems.init();
 		CDSoundEvents.init();

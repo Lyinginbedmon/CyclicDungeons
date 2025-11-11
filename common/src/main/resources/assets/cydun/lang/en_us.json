@@ -4,6 +4,10 @@
 	"debug.cydun.room": "%s %s (%s)",
 	// Entities
 	// Blocks
+	"block.cydun.trap_logic": "Trap Logic Block",
+	"block.cydun.trap_logic_decoy": "Decoy Trap Logic Block",
+	"block.cydun.redstone_sensor": "Redstone Sensor",
+	"block.cydun.redstone_actor": "Redstone Emitter",
 	// Items
 	"item.cydun.wire_gun": "Wiring Gun",
 	// Item tags
