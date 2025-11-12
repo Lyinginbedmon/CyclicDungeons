@@ -2,8 +2,7 @@ package com.lying.block;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.TrapLogicBlockEntity;
-import com.mojang.serialization.MapCodec;
+import com.lying.block.entity.TrapActorBlockEntity;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -13,23 +12,16 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class TrapLogicBlock extends BlockWithEntity implements IWireableBlock
+public abstract class AbstractTrapActorBlock extends BlockWithEntity implements IWireableBlock
 {
-	public static final MapCodec<TrapLogicBlock> CODEC = TrapLogicBlock.createCodec(TrapLogicBlock::new);
-	
-	public TrapLogicBlock(Settings settings)
+	protected AbstractTrapActorBlock(Settings settingsIn)
 	{
-		super(settings);
+		super(settingsIn);
 	}
 	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
-		return new TrapLogicBlockEntity(pos, state);
-	}
-	
-	protected MapCodec<? extends BlockWithEntity> getCodec()
-	{
-		return CODEC;
+		return new TrapActorBlockEntity(pos, state);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -41,19 +33,19 @@ public class TrapLogicBlock extends BlockWithEntity implements IWireableBlock
 	
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
 	{
-		return TrapLogicBlockEntity.getTicker(world, state, type);
+		return TrapActorBlockEntity.getTicker(world, state, type);
 	}
 	
-	public WireRecipient type() { return WireRecipient.LOGIC; }
+	public WireRecipient type() { return WireRecipient.ACTOR; }
 	
 	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
 	{
-		TrapLogicBlockEntity tile = (TrapLogicBlockEntity)world.getBlockEntity(pos);
-		return type != WireRecipient.LOGIC && tile.processWireConnection(target, type);
+		TrapActorBlockEntity tile = (TrapActorBlockEntity)world.getBlockEntity(pos);
+		return type == WireRecipient.SENSOR && tile.processWire(target);
 	}
 	
 	public void clearWires(BlockPos pos, World world)
 	{
-		((TrapLogicBlockEntity)world.getBlockEntity(pos)).reset();
+		((TrapActorBlockEntity)world.getBlockEntity(pos)).reset();
 	}
 }

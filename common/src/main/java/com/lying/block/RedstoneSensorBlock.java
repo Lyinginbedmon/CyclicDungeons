@@ -13,7 +13,7 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.block.WireOrientation;
 
-public class RedstoneSensorBlock extends Block
+public class RedstoneSensorBlock extends AbstractTrapSensorBlock
 {
 	public static final BooleanProperty POWERED	= Properties.POWERED;
 	
@@ -47,5 +47,10 @@ public class RedstoneSensorBlock extends Block
 	{
 		if ((Boolean)state.get(POWERED) && !world.isReceivingRedstonePower(pos))
 			world.setBlockState(pos, state.cycle(POWERED), 2);
+	}
+	
+	public boolean isActive(BlockPos pos, World world)
+	{
+		return world.getBlockState(pos).get(POWERED);
 	}
 }

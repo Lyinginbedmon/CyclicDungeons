@@ -31,13 +31,11 @@ public class CDBlocks
 	
 	/*
 	 * Trap sensors
-	 * * Redstone power
 	 * * Proximity
 	 * * Area
 	 * * Line-of-sight
 	 * * Sound
-	 * Trap 
-	 * * Redstone emitter
+	 * Trap actors
 	 * * Flamethrower
 	 * * Spikes
 	 * * Dart trap

@@ -9,6 +9,7 @@ import java.util.function.UnaryOperator;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.item.WireGunItem;
 import com.lying.reference.Reference;
 
 import dev.architectury.registry.CreativeTabRegistry;
@@ -40,7 +41,7 @@ public class CDItems
 			Text.translatable("itemGroup."+Reference.ModInfo.MOD_ID+".item_group"), 
 			() -> new ItemStack(Items.SPAWNER)));
 	
-	public static final RegistrySupplier<Item> WIRE_GUN	= register("wire_gun", s -> new Item(s.maxCount(1).fireproof().rarity(Rarity.EPIC)));
+	public static final RegistrySupplier<Item> WIRE_GUN	= register("wire_gun", s -> new WireGunItem(s.maxCount(1).fireproof().rarity(Rarity.EPIC)));
 	
 	// Block items
 	public static final RegistrySupplier<Item> TRAP_LOGIC		= registerRareBlock("trap_logic", CDBlocks.TRAP_LOGIC, Rarity.EPIC);

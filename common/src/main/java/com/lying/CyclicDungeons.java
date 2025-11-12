@@ -7,6 +7,7 @@ import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDParticleTypes;
@@ -53,6 +54,7 @@ public final class CyclicDungeons
 		CDBlocks.init();
 		CDBlockEntityTypes.init();
 		CDEntityTypes.init();
+		CDDataComponentTypes.init();
 		CDItems.init();
 		CDSoundEvents.init();
 		CDParticleTypes.init();
