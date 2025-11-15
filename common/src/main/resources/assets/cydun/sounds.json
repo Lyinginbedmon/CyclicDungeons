@@ -1,3 +1,8 @@
 {
-	
+	"wiring_gun": {
+		"subtitle": "sound.cydun.wiring_gun",
+		"sounds": [
+			"cydun:wiring_gun"
+		]
+	}
 }

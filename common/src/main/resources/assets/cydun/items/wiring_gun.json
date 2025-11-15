@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "cydun:item/wire_gun"
+    "model": "cydun:item/wiring_gun"
   }
 }

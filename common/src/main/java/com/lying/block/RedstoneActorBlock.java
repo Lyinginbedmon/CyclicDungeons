@@ -1,5 +1,6 @@
 package com.lying.block;
 
+import com.lying.init.CDBlockEntityTypes;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -52,4 +53,6 @@ public class RedstoneActorBlock extends AbstractTrapActorBlock
 		state = state.with(POWERED, !state.get(POWERED));
 		world.setBlockState(pos, state);
 	}
+	
+	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).get().wireCount(); }
 }

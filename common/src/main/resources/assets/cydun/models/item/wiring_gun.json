@@ -1,7 +1,7 @@
 {
 	"format_version": "1.9.0",
 	"textures": {
-		"tex": "cydun:item/wire_gun",
+		"tex": "cydun:item/wiring_gun",
 		"particle": "#tex"
 	},
 	"elements": [

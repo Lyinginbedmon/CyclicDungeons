@@ -9,14 +9,23 @@
 	"block.cydun.redstone_sensor": "Redstone Sensor",
 	"block.cydun.redstone_actor": "Redstone Emitter",
 	// Items
-	"item.cydun.wire_gun": "Wiring Gun",
+	"item.cydun.wiring_gun": "Wiring Gun",
 	// Item tags
 	// Status effects
 	// Commands
 	// Gui
 	"gui.cydun.dungeon_data": "%s:%s, %s errors",
-	"gui.cydun.dungeon_data_long": "%s:%s, %s errors (%s c, %s i, %s t)"
+	"gui.cydun.dungeon_data_long": "%s:%s, %s errors (%s c, %s i, %s t)",
+	"gui.cydun.wiring_gun.target": "Target: %s",
+	"gui.cydun.wiring_gun.failed": "[%s] is not wireable",
+	"gui.cydun.wiring_gun.start": "Started wire from [%s]",
+	"gui.cydun.wiring_gun.cancel": "Wiring cancelled",
+	"gui.cydun.wiring_gun.out_of_range": "Block is too far away to be wired to [%s]!",
+	"gui.cydun.wiring_gun.success": "Connected [%s] to [%s] successfully",
+	"gui.cydun.wiring_gun.wires_cleared.success": "Cleared %s wires from [%s]",
+	"gui.cydun.wiring_gun.wires_cleared.failed": "[%s] has no wires to clear",
 	// Enums
 	// Keybinds
 	// Sounds
+	"sound.cydun.wiring_gun": "Wiring Gun fires"
 }

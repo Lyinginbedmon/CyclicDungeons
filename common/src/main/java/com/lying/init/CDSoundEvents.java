@@ -1,5 +1,7 @@
 package com.lying.init;
 
+import static com.lying.reference.Reference.ModInfo.prefix;
+
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
@@ -17,6 +19,8 @@ public class CDSoundEvents
 {
 	public static final DeferredRegister<SoundEvent> SOUND_EVENTS 	= DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.SOUND_EVENT);
 	private static int tally;
+	
+	public static final RegistrySupplier<SoundEvent> WIRING_GUN	= register(prefix("wiring_gun"));
 	
 	private static RegistrySupplier<SoundEvent> register(Identifier name)
 	{

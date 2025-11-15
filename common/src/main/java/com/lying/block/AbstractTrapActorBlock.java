@@ -3,6 +3,7 @@ package com.lying.block;
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.TrapActorBlockEntity;
+import com.lying.init.CDBlockEntityTypes;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -40,12 +41,11 @@ public abstract class AbstractTrapActorBlock extends BlockWithEntity implements 
 	
 	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
 	{
-		TrapActorBlockEntity tile = (TrapActorBlockEntity)world.getBlockEntity(pos);
-		return type == WireRecipient.SENSOR && tile.processWire(target);
+		return world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).get().processWireConnection(target, type);
 	}
 	
 	public void clearWires(BlockPos pos, World world)
 	{
-		((TrapActorBlockEntity)world.getBlockEntity(pos)).reset();
+		world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).get().reset();
 	}
 }

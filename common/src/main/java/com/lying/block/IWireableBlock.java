@@ -25,6 +25,8 @@ public interface IWireableBlock
 	public default void activate(BlockPos pos, World world) { if(!isActive(pos, world)) trigger(pos, world); }
 	public default void deactivate(BlockPos pos, World world) { if(isActive(pos, world)) trigger(pos, world); }
 	
+	public default int wireCount(BlockPos pos, World world) { return 0; }
+	
 	public default void clearWires(BlockPos pos, World world) { }
 	
 	public default boolean isActive(BlockPos pos, World world) { return false; }

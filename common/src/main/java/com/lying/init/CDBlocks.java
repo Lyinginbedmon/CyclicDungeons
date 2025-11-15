@@ -30,6 +30,8 @@ public class CDBlocks
 	public static final List<RegistrySupplier<Block>> ALL_BLOCKS = Lists.newArrayList(), SOLID_CUBES = Lists.newArrayList();
 	
 	/*
+	 * World Guard
+	 * 
 	 * Trap sensors
 	 * * Proximity
 	 * * Area
