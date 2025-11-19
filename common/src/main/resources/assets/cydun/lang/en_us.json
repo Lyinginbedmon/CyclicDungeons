@@ -7,6 +7,9 @@
 	"block.cydun.trap_logic": "Trap Logic Block",
 	"block.cydun.trap_logic_decoy": "Decoy Trap Logic Block",
 	"block.cydun.redstone_sensor": "Redstone Sensor",
+	"block.cydun.collision_sensor": "Collision Sensor",
+	"block.cydun.sound_sensor": "Sound Sensor",
+	"block.cydun.sight_sensor": "Sight Sensor",
 	"block.cydun.redstone_actor": "Redstone Emitter",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",

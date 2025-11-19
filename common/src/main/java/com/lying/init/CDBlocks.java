@@ -5,8 +5,11 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.block.CollisionSensorBlock;
 import com.lying.block.RedstoneActorBlock;
 import com.lying.block.RedstoneSensorBlock;
+import com.lying.block.SightSensorBlock;
+import com.lying.block.SoundSensorBlock;
 import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
 
@@ -33,10 +36,8 @@ public class CDBlocks
 	 * World Guard
 	 * 
 	 * Trap sensors
-	 * * Proximity
 	 * * Area
 	 * * Line-of-sight
-	 * * Sound
 	 * Trap actors
 	 * * Flamethrower
 	 * * Spikes
@@ -51,6 +52,9 @@ public class CDBlocks
 	
 	// Sensors
 	public static final RegistrySupplier<Block> SENSOR_REDSTONE		= register("redstone_sensor", RedstoneSensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_COLLISION	= register("collision_sensor", CollisionSensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_SOUND		= registerSolidCube("sound_sensor", SoundSensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_SIGHT		= register("sight_sensor", SightSensorBlock::new);
 	
 	// Actors
 	public static final RegistrySupplier<Block> ACTOR_REDSTONE		= register("redstone_actor", RedstoneActorBlock::new);

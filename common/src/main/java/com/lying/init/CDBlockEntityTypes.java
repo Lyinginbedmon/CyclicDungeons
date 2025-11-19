@@ -5,6 +5,8 @@ import static com.lying.reference.Reference.ModInfo.prefix;
 import java.util.Set;
 
 import com.lying.CyclicDungeons;
+import com.lying.block.entity.SightSensorBlockEntity;
+import com.lying.block.entity.SoundSensorBlockEntity;
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.reference.Reference;
@@ -25,6 +27,8 @@ public class CDBlockEntityTypes
 	
 	public static final RegistrySupplier<BlockEntityType<TrapLogicBlockEntity>> TRAP_LOGIC	= register("trap_logic", TrapLogicBlockEntity::new, CDBlocks.TRAP_LOGIC.get());
 	public static final RegistrySupplier<BlockEntityType<TrapActorBlockEntity>> TRAP_ACTOR	= register("trap_actor", TrapActorBlockEntity::new, CDBlocks.ACTOR_REDSTONE.get());
+	public static final RegistrySupplier<BlockEntityType<SoundSensorBlockEntity>> SOUND_SENSOR	= register("sound_sensor", SoundSensorBlockEntity::new, CDBlocks.SENSOR_SOUND.get());
+	public static final RegistrySupplier<BlockEntityType<SightSensorBlockEntity>> SIGHT_SENSOR	= register("sight_sensor", SightSensorBlockEntity::new, CDBlocks.SENSOR_SIGHT.get());
 	
 	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, Block... blocksIn)
 	{

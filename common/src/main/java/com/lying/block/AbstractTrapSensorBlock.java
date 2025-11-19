@@ -1,11 +1,15 @@
 package com.lying.block;
 
 import net.minecraft.block.Block;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public abstract class AbstractTrapSensorBlock extends Block implements IWireableBlock
 {
+	public static final BooleanProperty POWERED	= Properties.POWERED;
+	
 	protected AbstractTrapSensorBlock(Settings settings)
 	{
 		super(settings);

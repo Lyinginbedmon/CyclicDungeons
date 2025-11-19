@@ -1,0 +1,23 @@
+{
+	"format_version": "1.21.6",
+	"parent": "block/block",
+	"textures": {
+		"texture": "block/polished_andesite",
+		"particle": "#texture"
+	},
+	"elements": [
+		{
+			"from": [1, 0, 1],
+			"to": [15, 2, 15],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 1, 8]},
+			"faces": {
+				"north": {"uv": [0, 0, 14, 2], "texture": "#texture"},
+				"east": {"uv": [0, 0, 14, 2], "texture": "#texture"},
+				"south": {"uv": [0, 0, 14, 2], "texture": "#texture"},
+				"west": {"uv": [0, 0, 14, 2], "texture": "#texture"},
+				"up": {"uv": [1, 1, 15, 15], "texture": "#texture"},
+				"down": {"uv": [1, 1, 15, 15], "texture": "#texture"}
+			}
+		}
+	]
+}

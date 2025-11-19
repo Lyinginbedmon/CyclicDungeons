@@ -1,5 +1,6 @@
 package com.lying.fabric.client;
 
+import static com.lying.reference.Reference.ModInfo.prefix;
 import static net.minecraft.client.data.BlockStateModelGenerator.createSingletonBlockState;
 
 import java.util.List;
@@ -8,12 +9,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.lying.block.CollisionSensorBlock;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDItems;
 
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.data.BlockStateModelGenerator;
 import net.minecraft.client.data.BlockStateVariant;
 import net.minecraft.client.data.BlockStateVariantMap;
@@ -31,6 +34,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
 
 public class CDModelProvider extends FabricModelProvider
 {
@@ -65,6 +69,8 @@ public class CDModelProvider extends FabricModelProvider
 				CDBlocks.ACTOR_REDSTONE
 				).stream().map(Supplier::get).toList())
 			registerPowerablePillar(block, generator);
+		
+		PressureSensor.register(CDBlocks.SENSOR_COLLISION.get(), Blocks.POLISHED_ANDESITE, generator);
 	}
 	
 	private void registerTrapItemModels(ItemModelGenerator itemModelGenerator)
@@ -124,5 +130,41 @@ public class CDModelProvider extends FabricModelProvider
 		return BlockStateVariantMap.create(property)
 				.register(true, BlockStateVariant.create().put(VariantSettings.MODEL, trueModel))
 				.register(false, BlockStateVariant.create().put(VariantSettings.MODEL, falseModel));
+	}
+	
+	private static class PressureSensor
+	{
+		private static final Model SENSOR = new Model(
+				Optional.of(prefix("block/template_pressure_sensor")),
+				Optional.empty(),
+				TextureKey.TEXTURE);
+		private static final Model SENSOR_PRESSED = new Model(
+				Optional.of(prefix("block/template_pressure_sensor_pressed")),
+				Optional.of("_pressed"),
+				TextureKey.TEXTURE);
+		
+		private static void register(Block block, Block texture, BlockStateModelGenerator generator)
+		{
+			TextureMap map = TextureMap.texture(texture);
+			Identifier inactive = SENSOR.upload(block, map, generator.modelCollector);
+			Identifier active = SENSOR_PRESSED.upload(block, map, generator.modelCollector);
+			
+			BlockStateVariantMap variants = BlockStateVariantMap.create(CollisionSensorBlock.FACING, CollisionSensorBlock.POWERED)
+				.register(Direction.UP, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive))
+				.register(Direction.DOWN, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R180))
+				.register(Direction.NORTH, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90))
+				.register(Direction.EAST, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R90))
+				.register(Direction.SOUTH, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R180))
+				.register(Direction.WEST, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R270))
+				
+				.register(Direction.UP, true, BlockStateVariant.create().put(VariantSettings.MODEL, active))
+				.register(Direction.DOWN, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R180))
+				.register(Direction.NORTH, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90))
+				.register(Direction.EAST, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R90))
+				.register(Direction.SOUTH, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R180))
+				.register(Direction.WEST, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
 	}
 }

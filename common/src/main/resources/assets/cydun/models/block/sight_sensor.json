@@ -1,0 +1,24 @@
+{
+	"format_version": "1.21.6",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"side": "block/purpur_pillar_top",
+		"eye": "block/purpur_block",
+		"particle": "#side"
+	},
+	"elements": [
+		{
+			"from": [0.5, 0.5, 0.5],
+			"to": [15.5, 15.5, 15.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0.5, 0.5, 0.5]},
+			"faces": {
+				"north": {"uv": [0, 0, 15, 15], "texture": "#eye"},
+				"east": {"uv": [0, 0, 15, 15], "texture": "#eye"},
+				"south": {"uv": [0, 0, 15, 15], "texture": "#side"},
+				"west": {"uv": [0, 0, 15, 15], "texture": "#eye"},
+				"up": {"uv": [0, 0, 15, 15], "texture": "#eye"},
+				"down": {"uv": [0, 0, 15, 15], "texture": "#eye"}
+			}
+		}
+	]
+}

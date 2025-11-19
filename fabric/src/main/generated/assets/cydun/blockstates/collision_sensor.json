@@ -1,0 +1,56 @@
+{
+  "variants": {
+    "facing=down,powered=false": {
+      "model": "cydun:block/collision_sensor",
+      "x": 180
+    },
+    "facing=down,powered=true": {
+      "model": "cydun:block/collision_sensor_pressed",
+      "x": 180
+    },
+    "facing=east,powered=false": {
+      "model": "cydun:block/collision_sensor",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,powered=true": {
+      "model": "cydun:block/collision_sensor_pressed",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north,powered=false": {
+      "model": "cydun:block/collision_sensor",
+      "x": 90
+    },
+    "facing=north,powered=true": {
+      "model": "cydun:block/collision_sensor_pressed",
+      "x": 90
+    },
+    "facing=south,powered=false": {
+      "model": "cydun:block/collision_sensor",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,powered=true": {
+      "model": "cydun:block/collision_sensor_pressed",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up,powered=false": {
+      "model": "cydun:block/collision_sensor"
+    },
+    "facing=up,powered=true": {
+      "model": "cydun:block/collision_sensor_pressed"
+    },
+    "facing=west,powered=false": {
+      "model": "cydun:block/collision_sensor",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,powered=true": {
+      "model": "cydun:block/collision_sensor_pressed",
+      "x": 90,
+      "y": 270
+    }
+  }
+}
