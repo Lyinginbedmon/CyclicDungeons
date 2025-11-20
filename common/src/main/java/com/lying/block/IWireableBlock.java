@@ -29,7 +29,9 @@ public interface IWireableBlock
 	
 	public default void clearWires(BlockPos pos, World world) { }
 	
-	public default boolean isActive(BlockPos pos, World world) { return false; }
+	public default boolean isActive(BlockPos pos, World world) { return activity(pos, world) > 0; }
+	
+	public default int activity(BlockPos pos, World world) { return 0; }
 	
 	public static enum WireRecipient implements StringIdentifiable
 	{

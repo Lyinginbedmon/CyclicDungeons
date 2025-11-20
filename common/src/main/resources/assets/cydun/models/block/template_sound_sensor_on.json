@@ -1,0 +1,7 @@
+{
+	"format_version": "1.21.6",
+	"parent": "cydun:block/template_sound_sensor",
+	"textures": {
+		"tendrils": "block/sculk_sensor_tendril_active"
+	}
+}

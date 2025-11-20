@@ -46,10 +46,13 @@ public class CDItems
 	// Block items
 	public static final RegistrySupplier<Item> TRAP_LOGIC		= registerRareBlock("trap_logic", CDBlocks.TRAP_LOGIC, Rarity.EPIC);
 	public static final RegistrySupplier<Item> TRAP_LOGIC_DECOY	= registerBlockNoItem("trap_logic_decoy", CDBlocks.TRAP_LOGIC_DECOY, s -> s.rarity(Rarity.RARE));
+	
 	public static final RegistrySupplier<Item> SENSOR_REDSTONE	= registerRareBlockNoItem("redstone_sensor", CDBlocks.SENSOR_REDSTONE, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_COLLISION	= registerRareBlock("collision_sensor", CDBlocks.SENSOR_COLLISION, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_SOUND		= registerRareBlock("sound_sensor", CDBlocks.SENSOR_SOUND, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_SIGHT		= registerRareBlock("sight_sensor", CDBlocks.SENSOR_SIGHT, Rarity.RARE);
+	public static final RegistrySupplier<Item> SENSOR_PROXIMITY	= registerRareBlock("proximity_sensor", CDBlocks.SENSOR_PROXIMITY, Rarity.RARE);
+	
 	public static final RegistrySupplier<Item> ACTOR_REDSTONE	= registerRareBlockNoItem("redstone_actor", CDBlocks.ACTOR_REDSTONE, Rarity.RARE);
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)

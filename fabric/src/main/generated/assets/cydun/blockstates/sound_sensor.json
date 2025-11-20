@@ -1,7 +1,82 @@
 {
   "variants": {
-    "": {
+    "facing=down,sculk_sensor_phase=active": {
+      "model": "cydun:block/sound_sensor_on",
+      "x": 180
+    },
+    "facing=down,sculk_sensor_phase=cooldown": {
+      "model": "cydun:block/sound_sensor",
+      "x": 180
+    },
+    "facing=down,sculk_sensor_phase=inactive": {
+      "model": "cydun:block/sound_sensor",
+      "x": 180
+    },
+    "facing=east,sculk_sensor_phase=active": {
+      "model": "cydun:block/sound_sensor_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,sculk_sensor_phase=cooldown": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,sculk_sensor_phase=inactive": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north,sculk_sensor_phase=active": {
+      "model": "cydun:block/sound_sensor_on",
+      "x": 90
+    },
+    "facing=north,sculk_sensor_phase=cooldown": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90
+    },
+    "facing=north,sculk_sensor_phase=inactive": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90
+    },
+    "facing=south,sculk_sensor_phase=active": {
+      "model": "cydun:block/sound_sensor_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,sculk_sensor_phase=cooldown": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,sculk_sensor_phase=inactive": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up,sculk_sensor_phase=active": {
+      "model": "cydun:block/sound_sensor_on"
+    },
+    "facing=up,sculk_sensor_phase=cooldown": {
       "model": "cydun:block/sound_sensor"
+    },
+    "facing=up,sculk_sensor_phase=inactive": {
+      "model": "cydun:block/sound_sensor"
+    },
+    "facing=west,sculk_sensor_phase=active": {
+      "model": "cydun:block/sound_sensor_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,sculk_sensor_phase=cooldown": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,sculk_sensor_phase=inactive": {
+      "model": "cydun:block/sound_sensor",
+      "x": 90,
+      "y": 270
     }
   }
 }

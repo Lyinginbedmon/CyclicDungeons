@@ -1,0 +1,62 @@
+{
+	"format_version": "1.21.6",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"particle": "#top"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 8, 16],
+			"rotation": {"angle": 0, "axis": "x", "origin": [8, 4, 8]},
+			"faces": {
+				"north": {"uv": [0, 8, 16, 16], "texture": "#side"},
+				"east": {"uv": [0, 8, 16, 16], "texture": "#side"},
+				"south": {"uv": [0, 8, 16, 16], "texture": "#side"},
+				"west": {"uv": [0, 8, 16, 16], "texture": "#side"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#top"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#bottom"}
+			}
+		},
+		{
+			"name": "tendrils_north",
+			"from": [4.65685, 8, 3.34315],
+			"to": [20.65685, 16, 3.34315],
+			"rotation": {"angle": -45, "axis": "y", "origin": [12.65685, 12, 3.34315]},
+			"faces": {
+				"north": {"uv": [16, 8, 0, 16], "texture": "#tendrils"},
+				"south": {"uv": [0, 8, 16, 16], "texture": "#tendrils"}
+			}
+		},
+		{
+			"name": "tendrils_south",
+			"from": [-4.65685, 8, 12.65685],
+			"to": [11.34315, 16, 12.65685],
+			"rotation": {"angle": -45, "axis": "y", "origin": [3.34315, 12, 12.65685]},
+			"faces": {
+				"north": {"uv": [0, 8, 16, 16], "texture": "#tendrils"},
+				"south": {"uv": [16, 8, 0, 16], "texture": "#tendrils"}
+			}
+		},
+		{
+			"name": "tendrils_east",
+			"from": [4.65685, 8, 12.65685],
+			"to": [20.65685, 16, 12.65685],
+			"rotation": {"angle": 45, "axis": "y", "origin": [12.65685, 12, 12.65685]},
+			"faces": {
+				"north": {"uv": [16, 8, 0, 16], "texture": "#tendrils"},
+				"south": {"uv": [0, 8, 16, 16], "texture": "#tendrils"}
+			}
+		},
+		{
+			"name": "tendrils_west",
+			"from": [3.34315, 8, -4.65685],
+			"to": [3.34315, 16, 11.34315],
+			"rotation": {"angle": -45, "axis": "y", "origin": [3.34315, 12, 3.34315]},
+			"faces": {
+				"east": {"uv": [16, 8, 0, 16], "texture": "#tendrils"},
+				"west": {"uv": [0, 8, 16, 16], "texture": "#tendrils"}
+			}
+		}
+	]
+}

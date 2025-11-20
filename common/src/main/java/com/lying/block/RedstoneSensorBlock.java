@@ -28,25 +28,25 @@ public class RedstoneSensorBlock extends AbstractTrapSensorBlock
 	
 	protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @Nullable WireOrientation wireOrientation, boolean notify)
 	{
-		if(!world.isClient)
+		if(!world.isClient())
 		{
-			boolean status = (Boolean)state.get(POWERED);
-			if (status != world.isReceivingRedstonePower(pos))
+			boolean status = state.get(POWERED);
+			if(status != world.isReceivingRedstonePower(pos))
 				if(status)
 					world.scheduleBlockTick(pos, this, 1);
 				else
-					world.setBlockState(pos, state.cycle(POWERED), 2);
+					world.setBlockState(pos, state.with(POWERED, true), 2);
 		}
 	}
 	
 	protected void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random)
 	{
-		if ((Boolean)state.get(POWERED) && !world.isReceivingRedstonePower(pos))
-			world.setBlockState(pos, state.cycle(POWERED), 2);
+		if(state.get(POWERED) && !world.isReceivingRedstonePower(pos))
+			world.setBlockState(pos, state.with(POWERED, false), 2);
 	}
 	
-	public boolean isActive(BlockPos pos, World world)
+	public int activity(BlockPos pos, World world)
 	{
-		return world.getBlockState(pos).get(POWERED);
+		return world.getBlockState(pos).get(POWERED) ? 15 : 0;
 	}
 }

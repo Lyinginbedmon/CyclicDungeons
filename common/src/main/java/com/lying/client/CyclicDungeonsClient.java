@@ -2,12 +2,15 @@ package com.lying.client;
 
 import com.lying.CyclicDungeons;
 import com.lying.client.screen.DungeonScreen;
+import com.lying.init.CDBlocks;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.network.ShowDungeonLayoutPacket;
 
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.render.RenderLayer;
 
 public class CyclicDungeonsClient
 {
@@ -22,7 +25,7 @@ public class CyclicDungeonsClient
 	
 	private static void registerRenderers()
 	{
-		
+		RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.SENSOR_SOUND.get());
 	}
 	
 	private static void registerEventHandlers()

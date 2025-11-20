@@ -6,6 +6,7 @@ import java.util.function.Function;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.CollisionSensorBlock;
+import com.lying.block.ProximitySensorBlock;
 import com.lying.block.RedstoneActorBlock;
 import com.lying.block.RedstoneSensorBlock;
 import com.lying.block.SightSensorBlock;
@@ -37,7 +38,6 @@ public class CDBlocks
 	 * 
 	 * Trap sensors
 	 * * Area
-	 * * Line-of-sight
 	 * Trap actors
 	 * * Flamethrower
 	 * * Spikes
@@ -53,8 +53,9 @@ public class CDBlocks
 	// Sensors
 	public static final RegistrySupplier<Block> SENSOR_REDSTONE		= register("redstone_sensor", RedstoneSensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_COLLISION	= register("collision_sensor", CollisionSensorBlock::new);
-	public static final RegistrySupplier<Block> SENSOR_SOUND		= registerSolidCube("sound_sensor", SoundSensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_SOUND		= register("sound_sensor", SoundSensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_SIGHT		= register("sight_sensor", SightSensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_PROXIMITY	= register("proximity_sensor", ProximitySensorBlock::new);
 	
 	// Actors
 	public static final RegistrySupplier<Block> ACTOR_REDSTONE		= register("redstone_actor", RedstoneActorBlock::new);
@@ -76,13 +77,13 @@ public class CDBlocks
 		return registry;
 	}
 	
-	private static Boolean always(BlockState state, BlockView world, BlockPos pos, EntityType<?> type) { return true; }
+	public static Boolean always(BlockState state, BlockView world, BlockPos pos, EntityType<?> type) { return true; }
 	
-	private static Boolean always(BlockState state, BlockView world, BlockPos pos) { return true; }
+	public static Boolean always(BlockState state, BlockView world, BlockPos pos) { return true; }
 	
-	private static Boolean never(BlockState state, BlockView world, BlockPos pos, EntityType<?> type) { return false; }
+	public static Boolean never(BlockState state, BlockView world, BlockPos pos, EntityType<?> type) { return false; }
 	
-	private static Boolean never(BlockState state, BlockView world, BlockPos pos) { return false; }
+	public static Boolean never(BlockState state, BlockView world, BlockPos pos) { return false; }
 	
 	private static AbstractBlock.Settings copyLootTable(AbstractBlock.Settings settings, Block block, boolean copyTranslationKey)
 	{

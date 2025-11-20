@@ -10,6 +10,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.lying.block.CollisionSensorBlock;
+import com.lying.block.ProximitySensorBlock;
+import com.lying.block.SoundSensorBlock;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDItems;
 
@@ -17,6 +19,7 @@ import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.enums.SculkSensorPhase;
 import net.minecraft.client.data.BlockStateModelGenerator;
 import net.minecraft.client.data.BlockStateVariant;
 import net.minecraft.client.data.BlockStateVariantMap;
@@ -71,6 +74,8 @@ public class CDModelProvider extends FabricModelProvider
 			registerPowerablePillar(block, generator);
 		
 		PressureSensor.register(CDBlocks.SENSOR_COLLISION.get(), Blocks.POLISHED_ANDESITE, generator);
+		SoundSensor.register(CDBlocks.SENSOR_SOUND.get(), generator);
+		ProximitySensor.register(CDBlocks.SENSOR_PROXIMITY.get(), generator);
 	}
 	
 	private void registerTrapItemModels(ItemModelGenerator itemModelGenerator)
@@ -132,6 +137,58 @@ public class CDModelProvider extends FabricModelProvider
 				.register(false, BlockStateVariant.create().put(VariantSettings.MODEL, falseModel));
 	}
 	
+	private static void appendSettings(Direction face, VariantSettings.Rotation x, VariantSettings.Rotation y, BlockStateVariantMap.DoubleProperty<Direction, Boolean> variants, Identifier model, Identifier modelOn)
+	{
+		Function<Boolean,BlockStateVariant> func = phase -> 
+		{
+			BlockStateVariant variant = BlockStateVariant.create().put(VariantSettings.MODEL, phase ? modelOn : model);
+			
+			if(x != VariantSettings.Rotation.R0)
+				variant.put(VariantSettings.X, x);
+			
+			if(y != VariantSettings.Rotation.R0)
+				variant.put(VariantSettings.Y, y);
+			return variant;
+		};
+		
+		variants.register(face, false, func.apply(false));
+		variants.register(face, true, func.apply(true));
+	}
+	
+	private static class ProximitySensor
+	{
+		private static final Model SENSOR = new Model(
+				Optional.of(prefix("block/template_proximity_sensor")),
+				Optional.empty(),
+				TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.TOP);
+		private static final Model SENSOR_ON = new Model(
+				Optional.of(prefix("block/template_proximity_sensor")),
+				Optional.of("_on"),
+				TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.TOP);
+		
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			TextureMap map = new TextureMap()
+				.put(TextureKey.BOTTOM, TextureMap.getSubId(block, "_bottom"));
+			Identifier model = SENSOR.upload(block, map
+					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side"))
+					.put(TextureKey.TOP, TextureMap.getSubId(block, "_top")), generator.modelCollector);
+			Identifier modelOn = SENSOR_ON.upload(block, map
+					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_on"))
+					.put(TextureKey.TOP, TextureMap.getSubId(block, "_top_on")), generator.modelCollector);
+			
+			BlockStateVariantMap.DoubleProperty<Direction, Boolean> variants = BlockStateVariantMap.create(ProximitySensorBlock.FACING, ProximitySensorBlock.POWERED);
+			appendSettings(Direction.UP, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.DOWN, VariantSettings.Rotation.R180, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R180, variants, model, modelOn);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R90, variants, model, modelOn);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R270, variants, model, modelOn);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
+	}
+	
 	private static class PressureSensor
 	{
 		private static final Model SENSOR = new Model(
@@ -146,25 +203,73 @@ public class CDModelProvider extends FabricModelProvider
 		private static void register(Block block, Block texture, BlockStateModelGenerator generator)
 		{
 			TextureMap map = TextureMap.texture(texture);
-			Identifier inactive = SENSOR.upload(block, map, generator.modelCollector);
-			Identifier active = SENSOR_PRESSED.upload(block, map, generator.modelCollector);
+			Identifier model = SENSOR.upload(block, map, generator.modelCollector);
+			Identifier modelOn = SENSOR_PRESSED.upload(block, map, generator.modelCollector);
 			
-			BlockStateVariantMap variants = BlockStateVariantMap.create(CollisionSensorBlock.FACING, CollisionSensorBlock.POWERED)
-				.register(Direction.UP, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive))
-				.register(Direction.DOWN, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R180))
-				.register(Direction.NORTH, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90))
-				.register(Direction.EAST, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R90))
-				.register(Direction.SOUTH, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R180))
-				.register(Direction.WEST, false, BlockStateVariant.create().put(VariantSettings.MODEL, inactive).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R270))
-				
-				.register(Direction.UP, true, BlockStateVariant.create().put(VariantSettings.MODEL, active))
-				.register(Direction.DOWN, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R180))
-				.register(Direction.NORTH, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90))
-				.register(Direction.EAST, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R90))
-				.register(Direction.SOUTH, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R180))
-				.register(Direction.WEST, true, BlockStateVariant.create().put(VariantSettings.MODEL, active).put(VariantSettings.X, VariantSettings.Rotation.R90).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			BlockStateVariantMap.DoubleProperty<Direction, Boolean> variants = BlockStateVariantMap.create(CollisionSensorBlock.FACING, CollisionSensorBlock.POWERED);
+			appendSettings(Direction.UP, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.DOWN, VariantSettings.Rotation.R180, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R180, variants, model, modelOn);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R90, variants, model, modelOn);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R270, variants, model, modelOn);
 			
 			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
+	}
+	
+	private static class SoundSensor
+	{
+		private static final TextureKey TENDRILS	= TextureKey.of("tendrils");
+		private static final Identifier TENDRILS_ACTIVE = TextureMap.getSubId(Blocks.SCULK_SENSOR, "_tendril_active");
+		private static final Identifier TENDRILS_INACTIVE = TextureMap.getSubId(Blocks.SCULK_SENSOR, "_tendril_inactive");
+		
+		private static final Model SENSOR = new Model(
+				Optional.of(prefix("block/template_sound_sensor")),
+				Optional.empty(),
+				TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.TOP, TENDRILS);
+		private static final Model SENSOR_ON = new Model(
+				Optional.of(prefix("block/template_sound_sensor_on")),
+				Optional.of("_on"),
+				TENDRILS);
+		
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			TextureMap map = new TextureMap()
+				.put(TextureKey.BOTTOM, TextureMap.getSubId(block, "_bottom"))
+				.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side"))
+				.put(TextureKey.TOP, TextureMap.getSubId(block, "_top"));
+			
+			Identifier model = SENSOR.upload(block, map.put(TENDRILS, TENDRILS_INACTIVE), generator.modelCollector);
+			Identifier modelOn = SENSOR_ON.upload(block, map.put(TENDRILS, TENDRILS_ACTIVE), generator.modelCollector);
+			
+			BlockStateVariantMap.DoubleProperty<Direction, SculkSensorPhase> variants = BlockStateVariantMap.create(SoundSensorBlock.FACING, SoundSensorBlock.PHASE);
+			appendSettings(Direction.UP, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.DOWN, VariantSettings.Rotation.R180, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R0, variants, model, modelOn);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R180, variants, model, modelOn);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R90, variants, model, modelOn);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R270, variants, model, modelOn);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
+		
+		private static void appendSettings(Direction face, VariantSettings.Rotation x, VariantSettings.Rotation y, BlockStateVariantMap.DoubleProperty<Direction, SculkSensorPhase> variants, Identifier model, Identifier modelOn)
+		{
+			Function<SculkSensorPhase,BlockStateVariant> func = phase -> 
+			{
+				BlockStateVariant variant = BlockStateVariant.create().put(VariantSettings.MODEL, phase == SculkSensorPhase.ACTIVE ? modelOn : model);
+				
+				if(x != VariantSettings.Rotation.R0)
+					variant.put(VariantSettings.X, x);
+				
+				if(y != VariantSettings.Rotation.R0)
+					variant.put(VariantSettings.Y, y);
+				return variant;
+			};
+			
+			for(SculkSensorPhase phase : SculkSensorPhase.values())
+				variants.register(face, phase, func.apply(phase));
 		}
 	}
 }

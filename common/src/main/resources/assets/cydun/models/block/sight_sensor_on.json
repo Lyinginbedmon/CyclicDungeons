@@ -2,7 +2,7 @@
 	"format_version": "1.21.6",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"eye": "block/purpur_pillar_top",
+		"eye": "block/redstone_block",
 		"side": "block/purpur_block",
 		"particle": "#side"
 	},

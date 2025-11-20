@@ -155,7 +155,11 @@ public class SightSensorBlockEntity extends BlockEntity
 			}
 			
 			if(player != null && IS_VISIBLE.test(player) && canEyeSeePlayer(tile, player, world))
-				return;
+			{
+				int charge = tile.getCachedState().get(SightSensorBlock.POWER);
+				if(charge < 15)
+					world.setBlockState(tilePos, state.with(SightSensorBlock.POWER, ++charge), 3);
+			}
 			else
 			{
 				tile.stopTracking(player);
@@ -168,7 +172,7 @@ public class SightSensorBlockEntity extends BlockEntity
 	protected void startTracking(PlayerEntity player)
 	{
 		lookTargetPlayer = Optional.of(player.getUuid());
-		updateBlock(true);
+		updateBlock(1);
 	}
 	
 	/** Called when the targeted player is no longer visible */
@@ -181,7 +185,7 @@ public class SightSensorBlockEntity extends BlockEntity
 		Vec3d tileEye = new Vec3d(getPos().getX(), getPos().getY(), getPos().getZ()).add(0.5D);
 		lookVec = player.getEyePos().subtract(tileEye).normalize();
 		tickCount = 0;
-		updateBlock(false);
+		updateBlock(0);
 	}
 	
 	/** Called when the targeted player no longer exists, not simply isn't visible */
@@ -189,15 +193,15 @@ public class SightSensorBlockEntity extends BlockEntity
 	{
 		lookTargetPlayer = Optional.empty();
 		lookVec = new Vec3d(0, 0, -1);
-		updateBlock(false);
+		updateBlock(0);
 	}
 	
-	protected void updateBlock(boolean value)
+	protected void updateBlock(int power)
 	{
-		if(value == getCachedState().get(SightSensorBlock.POWERED))
+		if(power == getCachedState().get(SightSensorBlock.POWER))
 			return;
 		
-		BlockState state = getCachedState().with(SightSensorBlock.POWERED, value);
+		BlockState state = getCachedState().with(SightSensorBlock.POWER, power).with(SightSensorBlock.POWERED, power > 0);
 		world.setBlockState(getPos(), state, 3);
 		world.updateListeners(getPos(), getCachedState(), state, 3);
 	}

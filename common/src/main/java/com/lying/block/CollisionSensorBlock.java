@@ -17,6 +17,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
@@ -51,6 +52,7 @@ public class CollisionSensorBlock extends AbstractTrapSensorBlock
 	protected static final VoxelShape SOUTH_SHAPE_PRESSED	= Block.createCuboidShape(1, 1, 0, 15, 15, 1);
 	protected static final VoxelShape WEST_SHAPE_PRESSED	= Block.createCuboidShape(15, 1, 1, 16, 15, 15);
 	
+	public static final BooleanProperty POWERED			= Properties.POWERED;
 	public static final EnumProperty<Direction> FACING	= Properties.FACING;
 	
 	public CollisionSensorBlock(Settings settings)
@@ -100,9 +102,9 @@ public class CollisionSensorBlock extends AbstractTrapSensorBlock
 		return getDefaultState().with(FACING, ctx.getSide());
 	}
 	
-	public boolean isActive(BlockPos pos, World world)
+	public int activity(BlockPos pos, World world)
 	{
-		return world.getBlockState(pos).get(POWERED);
+		return world.getBlockState(pos).get(POWERED) ? 15 : 0;
 	}
 	
 	protected void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random)

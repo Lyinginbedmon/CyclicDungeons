@@ -9,6 +9,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
@@ -19,10 +20,13 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.EnumProperty;
+import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.event.Vibrations;
 
@@ -30,13 +34,21 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 {
 	public static final MapCodec<SoundSensorBlock> CODEC	= createCodec(SoundSensorBlock::new);
 	
+	public static final IntProperty POWER	= Properties.POWER;
 	public static final EnumProperty<SculkSensorPhase> PHASE	= Properties.SCULK_SENSOR_PHASE;
 	public static final EnumProperty<Direction> FACING	= Properties.FACING;
+	
+	protected static final VoxelShape UP_SHAPE		= Block.createCuboidShape(0, 0, 0, 16, 8, 16);
+	protected static final VoxelShape DOWN_SHAPE	= Block.createCuboidShape(0, 8, 0, 16, 16, 16);
+	protected static final VoxelShape NORTH_SHAPE	= Block.createCuboidShape(0, 0, 8, 16, 16, 16);
+	protected static final VoxelShape SOUTH_SHAPE	= Block.createCuboidShape(0, 0, 0, 16, 16, 8);
+	protected static final VoxelShape EAST_SHAPE	= Block.createCuboidShape(0, 0, 0, 8, 16, 16);
+	protected static final VoxelShape WEST_SHAPE	= Block.createCuboidShape(8, 0, 0, 16, 16, 16);
 	
 	public SoundSensorBlock(Settings settings)
 	{
 		super(settings);
-		setDefaultState(getDefaultState().with(FACING, Direction.UP).with(PHASE, SculkSensorPhase.INACTIVE));
+		setDefaultState(getDefaultState().with(FACING, Direction.UP).with(PHASE, SculkSensorPhase.INACTIVE).with(POWER, 0));
 	}
 	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
@@ -51,7 +63,37 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 	
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
-		builder.add(FACING, PHASE);
+		builder.add(FACING, PHASE, POWER);
+	}
+	
+	protected VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
+	{
+		return getShapeByFace(state.get(FACING));
+	}
+	
+	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
+	{
+		return getShapeByFace(state.get(FACING));
+	}
+	
+	protected VoxelShape getShapeByFace(Direction face)
+	{
+		switch(face)
+		{
+			default:
+			case UP:
+				return UP_SHAPE;
+			case DOWN:
+				return DOWN_SHAPE;
+			case NORTH:
+				return NORTH_SHAPE;
+			case SOUTH:
+				return SOUTH_SHAPE;
+			case EAST:
+				return EAST_SHAPE;
+			case WEST:
+				return WEST_SHAPE;
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -79,9 +121,9 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 		return false;
 	}
 	
-	public boolean isActive(BlockPos pos, World world)
+	public int activity(BlockPos pos, World world)
 	{
-		return world.getBlockState(pos).get(PHASE) == SculkSensorPhase.ACTIVE;
+		return world.getBlockState(pos).get(PHASE) == SculkSensorPhase.ACTIVE ? 15 : 0;
 	}
 	
 	public BlockState getPlacementState(ItemPlacementContext ctx)
@@ -94,7 +136,7 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 		switch(state.get(PHASE))
 		{
 			case COOLDOWN:
-				world.setBlockState(pos, state.with(PHASE, SculkSensorPhase.INACTIVE), 3);
+				world.setBlockState(pos, state.with(PHASE, SculkSensorPhase.INACTIVE).with(POWER, 0), 3);
 				world.playSound(null, pos, SoundEvents.BLOCK_SCULK_SENSOR_CLICKING_STOP, SoundCategory.BLOCKS, 1.0F, world.random.nextFloat() * 0.2F + 0.8F);
 				break;
 			default:

@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "powered=false": {
       "model": "cydun:block/sight_sensor"
-    }
+    },
+	"powered=true": {
+	  "model": "cydun:block/sight_sensor_on"
+	}
   }
 }
