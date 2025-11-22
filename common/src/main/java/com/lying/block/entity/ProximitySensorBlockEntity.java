@@ -41,7 +41,6 @@ public class ProximitySensorBlockEntity extends BlockEntity
 	{
 		super.readNbt(nbt, registryLookup);
 		searchRange = nbt.getDouble("Range");
-		
 	}
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
@@ -66,7 +65,7 @@ public class ProximitySensorBlockEntity extends BlockEntity
 				.findFirst();
 		
 		closest.ifPresentOrElse(p -> 
-			ProximitySensorBlock.setPower((int)MathHelper.clamp(p, 0, 15), pos, world), () -> 
+			ProximitySensorBlock.setPower((int)MathHelper.clamp(15 - Math.floor(p), 0, 15), pos, world), () -> 
 			ProximitySensorBlock.setPower(0, pos, world));
 	}
 	

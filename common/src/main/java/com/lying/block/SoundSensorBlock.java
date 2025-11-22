@@ -66,19 +66,9 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 		builder.add(FACING, PHASE, POWER);
 	}
 	
-	protected VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
-	{
-		return getShapeByFace(state.get(FACING));
-	}
-	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
 	{
-		return getShapeByFace(state.get(FACING));
-	}
-	
-	protected VoxelShape getShapeByFace(Direction face)
-	{
-		switch(face)
+		switch(state.get(FACING))
 		{
 			default:
 			case UP:

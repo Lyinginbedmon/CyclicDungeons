@@ -9,9 +9,11 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.EnumProperty;
@@ -19,11 +21,20 @@ import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
 public class ProximitySensorBlock extends BlockWithEntity implements IWireableBlock
 {
 	public static final MapCodec<ProximitySensorBlock> CODEC	= createCodec(ProximitySensorBlock::new);
+	private static final VoxelShape UP_SHAPE	= Block.createCuboidShape(4, 0, 4, 12, 4, 12);
+	private static final VoxelShape DOWN_SHAPE	= Block.createCuboidShape(4, 12, 4, 12, 16, 12);
+	private static final VoxelShape NORTH_SHAPE	= Block.createCuboidShape(4, 4, 12, 12, 12, 16);
+	private static final VoxelShape EAST_SHAPE	= Block.createCuboidShape(0, 4, 4, 4, 12, 12);
+	private static final VoxelShape SOUTH_SHAPE	= Block.createCuboidShape(4, 4, 0, 12, 12, 4);
+	private static final VoxelShape WEST_SHAPE	= Block.createCuboidShape(12, 4, 4, 16, 12, 12);
+	
 	public static final IntProperty POWER	= Properties.POWER;
 	public static final BooleanProperty POWERED	= Properties.POWERED;
 	public static final EnumProperty<Direction> FACING	= Properties.FACING;
@@ -42,6 +53,31 @@ public class ProximitySensorBlock extends BlockWithEntity implements IWireableBl
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
 		return new ProximitySensorBlockEntity(pos, state);
+	}
+	
+	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
+	{
+		switch(state.get(FACING))
+		{
+			default:
+			case UP:
+				return UP_SHAPE;
+			case DOWN:
+				return DOWN_SHAPE;
+			case NORTH:
+				return NORTH_SHAPE;
+			case SOUTH:
+				return SOUTH_SHAPE;
+			case EAST:
+				return EAST_SHAPE;
+			case WEST:
+				return WEST_SHAPE;
+		}
+	}
+	
+	public BlockState getPlacementState(ItemPlacementContext ctx)
+	{
+		return getDefaultState().with(FACING, ctx.getSide());
 	}
 	
 	@SuppressWarnings("unchecked")

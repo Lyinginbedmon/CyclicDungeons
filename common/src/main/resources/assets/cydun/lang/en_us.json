@@ -10,6 +10,7 @@
 	"block.cydun.collision_sensor": "Collision Sensor",
 	"block.cydun.sound_sensor": "Sound Sensor",
 	"block.cydun.sight_sensor": "Sight Sensor",
+	"block.cydun.proximity_sensor": "Proximity Sensor",
 	"block.cydun.redstone_actor": "Redstone Emitter",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",

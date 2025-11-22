@@ -1,0 +1,7 @@
+{
+  "parent": "cydun:block/template_sight_sensor",
+  "textures": {
+    "eye": "cydun:block/sight_sensor",
+    "side": "cydun:block/sight_sensor_side"
+  }
+}

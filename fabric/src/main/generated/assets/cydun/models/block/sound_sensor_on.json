@@ -1,6 +1,9 @@
 {
-  "parent": "cydun:block/template_sound_sensor_on",
+  "parent": "cydun:block/template_sound_sensor",
   "textures": {
-    "tendrils": "minecraft:block/sculk_sensor_tendril_active"
+    "bottom": "cydun:block/sound_sensor_bottom",
+    "side": "cydun:block/sound_sensor_side",
+    "tendrils": "minecraft:block/sculk_sensor_tendril_active",
+    "top": "cydun:block/sound_sensor_top"
   }
 }

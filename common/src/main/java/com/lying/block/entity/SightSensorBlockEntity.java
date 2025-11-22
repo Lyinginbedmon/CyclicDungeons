@@ -34,7 +34,7 @@ import net.minecraft.world.World;
 public class SightSensorBlockEntity extends BlockEntity
 {
 	public static final double SEARCH_RANGE = 3D;
-	public static final double SIGHT_LIMIT = 32D;
+	protected double sightRange = 8D;
 	
 	public static final Predicate<Entity> IS_VISIBLE = EntityPredicates.EXCEPT_SPECTATOR.and(e -> !e.isInvisible());
 	
@@ -52,6 +52,7 @@ public class SightSensorBlockEntity extends BlockEntity
 	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.writeNbt(nbt, registryLookup);
+		nbt.putDouble("Range", sightRange);
 		lookTargetPlayer.ifPresent(id -> nbt.putUuid("Target", id));
 		nbt.putDouble("LookX", lookVec.x);
 		nbt.putDouble("LookY", lookVec.y);
@@ -61,6 +62,7 @@ public class SightSensorBlockEntity extends BlockEntity
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
+		sightRange = nbt.getDouble("Range");
 		lookVec = new Vec3d(
 				nbt.getDouble("LookX"),
 				nbt.getDouble("LookY"),
@@ -219,13 +221,14 @@ public class SightSensorBlockEntity extends BlockEntity
 	
 	/**
 	 * Returns true if the eye has unobstructed line of sight to the given player
+	 * TODO Adjust to a cone shape instead of just a 6-block-wide cuboid
 	 */
 	protected static boolean canEyeSeePlayer(SightSensorBlockEntity eye, PlayerEntity player, World world)
 	{
 		BlockPos tilePos = eye.getPos();
 		Vec3d tileEye = new Vec3d(tilePos.getX(), tilePos.getY(), tilePos.getZ()).add(0.5D);
 		Vec3d playerEye = player.getEyePos();
-		if(playerEye.distanceTo(tileEye) > SIGHT_LIMIT)
+		if(playerEye.distanceTo(tileEye) > eye.sightRange)
 			return false;
 		
 		BlockHitResult trace = world.raycast(new RaycastContext(playerEye, tileEye, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, ShapeContext.absent()));

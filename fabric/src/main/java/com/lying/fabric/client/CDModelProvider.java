@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 
 import com.lying.block.CollisionSensorBlock;
 import com.lying.block.ProximitySensorBlock;
+import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDItems;
@@ -75,6 +76,7 @@ public class CDModelProvider extends FabricModelProvider
 		
 		PressureSensor.register(CDBlocks.SENSOR_COLLISION.get(), Blocks.POLISHED_ANDESITE, generator);
 		SoundSensor.register(CDBlocks.SENSOR_SOUND.get(), generator);
+		SightSensor.register(CDBlocks.SENSOR_SIGHT.get(), generator);
 		ProximitySensor.register(CDBlocks.SENSOR_PROXIMITY.get(), generator);
 	}
 	
@@ -160,22 +162,13 @@ public class CDModelProvider extends FabricModelProvider
 		private static final Model SENSOR = new Model(
 				Optional.of(prefix("block/template_proximity_sensor")),
 				Optional.empty(),
-				TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.TOP);
-		private static final Model SENSOR_ON = new Model(
-				Optional.of(prefix("block/template_proximity_sensor")),
-				Optional.of("_on"),
-				TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.TOP);
+				TextureKey.TEXTURE);
 		
 		private static void register(Block block, BlockStateModelGenerator generator)
 		{
-			TextureMap map = new TextureMap()
-				.put(TextureKey.BOTTOM, TextureMap.getSubId(block, "_bottom"));
-			Identifier model = SENSOR.upload(block, map
-					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side"))
-					.put(TextureKey.TOP, TextureMap.getSubId(block, "_top")), generator.modelCollector);
-			Identifier modelOn = SENSOR_ON.upload(block, map
-					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_on"))
-					.put(TextureKey.TOP, TextureMap.getSubId(block, "_top_on")), generator.modelCollector);
+			TextureMap map = TextureMap.texture(block);
+			Identifier model = SENSOR.upload(block, map, generator.modelCollector);
+			Identifier modelOn = SENSOR.upload(block, "_on", map.put(TextureKey.TEXTURE, TextureMap.getSubId(block, "_on")), generator.modelCollector);
 			
 			BlockStateVariantMap.DoubleProperty<Direction, Boolean> variants = BlockStateVariantMap.create(ProximitySensorBlock.FACING, ProximitySensorBlock.POWERED);
 			appendSettings(Direction.UP, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, variants, model, modelOn);
@@ -228,10 +221,6 @@ public class CDModelProvider extends FabricModelProvider
 				Optional.of(prefix("block/template_sound_sensor")),
 				Optional.empty(),
 				TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.TOP, TENDRILS);
-		private static final Model SENSOR_ON = new Model(
-				Optional.of(prefix("block/template_sound_sensor_on")),
-				Optional.of("_on"),
-				TENDRILS);
 		
 		private static void register(Block block, BlockStateModelGenerator generator)
 		{
@@ -241,7 +230,7 @@ public class CDModelProvider extends FabricModelProvider
 				.put(TextureKey.TOP, TextureMap.getSubId(block, "_top"));
 			
 			Identifier model = SENSOR.upload(block, map.put(TENDRILS, TENDRILS_INACTIVE), generator.modelCollector);
-			Identifier modelOn = SENSOR_ON.upload(block, map.put(TENDRILS, TENDRILS_ACTIVE), generator.modelCollector);
+			Identifier modelOn = SENSOR.upload(block, "_on", map.put(TENDRILS, TENDRILS_ACTIVE), generator.modelCollector);
 			
 			BlockStateVariantMap.DoubleProperty<Direction, SculkSensorPhase> variants = BlockStateVariantMap.create(SoundSensorBlock.FACING, SoundSensorBlock.PHASE);
 			appendSettings(Direction.UP, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, variants, model, modelOn);
@@ -270,6 +259,29 @@ public class CDModelProvider extends FabricModelProvider
 			
 			for(SculkSensorPhase phase : SculkSensorPhase.values())
 				variants.register(face, phase, func.apply(phase));
+		}
+	}
+	
+	private static class SightSensor
+	{
+		private static final TextureKey EYE	= TextureKey.of("eye");
+		private static final Model SENSOR = new Model(
+				Optional.of(prefix("block/template_sight_sensor")),
+				Optional.empty(),
+				TextureKey.SIDE, EYE);
+		
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			TextureMap map = new TextureMap()
+					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side"));
+			Identifier model = SENSOR.upload(block, map.put(EYE, TextureMap.getId(block)), generator.modelCollector);
+			Identifier modelOn = SENSOR.upload(block, "_on", map.put(EYE, TextureMap.getSubId(block, "_on")), generator.modelCollector);
+			
+			BlockStateVariantMap variants = BlockStateVariantMap.create(SightSensorBlock.POWERED)
+					.register(false, BlockStateVariant.create().put(VariantSettings.MODEL, model))
+					.register(true, BlockStateVariant.create().put(VariantSettings.MODEL, modelOn));
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
 		}
 	}
 }
