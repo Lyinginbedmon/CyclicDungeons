@@ -247,7 +247,7 @@ public class CDModelProvider extends FabricModelProvider
 		{
 			Function<SculkSensorPhase,BlockStateVariant> func = phase -> 
 			{
-				BlockStateVariant variant = BlockStateVariant.create().put(VariantSettings.MODEL, phase == SculkSensorPhase.ACTIVE ? modelOn : model);
+				BlockStateVariant variant = BlockStateVariant.create().put(VariantSettings.MODEL, phase == SculkSensorPhase.INACTIVE ? model : modelOn);
 				
 				if(x != VariantSettings.Rotation.R0)
 					variant.put(VariantSettings.X, x);

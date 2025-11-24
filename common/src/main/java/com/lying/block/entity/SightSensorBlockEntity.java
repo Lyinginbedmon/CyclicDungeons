@@ -33,15 +33,20 @@ import net.minecraft.world.World;
 
 public class SightSensorBlockEntity extends BlockEntity
 {
-	public static final double SEARCH_RANGE = 3D;
-	protected double sightRange = 8D;
-	
 	public static final Predicate<Entity> IS_VISIBLE = EntityPredicates.EXCEPT_SPECTATOR.and(e -> !e.isInvisible());
 	
+	/** How far the eye can see, ie. the height of its view cone */
+	protected double sightRange = 8D;
+	/** How far at most from the look direction the eye can see, ie. the radius of the view cone at its base */
+	protected double sightRadius = 4D;
+	
+	/** UUID of the player being tracked, if any */
 	private Optional<UUID> lookTargetPlayer = Optional.empty();
+	/** Direction the eye is looking currently */
 	private Vec3d lookVec = new Vec3d(0, 0, -1);
 	private int tickCount = 0;
 	
+	/** Client look direction, interpolated between the last look vec and the current one */
 	public Vec3d clientLookVec = new Vec3d(0, 0, -1);
 	
 	public SightSensorBlockEntity(BlockPos pos, BlockState state)
@@ -53,6 +58,8 @@ public class SightSensorBlockEntity extends BlockEntity
 	{
 		super.writeNbt(nbt, registryLookup);
 		nbt.putDouble("Range", sightRange);
+		nbt.putDouble("Radius", sightRadius);
+		
 		lookTargetPlayer.ifPresent(id -> nbt.putUuid("Target", id));
 		nbt.putDouble("LookX", lookVec.x);
 		nbt.putDouble("LookY", lookVec.y);
@@ -62,16 +69,15 @@ public class SightSensorBlockEntity extends BlockEntity
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
-		sightRange = nbt.getDouble("Range");
+		sightRange = Math.max(1D, nbt.getDouble("Range"));
+		sightRadius = Math.max(0.5D, nbt.contains("Radius") ? nbt.getDouble("Radius") : sightRange * 0.5D);
+		
+		lookTargetPlayer = nbt.contains("Target") ? Optional.of(nbt.getUuid("Target")) : Optional.empty();
 		lookVec = new Vec3d(
 				nbt.getDouble("LookX"),
 				nbt.getDouble("LookY"),
 				nbt.getDouble("LookZ")
 				).normalize();
-		if(nbt.contains("Target"))
-			lookTargetPlayer = Optional.of(nbt.getUuid("Target"));
-		else
-			lookTargetPlayer = Optional.empty();
 	}
 	
 	public Vec3d currentLook() { return this.lookVec; }
@@ -96,9 +102,7 @@ public class SightSensorBlockEntity extends BlockEntity
 		PlayerEntity player;
 		if(tile.currentTarget().isPresent() && (player = world.getPlayerByUuid(tile.currentTarget().get())) != null)
 		{
-			BlockPos tilePos = tile.getPos();
-			Vec3d tileEye = new Vec3d(tilePos.getX(), tilePos.getY(), tilePos.getZ()).add(0.5D);
-			look = player.getEyePos().subtract(tileEye).normalize();
+			look = player.getEyePos().subtract(tile.getEyePos()).normalize();
 			adjustRate = 0.5D;
 		}
 		
@@ -110,8 +114,6 @@ public class SightSensorBlockEntity extends BlockEntity
 		if(tile.tickCount++%updateRate(tile) > 0)
 			return;
 		
-		BlockPos tilePos = tile.getPos();
-		Vec3d tileEye = new Vec3d(tilePos.getX(), tilePos.getY(), tilePos.getZ()).add(0.5D);
 		if(tile.lookTargetPlayer.isEmpty())
 		{
 			// Try to find player nearest to latest look direction to look at, otherwise randomly adjust look direction
@@ -119,12 +121,12 @@ public class SightSensorBlockEntity extends BlockEntity
 			
 			Optional<ServerPlayerEntity> newTarget = ((ServerWorld)world).getPlayers().stream()
 					.filter(IS_VISIBLE)
-					.filter(p -> calculateEyeDistance(tileEye, lookVec, p) <= SEARCH_RANGE)
+					.filter(tile::isInViewCone)
 					.filter(p -> canEyeSeePlayer(tile, p, world))
 					.sorted((a,b) -> 
 					{
-						double distA = calculateEyeDistance(tileEye, lookVec, a);
-						double distB = calculateEyeDistance(tileEye, lookVec, b);
+						double distA = tile.distanceFromLook(a.getEyePos());
+						double distB = tile.distanceFromLook(b.getEyePos());
 						return distA < distB ? -1 : distA > distB ? 1 : 0;
 					}).findFirst();
 			
@@ -160,7 +162,7 @@ public class SightSensorBlockEntity extends BlockEntity
 			{
 				int charge = tile.getCachedState().get(SightSensorBlock.POWER);
 				if(charge < 15)
-					world.setBlockState(tilePos, state.with(SightSensorBlock.POWER, ++charge), 3);
+					world.setBlockState(tile.getPos(), state.with(SightSensorBlock.POWER, ++charge), 3);
 			}
 			else
 			{
@@ -184,13 +186,12 @@ public class SightSensorBlockEntity extends BlockEntity
 			return;
 		
 		lookTargetPlayer = Optional.empty();
-		Vec3d tileEye = new Vec3d(getPos().getX(), getPos().getY(), getPos().getZ()).add(0.5D);
-		lookVec = player.getEyePos().subtract(tileEye).normalize();
+		lookVec = player.getEyePos().subtract(getEyePos()).normalize();
 		tickCount = 0;
 		updateBlock(0);
 	}
 	
-	/** Called when the targeted player no longer exists, not simply isn't visible */
+	/** Called when the targeted player no longer exists, not just isn't visible */
 	protected void clearTracking()
 	{
 		lookTargetPlayer = Optional.empty();
@@ -208,31 +209,35 @@ public class SightSensorBlockEntity extends BlockEntity
 		world.updateListeners(getPos(), getCachedState(), state, 3);
 	}
 	
-	/**
-	 * Returns the distance between the player's eye position and the point along the eye's look direction at the same distance
-	 */
-	protected static double calculateEyeDistance(Vec3d tileEye, Vec3d lookVec, PlayerEntity player)
+	public Vec3d getEyePos()
 	{
-		Vec3d playerEye = player.getEyePos();
-		double dist = playerEye.distanceTo(tileEye);
-		Vec3d intercept = tileEye.add(lookVec.multiply(dist));
-		return playerEye.distanceTo(intercept);
+		BlockPos tilePos = getPos();
+		return new Vec3d(tilePos.getX(), tilePos.getY(), tilePos.getZ()).add(0.5D);
+	}
+	
+	/** Returns the distance to the point from its equivalent point within the eye's view cone */
+	public double distanceFromLook(Vec3d p)
+	{
+		double distToP = getEyePos().distanceTo(p);
+		Vec3d conePoint = getEyePos().add(this.lookVec.multiply(distToP));
+		return p.distanceTo(conePoint);
+	}
+	
+	/** Returns true if the player's eye position is within this eye's view cone, ignoring obstructions */
+	protected boolean isInViewCone(PlayerEntity player)
+	{
+		double distFromEye = getEyePos().distanceTo(player.getEyePos());
+		double radiusAtDist = (distFromEye / this.sightRange) * this.sightRadius;
+		return distFromEye <= this.sightRange && distanceFromLook(player.getEyePos()) < radiusAtDist;
 	}
 	
 	/**
 	 * Returns true if the eye has unobstructed line of sight to the given player
-	 * TODO Adjust to a cone shape instead of just a 6-block-wide cuboid
 	 */
 	protected static boolean canEyeSeePlayer(SightSensorBlockEntity eye, PlayerEntity player, World world)
 	{
-		BlockPos tilePos = eye.getPos();
-		Vec3d tileEye = new Vec3d(tilePos.getX(), tilePos.getY(), tilePos.getZ()).add(0.5D);
-		Vec3d playerEye = player.getEyePos();
-		if(playerEye.distanceTo(tileEye) > eye.sightRange)
-			return false;
-		
-		BlockHitResult trace = world.raycast(new RaycastContext(playerEye, tileEye, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, ShapeContext.absent()));
-		return trace.getType() == Type.MISS || trace.getBlockPos().getManhattanDistance(tilePos) == 0;
+		BlockHitResult trace = world.raycast(new RaycastContext(player.getEyePos(), eye.getEyePos(), RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, ShapeContext.absent()));
+		return trace.getType() == Type.MISS || trace.getBlockPos().getManhattanDistance(eye.getPos()) == 0;
 	}
 	
 	public BlockEntityUpdateS2CPacket toUpdatePacket() { return BlockEntityUpdateS2CPacket.create(this); }
