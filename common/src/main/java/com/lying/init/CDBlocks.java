@@ -6,6 +6,8 @@ import java.util.function.Function;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.CollisionSensorBlock;
+import com.lying.block.HatchActorBlock;
+import com.lying.block.PitBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.RedstoneActorBlock;
 import com.lying.block.RedstoneSensorBlock;
@@ -42,23 +44,28 @@ public class CDBlocks
 	 * * Flamethrower
 	 * * Spikes
 	 * * Dart trap
-	 * * Hatch
 	 * * Entity spawner (mobs, potion clouds, etc.)
 	 */
 	
-	// Primary logic block for managing trap functions
+	// Primary logic block for managing complex trap functions
 	public static final RegistrySupplier<Block> TRAP_LOGIC			= register("trap_logic", s -> new TrapLogicBlock(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
 	public static final RegistrySupplier<Block> TRAP_LOGIC_DECOY	= register("trap_logic_decoy", s -> new Block(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
 	
 	// Sensors
-	public static final RegistrySupplier<Block> SENSOR_REDSTONE		= register("redstone_sensor", RedstoneSensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_COLLISION	= register("collision_sensor", CollisionSensorBlock::new);
-	public static final RegistrySupplier<Block> SENSOR_SOUND		= register("sound_sensor", SoundSensorBlock::new);
-	public static final RegistrySupplier<Block> SENSOR_SIGHT		= register("sight_sensor", SightSensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_PROXIMITY	= register("proximity_sensor", ProximitySensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_REDSTONE		= register("redstone_sensor", RedstoneSensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_SIGHT		= register("sight_sensor", SightSensorBlock::new);
+	public static final RegistrySupplier<Block> SENSOR_SOUND		= register("sound_sensor", SoundSensorBlock::new);
 	
 	// Actors
+	public static final RegistrySupplier<Block> PIT					= register("pit", PitBlock::new);
 	public static final RegistrySupplier<Block> ACTOR_REDSTONE		= register("redstone_actor", RedstoneActorBlock::new);
+	public static final RegistrySupplier<Block> COBBLESTONE_HATCH	= register("cobblestone_hatch", HatchActorBlock::new);
+	public static final RegistrySupplier<Block> DIRT_HATCH			= register("dirt_hatch", HatchActorBlock::new);
+	public static final RegistrySupplier<Block> GRASS_HATCH			= register("grass_hatch", HatchActorBlock::new);
+	public static final RegistrySupplier<Block> STONE_HATCH			= register("stone_hatch", HatchActorBlock::new);
+	public static final RegistrySupplier<Block> STONE_BRICK_HATCH	= register("stone_brick_hatch", HatchActorBlock::new);
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

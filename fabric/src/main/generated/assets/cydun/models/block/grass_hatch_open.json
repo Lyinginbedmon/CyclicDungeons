@@ -1,0 +1,6 @@
+{
+  "parent": "cydun:block/template_hatch_block_open",
+  "textures": {
+    "texture": "minecraft:block/grass_block_top"
+  }
+}

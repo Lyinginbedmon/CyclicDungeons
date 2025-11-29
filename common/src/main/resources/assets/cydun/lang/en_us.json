@@ -11,7 +11,13 @@
 	"block.cydun.sound_sensor": "Sound Sensor",
 	"block.cydun.sight_sensor": "Sight Sensor",
 	"block.cydun.proximity_sensor": "Proximity Sensor",
+	"block.cydun.pit": "Pit",
 	"block.cydun.redstone_actor": "Redstone Emitter",
+	"block.cydun.stone_brick_hatch": "Stone Brick Hatch",
+	"block.cydun.stone_hatch": "Stone Hatch",
+	"block.cydun.cobblestone_hatch": "Cobblestone Hatch",
+	"block.cydun.grass_hatch": "Grass Hatch",
+	"block.cydun.dirt_hatch": "Dirt Hatch",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",
 	// Item tags

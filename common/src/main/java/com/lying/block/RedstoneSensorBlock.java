@@ -7,6 +7,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.StateManager;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.block.WireOrientation;
@@ -47,6 +48,9 @@ public class RedstoneSensorBlock extends AbstractTrapSensorBlock
 	
 	public int activity(BlockPos pos, World world)
 	{
-		return world.getBlockState(pos).get(POWERED) ? 15 : 0;
+		int max = 0;
+		for(Direction face : Direction.Type.HORIZONTAL)
+			max = Math.max(max, world.getEmittedRedstonePower(pos.offset(face), face, false));
+		return max;
 	}
 }

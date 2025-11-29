@@ -3,6 +3,7 @@ package com.lying;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.lying.block.PitBlock;
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
 import com.lying.init.CDBlockEntityTypes;
@@ -65,6 +66,6 @@ public final class CyclicDungeons
 	
 	private static void registerServerEvents()
 	{
-		
+		PitBlock.registerEvent();
 	}
 }

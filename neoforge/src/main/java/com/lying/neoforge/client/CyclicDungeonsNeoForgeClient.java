@@ -7,6 +7,7 @@ import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDBlocks;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.reference.Reference;
 
@@ -34,10 +35,12 @@ public class CyclicDungeonsNeoForgeClient
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SIGHT_SENSOR.get(), SightSensorBlockEntityRenderer::new);
     }
     
+	@SuppressWarnings("deprecation")
 	private static void registerBlockColors()
     {
     	MinecraftClient client = MinecraftClient.getInstance();
     	BlockColors colors = client.getBlockColors();
+    	colors.registerColorProvider(CyclicDungeonsClient.GRASS_COLOR, CDBlocks.GRASS_HATCH.get());
     }
 	
 	@SubscribeEvent

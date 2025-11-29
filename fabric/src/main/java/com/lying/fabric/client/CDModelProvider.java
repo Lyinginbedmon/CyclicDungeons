@@ -3,13 +3,12 @@ package com.lying.fabric.client;
 import static com.lying.reference.Reference.ModInfo.prefix;
 import static net.minecraft.client.data.BlockStateModelGenerator.createSingletonBlockState;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.lying.block.CollisionSensorBlock;
+import com.lying.block.HatchActorBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
@@ -25,7 +24,9 @@ import net.minecraft.client.data.BlockStateModelGenerator;
 import net.minecraft.client.data.BlockStateVariant;
 import net.minecraft.client.data.BlockStateVariantMap;
 import net.minecraft.client.data.ItemModelGenerator;
+import net.minecraft.client.data.ItemModels;
 import net.minecraft.client.data.Model;
+import net.minecraft.client.data.ModelIds;
 import net.minecraft.client.data.ModelSupplier;
 import net.minecraft.client.data.Models;
 import net.minecraft.client.data.TextureKey;
@@ -63,36 +64,30 @@ public class CDModelProvider extends FabricModelProvider
 		// Block items
 		CDItems.BASIC_BLOCK_ITEMS.stream().map(e -> (BlockItem)e.get()).forEach(entry -> registerBlockModel(entry, itemModelGenerator));
 		
-		registerTrapItemModels(itemModelGenerator);
+		registerSimpleItem(CDItems.PIT.get(), itemModelGenerator);
 	}
 	
 	private void registerTrapBlockStates(BlockStateModelGenerator generator)
 	{
-		for(Block block : List.of(
-				CDBlocks.SENSOR_REDSTONE, 
-				CDBlocks.ACTOR_REDSTONE
-				).stream().map(Supplier::get).toList())
-			registerPowerablePillar(block, generator);
-		
+		registerPowerablePillar(CDBlocks.SENSOR_REDSTONE.get(), generator);
 		PressureSensor.register(CDBlocks.SENSOR_COLLISION.get(), Blocks.POLISHED_ANDESITE, generator);
 		SoundSensor.register(CDBlocks.SENSOR_SOUND.get(), generator);
 		SightSensor.register(CDBlocks.SENSOR_SIGHT.get(), generator);
 		ProximitySensor.register(CDBlocks.SENSOR_PROXIMITY.get(), generator);
-	}
-	
-	private void registerTrapItemModels(ItemModelGenerator itemModelGenerator)
-	{
-		for(Item block : List.of(
-				CDItems.SENSOR_REDSTONE, 
-				CDItems.ACTOR_REDSTONE
-				).stream().map(Supplier::get).toList())
-			registerBlockModel((BlockItem)block, itemModelGenerator);
+		
+		generator.registerBuiltinWithParticle(CDBlocks.PIT.get(), CDItems.PIT.get());
+		registerPowerablePillar(CDBlocks.ACTOR_REDSTONE.get(), generator);
+		HatchActor.register(CDBlocks.STONE_BRICK_HATCH.get(), Blocks.STONE_BRICKS, generator);
+		HatchActor.register(CDBlocks.STONE_HATCH.get(), Blocks.STONE, generator);
+		HatchActor.register(CDBlocks.COBBLESTONE_HATCH.get(), Blocks.COBBLESTONE, generator);
+		HatchActor.registerGrass(CDBlocks.GRASS_HATCH.get(), generator);
+		HatchActor.register(CDBlocks.DIRT_HATCH.get(), Blocks.DIRT, generator);
 	}
 	
 	public void registerUnrotatedPillar(Block block, BlockStateModelGenerator generator)
 	{
-		TextureMap map = TextureMap.sideEnd(block);
-		map.put(TextureKey.PARTICLE, TextureMap.getSubId(block, "_side"));
+		TextureMap map = TextureMap.sideEnd(block)
+				.put(TextureKey.PARTICLE, TextureMap.getSubId(block, "_side"));
 		generator.blockStateCollector.accept(createSingletonBlockState(block, Models.CUBE_COLUMN.upload(block, map, generator.modelCollector)));
 	}
 	
@@ -111,20 +106,26 @@ public class CDModelProvider extends FabricModelProvider
 		generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(createBooleanModelMap(Properties.POWERED, 
 				createSubModel(block, "_on", Models.CUBE_COLUMN, texMapFunc, generator.modelCollector), 
 				Models.CUBE_COLUMN.upload(block, texMapFunc.apply(TextureMap.getId(block)), generator.modelCollector))));
-		
 	}
 	
-	private static void registerBlockModel(BlockItem item, ItemModelGenerator itemModelGenerator)
+	private static void registerSimpleItem(Item item, ItemModelGenerator generator)
 	{
-		itemModelGenerator.register(item, makeBlockModel(item));
+		TextureMap map = TextureMap.layer0(item);
+		Identifier reg = ModelIds.getItemModelId(item);
+		Identifier model = Models.GENERATED.upload(reg, map, generator.modelCollector);
+		generator.output.accept(item, ItemModels.basic(model));
+	}
+	
+	private static void registerBlockModel(BlockItem item, ItemModelGenerator generator)
+	{
+		generator.register(item, makeBlockModel(item));
 	}
 	
 	private static Model makeBlockModel(BlockItem item)
 	{
 		Block block = item.getBlock();
 		Identifier reg = Registries.BLOCK.getId(block);
-		Model model = new Model(Optional.of(Identifier.of(reg.getNamespace(), "block/"+reg.getPath())), Optional.empty());
-		return model;
+		return new Model(Optional.of(Identifier.of(reg.getNamespace(), "block/"+reg.getPath())), Optional.empty());
 	}
 	
 	private Identifier createSubModel(Block block, String suffix, Model model, Function<Identifier, TextureMap> texturesFactory, BiConsumer<Identifier, ModelSupplier> modelCollector)
@@ -282,6 +283,59 @@ public class CDModelProvider extends FabricModelProvider
 					.register(true, BlockStateVariant.create().put(VariantSettings.MODEL, modelOn));
 			
 			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
+	}
+	
+	private static class HatchActor
+	{
+		private static final Model MODEL = new Model(
+				Optional.of(prefix("block/template_hatch_block")),
+				Optional.empty(),
+				TextureKey.TEXTURE);
+		private static final Model MODEL_OPEN = new Model(
+				Optional.of(prefix("block/template_hatch_block_open")),
+				Optional.of("_open"),
+				TextureKey.TEXTURE);
+		
+		private static void registerGrass(Block block, BlockStateModelGenerator generator)
+		{
+			register(block, TextureMap.getSubId(Blocks.GRASS_BLOCK, "_top"), generator);
+		}
+		
+		private static void register(Block block, Block emulated, BlockStateModelGenerator generator)
+		{
+			register(block, TextureMap.getId(emulated), generator);
+		}
+		
+		private static void register(Block block, Identifier texture, BlockStateModelGenerator generator)
+		{
+			TextureMap map = TextureMap.texture(texture);
+			Identifier model = MODEL.upload(block, map, generator.modelCollector);
+			Identifier modelOn = MODEL_OPEN.upload(block, map, generator.modelCollector);
+			Identifier modelVoid = Models.PARTICLE.upload(block, "_interstitial", TextureMap.particle(texture), generator.modelCollector);
+			
+			BlockStateVariantMap.TripleProperty<Boolean, Boolean, Direction> variants = BlockStateVariantMap.create(HatchActorBlock.POWERED, HatchActorBlock.INTERSTITIAL, HatchActorBlock.FACING);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, variants, model, modelOn, modelVoid);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R90, variants, model, modelOn, modelVoid);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R180, variants, model, modelOn, modelVoid);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R270, variants, model, modelOn, modelVoid);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
+		
+		private static void appendSettings(Direction face, VariantSettings.Rotation y, BlockStateVariantMap.TripleProperty<Boolean, Boolean, Direction> map, Identifier model, Identifier modelOn, Identifier modelVoid)
+		{
+			final Function<BlockStateVariant,BlockStateVariant> rotator = v -> y == VariantSettings.Rotation.R0 ? v : v.put(VariantSettings.Y, y);
+			
+			// If we're unpowered, show closed model
+			map.register(false, false, face, rotator.apply(BlockStateVariant.create().put(VariantSettings.MODEL, model).put(VariantSettings.UVLOCK, true)));
+			map.register(false, true, face, rotator.apply(BlockStateVariant.create().put(VariantSettings.MODEL, model).put(VariantSettings.UVLOCK, true)));
+			
+			// If we're powered, show open model
+			map.register(true, false, face, rotator.apply(BlockStateVariant.create().put(VariantSettings.MODEL, modelOn)));
+			
+			// If we're interstitial and powered, disappear entirely
+			map.register(true, true, face, BlockStateVariant.create().put(VariantSettings.MODEL, modelVoid));
 		}
 	}
 }

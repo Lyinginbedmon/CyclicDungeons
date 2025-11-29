@@ -27,7 +27,13 @@ public class CDBlockEntityTypes
 	private static int tally = 0;
 	
 	public static final RegistrySupplier<BlockEntityType<TrapLogicBlockEntity>> TRAP_LOGIC	= register("trap_logic", TrapLogicBlockEntity::new, CDBlocks.TRAP_LOGIC.get());
-	public static final RegistrySupplier<BlockEntityType<TrapActorBlockEntity>> TRAP_ACTOR	= register("trap_actor", TrapActorBlockEntity::new, CDBlocks.ACTOR_REDSTONE.get());
+	public static final RegistrySupplier<BlockEntityType<TrapActorBlockEntity>> TRAP_ACTOR	= register("trap_actor", TrapActorBlockEntity::new, 
+			CDBlocks.ACTOR_REDSTONE.get(), 
+			CDBlocks.STONE_BRICK_HATCH.get(),
+			CDBlocks.STONE_HATCH.get(),
+			CDBlocks.COBBLESTONE_HATCH.get(),
+			CDBlocks.GRASS_HATCH.get(),
+			CDBlocks.DIRT_HATCH.get());
 	public static final RegistrySupplier<BlockEntityType<SoundSensorBlockEntity>> SOUND_SENSOR	= register("sound_sensor", SoundSensorBlockEntity::new, CDBlocks.SENSOR_SOUND.get());
 	public static final RegistrySupplier<BlockEntityType<SightSensorBlockEntity>> SIGHT_SENSOR	= register("sight_sensor", SightSensorBlockEntity::new, CDBlocks.SENSOR_SIGHT.get());
 	public static final RegistrySupplier<BlockEntityType<ProximitySensorBlockEntity>> PROXIMITY_SENSOR	= register("proximity_sensor", ProximitySensorBlockEntity::new, CDBlocks.SENSOR_PROXIMITY.get());

@@ -9,12 +9,25 @@ import com.lying.network.ShowDungeonLayoutPacket;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.color.block.BlockColorProvider;
+import net.minecraft.client.color.world.BiomeColors;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.world.biome.GrassColors;
 
 public class CyclicDungeonsClient
 {
 	public static final MinecraftClient mc = MinecraftClient.getInstance();
+	
+	public static final int BASE_LEAF = -12012264;
+	/** BlockColorProvider for local grass colour */
+	public static final BlockColorProvider GRASS_COLOR = (state, world, pos, tintIndex) -> world != null && pos != null ? BiomeColors.getGrassColor(world, pos) : GrassColors.getDefaultColor();
+	public static final int SPRUCE_LEAF = -10380959;
+	/** BlockColorProvider for spruce leaf colour */
+	public static final BlockColorProvider SPRUCE_COLOR = (state, world, pos, tintIndex) -> SPRUCE_LEAF;
+	public static final int BIRCH_LEAF = -8345771;
+	/** BlockColorProvider for birch leaf colour */
+	public static final BlockColorProvider BIRCH_COLOR = (state, world, pos, tintIndex) -> BIRCH_LEAF;
 	
 	public static void clientInit()
 	{

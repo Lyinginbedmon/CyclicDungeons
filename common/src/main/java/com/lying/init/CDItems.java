@@ -47,13 +47,19 @@ public class CDItems
 	public static final RegistrySupplier<Item> TRAP_LOGIC		= registerRareBlock("trap_logic", CDBlocks.TRAP_LOGIC, Rarity.EPIC);
 	public static final RegistrySupplier<Item> TRAP_LOGIC_DECOY	= registerBlockNoItem("trap_logic_decoy", CDBlocks.TRAP_LOGIC_DECOY, s -> s.rarity(Rarity.RARE));
 	
-	public static final RegistrySupplier<Item> SENSOR_REDSTONE	= registerRareBlockNoItem("redstone_sensor", CDBlocks.SENSOR_REDSTONE, Rarity.RARE);
+	public static final RegistrySupplier<Item> SENSOR_REDSTONE	= registerRareBlock("redstone_sensor", CDBlocks.SENSOR_REDSTONE, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_COLLISION	= registerRareBlock("collision_sensor", CDBlocks.SENSOR_COLLISION, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_SOUND		= registerRareBlock("sound_sensor", CDBlocks.SENSOR_SOUND, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_SIGHT		= registerRareBlock("sight_sensor", CDBlocks.SENSOR_SIGHT, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_PROXIMITY	= registerRareBlock("proximity_sensor", CDBlocks.SENSOR_PROXIMITY, Rarity.RARE);
 	
-	public static final RegistrySupplier<Item> ACTOR_REDSTONE	= registerRareBlockNoItem("redstone_actor", CDBlocks.ACTOR_REDSTONE, Rarity.RARE);
+	public static final RegistrySupplier<Item> PIT				= registerRareBlockNoItem("pit", CDBlocks.PIT, Rarity.RARE);
+	public static final RegistrySupplier<Item> ACTOR_REDSTONE	= registerRareBlock("redstone_actor", CDBlocks.ACTOR_REDSTONE, Rarity.RARE);
+	public static final RegistrySupplier<Item> STONE_BRICK_HATCH	= registerRareBlock("stone_brick_hatch", CDBlocks.STONE_BRICK_HATCH, Rarity.RARE);
+	public static final RegistrySupplier<Item> STONE_HATCH			= registerRareBlock("stone_hatch", CDBlocks.STONE_HATCH, Rarity.RARE);
+	public static final RegistrySupplier<Item> COBBLESTONE_HATCH	= registerRareBlock("cobblestone_hatch", CDBlocks.COBBLESTONE_HATCH, Rarity.RARE);
+	public static final RegistrySupplier<Item> GRASS_HATCH			= registerRareBlock("grass_hatch", CDBlocks.GRASS_HATCH, Rarity.RARE);
+	public static final RegistrySupplier<Item> DIRT_HATCH			= registerRareBlock("dirt_hatch", CDBlocks.DIRT_HATCH, Rarity.RARE);
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)
 	{

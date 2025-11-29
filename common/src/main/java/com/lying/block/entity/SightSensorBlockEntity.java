@@ -236,6 +236,9 @@ public class SightSensorBlockEntity extends BlockEntity
 	 */
 	protected static boolean canEyeSeePlayer(SightSensorBlockEntity eye, PlayerEntity player, World world)
 	{
+		if(eye.getEyePos().distanceTo(player.getEyePos()) > eye.sightRange)
+			return false;
+		
 		BlockHitResult trace = world.raycast(new RaycastContext(player.getEyePos(), eye.getEyePos(), RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, ShapeContext.absent()));
 		return trace.getType() == Type.MISS || trace.getBlockPos().getManhattanDistance(eye.getPos()) == 0;
 	}

@@ -7,9 +7,11 @@ import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDBlocks;
 import com.lying.init.CDScreenHandlerTypes;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 
@@ -35,7 +37,7 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     
     private static void registerBlockColors()
     {
-    	
+    	ColorProviderRegistry.BLOCK.register(CyclicDungeonsClient.GRASS_COLOR, CDBlocks.GRASS_HATCH.get());
     }
     
     private static void registerParticleProviders()

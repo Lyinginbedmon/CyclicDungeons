@@ -41,11 +41,6 @@ public class SightSensorBlock extends BlockWithEntity implements IWireableBlock
 		return new SightSensorBlockEntity(pos, state);
 	}
 	
-	protected VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
-	{
-		return SHAPE;
-	}
-	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
 	{
 		return SHAPE;
