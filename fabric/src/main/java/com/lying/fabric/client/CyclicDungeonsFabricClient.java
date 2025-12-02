@@ -7,7 +7,6 @@ import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDBlocks;
 import com.lying.init.CDScreenHandlerTypes;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -37,7 +36,7 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     
     private static void registerBlockColors()
     {
-    	ColorProviderRegistry.BLOCK.register(CyclicDungeonsClient.GRASS_COLOR, CDBlocks.GRASS_HATCH.get());
+    	CyclicDungeonsClient.registerColorHandlers(ColorProviderRegistry.BLOCK::register);
     }
     
     private static void registerParticleProviders()

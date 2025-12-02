@@ -12,6 +12,7 @@ import com.lying.block.HatchActorBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
+import com.lying.block.SwingingBladeBlock;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDItems;
 
@@ -82,6 +83,7 @@ public class CDModelProvider extends FabricModelProvider
 		HatchActor.register(CDBlocks.COBBLESTONE_HATCH.get(), Blocks.COBBLESTONE, generator);
 		HatchActor.registerGrass(CDBlocks.GRASS_HATCH.get(), generator);
 		HatchActor.register(CDBlocks.DIRT_HATCH.get(), Blocks.DIRT, generator);
+		SwingingBlade.register(CDBlocks.SWINGING_BLADE.get(), generator);
 	}
 	
 	public void registerUnrotatedPillar(Block block, BlockStateModelGenerator generator)
@@ -336,6 +338,43 @@ public class CDModelProvider extends FabricModelProvider
 			
 			// If we're interstitial and powered, disappear entirely
 			map.register(true, true, face, BlockStateVariant.create().put(VariantSettings.MODEL, modelVoid));
+		}
+	}
+	
+	private static class SwingingBlade
+	{
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			BlockStateVariantMap.DoubleProperty<Direction, Direction.Axis> variants = BlockStateVariantMap.create(SwingingBladeBlock.FACING, SwingingBladeBlock.AXIS);
+			Identifier wallHorizontalModel = TextureMap.getSubId(block, "_horizontal");
+			Identifier wallVerticalModel = TextureMap.getSubId(block, "_vertical");
+			
+			variants.register(Direction.UP, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			variants.register(Direction.DOWN, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			variants.register(Direction.NORTH, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			variants.register(Direction.EAST, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			variants.register(Direction.SOUTH, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			variants.register(Direction.WEST, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			
+			variants.register(Direction.UP, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.X, VariantSettings.Rotation.R270));
+			variants.register(Direction.UP, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.X, VariantSettings.Rotation.R270));
+			
+			variants.register(Direction.DOWN, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.X, VariantSettings.Rotation.R90));
+			variants.register(Direction.DOWN, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.X, VariantSettings.Rotation.R90));
+			
+			variants.register(Direction.NORTH, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel));
+			variants.register(Direction.NORTH, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			
+			variants.register(Direction.EAST, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R90));
+			variants.register(Direction.EAST, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.Y, VariantSettings.Rotation.R90));
+			
+			variants.register(Direction.SOUTH, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R180));
+			variants.register(Direction.SOUTH, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.Y, VariantSettings.Rotation.R180));
+			
+			variants.register(Direction.WEST, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			variants.register(Direction.WEST, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
 		}
 	}
 }

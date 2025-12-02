@@ -1,5 +1,7 @@
 package com.lying.client;
 
+import java.util.function.BiConsumer;
+
 import com.lying.CyclicDungeons;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlocks;
@@ -8,6 +10,7 @@ import com.lying.network.ShowDungeonLayoutPacket;
 
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
+import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.block.BlockColorProvider;
 import net.minecraft.client.color.world.BiomeColors;
@@ -39,6 +42,11 @@ public class CyclicDungeonsClient
 	private static void registerRenderers()
 	{
 		RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.SENSOR_SOUND.get());
+	}
+	
+	public static void registerColorHandlers(BiConsumer<BlockColorProvider, Block[]> function)
+	{
+		function.accept(GRASS_COLOR, new Block[] { CDBlocks.GRASS_HATCH.get() });
 	}
 	
 	private static void registerEventHandlers()

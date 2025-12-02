@@ -13,6 +13,7 @@ import com.lying.block.RedstoneActorBlock;
 import com.lying.block.RedstoneSensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
+import com.lying.block.SwingingBladeBlock;
 import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
 
@@ -66,6 +67,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> GRASS_HATCH			= register("grass_hatch", HatchActorBlock::new);
 	public static final RegistrySupplier<Block> STONE_HATCH			= register("stone_hatch", HatchActorBlock::new);
 	public static final RegistrySupplier<Block> STONE_BRICK_HATCH	= register("stone_brick_hatch", HatchActorBlock::new);
+	public static final RegistrySupplier<Block> SWINGING_BLADE		= register("swinging_blade", SwingingBladeBlock::new);
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{
