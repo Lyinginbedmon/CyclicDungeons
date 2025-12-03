@@ -4,6 +4,7 @@ import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
 import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
+import com.lying.client.renderer.block.SwingingBladeBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
@@ -27,6 +28,7 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_LOGIC.get(), WireableBlockEntityRenderer<TrapLogicBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SIGHT_SENSOR.get(), SightSensorBlockEntityRenderer::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.SWINGING_BLADE.get(), SwingingBladeBlockEntityRenderer::new);
     }
     
     private static void registerScreens()

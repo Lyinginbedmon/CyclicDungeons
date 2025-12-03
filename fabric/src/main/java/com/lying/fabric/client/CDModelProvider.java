@@ -66,6 +66,7 @@ public class CDModelProvider extends FabricModelProvider
 		CDItems.BASIC_BLOCK_ITEMS.stream().map(e -> (BlockItem)e.get()).forEach(entry -> registerBlockModel(entry, itemModelGenerator));
 		
 		registerSimpleItem(CDItems.PIT.get(), itemModelGenerator);
+		registerBlockModel((BlockItem)CDItems.SWINGING_BLADE.get(), "_horizontal", itemModelGenerator);
 	}
 	
 	private void registerTrapBlockStates(BlockStateModelGenerator generator)
@@ -83,6 +84,7 @@ public class CDModelProvider extends FabricModelProvider
 		HatchActor.register(CDBlocks.COBBLESTONE_HATCH.get(), Blocks.COBBLESTONE, generator);
 		HatchActor.registerGrass(CDBlocks.GRASS_HATCH.get(), generator);
 		HatchActor.register(CDBlocks.DIRT_HATCH.get(), Blocks.DIRT, generator);
+		SwingingBlade.registerBlade(CDBlocks.BLADE.get(), generator);
 		SwingingBlade.register(CDBlocks.SWINGING_BLADE.get(), generator);
 	}
 	
@@ -120,14 +122,19 @@ public class CDModelProvider extends FabricModelProvider
 	
 	private static void registerBlockModel(BlockItem item, ItemModelGenerator generator)
 	{
-		generator.register(item, makeBlockModel(item));
+		registerBlockModel(item, "", generator);
 	}
 	
-	private static Model makeBlockModel(BlockItem item)
+	private static void registerBlockModel(BlockItem item, String suffix, ItemModelGenerator generator)
+	{
+		generator.register(item, makeBlockModel(item, suffix));
+	}
+	
+	private static Model makeBlockModel(BlockItem item, String suffix)
 	{
 		Block block = item.getBlock();
 		Identifier reg = Registries.BLOCK.getId(block);
-		return new Model(Optional.of(Identifier.of(reg.getNamespace(), "block/"+reg.getPath())), Optional.empty());
+		return new Model(Optional.of(Identifier.of(reg.getNamespace(), "block/"+reg.getPath()+suffix)), Optional.empty());
 	}
 	
 	private Identifier createSubModel(Block block, String suffix, Model model, Function<Identifier, TextureMap> texturesFactory, BiConsumer<Identifier, ModelSupplier> modelCollector)
@@ -343,18 +350,20 @@ public class CDModelProvider extends FabricModelProvider
 	
 	private static class SwingingBlade
 	{
+		private static void registerBlade(Block block, BlockStateModelGenerator generator)
+		{
+			generator.blockStateCollector.accept(BlockStateModelGenerator.createSingletonBlockState(block, TextureMap.getId(block)));
+		}
+		
 		private static void register(Block block, BlockStateModelGenerator generator)
 		{
 			BlockStateVariantMap.DoubleProperty<Direction, Direction.Axis> variants = BlockStateVariantMap.create(SwingingBladeBlock.FACING, SwingingBladeBlock.AXIS);
 			Identifier wallHorizontalModel = TextureMap.getSubId(block, "_horizontal");
 			Identifier wallVerticalModel = TextureMap.getSubId(block, "_vertical");
 			
-			variants.register(Direction.UP, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
-			variants.register(Direction.DOWN, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
-			variants.register(Direction.NORTH, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
-			variants.register(Direction.EAST, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
-			variants.register(Direction.SOUTH, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
-			variants.register(Direction.WEST, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
+			// Default all the impossible axises, since a swinging blade cannot act on the same axis as its mounting bracket
+			for(Direction face : Direction.values())
+				variants.register(face, face.getAxis(), BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
 			
 			variants.register(Direction.UP, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.X, VariantSettings.Rotation.R270));
 			variants.register(Direction.UP, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.X, VariantSettings.Rotation.R270));
@@ -365,14 +374,14 @@ public class CDModelProvider extends FabricModelProvider
 			variants.register(Direction.NORTH, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel));
 			variants.register(Direction.NORTH, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel));
 			
-			variants.register(Direction.EAST, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R90));
 			variants.register(Direction.EAST, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.Y, VariantSettings.Rotation.R90));
+			variants.register(Direction.EAST, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R90));
 			
 			variants.register(Direction.SOUTH, Direction.Axis.X, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R180));
 			variants.register(Direction.SOUTH, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.Y, VariantSettings.Rotation.R180));
 			
-			variants.register(Direction.WEST, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R270));
 			variants.register(Direction.WEST, Direction.Axis.Y, BlockStateVariant.create().put(VariantSettings.MODEL, wallVerticalModel).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			variants.register(Direction.WEST, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R270));
 			
 			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
 		}

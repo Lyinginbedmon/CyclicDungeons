@@ -60,7 +60,7 @@ public class CDItems
 	public static final RegistrySupplier<Item> COBBLESTONE_HATCH	= registerRareBlock("cobblestone_hatch", CDBlocks.COBBLESTONE_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> GRASS_HATCH			= registerRareBlock("grass_hatch", CDBlocks.GRASS_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> DIRT_HATCH			= registerRareBlock("dirt_hatch", CDBlocks.DIRT_HATCH, Rarity.RARE);
-	public static final RegistrySupplier<Item> SWINGING_BLADE	= registerRareBlock("swinging_blade", CDBlocks.SWINGING_BLADE, Rarity.RARE);
+	public static final RegistrySupplier<Item> SWINGING_BLADE	= registerRareBlockNoItem("swinging_blade", CDBlocks.SWINGING_BLADE, Rarity.RARE);
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)
 	{

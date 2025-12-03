@@ -68,6 +68,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> STONE_HATCH			= register("stone_hatch", HatchActorBlock::new);
 	public static final RegistrySupplier<Block> STONE_BRICK_HATCH	= register("stone_brick_hatch", HatchActorBlock::new);
 	public static final RegistrySupplier<Block> SWINGING_BLADE		= register("swinging_blade", SwingingBladeBlock::new);
+	public static final RegistrySupplier<Block> BLADE				= register("blade", Block::new);
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{
