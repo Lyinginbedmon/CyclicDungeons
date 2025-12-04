@@ -14,9 +14,14 @@ import net.minecraft.world.World;
 
 public class TrapActorBlockEntity extends AbstractWireableBlockEntity
 {
+	protected <T extends TrapActorBlockEntity> TrapActorBlockEntity(BlockEntityType<T> type, BlockPos pos, BlockState state)
+	{
+		super(type, pos, state);
+	}
+	
 	public TrapActorBlockEntity(BlockPos pos, BlockState state)
 	{
-		super(CDBlockEntityTypes.TRAP_ACTOR.get(), pos, state);
+		this(CDBlockEntityTypes.TRAP_ACTOR.get(), pos, state);
 	}
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)

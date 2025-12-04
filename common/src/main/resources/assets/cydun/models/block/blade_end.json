@@ -1,0 +1,96 @@
+{
+	"format_version": "1.21.6",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"particle": "#wood",
+		"wood": "block/stripped_dark_oak_log",
+		"blade": "block/iron_block"
+	},
+	"elements": [
+		{
+			"from": [7.5, 10, 4],
+			"to": [8.5, 15, 12],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 13, 7]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"east": {"uv": [0, 0, 8, 5], "texture": "#blade"},
+				"south": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"west": {"uv": [0, 0, 8, 5], "texture": "#blade"},
+				"up": {"uv": [0, 0, 1, 8], "texture": "#blade"},
+				"down": {"uv": [0, 0, 1, 8], "texture": "#blade"}
+			}
+		},
+		{
+			"from": [7.5, 8, 14],
+			"to": [8.5, 13, 15],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 11, 12]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"east": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"south": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"west": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"up": {"uv": [0, 0, 1, 1], "texture": "#blade"},
+				"down": {"uv": [0, 0, 1, 1], "texture": "#blade"}
+			}
+		},
+		{
+			"from": [7.5, 9, 12],
+			"to": [8.5, 14, 14],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 12, 9]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"east": {"uv": [0, 0, 2, 5], "texture": "#blade"},
+				"south": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"west": {"uv": [0, 0, 2, 5], "texture": "#blade"},
+				"up": {"uv": [0, 0, 1, 2], "texture": "#blade"},
+				"down": {"uv": [0, 0, 1, 2], "texture": "#blade"}
+			}
+		},
+		{
+			"from": [7.5, 9, 2],
+			"to": [8.5, 14, 4],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 12, -1]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"east": {"uv": [0, 0, 2, 5], "texture": "#blade"},
+				"south": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"west": {"uv": [0, 0, 2, 5], "texture": "#blade"},
+				"up": {"uv": [0, 0, 1, 2], "texture": "#blade"},
+				"down": {"uv": [0, 0, 1, 2], "texture": "#blade"}
+			}
+		},
+		{
+			"from": [7.5, 8, 1],
+			"to": [8.5, 13, 2],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 11, -1]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"east": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"south": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"west": {"uv": [0, 0, 1, 5], "texture": "#blade"},
+				"up": {"uv": [0, 0, 1, 1], "texture": "#blade"},
+				"down": {"uv": [0, 0, 1, 1], "texture": "#blade"}
+			}
+		},
+		{
+			"from": [7, 0, 7],
+			"to": [9, 13, 9],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 0, 7]},
+			"faces": {
+				"north": {"uv": [0, 0, 2, 13], "texture": "#wood"},
+				"east": {"uv": [0, 0, 2, 13], "texture": "#wood"},
+				"south": {"uv": [0, 0, 2, 13], "texture": "#wood"},
+				"west": {"uv": [0, 0, 2, 13], "texture": "#wood"},
+				"up": {"uv": [0, 0, 2, 2], "texture": "#wood"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "blade",
+			"origin": [7.5, 30, 7],
+			"color": 0,
+			"children": [0, 1, 2, 3, 4, 5]
+		}
+	]
+}

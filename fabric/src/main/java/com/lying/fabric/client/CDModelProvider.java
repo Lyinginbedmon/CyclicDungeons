@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import com.lying.block.BladeBlock;
+import com.lying.block.BladeBlock.Part;
 import com.lying.block.CollisionSensorBlock;
 import com.lying.block.HatchActorBlock;
 import com.lying.block.ProximitySensorBlock;
@@ -352,7 +354,12 @@ public class CDModelProvider extends FabricModelProvider
 	{
 		private static void registerBlade(Block block, BlockStateModelGenerator generator)
 		{
-			generator.blockStateCollector.accept(BlockStateModelGenerator.createSingletonBlockState(block, TextureMap.getId(block)));
+			BlockStateVariantMap map = BlockStateVariantMap.create(BladeBlock.PART)
+				.register(Part.MOUNT, BlockStateVariant.create().put(VariantSettings.MODEL, TextureMap.getSubId(block, "_mount")))
+				.register(Part.ARM, BlockStateVariant.create().put(VariantSettings.MODEL, TextureMap.getSubId(block, "_arm")))
+				.register(Part.BLADE, BlockStateVariant.create().put(VariantSettings.MODEL, TextureMap.getSubId(block, "_end")));
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(map));
 		}
 		
 		private static void register(Block block, BlockStateModelGenerator generator)

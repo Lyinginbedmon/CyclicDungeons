@@ -4,15 +4,14 @@ import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
 import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
+import com.lying.client.renderer.block.SwingingBladeBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDBlocks;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.reference.Reference;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -33,14 +32,14 @@ public class CyclicDungeonsNeoForgeClient
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_LOGIC.get(), WireableBlockEntityRenderer<TrapLogicBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SIGHT_SENSOR.get(), SightSensorBlockEntityRenderer::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.SWINGING_BLADE.get(), SwingingBladeBlockEntityRenderer::new);
     }
     
 	@SuppressWarnings("deprecation")
 	private static void registerBlockColors()
     {
     	MinecraftClient client = MinecraftClient.getInstance();
-    	BlockColors colors = client.getBlockColors();
-    	colors.registerColorProvider(CyclicDungeonsClient.GRASS_COLOR, CDBlocks.GRASS_HATCH.get());
+    	CyclicDungeonsClient.registerColorHandlers(client.getBlockColors()::registerColorProvider);
     }
 	
 	@SubscribeEvent

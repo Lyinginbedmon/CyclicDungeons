@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.block.BladeBlock;
 import com.lying.block.CollisionSensorBlock;
 import com.lying.block.HatchActorBlock;
 import com.lying.block.PitBlock;
@@ -68,7 +69,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> STONE_HATCH			= register("stone_hatch", HatchActorBlock::new);
 	public static final RegistrySupplier<Block> STONE_BRICK_HATCH	= register("stone_brick_hatch", HatchActorBlock::new);
 	public static final RegistrySupplier<Block> SWINGING_BLADE		= register("swinging_blade", SwingingBladeBlock::new);
-	public static final RegistrySupplier<Block> BLADE				= register("blade", Block::new);
+	public static final RegistrySupplier<Block> BLADE				= register("blade", BladeBlock::new);
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

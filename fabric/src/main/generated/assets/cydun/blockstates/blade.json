@@ -1,7 +1,13 @@
 {
   "variants": {
-    "": {
-      "model": "cydun:block/blade"
+    "part=arm": {
+      "model": "cydun:block/blade_arm"
+    },
+    "part=blade": {
+      "model": "cydun:block/blade_end"
+    },
+    "part=mount": {
+      "model": "cydun:block/blade_mount"
     }
   }
 }

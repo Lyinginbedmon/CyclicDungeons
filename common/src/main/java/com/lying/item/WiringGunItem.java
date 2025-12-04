@@ -26,6 +26,8 @@ import net.minecraft.world.World;
 
 public class WiringGunItem extends Item
 {
+	public static final double MAX_WIRE_RANGE = 32D;
+	
 	public WiringGunItem(Settings settings)
 	{
 		super(settings.component(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty()));
@@ -63,7 +65,7 @@ public class WiringGunItem extends Item
 				return ActionResult.SUCCESS;
 			}
 			// If too far away = Prevent wiring
-			else if(!wiring.pos().get().isWithinDistance(blockPos, 32))
+			else if(!wiring.pos().get().isWithinDistance(blockPos, MAX_WIRE_RANGE))
 			{
 				context.getPlayer().sendMessage(translate("gui", "wiring_gun.out_of_range", linkName), true);
 				return ActionResult.PASS;

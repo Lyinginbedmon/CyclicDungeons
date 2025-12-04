@@ -1,0 +1,29 @@
+{
+	"format_version": "1.21.6",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"particle": "#wood",
+		"wood": "block/stripped_dark_oak_log"
+	},
+	"elements": [
+		{
+			"from": [7, 0, 7],
+			"to": [9, 16, 9],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 0, 7]},
+			"faces": {
+				"north": {"uv": [0, 0, 2, 16], "texture": "#wood"},
+				"east": {"uv": [0, 0, 2, 16], "texture": "#wood"},
+				"south": {"uv": [0, 0, 2, 16], "texture": "#wood"},
+				"west": {"uv": [0, 0, 2, 16], "texture": "#wood"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "arm",
+			"origin": [7, 0, 7],
+			"color": 0,
+			"children": [0]
+		}
+	]
+}
