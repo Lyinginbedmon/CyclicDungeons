@@ -1,0 +1,50 @@
+{
+  "variants": {
+    "facing=down,powered=false": {
+      "model": "cydun:block/flame_jet",
+      "x": 90
+    },
+    "facing=down,powered=true": {
+      "model": "cydun:block/flame_jet_active",
+      "x": 90
+    },
+    "facing=east,powered=false": {
+      "model": "cydun:block/flame_jet",
+      "y": 90
+    },
+    "facing=east,powered=true": {
+      "model": "cydun:block/flame_jet_active",
+      "y": 90
+    },
+    "facing=north,powered=false": {
+      "model": "cydun:block/flame_jet"
+    },
+    "facing=north,powered=true": {
+      "model": "cydun:block/flame_jet_active"
+    },
+    "facing=south,powered=false": {
+      "model": "cydun:block/flame_jet",
+      "y": 180
+    },
+    "facing=south,powered=true": {
+      "model": "cydun:block/flame_jet_active",
+      "y": 180
+    },
+    "facing=up,powered=false": {
+      "model": "cydun:block/flame_jet",
+      "x": 270
+    },
+    "facing=up,powered=true": {
+      "model": "cydun:block/flame_jet_active",
+      "x": 270
+    },
+    "facing=west,powered=false": {
+      "model": "cydun:block/flame_jet",
+      "y": 270
+    },
+    "facing=west,powered=true": {
+      "model": "cydun:block/flame_jet_active",
+      "y": 270
+    }
+  }
+}

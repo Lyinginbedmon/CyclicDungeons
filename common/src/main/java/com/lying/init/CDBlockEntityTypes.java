@@ -5,6 +5,7 @@ import static com.lying.reference.Reference.ModInfo.prefix;
 import java.util.Set;
 
 import com.lying.CyclicDungeons;
+import com.lying.block.entity.FlameJetBlockEntity;
 import com.lying.block.entity.ProximitySensorBlockEntity;
 import com.lying.block.entity.SightSensorBlockEntity;
 import com.lying.block.entity.SoundSensorBlockEntity;
@@ -39,6 +40,7 @@ public class CDBlockEntityTypes
 			CDBlocks.GRASS_HATCH.get(),
 			CDBlocks.DIRT_HATCH.get());
 	public static final RegistrySupplier<BlockEntityType<SwingingBladeBlockEntity>> SWINGING_BLADE	= register("swinging_blade", SwingingBladeBlockEntity::new, CDBlocks.SWINGING_BLADE.get());
+	public static final RegistrySupplier<BlockEntityType<FlameJetBlockEntity>> FLAME_JET		= register("flame_jet", FlameJetBlockEntity::new, CDBlocks.FLAME_JET.get());
 	
 	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, Block... blocksIn)
 	{

@@ -10,7 +10,8 @@ import java.util.function.Function;
 import com.lying.block.BladeBlock;
 import com.lying.block.BladeBlock.Part;
 import com.lying.block.CollisionSensorBlock;
-import com.lying.block.HatchActorBlock;
+import com.lying.block.FlameJetBlock;
+import com.lying.block.HatchBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
@@ -88,6 +89,7 @@ public class CDModelProvider extends FabricModelProvider
 		HatchActor.register(CDBlocks.DIRT_HATCH.get(), Blocks.DIRT, generator);
 		SwingingBlade.registerBlade(CDBlocks.BLADE.get(), generator);
 		SwingingBlade.register(CDBlocks.SWINGING_BLADE.get(), generator);
+		FlameJet.register(CDBlocks.FLAME_JET.get(), generator);
 	}
 	
 	public void registerUnrotatedPillar(Block block, BlockStateModelGenerator generator)
@@ -325,7 +327,7 @@ public class CDModelProvider extends FabricModelProvider
 			Identifier modelOn = MODEL_OPEN.upload(block, map, generator.modelCollector);
 			Identifier modelVoid = Models.PARTICLE.upload(block, "_interstitial", TextureMap.particle(texture), generator.modelCollector);
 			
-			BlockStateVariantMap.TripleProperty<Boolean, Boolean, Direction> variants = BlockStateVariantMap.create(HatchActorBlock.POWERED, HatchActorBlock.INTERSTITIAL, HatchActorBlock.FACING);
+			BlockStateVariantMap.TripleProperty<Boolean, Boolean, Direction> variants = BlockStateVariantMap.create(HatchBlock.POWERED, HatchBlock.INTERSTITIAL, HatchBlock.FACING);
 			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, variants, model, modelOn, modelVoid);
 			appendSettings(Direction.EAST, VariantSettings.Rotation.R90, variants, model, modelOn, modelVoid);
 			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R180, variants, model, modelOn, modelVoid);
@@ -391,6 +393,30 @@ public class CDModelProvider extends FabricModelProvider
 			variants.register(Direction.WEST, Direction.Axis.Z, BlockStateVariant.create().put(VariantSettings.MODEL, wallHorizontalModel).put(VariantSettings.Y, VariantSettings.Rotation.R270));
 			
 			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
+	}
+	
+	private static class FlameJet
+	{
+		private static final Model MODEL = new Model(
+				Optional.of(prefix("block/template_flame_jet")),
+				Optional.empty(),
+				TextureKey.TEXTURE);
+		
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			Identifier model = MODEL.upload(block, TextureMap.texture(block), generator.modelCollector);
+			Identifier modelOn = MODEL.upload(block, "_active", TextureMap.texture(TextureMap.getSubId(block, "_active")), generator.modelCollector);
+			
+			BlockStateVariantMap.DoubleProperty<Direction, Boolean> map = BlockStateVariantMap.create(FlameJetBlock.FACING, FlameJetBlock.POWERED);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, map, model, modelOn);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R180, map, model, modelOn);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R0, VariantSettings.Rotation.R90, map, model, modelOn);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R0, VariantSettings.Rotation.R270, map, model, modelOn);
+			appendSettings(Direction.UP, VariantSettings.Rotation.R270, VariantSettings.Rotation.R0, map, model, modelOn);
+			appendSettings(Direction.DOWN, VariantSettings.Rotation.R90, VariantSettings.Rotation.R0, map, model, modelOn);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(map));
 		}
 	}
 }

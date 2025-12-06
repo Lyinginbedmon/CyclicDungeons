@@ -1,0 +1,6 @@
+{
+  "parent": "cydun:block/template_flame_jet",
+  "textures": {
+    "texture": "cydun:block/flame_jet"
+  }
+}

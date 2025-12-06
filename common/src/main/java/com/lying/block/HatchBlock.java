@@ -22,9 +22,9 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 import net.minecraft.world.tick.ScheduledTickView;
 
-public class HatchActorBlock extends AbstractTrapActorBlock
+public class HatchBlock extends AbstractTrapActorBlock
 {
-	public static final MapCodec<HatchActorBlock> CODEC = RedstoneActorBlock.createCodec(HatchActorBlock::new);
+	public static final MapCodec<HatchBlock> CODEC = RedstoneActorBlock.createCodec(HatchBlock::new);
 
 	public static final BooleanProperty POWERED	= Properties.POWERED;
 	public static final BooleanProperty INTERSTITIAL = BooleanProperty.of("interstitial");
@@ -33,7 +33,7 @@ public class HatchActorBlock extends AbstractTrapActorBlock
 	public static final VoxelShape SHAPE_CLOSED	= Block.createCuboidShape(0, 14, 0, 16, 16, 16);
 	public static final VoxelShape SHAPE_OPEN	= VoxelShapes.empty();
 	
-	public HatchActorBlock(Settings settingsIn)
+	public HatchBlock(Settings settingsIn)
 	{
 		super(settingsIn);
 		setDefaultState(getDefaultState().with(POWERED, false).with(FACING, Direction.NORTH).with(INTERSTITIAL, false));
@@ -71,7 +71,7 @@ public class HatchActorBlock extends AbstractTrapActorBlock
 	
 	protected static boolean isInterstitial(Direction face, WorldView world, BlockPos pos)
 	{
-		return world.getBlockState(pos.offset(face.getOpposite())).getBlock() instanceof HatchActorBlock;
+		return world.getBlockState(pos.offset(face.getOpposite())).getBlock() instanceof HatchBlock;
 	}
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
