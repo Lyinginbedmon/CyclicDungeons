@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import org.joml.Vector2i;
 
 import com.lying.CyclicDungeons;
+import com.lying.blueprint.processor.BattleRoomProcessor;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.grammar.GrammarTerm;
@@ -66,6 +67,7 @@ public class CDTerms
 			.neverBefore(CDTerms.END));
 	public static final Supplier<GrammarTerm> BATTLE		= register("battle", () -> GrammarTerm.Builder.create(0xC80707, DyeColor.ORANGE)
 			.size(size(8, 8, 14, 14))
+			.setProcessor(BattleRoomProcessor::new)
 			.withTileSet(CDRoomTileSets.BATTLE_ROOM_TILESET)
 			.nonconsecutive()
 			.weight(3));

@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
+import com.lying.blueprint.processor.IRoomProcessor;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
@@ -34,6 +35,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 
@@ -55,7 +57,10 @@ public abstract class GrammarTerm
 	private final int weight;
 	private final boolean isReplaceable, isPlaceable, isBranchInjector;
 	private final TermConditions conditions;
+	
+	private final Supplier<IRoomProcessor> processorGetter;
 	private final Function<Random, Vector2i> sizeFunc;
+	private final PrepareRoom prepFunc;
 	private final Map<Tile,Float> tileSet;
 	
 	private GrammarTerm(
@@ -63,6 +68,8 @@ public abstract class GrammarTerm
 			int weightIn, 
 			int colourIn, 
 			DyeColor colorIn, 
+			Supplier<IRoomProcessor> processorIn,
+			PrepareRoom prepFuncIn,
 			Function<Random, Vector2i> sizeFuncIn, 
 			boolean placeable, 
 			boolean replaceable, 
@@ -74,6 +81,8 @@ public abstract class GrammarTerm
 		weight = weightIn;
 		colour = colourIn;
 		color = colorIn;
+		processorGetter = processorIn;
+		prepFunc = prepFuncIn;
 		sizeFunc = sizeFuncIn;
 		conditions = conditionsIn;
 		tileSet = tileSetIn;
@@ -116,11 +125,24 @@ public abstract class GrammarTerm
 		// Pre-seed doorways to connecting rooms
 		preseedDoorways(node, map, passages);
 		
+		RoomMetadata meta = node.metadata();
+		IRoomProcessor processor = processorGetter.get();
+		processor.applyPreProcessing(node, meta, map, world);
+		
 		// Fill rest of tileset with WFC generation
 		TileGenerator.generate(map, tileSet, world.getRandom());
 		
 		map.finalise();
-		return map.generate(position, world);
+		
+		if(map.generate(position, world))
+		{
+			Box box = node.worldBox().offset(position);
+			BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
+			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ);
+			processor.applyPostProcessing(min, max, world, node, meta);
+			return true;
+		}
+		return false;
 	}
 	
 	protected static void preseedDoorways(BlueprintRoom node, BlueprintTileGrid map, List<BlueprintPassage> passages)
@@ -150,7 +172,12 @@ public abstract class GrammarTerm
 	
 	protected abstract void onApply(GrammarRoom room, GrammarPhrase graph);
 	
-	public Vector2i size(Random rand) { return sizeFunc.apply(rand); }
+	public void prepare(RoomMetadata metadata, Random rand)
+	{
+		prepFunc.applyTo(metadata, this, rand);
+	}
+	
+	protected Vector2i size(Random rand) { return sizeFunc.apply(rand); }
 	
 	public static GrammarRoom injectRoom(GrammarRoom room, GrammarPhrase graph)
 	{
@@ -184,6 +211,13 @@ public abstract class GrammarTerm
 		return rooms != null && !rooms.isEmpty() && rooms.stream().filter(Objects::nonNull).anyMatch(r -> r.metadata().is(term));
 	}
 	
+	@FunctionalInterface
+	public static interface PrepareRoom
+	{
+		/** Sets the room size and other handling prior to blueprint scrunching */
+		public void applyTo(RoomMetadata data, GrammarTerm term, Random rand);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public static class Builder
 	{
@@ -200,6 +234,9 @@ public abstract class GrammarTerm
 		private List<Supplier<GrammarTerm>> after = Lists.newArrayList(), before = Lists.newArrayList();
 		private List<Supplier<GrammarTerm>> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
 		private TermApplyFunc applyFunc = (t,r,g) -> {};
+		
+		private Supplier<IRoomProcessor> processor = IRoomProcessor.NOOP;
+		private PrepareRoom prepFunc = (d,t,r) -> d.setSize(t.size(r));
 		private Function<Random, Vector2i> sizeFunc = r -> new Vector2i(3 + r.nextInt(4), 3 + r.nextInt(4));
 		private Map<Tile,Float> tileSet = CDRoomTileSets.DEFAULT_TILESET;
 		
@@ -320,6 +357,12 @@ public abstract class GrammarTerm
 			return this;
 		}
 		
+		public Builder setProcessor(Supplier<IRoomProcessor> processorIn)
+		{
+			processor = processorIn;
+			return this;
+		}
+		
 		public GrammarTerm build(Identifier registryName)
 		{
 			TermConditions conditions = TermConditions.create()
@@ -331,7 +374,7 @@ public abstract class GrammarTerm
 					.onlyAfter(after).neverAfter(notAfter)
 					.onlyBefore(before).neverBefore(notBefore);
 			
-			return new GrammarTerm(registryName, weight, colour, color, sizeFunc, placeable, replaceable, injects, conditions, tileSet)
+			return new GrammarTerm(registryName, weight, colour, color, processor, prepFunc, sizeFunc, placeable, replaceable, injects, conditions, tileSet)
 				{
 					public void onApply(GrammarRoom room, GrammarPhrase graph) { applyFunc.apply(this, room, graph); }
 				};

@@ -9,10 +9,12 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintOrganiser;
+import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.BlueprintScruncher;
 import com.lying.grammar.CDGrammar;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
+import com.lying.init.CDThemes;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -69,26 +71,9 @@ public class CDCommands
 				);
 		});
 	}
-	
-	public static GrammarPhrase parsePhrase(NbtCompound nbt) throws CommandSyntaxException
-	{
-		if(nbt.contains("Phrase", NbtElement.LIST_TYPE))
-		{
-			NbtList phrase = nbt.getList("Phrase", NbtElement.STRING_TYPE);
-			if(phrase.isEmpty())
-				throw PHRASE_PARSE_FAILED_EXCEPTION.create();
-			
-			List<String> terms = Lists.newArrayList();
-			phrase.forEach(e -> terms.add(e.asString()));
-			return GrammarPhrase.parsePhrase(terms.toArray(new String[0]));
-		}
-		else
-			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
-	}
-	
 	private static int tryParsePhrase(NbtCompound nbt, ServerCommandSource source) throws CommandSyntaxException
 	{
-		GrammarPhrase graph = parsePhrase(nbt);
+		GrammarPhrase graph = GrammarPhrase.fromNbt(nbt);
 		if(graph.isEmpty())
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
 		if(source.getPlayer() != null)
@@ -98,7 +83,7 @@ public class CDCommands
 	
 	private static int tryPreview(NbtCompound nbt, Random rand, ServerCommandSource source) throws CommandSyntaxException
 	{
-		GrammarPhrase graph = parsePhrase(nbt);
+		GrammarPhrase graph = GrammarPhrase.fromNbt(nbt);
 		if(graph.isEmpty())
 			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
 		CDGrammar.generate(graph, rand);
@@ -136,13 +121,12 @@ public class CDCommands
 		CDGrammar.generate(graph, rand);
 		
 		Blueprint blueprint = Blueprint.fromGraph(graph);
-		blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
+		blueprint.stream().map(BlueprintRoom::metadata).forEach(meta -> meta.type().prepare(meta, rand));
 		BlueprintOrganiser.Circular.create().organise(blueprint, rand);
 		if(blueprint.hasErrors())
 			throw GRAPH_FAILED_EXCEPTION.create();
 		
 		BlueprintScruncher.collapse(blueprint, false);
-//		BlueprintScruncher.collapse(blueprint, true);
 		if(blueprint.hasErrors())
 			throw SCRUNCH_FAILED_EXCEPTION.create();
 		

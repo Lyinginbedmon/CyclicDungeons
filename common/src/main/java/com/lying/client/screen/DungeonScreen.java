@@ -12,6 +12,7 @@ import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintOrganiser;
 import com.lying.blueprint.BlueprintPassage;
+import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.BlueprintScruncher;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
@@ -265,7 +266,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 						blueprint = Blueprint.fromGraph(graph);
 						blueprint.updateCriticalPath();
 						Random rand = Random.create(randSeed);
-						blueprint.forEach(node -> node.metadata().setSize(node.metadata().type().size(rand)));
+						blueprint.stream().map(BlueprintRoom::metadata).forEach(meta -> meta.type().prepare(meta, rand));
 						BlueprintOrganiser.Tree.create().organise(blueprint, rand);
 						cacheErrors();
 						updatePathCaches();

@@ -1,12 +1,16 @@
 package com.lying.grammar;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.blueprint.processor.IRoomProcessor;
 import com.lying.grid.GridTile;
 import com.lying.init.CDTerms;
+import com.lying.init.CDThemes;
+import com.lying.init.CDThemes.Theme;
 import com.lying.reference.Reference;
 import com.lying.utility.Vector2iUtils;
 import com.lying.worldgen.Tile;
@@ -16,6 +20,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.MutableText;
+import net.minecraft.util.Identifier;
 
 /** Metadata describing non-structural details of a dungeon room */
 public class RoomMetadata
@@ -28,13 +33,21 @@ public class RoomMetadata
 	public static final Codec<RoomMetadata> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Codec.INT.fieldOf("Depth").forGetter(RoomMetadata::depth),
 			VEC_CODEC.fieldOf("Size").forGetter(RoomMetadata::size),
-			GrammarTerm.CODEC.fieldOf("Type").forGetter(RoomMetadata::type)
-			).apply(instance, (d,s,t) -> new RoomMetadata().setDepth(d).setSize(s).setType(t)));
+			GrammarTerm.CODEC.fieldOf("Type").forGetter(RoomMetadata::type),
+			Identifier.CODEC.optionalFieldOf("Variant").forGetter(RoomMetadata::processorID)
+			).apply(instance, (d,s,t,v) -> 
+			{
+				RoomMetadata meta = new RoomMetadata().setDepth(d).setSize(s).setType(t);
+				v.ifPresent(id -> meta.setProcessorID(id));
+				return meta;
+			}));
 	
 	private GrammarTerm type = CDTerms.BLANK.get();
 	private Vector2i tileSize = new Vector2i(3, 3);
 	private List<GridTile> tileFootprint = Lists.newArrayList();
 	private int depth = 0;
+	private Theme theme = CDThemes.BASIC.get();
+	private Optional<Identifier> processorID = Optional.empty();
 	
 	public RoomMetadata()
 	{
@@ -71,8 +84,18 @@ public class RoomMetadata
 		return Reference.ModInfo.translate("debug", "room", vec2ToString(tileSize), type.name(), depth);
 	}
 	
+	public RoomMetadata setTheme(Theme themeIn) { theme = themeIn; return this; }
+	public Theme theme() { return this.theme; }
+	
 	public RoomMetadata setDepth(int d) { depth = d; return this; }
 	public int depth() { return depth; }
+	
+	/** An ID value used by {@link IRoomProcessor} when choosing a variation */
+	public Optional<Identifier> processorID() { return this.processorID; }
+	public void setProcessorID(Identifier idIn)
+	{
+		this.processorID = idIn == null ? Optional.empty() : Optional.of(idIn);
+	}
 	
 	public RoomMetadata setSize(Vector2i sizeIn)
 	{
