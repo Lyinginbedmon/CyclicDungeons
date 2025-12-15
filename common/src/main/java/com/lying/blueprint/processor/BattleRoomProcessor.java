@@ -1,6 +1,13 @@
 package com.lying.blueprint.processor;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.jetbrains.annotations.Nullable;
+
+import com.google.common.collect.Lists;
 import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
+import com.lying.blueprint.processor.BattleRoomProcessor.SquadBattleEntry.SquadEntry;
 import com.lying.init.CDThemes.Theme;
 
 import net.minecraft.entity.Entity;
@@ -9,6 +16,7 @@ import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -20,12 +28,38 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 	public void buildRegistry(Theme theme)
 	{
 		register("zombie_crowd", new SimpleBattleEntry<>(EntityType.ZOMBIE, 4, 8));
-		register("husk_crowd", new SimpleBattleEntry<>(EntityType.HUSK, 3, 5));
+		register("skeletons", new SimpleBattleEntry<>(EntityType.SKELETON, 3, 5));
 		register("coven", new SimpleBattleEntry<>(EntityType.WITCH, 2, 3));
+		register("fire_team", new SquadBattleEntry()
+				.add(SquadEntry.Builder.of(EntityType.WITHER_SKELETON).build())
+				.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()));
+		register("pillager_squad", new SquadBattleEntry()
+				.add(SquadEntry.Builder.of(EntityType.EVOKER).count(0, 1).build())
+				.add(SquadEntry.Builder.of(EntityType.VINDICATOR).count(1, 2).build())
+				.add(SquadEntry.Builder.of(EntityType.PILLAGER).count(2, 3).build()));
 	}
 	
 	protected abstract class BattleEntry implements IProcessorEntry
 	{
+		protected static final int SEARCH_ATTEMPTS = 20;
+		
+		@Nullable
+		protected static BlockPos findSpawnablePosition(EntityType<? extends Entity> type, BlockPos min, BlockPos max, ServerWorld world, Random rand, int searchAttempts)
+		{
+			BlockPos pos;
+			boolean isValid = false;
+			do
+			{
+				pos = new BlockPos(
+					rand.nextBetween(min.getX() + 1, max.getX() - 1), 
+					rand.nextBetween(min.getY() + 1, max.getY() - 1), 
+					rand.nextBetween(min.getZ() + 1, max.getZ() - 1));
+				isValid = canPlaceAt(pos, world, type);
+			}
+			while(--searchAttempts > 0 && !isValid);
+			return isValid ? pos : null;
+		}
+		
 		protected static <T extends Entity> boolean canPlaceAt(BlockPos pos, ServerWorld world, EntityType<T> type)
 		{
 			if(!SpawnLocationTypes.ON_GROUND.isSpawnPositionOk(world, pos, type))
@@ -65,7 +99,7 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 				
 				// Where possible, set the mob's home position to encourage them to stay in the room
 				if(mob.getBrain().hasMemoryModule(MemoryModuleType.HOME))
-					mob.getBrain().remember(MemoryModuleType.HOME, new GlobalPos(world.getRegistryKey(), new BlockPos(pos)));
+					mob.getBrain().remember(MemoryModuleType.HOME, new GlobalPos(world.getRegistryKey(), pos));
 				
 				if(world.spawnNewEntityAndPassengers(entity))
 					return true;
@@ -87,26 +121,120 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 			maxCount = max;
 		}
 		
+		public SimpleBattleEntry(EntityType<T> typeIn, int count)
+		{
+			this(typeIn, count, count);
+		}
+		
 		public void apply(BlockPos min, BlockPos max, ServerWorld world)
 		{
 			Random rand = world.random;
 			final int mobs = rand.nextBetween(minCount, maxCount);
 			for(int i=mobs; i>0; --i)
 			{
-				int searchAttempts = 20;
-				BlockPos pos;
-				do
-				{
-					pos = new BlockPos(
-						rand.nextBetween(min.getX() + 1, max.getX() - 1), 
-						rand.nextBetween(min.getY() + 1, max.getY() - 1), 
-						rand.nextBetween(min.getZ() + 1, max.getZ() - 1));
-				}
-				while(--searchAttempts > 0 && !canPlaceAt(pos, world, type));
-				if(!canPlaceAt(pos, world, type))
-					continue;
+				BlockPos pos = findSpawnablePosition(type, min, max, world, rand, SEARCH_ATTEMPTS);
+				if(pos != null)
+					trySpawn(type, pos, world);
+			}
+		}
+	}
+	
+	/** Spawns a predefined set of mobs */
+	public class SquadBattleEntry extends BattleEntry
+	{
+		private final List<SquadEntry> squad = Lists.newArrayList();
+		
+		public SquadBattleEntry(){ }
+		
+		public SquadBattleEntry add(SquadEntry entry)
+		{
+			squad.add(entry);
+			return this;
+		}
+		
+		public void apply(BlockPos min, BlockPos max, ServerWorld world)
+		{
+			Random rand = world.random;
+			for(SquadEntry entry : squad)
+			{
+				int count = 
+						entry.min() == entry.max() ? 
+							entry.min() : 
+							world.random.nextBetween(entry.min(), entry.max());
 				
-				trySpawn(type, pos, world);
+				if(count > 0)
+					for(int i=0; i<count; i++)
+					{
+						BlockPos pos = findSpawnablePosition(entry.type, min, max, world, rand, SEARCH_ATTEMPTS);
+						if(pos != null)
+							entry.trySpawn(pos, world);
+					}
+			}
+		}
+		
+		public static record SquadEntry(EntityType<? extends MobEntity> type, Optional<NbtCompound> data, int min, int max)
+		{
+			protected boolean trySpawn(BlockPos pos, ServerWorld world)
+			{
+				Entity entity = type.create(world, SpawnReason.STRUCTURE);
+				entity.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 360F * world.random.nextFloat(), 0);
+				data.ifPresent(d -> entity.readNbt(d));
+				
+				if(entity instanceof MobEntity)
+				{
+					MobEntity mob = (MobEntity)entity;
+					mob.setPersistent();
+					mob.initialize(world, world.getLocalDifficulty(pos), SpawnReason.STRUCTURE, null);
+					
+					// Where possible, set the mob's home position to encourage them to stay in the room
+					if(mob.getBrain().hasMemoryModule(MemoryModuleType.HOME))
+						mob.getBrain().remember(MemoryModuleType.HOME, new GlobalPos(world.getRegistryKey(), pos));
+					
+					if(world.spawnNewEntityAndPassengers(entity))
+						return true;
+				}
+				return false;
+			}
+			
+			public static class Builder
+			{
+				private final EntityType<? extends MobEntity> type;
+				private Optional<NbtCompound> data = Optional.empty();
+				private int min = 1, max = 1;
+				
+				protected Builder(EntityType<? extends MobEntity> typeIn)
+				{
+					type = typeIn;
+				}
+				
+				public static Builder of(EntityType<? extends MobEntity> typeIn)
+				{
+					return new Builder(typeIn);
+				}
+				
+				public Builder nbt(NbtCompound dataIn)
+				{
+					data = dataIn.isEmpty() ? Optional.empty() : Optional.of(dataIn);
+					return this;
+				}
+				
+				public Builder count(int val)
+				{
+					min = max = val;
+					return this;
+				}
+				
+				public Builder count(int a, int b)
+				{
+					min = Math.min(a, b);
+					max = Math.max(a, b);
+					return this;
+				}
+				
+				public SquadEntry build()
+				{
+					return new SquadEntry(type, data, min, max);
+				}
 			}
 		}
 	}

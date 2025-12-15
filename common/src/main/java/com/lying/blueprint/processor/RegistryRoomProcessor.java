@@ -15,6 +15,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
+/** A room processor with a built-in typed registry that selects an entry at pre-processing and enacts it in post-processing */
 public abstract class RegistryRoomProcessor<T extends IProcessorEntry> implements IRoomProcessor
 {
 	protected final Map<Identifier, T> registry = new HashMap<>();
