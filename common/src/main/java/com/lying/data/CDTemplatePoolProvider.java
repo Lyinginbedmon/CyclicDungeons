@@ -94,6 +94,12 @@ public class CDTemplatePoolProvider
 				create("dungeon/doorway/plains/door_03", 1),
 				create("dungeon/doorway/plains/door_04", 1)
 				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.DOORWAY_LINTEL_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/doorway_lintel/plains/door_01", 1),
+				create("dungeon/doorway_lintel/plains/door_02", 1),
+				create("dungeon/doorway_lintel/plains/door_03", 1),
+				create("dungeon/doorway_lintel/plains/door_04", 1)
+				), StructurePool.Projection.RIGID));
 		context.register(CDStructurePools.TREASURE_KEY, new StructurePool(registry, ImmutableList.of(
 				create("dungeon/treasure/plains/chest_01", 1),
 				create("dungeon/treasure/plains/chest_02", 1),

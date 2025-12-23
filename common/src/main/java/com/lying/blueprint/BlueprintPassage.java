@@ -26,6 +26,7 @@ import com.lying.worldgen.Tile.RotationSupplier;
 import com.lying.worldgen.TileGenerator;
 
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -33,7 +34,8 @@ import net.minecraft.util.math.Vec2f;
 
 public class BlueprintPassage
 {
-	public static final int PASSAGE_HEIGHT = 2;
+	/** How many tiles high each passage is */
+	public static final int PASSAGE_HEIGHT = 4;
 	public static final int TILE_SIZE = Tile.TILE_SIZE;
 	public static final int PASSAGE_WIDTH = 3 * TILE_SIZE;
 	public static final Map<Tile, Float> PASSAGE_TILE_SET = Map.of(
@@ -216,7 +218,7 @@ public class BlueprintPassage
 	{
 		List<Box> boxes = Lists.newArrayList();
 		for(GridTile tile : tiles())
-			boxes.add(GridTile.BOX.offset(tile.x * GridTile.GRID_SIZE, 0, tile.y * GridTile.GRID_SIZE).withMaxY((PASSAGE_HEIGHT - 1) * GridTile.GRID_SIZE));
+			boxes.add(GridTile.BOX.offset(tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE).withMaxY(PASSAGE_HEIGHT * TILE_SIZE));
 		return boxes;
 	}
 	
@@ -341,6 +343,17 @@ public class BlueprintPassage
 			doorPos = p.withY(1);
 			map.put(doorPos.down(), CDTiles.FLOOR_PRISTINE.get());
 			map.put(doorPos, CDTiles.DOORWAY.get());
+			if(PASSAGE_HEIGHT > 2)
+			{
+				map.put(doorPos.up(), CDTiles.DOORWAY_LINTEL.get());
+				
+				BlockPos tile = doorPos.up(2);
+				while(map.contains(tile))
+				{
+					map.put(tile, CDTiles.PASSAGE_BOUNDARY.get());
+					tile = tile.up();
+				}
+			}
 			break;
 		}
 		
@@ -352,7 +365,10 @@ public class BlueprintPassage
 			for(Direction face : Direction.Type.HORIZONTAL)
 				if(parent.contains(doorGrid.offset(face)))
 				{
-					map.finalise(new TileInstance(doorPos, CDTiles.DOORWAY.get(), RotationSupplier.faceToRotationMap.get(face)));
+					BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
+					map.finalise(new TileInstance(doorPos, CDTiles.DOORWAY.get(), rotation));
+					if(PASSAGE_HEIGHT > 2)
+						map.finalise(new TileInstance(doorPos.up(), CDTiles.DOORWAY_LINTEL.get(), rotation));
 					break;
 				}
 		

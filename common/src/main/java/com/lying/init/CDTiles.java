@@ -33,9 +33,11 @@ public class CDTiles
 		ID_AIR				= prefix("air"), 
 		ID_PASSAGE			= prefix("passage_flag"), 
 		ID_DOORWAY			= prefix("doorway"),
+		ID_DOORWAY_LINTEL	= prefix("doorway_lintel"),
 		ID_FLOOR_PRISTINE	= prefix("floor_room_pristine"),
 		ID_FLOOR_ROOM		= prefix("floor_room"),
 		ID_FLOOR_PASSAGE	= prefix("floor_passage"),
+		ID_BOUNDARY_PASSAGE	= prefix("boundary_passage"),
 		ID_PUDDLE			= prefix("puddle"),
 		ID_WET_FLOOR		= prefix("wet_floor"),
 		ID_POOL				= prefix("pool"),
@@ -66,6 +68,10 @@ public class CDTiles
 	public static final Supplier<Tile> DOORWAY	= register(ID_DOORWAY, Tile.Builder
 			.of(TilePredicate.fromCondition(TileConditions.boundary(Direction.Type.HORIZONTAL)))
 			.asStructure(CDStructurePools.DOORWAY_KEY)
+			.build());
+	public static final Supplier<Tile> DOORWAY_LINTEL	= register(ID_DOORWAY_LINTEL, Tile.Builder
+			.of(TilePredicate.fromCondition(TileConditions.boundary(Direction.Type.HORIZONTAL)))
+			.asStructure(CDStructurePools.DOORWAY_LINTEL_KEY)
 			.build());
 	
 	// Flooring tiles
@@ -116,6 +122,12 @@ public class CDTiles
 				.condition(TileConditions.onBottomLayer())
 				.build())
 			.asStructure(CDStructurePools.PASSAGE_FLOOR_KEY)
+			.freeRotation().build());
+	public static final Supplier<Tile> PASSAGE_BOUNDARY	= register(ID_BOUNDARY_PASSAGE, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.always())
+				.build())
+			.asStructure(CDStructurePools.PASSAGE_BOUNDARY_KEY)
 			.freeRotation().build());
 	
 	// Decoration & content tiles

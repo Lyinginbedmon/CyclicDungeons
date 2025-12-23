@@ -178,7 +178,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		bounds.stream().map(b -> b.offset(position).expand(1)).forEach(b -> 
 			BlockPos.Mutable.iterate(
 					new BlockPos((int)b.minX, (int)b.minY, (int)b.minZ), 
-					new BlockPos((int)b.maxX - 1, (int)b.minY + 4, (int)b.maxZ - 1))
+					new BlockPos((int)b.maxX, (int)b.maxY, (int)b.maxZ).add(-1, -1, -1))
 				.forEach(p -> 
 				{
 					// Place walling at any position outside the original boundaries

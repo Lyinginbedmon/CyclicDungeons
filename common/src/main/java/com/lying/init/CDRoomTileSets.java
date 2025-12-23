@@ -83,7 +83,11 @@ public class CDRoomTileSets
 			CDTiles.FLOOR_PRISTINE, 750F,
 			CDTiles.FLOOR, 1000F,
 			CDTiles.HOT_FLOOR, 1000F,
-			CDTiles.LAVA, 500F));
+			CDTiles.SEAT, 10F,
+			CDTiles.FLOOR_LIGHT, 1F,
+			CDTiles.TABLE, 1F,
+			CDTiles.TABLE_LIGHT, 1F,
+			CDTiles.WORKSTATION, 1F));
 		
 		// Puzzle room tile set
 		addPlaceableFlooring(PUZZLE_ROOM_TILESET);

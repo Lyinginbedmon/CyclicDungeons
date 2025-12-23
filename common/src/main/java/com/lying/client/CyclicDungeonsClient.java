@@ -5,10 +5,12 @@ import java.util.function.BiConsumer;
 import com.lying.CyclicDungeons;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDEntityTypes;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.network.ShowDungeonLayoutPacket;
 
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
@@ -16,6 +18,7 @@ import net.minecraft.client.color.block.BlockColorProvider;
 import net.minecraft.client.color.world.BiomeColors;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.entity.WolfEntityRenderer;
 import net.minecraft.world.biome.GrassColors;
 
 public class CyclicDungeonsClient
@@ -41,6 +44,8 @@ public class CyclicDungeonsClient
 	
 	private static void registerRenderers()
 	{
+		EntityRendererRegistry.register(CDEntityTypes.RABID_WOLF, WolfEntityRenderer::new);
+		
 		RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.SENSOR_SOUND.get());
 	}
 	

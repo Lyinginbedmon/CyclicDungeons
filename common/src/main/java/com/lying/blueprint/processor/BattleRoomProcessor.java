@@ -1,14 +1,22 @@
 package com.lying.blueprint.processor;
 
+import static com.lying.reference.Reference.ModInfo.prefix;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
+import org.apache.commons.lang3.function.Consumers;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
 import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
 import com.lying.blueprint.processor.BattleRoomProcessor.SquadBattleEntry.SquadEntry;
+import com.lying.init.CDEntityTypes;
+import com.lying.init.CDThemes;
 import com.lying.init.CDThemes.Theme;
+import com.lying.reference.Reference;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -18,6 +26,7 @@ import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.random.Random;
@@ -27,16 +36,30 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 {
 	public void buildRegistry(Theme theme)
 	{
-		register("zombie_crowd", new SimpleBattleEntry<>(EntityType.ZOMBIE, 4, 8));
-		register("skeletons", new SimpleBattleEntry<>(EntityType.SKELETON, 3, 5));
-		register("coven", new SimpleBattleEntry<>(EntityType.WITCH, 2, 3));
+		if(theme.is(CDThemes.DESERT.get()))
+			register("husk_crowd", new SimpleBattleEntry<>(EntityType.HUSK, 4, 8));
+		else
+			register("zombie_crowd", new SimpleBattleEntry<>(EntityType.ZOMBIE, 4, 8));
+		
+		if(theme.is(CDThemes.SWAMP.get()))
+		{
+			register("skeletons", new SimpleBattleEntry<>(EntityType.BOGGED, 3, 5));
+			register("coven", new SimpleBattleEntry<>(EntityType.WITCH, 2, 3));
+		}
+		else
+			register("skeletons", new SimpleBattleEntry<>(EntityType.SKELETON, 3, 5));
+		
 		register("fire_team", new SquadBattleEntry()
 				.add(SquadEntry.Builder.of(EntityType.WITHER_SKELETON).build())
 				.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()));
+		
 		register("pillager_squad", new SquadBattleEntry()
-				.add(SquadEntry.Builder.of(EntityType.EVOKER).count(0, 1).build())
-				.add(SquadEntry.Builder.of(EntityType.VINDICATOR).count(1, 2).build())
+				.add(SquadEntry.Builder.of(EntityType.EVOKER).name("leader").count(0, 1).build())
+				.add(SquadEntry.Builder.of(EntityType.VINDICATOR).name("elite").count(1, 2).build())
 				.add(SquadEntry.Builder.of(EntityType.PILLAGER).count(2, 3).build()));
+		
+		register("wolf_pack", new SquadBattleEntry()
+				.add(SquadEntry.Builder.of(CDEntityTypes.RABID_WOLF.get()).count(3, 4).build()));
 	}
 	
 	protected abstract class BattleEntry implements IProcessorEntry
@@ -143,8 +166,9 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 	public class SquadBattleEntry extends BattleEntry
 	{
 		private final List<SquadEntry> squad = Lists.newArrayList();
+		private Consumer<Roster> setup = Consumers.nop();
 		
-		public SquadBattleEntry(){ }
+		public SquadBattleEntry() { }
 		
 		public SquadBattleEntry add(SquadEntry entry)
 		{
@@ -152,11 +176,19 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 			return this;
 		}
 		
+		public SquadBattleEntry setup(Consumer<Roster> setupIn)
+		{
+			setup = setupIn;
+			return this;
+		}
+		
 		public void apply(BlockPos min, BlockPos max, ServerWorld world)
 		{
 			Random rand = world.random;
+			Roster roster = new Roster();
 			for(SquadEntry entry : squad)
 			{
+				List<MobEntity> list = roster.getOrDefault(entry.name(), Lists.newArrayList());
 				int count = 
 						entry.min() == entry.max() ? 
 							entry.min() : 
@@ -167,14 +199,38 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 					{
 						BlockPos pos = findSpawnablePosition(entry.type, min, max, world, rand, SEARCH_ATTEMPTS);
 						if(pos != null)
-							entry.trySpawn(pos, world);
+						{
+							MobEntity mob = entry.trySpawn(pos, world);
+							if(mob != null)
+								list.add(mob);
+						}
 					}
+				roster.put(entry.name(), list);
+			}
+			setup.accept(roster);
+		}
+		
+		/** Delineated set of mobs representing different roles in the squad */
+		public static class Roster extends HashMap<Identifier, List<MobEntity>>
+		{
+			private static final long serialVersionUID = 7601896549322837235L;
+			public static final Identifier DEFAULT_NAME	= prefix("mob");
+			
+			public List<MobEntity> get(String nameIn)
+			{
+				return get(prefix(nameIn));
+			}
+			
+			public List<MobEntity> getOrDefault(String nameIn, List<MobEntity> defaultValue)
+			{
+				return getOrDefault(prefix(nameIn), defaultValue);
 			}
 		}
 		
-		public static record SquadEntry(EntityType<? extends MobEntity> type, Optional<NbtCompound> data, int min, int max)
+		public static record SquadEntry(EntityType<? extends MobEntity> type, Optional<NbtCompound> data, int min, int max, Identifier name)
 		{
-			protected boolean trySpawn(BlockPos pos, ServerWorld world)
+			
+			protected MobEntity trySpawn(BlockPos pos, ServerWorld world)
 			{
 				Entity entity = type.create(world, SpawnReason.STRUCTURE);
 				entity.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 360F * world.random.nextFloat(), 0);
@@ -191,15 +247,16 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 						mob.getBrain().remember(MemoryModuleType.HOME, new GlobalPos(world.getRegistryKey(), pos));
 					
 					if(world.spawnNewEntityAndPassengers(entity))
-						return true;
+						return mob;
 				}
-				return false;
+				return null;
 			}
 			
 			public static class Builder
 			{
 				private final EntityType<? extends MobEntity> type;
 				private Optional<NbtCompound> data = Optional.empty();
+				private Identifier name = Roster.DEFAULT_NAME;
 				private int min = 1, max = 1;
 				
 				protected Builder(EntityType<? extends MobEntity> typeIn)
@@ -210,6 +267,17 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 				public static Builder of(EntityType<? extends MobEntity> typeIn)
 				{
 					return new Builder(typeIn);
+				}
+				
+				public Builder name(Identifier nameIn)
+				{
+					name = nameIn;
+					return this;
+				}
+				
+				public Builder name(String nameIn)
+				{
+					return name(Reference.ModInfo.prefix(nameIn));
 				}
 				
 				public Builder nbt(NbtCompound dataIn)
@@ -233,7 +301,7 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 				
 				public SquadEntry build()
 				{
-					return new SquadEntry(type, data, min, max);
+					return new SquadEntry(type, data, min, max, name);
 				}
 			}
 		}

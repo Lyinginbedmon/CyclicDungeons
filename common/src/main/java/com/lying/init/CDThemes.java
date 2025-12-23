@@ -45,6 +45,8 @@ public class CDThemes
 			else
 				return DataResult.error(() -> "Not a recognised theme: '"+String.valueOf(id) + "'");
 		}, Theme::registryName);
+		
+		public boolean is(Theme b) { return b.registryName().equals(registryName); }
 	}
 	
 	public static void init()

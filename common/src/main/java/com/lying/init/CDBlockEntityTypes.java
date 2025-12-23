@@ -2,8 +2,11 @@ package com.lying.init;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
+import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.entity.FlameJetBlockEntity;
 import com.lying.block.entity.ProximitySensorBlockEntity;
@@ -28,24 +31,25 @@ public class CDBlockEntityTypes
 	private static final DeferredRegister<BlockEntityType<?>> TYPES	= DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.BLOCK_ENTITY_TYPE);
 	private static int tally = 0;
 	
-	public static final RegistrySupplier<BlockEntityType<TrapLogicBlockEntity>> TRAP_LOGIC	= register("trap_logic", TrapLogicBlockEntity::new, CDBlocks.TRAP_LOGIC.get());
-	public static final RegistrySupplier<BlockEntityType<SoundSensorBlockEntity>> SOUND_SENSOR	= register("sound_sensor", SoundSensorBlockEntity::new, CDBlocks.SENSOR_SOUND.get());
-	public static final RegistrySupplier<BlockEntityType<SightSensorBlockEntity>> SIGHT_SENSOR	= register("sight_sensor", SightSensorBlockEntity::new, CDBlocks.SENSOR_SIGHT.get());
-	public static final RegistrySupplier<BlockEntityType<ProximitySensorBlockEntity>> PROXIMITY_SENSOR	= register("proximity_sensor", ProximitySensorBlockEntity::new, CDBlocks.SENSOR_PROXIMITY.get());
+	public static final RegistrySupplier<BlockEntityType<TrapLogicBlockEntity>> TRAP_LOGIC	= register("trap_logic", TrapLogicBlockEntity::new, CDBlocks.TRAP_LOGIC);
+	public static final RegistrySupplier<BlockEntityType<SoundSensorBlockEntity>> SOUND_SENSOR	= register("sound_sensor", SoundSensorBlockEntity::new, CDBlocks.SENSOR_SOUND);
+	public static final RegistrySupplier<BlockEntityType<SightSensorBlockEntity>> SIGHT_SENSOR	= register("sight_sensor", SightSensorBlockEntity::new, CDBlocks.SENSOR_SIGHT);
+	public static final RegistrySupplier<BlockEntityType<ProximitySensorBlockEntity>> PROXIMITY_SENSOR	= register("proximity_sensor", ProximitySensorBlockEntity::new, CDBlocks.SENSOR_PROXIMITY);
 	public static final RegistrySupplier<BlockEntityType<TrapActorBlockEntity>> TRAP_ACTOR	= register("trap_actor", TrapActorBlockEntity::new, 
-			CDBlocks.ACTOR_REDSTONE.get(), 
-			CDBlocks.STONE_BRICK_HATCH.get(),
-			CDBlocks.STONE_HATCH.get(),
-			CDBlocks.COBBLESTONE_HATCH.get(),
-			CDBlocks.GRASS_HATCH.get(),
-			CDBlocks.DIRT_HATCH.get());
-	public static final RegistrySupplier<BlockEntityType<SwingingBladeBlockEntity>> SWINGING_BLADE	= register("swinging_blade", SwingingBladeBlockEntity::new, CDBlocks.SWINGING_BLADE.get());
-	public static final RegistrySupplier<BlockEntityType<FlameJetBlockEntity>> FLAME_JET		= register("flame_jet", FlameJetBlockEntity::new, CDBlocks.FLAME_JET.get());
+			CDBlocks.ACTOR_REDSTONE, 
+			CDBlocks.STONE_BRICK_HATCH,
+			CDBlocks.STONE_HATCH,
+			CDBlocks.COBBLESTONE_HATCH,
+			CDBlocks.GRASS_HATCH,
+			CDBlocks.DIRT_HATCH);
+	public static final RegistrySupplier<BlockEntityType<SwingingBladeBlockEntity>> SWINGING_BLADE	= register("swinging_blade", SwingingBladeBlockEntity::new, CDBlocks.SWINGING_BLADE);
+	public static final RegistrySupplier<BlockEntityType<FlameJetBlockEntity>> FLAME_JET		= register("flame_jet", FlameJetBlockEntity::new, CDBlocks.FLAME_JET);
 	
-	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, Block... blocksIn)
+	@SafeVarargs
+	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, RegistrySupplier<Block>... blocksIn)
 	{
 		tally++;
-		return TYPES.register(prefix(nameIn), () -> new BlockEntityType<T>(factory, Set.of(blocksIn)));
+		return TYPES.register(prefix(nameIn), () -> new BlockEntityType<T>(factory, Set.of(List.of(blocksIn).stream().map(Supplier::get).toList().toArray(new Block[0]))));
 	}
 	
 	private static RegistryKey<BlockEntityType<?>> keyOf(String nameIn) { return RegistryKey.of(RegistryKeys.BLOCK_ENTITY_TYPE, prefix(nameIn)); }
