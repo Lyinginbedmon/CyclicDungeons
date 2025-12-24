@@ -10,12 +10,12 @@ import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
 import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
-import com.lying.blueprint.processor.BattleRoomProcessor.SimpleBattleEntry;
-import com.lying.blueprint.processor.BattleRoomProcessor.SquadBattleEntry;
-import com.lying.blueprint.processor.BattleRoomProcessor.SquadBattleEntry.SquadEntry;
-import com.lying.blueprint.processor.TrapRoomProcessor.LavaRiverTrapEntry;
-import com.lying.blueprint.processor.TrapRoomProcessor.PitfallTrapEntry;
 import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
+import com.lying.blueprint.processor.battle.SimpleBattleEntry;
+import com.lying.blueprint.processor.battle.SquadBattleEntry;
+import com.lying.blueprint.processor.battle.SquadBattleEntry.SquadEntry;
+import com.lying.blueprint.processor.trap.LavaRiverTrapEntry;
+import com.lying.blueprint.processor.trap.PitfallTrapEntry;
 import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;

@@ -76,7 +76,7 @@ public class HatchBlock extends AbstractTrapActorBlock
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
 	{
-		return SHAPE_CLOSED;
+		return state.get(POWERED) ? VoxelShapes.empty() : SHAPE_CLOSED;
 	}
 	
 	protected VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)

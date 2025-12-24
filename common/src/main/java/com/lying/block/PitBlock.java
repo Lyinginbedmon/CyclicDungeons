@@ -26,22 +26,22 @@ public class PitBlock extends Block
 		TickEvent.PLAYER_POST.register(p -> 
 		{
 			World world = p.getWorld();
-			if(world.isClient())
-				return;
-			
-			if(world.getBlockState(p.getBlockPos()).isOf(CDBlocks.PIT.get()))
+			if(!world.isClient() && world.getBlockState(p.getBlockPos()).isOf(CDBlocks.PIT.get()))
 				p.damage((ServerWorld)world, p.getDamageSources().fall(), 4F);
 		});
 	}
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView World, BlockPos pos, ShapeContext context)
 	{
-		// FIXME Full cube when holding pit block
-		return VoxelShapes.fullCube();
+		return context.isHolding(asItem()) ? VoxelShapes.fullCube() : VoxelShapes.empty();
 	}
 	
 	protected BlockRenderType getRenderType(BlockState state)
 	{
 		return BlockRenderType.INVISIBLE;
+	}
+	
+	protected float getAmbientOcclusionLightLevel(BlockState state, BlockView world, BlockPos pos) {
+		return 0.0F;
 	}
 }

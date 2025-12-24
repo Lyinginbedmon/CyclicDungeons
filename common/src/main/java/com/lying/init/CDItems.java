@@ -123,6 +123,13 @@ public class CDItems
 	{
 		TABS.register();
 		ITEMS.register();
+		
+		ALL_BLOCKS.stream()
+			.map(Supplier::get)
+			.map(i -> (BlockItem)i)
+			.forEach(item -> 
+				Item.BLOCK_ITEMS.put(item.getBlock(), item));
+		
 		CyclicDungeons.LOGGER.info("# Initialised {} items ({} block items)", itemTally, blockTally);
 	}
 }

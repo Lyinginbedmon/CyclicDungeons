@@ -18,10 +18,13 @@ public interface IProcessorEntry
 {
 	public Identifier registryName();
 	
+	/** Returns true if this entry can be applied to the given room */
 	public default boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return true; }
 	
+	/** Applied when the entry is selected, before the room goes through tile generation */
 	public default void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world) { }
 	
+	/** Applied after tile generation */
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta);
 	
 	public static <T extends BlockEntity> List<T> getTileEntities(BlockPos min, BlockPos max, ServerWorld world, BlockEntityType<T> type)

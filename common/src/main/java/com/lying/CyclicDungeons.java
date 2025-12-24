@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lying.block.PitBlock;
+import com.lying.block.entity.logic.TrapLogicRegistry;
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
 import com.lying.init.CDBlockEntityTypes;
@@ -54,6 +55,7 @@ public final class CyclicDungeons
 		CDCommands.init();
 		CDBlocks.init();
 		CDBlockEntityTypes.init();
+		TrapLogicRegistry.init();
 		CDEntityTypes.init();
 		CDDataComponentTypes.init();
 		CDItems.init();
