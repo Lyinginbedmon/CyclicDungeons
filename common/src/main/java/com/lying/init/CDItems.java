@@ -53,15 +53,15 @@ public class CDItems
 	public static final RegistrySupplier<Item> SENSOR_SIGHT		= registerRareBlock("sight_sensor", CDBlocks.SENSOR_SIGHT, Rarity.RARE);
 	public static final RegistrySupplier<Item> SENSOR_PROXIMITY	= registerRareBlock("proximity_sensor", CDBlocks.SENSOR_PROXIMITY, Rarity.RARE);
 	
-	public static final RegistrySupplier<Item> PIT				= registerRareBlockNoItem("pit", CDBlocks.PIT, Rarity.RARE);
-	public static final RegistrySupplier<Item> ACTOR_REDSTONE	= registerRareBlock("redstone_actor", CDBlocks.ACTOR_REDSTONE, Rarity.RARE);
+	public static final RegistrySupplier<Item> PIT					= registerRareBlockNoItem("pit", CDBlocks.PIT, Rarity.RARE);
+	public static final RegistrySupplier<Item> ACTOR_REDSTONE		= registerRareBlock("redstone_actor", CDBlocks.ACTOR_REDSTONE, Rarity.RARE);
 	public static final RegistrySupplier<Item> STONE_BRICK_HATCH	= registerRareBlock("stone_brick_hatch", CDBlocks.STONE_BRICK_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> STONE_HATCH			= registerRareBlock("stone_hatch", CDBlocks.STONE_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> COBBLESTONE_HATCH	= registerRareBlock("cobblestone_hatch", CDBlocks.COBBLESTONE_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> GRASS_HATCH			= registerRareBlock("grass_hatch", CDBlocks.GRASS_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> DIRT_HATCH			= registerRareBlock("dirt_hatch", CDBlocks.DIRT_HATCH, Rarity.RARE);
-	public static final RegistrySupplier<Item> SWINGING_BLADE	= registerRareBlockNoItem("swinging_blade", CDBlocks.SWINGING_BLADE, Rarity.RARE);
-	public static final RegistrySupplier<Item> FLAME_JET		= registerRareBlock("flame_jet", CDBlocks.FLAME_JET, Rarity.RARE);
+	public static final RegistrySupplier<Item> SWINGING_BLADE		= registerRareBlockNoItem("swinging_blade", CDBlocks.SWINGING_BLADE, Rarity.RARE);
+	public static final RegistrySupplier<Item> FLAME_JET			= registerRareBlock("flame_jet", CDBlocks.FLAME_JET, Rarity.RARE);
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)
 	{

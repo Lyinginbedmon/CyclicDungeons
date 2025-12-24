@@ -345,14 +345,14 @@ public class BlueprintPassage
 			map.put(doorPos, CDTiles.DOORWAY.get());
 			if(PASSAGE_HEIGHT > 2)
 			{
-				map.put(doorPos.up(), CDTiles.DOORWAY_LINTEL.get());
+				BlockPos pos = doorPos.up();
 				
-				BlockPos tile = doorPos.up(2);
-				while(map.contains(tile))
-				{
-					map.put(tile, CDTiles.PASSAGE_BOUNDARY.get());
-					tile = tile.up();
-				}
+				// Place a lintel above the door
+				map.put(pos, CDTiles.DOORWAY_LINTEL.get());
+				
+				// Fill remaining vertical space above the door with boundary
+				while(map.contains(pos.up()))
+					map.put((pos = pos.up()), CDTiles.PASSAGE_BOUNDARY.get());
 			}
 			break;
 		}
@@ -367,7 +367,8 @@ public class BlueprintPassage
 				{
 					BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
 					map.finalise(new TileInstance(doorPos, CDTiles.DOORWAY.get(), rotation));
-					if(PASSAGE_HEIGHT > 2)
+					
+					if(map.contains(doorPos.up()))
 						map.finalise(new TileInstance(doorPos.up(), CDTiles.DOORWAY_LINTEL.get(), rotation));
 					break;
 				}

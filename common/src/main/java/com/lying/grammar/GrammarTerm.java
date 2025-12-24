@@ -121,16 +121,20 @@ public abstract class GrammarTerm
 	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, List<BlueprintPassage> passages)
 	{
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT);
-		
-		// Pre-seed doorways to connecting rooms
-		preseedDoorways(node, map, passages);
-		
 		RoomMetadata meta = node.metadata();
 		IRoomProcessor processor = processorGetter.get();
-		processor.applyPreProcessing(node, meta, map, world);
 		
-		// Fill rest of tileset with WFC generation
-		TileGenerator.generate(map, tileSet, world.getRandom());
+		try
+		{
+			// Pre-seed doorways to connecting rooms
+			preseedDoorways(node, map, passages);
+			
+			processor.applyPreProcessing(node, meta, map, world);
+			
+			// Fill rest of tileset with WFC generation
+			TileGenerator.generate(map, tileSet, world.getRandom());
+		}
+		catch(Exception e) { }
 		
 		map.finalise();
 		

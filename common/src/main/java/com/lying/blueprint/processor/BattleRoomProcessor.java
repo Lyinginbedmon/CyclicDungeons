@@ -12,9 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
 import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
-import com.lying.blueprint.processor.BattleRoomProcessor.SquadBattleEntry.SquadEntry;
-import com.lying.init.CDEntityTypes;
-import com.lying.init.CDThemes;
+import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDThemes.Theme;
 import com.lying.reference.Reference;
 
@@ -36,35 +34,20 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 {
 	public void buildRegistry(Theme theme)
 	{
-		if(theme.is(CDThemes.DESERT.get()))
-			register("husk_crowd", new SimpleBattleEntry<>(EntityType.HUSK, 4, 8));
-		else
-			register("zombie_crowd", new SimpleBattleEntry<>(EntityType.ZOMBIE, 4, 8));
-		
-		if(theme.is(CDThemes.SWAMP.get()))
-		{
-			register("skeletons", new SimpleBattleEntry<>(EntityType.BOGGED, 3, 5));
-			register("coven", new SimpleBattleEntry<>(EntityType.WITCH, 2, 3));
-		}
-		else
-			register("skeletons", new SimpleBattleEntry<>(EntityType.SKELETON, 3, 5));
-		
-		register("fire_team", new SquadBattleEntry()
-				.add(SquadEntry.Builder.of(EntityType.WITHER_SKELETON).build())
-				.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()));
-		
-		register("pillager_squad", new SquadBattleEntry()
-				.add(SquadEntry.Builder.of(EntityType.EVOKER).name("leader").count(0, 1).build())
-				.add(SquadEntry.Builder.of(EntityType.VINDICATOR).name("elite").count(1, 2).build())
-				.add(SquadEntry.Builder.of(EntityType.PILLAGER).count(2, 3).build()));
-		
-		register("wolf_pack", new SquadBattleEntry()
-				.add(SquadEntry.Builder.of(CDEntityTypes.RABID_WOLF.get()).count(3, 4).build()));
+		theme.encounters().forEach(encounter -> register(encounter.registryName(), encounter));
 	}
 	
-	protected abstract class BattleEntry implements IProcessorEntry
+	public static abstract class BattleEntry implements IProcessorEntry
 	{
 		protected static final int SEARCH_ATTEMPTS = 20;
+		private final Identifier id;
+		
+		private BattleEntry(Identifier idIn)
+		{
+			id = idIn;
+		}
+		
+		public Identifier registryName() { return id; }
 		
 		@Nullable
 		protected static BlockPos findSpawnablePosition(EntityType<? extends Entity> type, BlockPos min, BlockPos max, ServerWorld world, Random rand, int searchAttempts)
@@ -132,24 +115,25 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 	}
 	
 	/** Spawns a group of all the same mob */
-	public class SimpleBattleEntry<T extends MobEntity> extends BattleEntry
+	public static class SimpleBattleEntry<T extends MobEntity> extends BattleEntry
 	{
 		private final EntityType<T> type;
 		private final int maxCount, minCount;
 		
-		public SimpleBattleEntry(EntityType<T> typeIn, int min, int max)
+		public SimpleBattleEntry(Identifier name, EntityType<T> typeIn, int min, int max)
 		{
+			super(name);
 			type = typeIn;
 			minCount = min;
 			maxCount = max;
 		}
 		
-		public SimpleBattleEntry(EntityType<T> typeIn, int count)
+		public SimpleBattleEntry(Identifier name, EntityType<T> typeIn, int count)
 		{
-			this(typeIn, count, count);
+			this(name, typeIn, count, count);
 		}
 		
-		public void apply(BlockPos min, BlockPos max, ServerWorld world)
+		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
 		{
 			Random rand = world.random;
 			final int mobs = rand.nextBetween(minCount, maxCount);
@@ -163,12 +147,15 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 	}
 	
 	/** Spawns a predefined set of mobs */
-	public class SquadBattleEntry extends BattleEntry
+	public static class SquadBattleEntry extends BattleEntry
 	{
 		private final List<SquadEntry> squad = Lists.newArrayList();
 		private Consumer<Roster> setup = Consumers.nop();
 		
-		public SquadBattleEntry() { }
+		public SquadBattleEntry(Identifier name)
+		{
+			super(name);
+		}
 		
 		public SquadBattleEntry add(SquadEntry entry)
 		{
@@ -182,7 +169,7 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 			return this;
 		}
 		
-		public void apply(BlockPos min, BlockPos max, ServerWorld world)
+		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
 		{
 			Random rand = world.random;
 			Roster roster = new Roster();
@@ -229,7 +216,6 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 		
 		public static record SquadEntry(EntityType<? extends MobEntity> type, Optional<NbtCompound> data, int min, int max, Identifier name)
 		{
-			
 			protected MobEntity trySpawn(BlockPos pos, ServerWorld world)
 			{
 				Entity entity = type.create(world, SpawnReason.STRUCTURE);

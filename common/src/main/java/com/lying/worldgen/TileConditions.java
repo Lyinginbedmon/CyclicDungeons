@@ -166,6 +166,20 @@ public class TileConditions
 		return not(adjacent(faces, tiles));
 	}
 	
+	public static Condition maxAdjacent(List<Direction> faces, Predicate<Tile> tiles, int count)
+	{
+		return (tile,pos,set) -> 
+		{
+			return (int)faces.stream()
+				.map(f -> pos.offset(f))
+				.filter(set::contains)
+				.map(p -> set.get(p).get())
+				.filter(Predicates.not(Tile::isBlank))
+				.filter(tiles)
+				.count() < count;
+		};
+	}
+	
 	/** Not adjacent to self */
 	public static Condition nonConsecutive(Box box)
 	{

@@ -25,6 +25,8 @@ public class CDStructurePools
 	public static final RegistryKey<StructurePool>	PILLAR_BASE_KEY		= of("dungeon/pillar_base/plains");
 	public static final RegistryKey<StructurePool>	PILLAR_CAP_KEY		= of("dungeon/pillar_cap/plains");
 	
+	public static final RegistryKey<StructurePool>	HATCH_KEY			= of("dungeon/pitfall_hatch/plains");
+	
 	public static final RegistryKey<StructurePool>	PASSAGE_FLOOR_KEY		= of("dungeon/passage_floor/plains");
 	public static final RegistryKey<StructurePool>	PASSAGE_BOUNDARY_KEY	= of("dungeon/passage_boundary/plains");
 	

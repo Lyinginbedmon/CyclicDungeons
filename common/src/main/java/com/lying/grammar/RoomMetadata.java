@@ -17,6 +17,7 @@ import com.lying.worldgen.Tile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.MutableText;
@@ -34,11 +35,13 @@ public class RoomMetadata
 			Codec.INT.fieldOf("Depth").forGetter(RoomMetadata::depth),
 			VEC_CODEC.fieldOf("Size").forGetter(RoomMetadata::size),
 			GrammarTerm.CODEC.fieldOf("Type").forGetter(RoomMetadata::type),
-			Identifier.CODEC.optionalFieldOf("Variant").forGetter(RoomMetadata::processorID)
-			).apply(instance, (d,s,t,v) -> 
+			Identifier.CODEC.optionalFieldOf("Variant").forGetter(RoomMetadata::processorID),
+			NbtCompound.CODEC.fieldOf("VariantData").forGetter(r -> r.processorData)
+			).apply(instance, (d,s,t,v,n) -> 
 			{
 				RoomMetadata meta = new RoomMetadata().setDepth(d).setSize(s).setType(t);
 				v.ifPresent(id -> meta.setProcessorID(id));
+				meta.processorData = n;
 				return meta;
 			}));
 	
@@ -48,6 +51,7 @@ public class RoomMetadata
 	private int depth = 0;
 	private Theme theme = CDThemes.BASIC.get();
 	private Optional<Identifier> processorID = Optional.empty();
+	public NbtCompound processorData = new NbtCompound();
 	
 	public RoomMetadata()
 	{

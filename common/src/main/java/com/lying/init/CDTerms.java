@@ -13,6 +13,7 @@ import org.joml.Vector2i;
 
 import com.lying.CyclicDungeons;
 import com.lying.blueprint.processor.BattleRoomProcessor;
+import com.lying.blueprint.processor.TrapRoomProcessor;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.grammar.GrammarTerm;
@@ -73,6 +74,7 @@ public class CDTerms
 			.weight(3));
 	public static final Supplier<GrammarTerm> TRAP			= register("trap", () -> GrammarTerm.Builder.create(0xAE31DE, DyeColor.MAGENTA)
 			.size(size(6, 6, 8, 8))
+			.setProcessor(TrapRoomProcessor::new)
 			.withTileSet(CDRoomTileSets.TRAP_ROOM_TILESET)
 			.nonconsecutive()
 			.weight(2));

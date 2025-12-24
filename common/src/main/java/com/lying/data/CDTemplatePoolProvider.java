@@ -105,6 +105,12 @@ public class CDTemplatePoolProvider
 				create("dungeon/treasure/plains/chest_02", 1),
 				create("dungeon/treasure/plains/chest_03", 1)
 				), StructurePool.Projection.RIGID));
+		context.register(CDStructurePools.HATCH_KEY, new StructurePool(registry, ImmutableList.of(
+				create("dungeon/pitfall_hatch/plains/hatch_01", 1),
+				create("dungeon/pitfall_hatch/plains/hatch_02", 1),
+				create("dungeon/pitfall_hatch/plains/hatch_03", 1),
+				create("dungeon/pitfall_hatch/plains/hatch_04", 1)
+				), StructurePool.Projection.RIGID));
 	}
 	
 	private static Pair<Function<Projection, ? extends StructurePoolElement>, Integer> create(String name, int weight)

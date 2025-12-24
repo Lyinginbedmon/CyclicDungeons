@@ -3,11 +3,13 @@ package com.lying.blueprint.processor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDThemes.Theme;
 import com.lying.reference.Reference;
 
@@ -36,19 +38,23 @@ public abstract class RegistryRoomProcessor<T extends IProcessorEntry> implement
 		registry.clear();
 		buildRegistry(meta.theme());
 		
-		List<Identifier> ids = registry.keySet().stream().toList();
+		List<Identifier> ids = registry.entrySet().stream()
+				.filter(entry -> entry.getValue().isApplicableTo(room, meta, meta.theme()))
+				.map(Entry::getKey)
+				.toList();
+		
 		if(!ids.isEmpty())
 		{
 			Identifier id = ids.size() == 1 ? ids.getFirst() : ids.get(world.random.nextInt(ids.size()));
 			meta.setProcessorID(id);
+			CDLoggers.WORLDGEN.info("# Processor selected registry entry {}", id.toString());
 			get(id).ifPresent(entry -> entry.prepare(room, tileMap, world));
 		}
-		
 	}
 	
 	public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta)
 	{
 		meta.processorID().ifPresent(id -> 
-			registry.get(id).apply(min, max, world));
+			registry.get(id).apply(min, max, world, meta));
 	}
 }

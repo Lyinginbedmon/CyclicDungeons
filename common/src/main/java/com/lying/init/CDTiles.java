@@ -51,7 +51,9 @@ public class CDTiles
 		ID_PILLAR_CAP		= prefix("pillar_cap"),
 		ID_LAVA				= prefix("lava"),
 		ID_HOT_FLOOR		= prefix("hot_floor"),
-		ID_TREASURE			= prefix("treasure");
+		ID_TREASURE			= prefix("treasure"),
+		ID_HATCH			= prefix("pitfall_hatch"),
+		ID_LAVA_RIVER		= prefix("lava_river");
 	
 	// Blank tile, used during generation
 	public static final Supplier<Tile> BLANK	= register(ID_BLANK, Tile.Builder
@@ -224,6 +226,14 @@ public class CDTiles
 				.build())
 			.asBlock(Blocks.LAVA.getDefaultState())
 			.build());
+	public static final Supplier<Tile> LAVA_RIVER	= register(ID_LAVA_RIVER, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.nonPassage())
+				.condition(TileConditions.maxAdjacent(Direction.Type.HORIZONTAL.stream().toList(), TileConditions.isAnyOf(CDTiles.ID_LAVA_RIVER), 2))
+				.build())
+			.asBlock(Blocks.LAVA.getDefaultState())
+			.build());
 	public static final Supplier<Tile> HOT_FLOOR	= register(ID_HOT_FLOOR, Tile.Builder.
 			of(TilePredicate.Builder.create()
 				.condition(TileConditions.onBottomLayer())
@@ -233,6 +243,14 @@ public class CDTiles
 				.build())
 			.asStructure(CDStructurePools.HOT_FLOOR_KEY)
 			.freeRotation().build());
+	public static final Supplier<Tile> HATCH	= register(ID_HATCH, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(TileConditions.onBottomLayer())
+				.condition(TileConditions.nonPassage())
+				.build())
+			.asStructure(CDStructurePools.HATCH_KEY)
+			.freeRotation()
+			.build());
 	
 	@SuppressWarnings("unused")
 	private static Supplier<Tile> register(String name, Function<Identifier,Tile> funcIn)
