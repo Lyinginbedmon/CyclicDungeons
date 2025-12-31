@@ -239,7 +239,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		BlueprintTileGrid grid = BlueprintTileGrid.fromGraphGrid(graph, 2);
 		TileGenerator.generate(grid, Map.of(CDTiles.FLOOR_PRISTINE.get(), 1F), Random.create());
-		grid.finalise();
+		grid.finalise(start.metadata().theme());
 		grid.generate(position, world);
 	}
 	

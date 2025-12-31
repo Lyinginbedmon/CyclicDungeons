@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
+import com.lying.init.CDThemes.Theme;
 import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
 import com.lying.worldgen.Tile;
@@ -126,7 +127,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	}
 	
 	/** Populates the finalised map with tile instances with appropriate orientations */
-	public void finalise()
+	public void finalise(Theme theme)
 	{
 		LOGGER.info("Finalising tile set...");
 		finalised.clear();
@@ -138,7 +139,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			
 			BlockPos pos = entry.getKey();
 			BlockRotation rotation = tile.assignRotation(pos, this::get, rand);
-			finalised.add(new TileInstance(pos, tile, rotation));
+			finalised.add(new TileInstance(pos, tile, theme, rotation));
 		});
 		if(!finalised.isEmpty())
 			LOGGER.info("Tile set finalised");
@@ -169,7 +170,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return true;
 	}
 	
-	public static record TileInstance(BlockPos pos, Tile tile, BlockRotation rotation)
+	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation)
 	{
 		public void generate(BlockPos position, ServerWorld world)
 		{

@@ -11,7 +11,6 @@ import com.lying.block.HatchBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
-import com.lying.block.entity.logic.TrapLogicRegistry;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.processor.IProcessorEntry;
 import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
@@ -20,6 +19,7 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDTiles;
+import com.lying.init.CDTrapLogicHandlers;
 import com.lying.worldgen.Tile;
 
 import net.minecraft.block.BlockState;
@@ -98,7 +98,7 @@ public class PitfallTrapEntry extends TrapEntry
 			logicPos = min;
 		
 		world.setBlockState(logicPos, CDBlocks.TRAP_LOGIC.get().getDefaultState());
-		final TrapLogicBlockEntity logic = world.getBlockEntity(logicPos, CDBlockEntityTypes.TRAP_LOGIC.get()).get().setLogic(TrapLogicRegistry.ID_1S_FALLOFF);
+		final TrapLogicBlockEntity logic = world.getBlockEntity(logicPos, CDBlockEntityTypes.TRAP_LOGIC.get()).get().setLogic(CDTrapLogicHandlers.ID_1S_FALLOFF);
 		
 		// Wire hatches to logic
 		List<TrapActorBlockEntity> hatches = IProcessorEntry.getTileEntities(min, max, world, CDBlockEntityTypes.TRAP_ACTOR.get());

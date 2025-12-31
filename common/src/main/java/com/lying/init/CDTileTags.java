@@ -19,47 +19,30 @@ public class CDTileTags
 	
 	private static final Map<Identifier, TileTag> TAGS	= new HashMap<>();
 	
-	public static final TileTag SOLID_FLOORING	= make("solid_flooring", 
-			CDTiles.ID_FLOOR_PRISTINE,
-			CDTiles.ID_FLOOR_ROOM,
-			CDTiles.ID_FLOOR_PASSAGE,
-			CDTiles.ID_HOT_FLOOR,
-			CDTiles.ID_PILLAR_CAP);
-	public static final TileTag WET				= make("wet",
-			CDTiles.ID_WET_FLOOR,
-			CDTiles.ID_POOL);
-	public static final TileTag DAMP			= make("damp",
-			CDTiles.ID_PUDDLE,
-			CDTiles.ID_WET_FLOOR,
-			CDTiles.ID_POOL);
-	public static final TileTag HOT				= make("hot",
-			CDTiles.ID_LAVA,
-			CDTiles.ID_HOT_FLOOR);
-	public static final TileTag CEILING			= make("ceiling",
-			CDTiles.ID_PILLAR_CAP);
-	public static final TileTag TABLES			= make("tables", 
-			CDTiles.ID_TABLE, 
-			CDTiles.ID_LIGHT_TABLE);
-	public static final TileTag LIGHTING		= make("lighting", 
-			CDTiles.ID_LIGHT_FLOOR, 
-			CDTiles.ID_LIGHT_TABLE);
-	public static final TileTag DECOR			= make("decor", 
-			CDTiles.ID_LIGHT_FLOOR, 
-			CDTiles.ID_TABLE, 
-			CDTiles.ID_LIGHT_TABLE, 
-			CDTiles.ID_SEAT,
-			CDTiles.ID_WORKSTATION,
-			CDTiles.ID_TREASURE,
-			CDTiles.ID_PILLAR_BASE);
-	public static final TileTag OBTRUSIVE		= make("obtrusive", 
-			CDTiles.ID_TABLE, 
-			CDTiles.ID_LIGHT_TABLE, 
-			CDTiles.ID_SEAT,
-			CDTiles.ID_TREASURE,
-			CDTiles.ID_PILLAR_BASE);
-	public static final TileTag TRAPS			= make("traps");
+	public static final Identifier
+		ID_SOLID_FLOORING	= prefix("solid_flooring"),
+		ID_WET				= prefix("wet"),
+		ID_DAMP				= prefix("damp"),
+		ID_HOT				= prefix("hot"),
+		ID_CEILING			= prefix("ceiling"),
+		ID_TABLES			= prefix("tables"),
+		ID_LIGHTING			= prefix("lighting"),
+		ID_DECOR			= prefix("decor"),
+		ID_OBTRUSIVE		= prefix("obtrusive"),
+		ID_TRAPS			= prefix("traps");
 	
-	private static TileTag make(String name, Identifier... idsIn)
+	public static final TileTag SOLID_FLOORING	= make(ID_SOLID_FLOORING);
+	public static final TileTag WET				= make(ID_WET);
+	public static final TileTag DAMP			= make(ID_DAMP);
+	public static final TileTag HOT				= make(ID_HOT);
+	public static final TileTag CEILING			= make(ID_CEILING);
+	public static final TileTag TABLES			= make(ID_TABLES);
+	public static final TileTag LIGHTING		= make(ID_LIGHTING);
+	public static final TileTag DECOR			= make(ID_DECOR);
+	public static final TileTag OBTRUSIVE		= make(ID_OBTRUSIVE);
+	public static final TileTag TRAPS			= make(ID_TRAPS);
+	
+	public static TileTag make(String name, Identifier... idsIn)
 	{
 		return make(prefix(name), idsIn);
 	}
@@ -77,6 +60,11 @@ public class CDTileTags
 	public static void init()
 	{
 		CyclicDungeons.LOGGER.info("# Initialised {} tile tags", tally);
+		
+		List<Tile> allTiles = CDTiles.getAllTiles();
+		TAGS.values().forEach(tag -> allTiles.stream().filter(tile -> tile.isIn(tag)).map(Tile::registryName).forEach(tag::add));
+		
+		// TAGS.entrySet().forEach(entry -> CyclicDungeons.LOGGER.info(" # {} : {} tiles", entry.getKey().toString(), entry.getValue().contents.size()));
 	}
 	
 	public static final class TileTag

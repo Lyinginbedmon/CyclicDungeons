@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.init.CDLoggers;
@@ -46,13 +47,15 @@ public abstract class Tile
 	
 	private final Identifier registryName;
 	private final TilePredicate predicate;
+	private final List<Identifier> tileTags = Lists.newArrayList();
 	
 	private final GenStyle type;
 	private final RotationSupplier rotator;
 	
-	public Tile(Identifier id, GenStyle style, TilePredicate predicateIn, RotationSupplier rotatorIn)
+	public Tile(Identifier id, List<Identifier> tagsIn, GenStyle style, TilePredicate predicateIn, RotationSupplier rotatorIn)
 	{
 		this.registryName = id;
+		tileTags.addAll(tagsIn);
 		this.type = style;
 		this.predicate = predicateIn;
 		this.rotator = rotatorIn;
@@ -64,7 +67,7 @@ public abstract class Tile
 	
 	public final Identifier registryName() { return this.registryName; }
 	
-	public final boolean isIn(TileTag tag) { return tag.contains(registryName); }
+	public final boolean isIn(TileTag tag) { return tileTags.contains(tag.id()); }
 	
 	public final boolean isBlank() { return this.registryName.equals(CDTiles.BLANK.get().registryName()); }
 	
@@ -165,8 +168,8 @@ public abstract class Tile
 		
 		private GenStyle style = GenStyle.FLAG;
 		private BlockState[] blockStates = new BlockState[0];
-		private RegistryKey<StructurePool> structureKey = null;
 		private RotationSupplier rotationFunc = (p,g,r) -> BlockRotation.NONE;
+		private List<Identifier> tileTags = Lists.newArrayList();
 		
 		private Builder(TilePredicate predicateIn)
 		{
@@ -174,6 +177,14 @@ public abstract class Tile
 		}
 		
 		public static Builder of(TilePredicate predicate) { return new Builder(predicate); }
+		
+		public Builder tags(Identifier... tags)
+		{
+			for(Identifier id : tags)
+				if(!tileTags.contains(id))
+					tileTags.add(id);
+			return this;
+		}
 		
 		public Builder asFlag()
 		{
@@ -195,10 +206,9 @@ public abstract class Tile
 			return this;
 		}
 		
-		public Builder asStructure(RegistryKey<StructurePool> structureKeyIn)
+		public Builder asStructure()
 		{
 			style = GenStyle.STRUCTURE;
-			structureKey = structureKeyIn;
 			return this;
 		}
 		
@@ -224,12 +234,12 @@ public abstract class Tile
 			{
 				default:
 				case FLAG:
-					return id -> new Tile(id, style, predicate, RotationSupplier.none())
+					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.none())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world) { }
 					};
 				case BLOCK:
-					return id -> new Tile(id, style, predicate, RotationSupplier.none())
+					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.none())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{
@@ -238,17 +248,21 @@ public abstract class Tile
 						}
 					};
 				case STRUCTURE:
-					return id -> new Tile(id, style, predicate, rotationFunc)
+					return id -> new Tile(id, tileTags, style, predicate, rotationFunc)
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{
 							DynamicRegistryManager manager = world.getRegistryManager();
 							Registry<StructurePool> registry = manager.getOrThrow(RegistryKeys.TEMPLATE_POOL);
 							StructurePoolAliasLookup alias = StructurePoolAliasLookup.create(List.of(), pos, world.getSeed());
+							RegistryKey<StructurePool> structureKey = inst.theme().getTilePool(inst.tile());
 							Optional<StructurePool> poolOpt = Optional.of(structureKey).flatMap(key -> registry.getOptionalValue(alias.lookup(key)));
 							if(poolOpt.isEmpty())
 							{
-								LOGGER.warn("Blank structure pool: {}", structureKey.getValue().toString());
+								LOGGER.warn("Blank structure pool: {} for tile {} in theme {}", 
+										structureKey.getValue().toString(), 
+										inst.tile().registryName().toString(), 
+										inst.theme().registryName().toString());
 								return;
 							}
 							

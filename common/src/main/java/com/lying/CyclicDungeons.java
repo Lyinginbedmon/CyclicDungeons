@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lying.block.PitBlock;
-import com.lying.block.entity.logic.TrapLogicRegistry;
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
 import com.lying.init.CDBlockEntityTypes;
@@ -17,8 +16,11 @@ import com.lying.init.CDRoomTileSets;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.init.CDTerms;
+import com.lying.init.CDThemes;
 import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
+import com.lying.init.CDTrapLogicHandlers;
+import com.lying.init.CDTraps;
 import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
 
@@ -55,8 +57,10 @@ public final class CyclicDungeons
 		CDCommands.init();
 		CDBlocks.init();
 		CDBlockEntityTypes.init();
-		TrapLogicRegistry.init();
+		CDTrapLogicHandlers.init();
+		CDTraps.init();
 		CDEntityTypes.init();
+		CDThemes.init();
 		CDDataComponentTypes.init();
 		CDItems.init();
 		CDSoundEvents.init();

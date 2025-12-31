@@ -15,6 +15,7 @@ import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
 import com.lying.grid.TileUtils;
+import com.lying.init.CDThemes.Theme;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CompoundBox2f;
@@ -358,7 +359,8 @@ public class BlueprintPassage
 		}
 		
 		TileGenerator.generate(map, PASSAGE_TILE_SET, world.random);
-		map.finalise();
+		final Theme theme = parent().metadata().theme();
+		map.finalise(theme);
 		
 		// Ensure doorway from parent room has correct orientation
 		if(doorPos != null)
@@ -366,10 +368,10 @@ public class BlueprintPassage
 				if(parent.contains(doorGrid.offset(face)))
 				{
 					BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
-					map.finalise(new TileInstance(doorPos, CDTiles.DOORWAY.get(), rotation));
+					map.finalise(new TileInstance(doorPos, CDTiles.DOORWAY.get(), theme, rotation));
 					
 					if(map.contains(doorPos.up()))
-						map.finalise(new TileInstance(doorPos.up(), CDTiles.DOORWAY_LINTEL.get(), rotation));
+						map.finalise(new TileInstance(doorPos.up(), CDTiles.DOORWAY_LINTEL.get(), theme, rotation));
 					break;
 				}
 		

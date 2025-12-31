@@ -49,7 +49,7 @@ public class RoomMetadata
 	private Vector2i tileSize = new Vector2i(3, 3);
 	private List<GridTile> tileFootprint = Lists.newArrayList();
 	private int depth = 0;
-	private Theme theme = CDThemes.BASIC.get();
+	private Theme theme = CDThemes.GENERIC.get();
 	private Optional<Identifier> processorID = Optional.empty();
 	public NbtCompound processorData = new NbtCompound();
 	

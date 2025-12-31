@@ -11,7 +11,6 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Predicates;
 import com.lying.CyclicDungeons;
-import com.lying.data.CDStructurePools;
 import com.lying.worldgen.Tile;
 import com.lying.worldgen.Tile.RotationSupplier;
 import com.lying.worldgen.TileConditions;
@@ -34,26 +33,26 @@ public class CDTiles
 		ID_PASSAGE			= prefix("passage_flag"), 
 		ID_DOORWAY			= prefix("doorway"),
 		ID_DOORWAY_LINTEL	= prefix("doorway_lintel"),
-		ID_FLOOR_PRISTINE	= prefix("floor_room_pristine"),
-		ID_FLOOR_ROOM		= prefix("floor_room"),
-		ID_FLOOR_PASSAGE	= prefix("floor_passage"),
-		ID_BOUNDARY_PASSAGE	= prefix("boundary_passage"),
-		ID_PUDDLE			= prefix("puddle"),
-		ID_WET_FLOOR		= prefix("wet_floor"),
-		ID_POOL				= prefix("pool"),
-		ID_TABLE			= prefix("table"),
-		ID_SEAT				= prefix("seat"),
-		ID_LIGHT_FLOOR		= prefix("light_floor"),
-		ID_LIGHT_TABLE		= prefix("light_table"),
-		ID_WORKSTATION		= prefix("workstation"),
-		ID_PILLAR_BASE		= prefix("pillar_base"),
-		ID_PILLAR			= prefix("pillar"),
-		ID_PILLAR_CAP		= prefix("pillar_cap"),
-		ID_LAVA				= prefix("lava"),
+		ID_FLOOR			= prefix("floor"),
+		ID_FLOOR_LIGHT		= prefix("floor_light"),
 		ID_HOT_FLOOR		= prefix("hot_floor"),
-		ID_TREASURE			= prefix("treasure"),
+		ID_PASSAGE_BOUNDARY	= prefix("passage_boundary"),
+		ID_PASSAGE_FLOOR	= prefix("passage_floor"),
+		ID_PILLAR_BASE		= prefix("pillar_base"),
+		ID_PILLAR_CAP		= prefix("pillar_cap"),
+		ID_PILLAR			= prefix("pillar"),
 		ID_HATCH			= prefix("pitfall_hatch"),
-		ID_LAVA_RIVER		= prefix("lava_river");
+		ID_PRISTINE_FLOOR	= prefix("pristine_floor"),
+		ID_PUDDLE			= prefix("puddle"),
+		ID_SEAT				= prefix("seat"),
+		ID_TABLE_LIGHT		= prefix("table_light"),
+		ID_TABLE			= prefix("table"),
+		ID_TREASURE			= prefix("treasure"),
+		ID_WET_FLOOR		= prefix("wet_floor"),
+		ID_WORKSTATION		= prefix("workstation"),
+		ID_LAVA				= prefix("lava"),
+		ID_LAVA_RIVER		= prefix("lava_river"),
+		ID_POOL				= prefix("pool");
 	
 	// Blank tile, used during generation
 	public static final Supplier<Tile> BLANK	= register(ID_BLANK, Tile.Builder
@@ -69,27 +68,29 @@ public class CDTiles
 			.asAir().build());
 	public static final Supplier<Tile> DOORWAY	= register(ID_DOORWAY, Tile.Builder
 			.of(TilePredicate.fromCondition(TileConditions.boundary(Direction.Type.HORIZONTAL)))
-			.asStructure(CDStructurePools.DOORWAY_KEY)
+			.asStructure()
 			.build());
 	public static final Supplier<Tile> DOORWAY_LINTEL	= register(ID_DOORWAY_LINTEL, Tile.Builder
 			.of(TilePredicate.fromCondition(TileConditions.boundary(Direction.Type.HORIZONTAL)))
-			.asStructure(CDStructurePools.DOORWAY_LINTEL_KEY)
+			.asStructure()
 			.build());
 	
 	// Flooring tiles
-	public static final Supplier<Tile> FLOOR_PRISTINE	= register(ID_FLOOR_PRISTINE, Tile.Builder
+	public static final Supplier<Tile> FLOOR_PRISTINE	= register(ID_PRISTINE_FLOOR, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.onBottomLayer())
 				.condition(TileConditions.nonAdjacent(CDTileTags.DAMP::contains))
 				.build())
-			.asStructure(CDStructurePools.PRISTINE_FLOOR_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_SOLID_FLOORING)
 			.freeRotation().build());
-	public static final Supplier<Tile> FLOOR	= register(ID_FLOOR_ROOM, Tile.Builder
+	public static final Supplier<Tile> FLOOR	= register(ID_FLOOR, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.onBottomLayer())
 				.condition(TileConditions.nonAdjacent(CDTileTags.WET::contains))
 				.build())
-			.asStructure(CDStructurePools.FLOOR_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_SOLID_FLOORING)
 			.freeRotation().build());
 	public static final Supplier<Tile> PUDDLE	= register(ID_PUDDLE, Tile.Builder
 			.of(TilePredicate.Builder.create()
@@ -97,7 +98,8 @@ public class CDTiles
 				.condition(TileConditions.nonAdjacent(t -> t.registryName().equals(ID_POOL)))
 				.condition(TileConditions.nonPassage())
 				.build())
-			.asStructure(CDStructurePools.PUDDLE_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_DAMP)
 			.freeRotation().build());
 	public static final Supplier<Tile> WET_FLOOR	= register(ID_WET_FLOOR, Tile.Builder.
 			of(TilePredicate.Builder.create()
@@ -106,7 +108,8 @@ public class CDTiles
 				.condition(TileConditions.nonAdjacent(CDTileTags.SOLID_FLOORING::contains))
 				.condition(TileConditions.nonPassage())
 				.build())
-			.asStructure(CDStructurePools.WET_FLOOR_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_WET, CDTileTags.ID_DAMP)
 			.freeRotation().build());
 	public static final Supplier<Tile> POOL		= register(ID_POOL, Tile.Builder
 			.of(TilePredicate.Builder.create()
@@ -116,20 +119,22 @@ public class CDTiles
 				.condition(TileConditions.nonPassage())
 				.build())
 			.asBlock(Blocks.WATER.getDefaultState())
+			.tags(CDTileTags.ID_WET, CDTileTags.ID_DAMP)
 			.build());
 	
 	// Passage tiles
-	public static final Supplier<Tile> PASSAGE_FLOOR	= register(ID_FLOOR_PASSAGE, Tile.Builder
+	public static final Supplier<Tile> PASSAGE_FLOOR	= register(ID_PASSAGE_FLOOR, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.onBottomLayer())
 				.build())
-			.asStructure(CDStructurePools.PASSAGE_FLOOR_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_SOLID_FLOORING)
 			.freeRotation().build());
-	public static final Supplier<Tile> PASSAGE_BOUNDARY	= register(ID_BOUNDARY_PASSAGE, Tile.Builder
+	public static final Supplier<Tile> PASSAGE_BOUNDARY	= register(ID_PASSAGE_BOUNDARY, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.always())
 				.build())
-			.asStructure(CDStructurePools.PASSAGE_BOUNDARY_KEY)
+			.asStructure()
 			.freeRotation().build());
 	
 	// Decoration & content tiles
@@ -139,25 +144,28 @@ public class CDTiles
 				.condition(TileConditions.boundary(Direction.Type.HORIZONTAL))
 				.condition(TileConditions.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), CDTileTags.TABLES::contains))
 				.build())
-			.asStructure(CDStructurePools.TABLE_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_TABLES, CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR)
 			.freeRotation().build());
-	public static final Supplier<Tile> TABLE_LIGHT	= register(ID_LIGHT_TABLE, Tile.Builder
+	public static final Supplier<Tile> TABLE_LIGHT	= register(ID_TABLE_LIGHT, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.onFloor())
 				.condition(TileConditions.boundary(Direction.Type.HORIZONTAL))
 				.condition(TileConditions.nonConsecutive())
 				.condition(TileConditions.avoid(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), Predicates.or(CDTileTags.TABLES::contains, CDTileTags.LIGHTING::contains)))
 				.build())
-			.asStructure(CDStructurePools.TABLE_LIGHT_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_TABLES, CDTileTags.ID_LIGHTING, CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR)
 			.freeRotation().build());
 	public static final Supplier<Tile> SEAT		= register(ID_SEAT, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.onFloor())
 				.condition(TileConditions.adjacent(Direction.Type.HORIZONTAL, CDTileTags.TABLES::contains))
 				.build())
-			.asStructure(CDStructurePools.SEAT_KEY)
-			.withRotation(RotationSupplier.toFaceAdjacent(CDTileTags.TABLES::contains)).build());
-	public static final Supplier<Tile> FLOOR_LIGHT	= register(ID_LIGHT_FLOOR, Tile.Builder
+			.asStructure()
+			.withRotation(RotationSupplier.toFaceAdjacent(CDTileTags.TABLES::contains))
+			.tags(CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR).build());
+	public static final Supplier<Tile> FLOOR_LIGHT	= register(ID_FLOOR_LIGHT, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.boundary(Direction.Type.HORIZONTAL))
 				.condition(TileConditions.onFloor())
@@ -165,7 +173,8 @@ public class CDTiles
 				.condition(TileConditions.avoid(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), CDTileTags.LIGHTING::contains))
 				.condition(TileConditions.nonAdjacent(CDTileTags.TABLES::contains))
 				.build())
-			.asStructure(CDStructurePools.FLOOR_LIGHT_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_LIGHTING, CDTileTags.ID_DECOR)
 			.freeRotation().build());
 	public static final Supplier<Tile> WORKSTATION	= register(ID_WORKSTATION, Tile.Builder
 			.of(TilePredicate.Builder.create()
@@ -174,8 +183,9 @@ public class CDTiles
 				.condition(TileConditions.nonConsecutive())
 				.condition(TileConditions.avoid(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), CDTileTags.DECOR::contains))
 				.build())
-			.asStructure(CDStructurePools.WORKSTATION_KEY)
+			.asStructure()
 			.withRotation(RotationSupplier.againstBoundary(RotationSupplier.random()))
+			.tags(CDTileTags.ID_DECOR)
 			.build());
 	public static final Supplier<Tile> PILLAR_BASE	= register(ID_PILLAR_BASE, Tile.Builder
 			.of(TilePredicate.Builder.create()
@@ -185,15 +195,16 @@ public class CDTiles
 				.condition(TileConditions.nonConsecutive())
 				.condition(TileConditions.maxOf(4))
 				.build())
-			.asStructure(CDStructurePools.PILLAR_BASE_KEY)
+			.asStructure()
 			.freeRotation()
+			.tags(CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR)
 			.build());
 	public static final Supplier<Tile> PILLAR		= register(ID_PILLAR, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.nonBoundary())
 				.condition(TileConditions.adjacent(List.of(Direction.DOWN), TileConditions.isAnyOf(ID_PILLAR_BASE, ID_PILLAR)))
 				.build())
-			.asStructure(CDStructurePools.PILLAR_KEY)
+			.asStructure()
 			.freeRotation()
 			.build());
 	public static final Supplier<Tile> PILLAR_CAP	= register(ID_PILLAR_CAP, Tile.Builder
@@ -201,8 +212,9 @@ public class CDTiles
 				.condition(TileConditions.onTopLayer())
 				.condition(TileConditions.adjacent(List.of(Direction.DOWN), TileConditions.isAnyOf(ID_PILLAR_BASE, ID_PILLAR)))
 				.build())
-			.asStructure(CDStructurePools.PILLAR_CAP_KEY)
+			.asStructure()
 			.freeRotation()
+			.tags(CDTileTags.ID_SOLID_FLOORING, CDTileTags.ID_CEILING)
 			.build());
 	
 	// Loot
@@ -212,8 +224,9 @@ public class CDTiles
 				.condition(TileConditions.nonBoundary())
 				.condition(TileConditions.onFloor())
 				.build())
-			.asStructure(CDStructurePools.TREASURE_KEY)
+			.asStructure()
 			.freeRotation()
+			.tags(CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR)
 			.build());
 	
 	// Hazards
@@ -225,6 +238,7 @@ public class CDTiles
 				.condition(TileConditions.nonPassage())
 				.build())
 			.asBlock(Blocks.LAVA.getDefaultState())
+			.tags(CDTileTags.ID_HOT)
 			.build());
 	public static final Supplier<Tile> LAVA_RIVER	= register(ID_LAVA_RIVER, Tile.Builder
 			.of(TilePredicate.Builder.create()
@@ -241,15 +255,17 @@ public class CDTiles
 				.condition(TileConditions.adjacent(CDTileTags.SOLID_FLOORING::contains))
 				.condition(TileConditions.nonPassage())
 				.build())
-			.asStructure(CDStructurePools.HOT_FLOOR_KEY)
+			.asStructure()
+			.tags(CDTileTags.ID_SOLID_FLOORING, CDTileTags.ID_HOT)
 			.freeRotation().build());
 	public static final Supplier<Tile> HATCH	= register(ID_HATCH, Tile.Builder
 			.of(TilePredicate.Builder.create()
 				.condition(TileConditions.onBottomLayer())
 				.condition(TileConditions.nonPassage())
 				.build())
-			.asStructure(CDStructurePools.HATCH_KEY)
+			.asStructure()
 			.freeRotation()
+			.tags(CDTileTags.ID_TRAPS)
 			.build());
 	
 	@SuppressWarnings("unused")
@@ -269,6 +285,11 @@ public class CDTiles
 	public static Optional<Tile> get(String name) { return get(name.contains(":") ? Identifier.of(name) : prefix(name)); }
 	
 	public static Optional<Tile> get(Identifier id) { return TILES.containsKey(id) ? Optional.of(TILES.get(id).get()) : Optional.empty(); }
+	
+	public static List<Tile> getAllTiles()
+	{
+		return TILES.values().stream().map(Supplier::get).toList();
+	}
 	
 	public static void init()
 	{

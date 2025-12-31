@@ -3,7 +3,7 @@ package com.lying.block.entity.logic;
 import java.util.List;
 
 import com.lying.block.IWireableBlock;
-import com.lying.block.entity.logic.TrapLogicRegistry.LogicHandler;
+import com.lying.init.CDTrapLogicHandlers.LogicHandler;
 import com.lying.reference.Reference;
 
 import net.minecraft.server.world.ServerWorld;

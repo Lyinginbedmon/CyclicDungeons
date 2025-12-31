@@ -38,7 +38,7 @@ public class GrammarPhrase
 		theme = themeIn;
 	}
 	
-	public GrammarPhrase() { this(CDThemes.BASIC.get()); }
+	public GrammarPhrase() { this(CDThemes.GENERIC.get()); }
 	
 	protected GrammarPhrase(Theme themeIn, List<GrammarRoom> roomsIn)
 	{

@@ -1,8 +1,13 @@
 package com.lying.blueprint.processor;
 
+import java.util.ArrayList;
+import java.util.function.Consumer;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
+import com.lying.blueprint.processor.battle.SimpleBattleEntry;
+import com.lying.blueprint.processor.battle.SquadBattleEntry;
 import com.lying.init.CDThemes.Theme;
 
 import net.minecraft.entity.Entity;
@@ -23,6 +28,34 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 	public void buildRegistry(Theme theme)
 	{
 		theme.encounters().forEach(encounter -> register(encounter.registryName(), encounter));
+	}
+	
+	public static class EncounterSet extends ArrayList<BattleEntry>
+	{
+		private static final long serialVersionUID = 1L;
+		
+		public EncounterSet addEntry(BattleEntry entry)
+		{
+			add(entry);
+			return this;
+		}
+		
+		public <T extends MobEntity> EncounterSet addSimple(Identifier name, EntityType<T> typeIn, int count)
+		{
+			return addSimple(name, typeIn, count, count);
+		}
+		
+		public <T extends MobEntity> EncounterSet addSimple(Identifier name, EntityType<T> typeIn, int min, int max)
+		{
+			return addEntry(new SimpleBattleEntry<T>(name, typeIn, min, max));
+		}
+		
+		public EncounterSet addSquad(Identifier name, Consumer<SquadBattleEntry> setup)
+		{
+			SquadBattleEntry entry = new SquadBattleEntry(name);
+			setup.accept(entry);
+			return addEntry(entry);
+		}
 	}
 	
 	public static abstract class BattleEntry implements IProcessorEntry

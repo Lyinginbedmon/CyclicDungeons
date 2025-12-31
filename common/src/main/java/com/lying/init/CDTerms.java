@@ -26,16 +26,25 @@ import net.minecraft.util.math.random.Random;
 public class CDTerms
 {
 	private static final Map<Identifier, Supplier<GrammarTerm>> TERMS = new HashMap<>();
-	private static int tally = 0;
+	private static int placeableTally = 0;
+	
+	public static final Identifier
+		ID_START	= prefix("start"),
+		ID_END		= prefix("end"),
+		ID_EMPTY	= prefix("empty"),
+		ID_BATTLE	= prefix("battle"),
+		ID_BOSS		= prefix("boss"),
+		ID_TRAP		= prefix("trap"),
+		ID_BIG_PUZZLE	= prefix("big_puzzle"),
+		ID_SML_PUZZLE	= prefix("small_puzzle"),
+		ID_TREASURE		= prefix("treasure");
 	
 	// Initial building blocks
-	public static final Supplier<GrammarTerm> START		= register("start", () -> GrammarTerm.Builder.create(0xFFFFFF, DyeColor.WHITE)
+	public static final Supplier<GrammarTerm> START		= register(ID_START, () -> GrammarTerm.Builder.create(0xFFFFFF, DyeColor.WHITE)
 			.size(size(6, 6, 8, 8))
-			.withTileSet(CDRoomTileSets.START_ROOM_TILESET)
 			.unplaceable());
-	public static final Supplier<GrammarTerm> END		= register("end", () -> GrammarTerm.Builder.create(0xFFFFFF, DyeColor.WHITE)
+	public static final Supplier<GrammarTerm> END		= register(ID_END, () -> GrammarTerm.Builder.create(0xFFFFFF, DyeColor.WHITE)
 			.size(size(6, 6, 8, 8))
-			.withTileSet(CDRoomTileSets.END_ROOM_TILESET)
 			.unplaceable());
 	
 	/** Completely blank, only used to mark errors in generation */
@@ -59,47 +68,40 @@ public class CDTerms
 			.onApply((t,r,g) -> GrammarTerm.injectBranch(r, g)));
 	
 	// Functional rooms
-	public static final Supplier<GrammarTerm> EMPTY			= register("empty", () -> GrammarTerm.Builder.create(0xA6A6A6, DyeColor.GRAY)
+	public static final Supplier<GrammarTerm> EMPTY			= register(ID_EMPTY, () -> GrammarTerm.Builder.create(0xA6A6A6, DyeColor.GRAY)
 			.size(size(7, 7, 10, 10))
-			.withTileSet(CDRoomTileSets.EMPTY_ROOM_TILESET)
 			.nonconsecutive()
 			.allowDeadEnds(false)
 			.neverAfter(CDTerms.START)
 			.neverBefore(CDTerms.END));
-	public static final Supplier<GrammarTerm> BATTLE		= register("battle", () -> GrammarTerm.Builder.create(0xC80707, DyeColor.ORANGE)
+	public static final Supplier<GrammarTerm> BATTLE		= register(ID_BATTLE, () -> GrammarTerm.Builder.create(0xC80707, DyeColor.ORANGE)
 			.size(size(8, 8, 14, 14))
 			.setProcessor(BattleRoomProcessor::new)
-			.withTileSet(CDRoomTileSets.BATTLE_ROOM_TILESET)
 			.nonconsecutive()
 			.weight(3));
-	public static final Supplier<GrammarTerm> TRAP			= register("trap", () -> GrammarTerm.Builder.create(0xAE31DE, DyeColor.MAGENTA)
+	public static final Supplier<GrammarTerm> TRAP			= register(ID_TRAP, () -> GrammarTerm.Builder.create(0xAE31DE, DyeColor.MAGENTA)
 			.size(size(6, 6, 8, 8))
 			.setProcessor(TrapRoomProcessor::new)
-			.withTileSet(CDRoomTileSets.TRAP_ROOM_TILESET)
 			.nonconsecutive()
 			.weight(2));
-	public static final Supplier<GrammarTerm> BIG_PUZZLE	= register("big_puzzle", () -> GrammarTerm.Builder.create(0x3136DE, DyeColor.BLUE)
+	public static final Supplier<GrammarTerm> BIG_PUZZLE	= register(ID_BIG_PUZZLE, () -> GrammarTerm.Builder.create(0x3136DE, DyeColor.BLUE)
 			.size(size(10, 10, 16, 16))
-			.withTileSet(CDRoomTileSets.PUZZLE_ROOM_TILESET)
 			.nonconsecutive()
 			.popCap(2)
 			.onApply(CDTerms::injectTreasure));
-	public static final Supplier<GrammarTerm> SML_PUZZLE	= register("small_puzzle", () -> GrammarTerm.Builder.create(0x2768CA, DyeColor.LIGHT_BLUE)
+	public static final Supplier<GrammarTerm> SML_PUZZLE	= register(ID_SML_PUZZLE, () -> GrammarTerm.Builder.create(0x2768CA, DyeColor.LIGHT_BLUE)
 			.size(size(5, 5, 8, 8))
-			.withTileSet(CDRoomTileSets.PUZZLE_ROOM_TILESET)
 			.nonconsecutive()
 			.popCap(4));
-	public static final Supplier<GrammarTerm> BOSS			= register("boss", () -> GrammarTerm.Builder.create(0x7D1D1D, DyeColor.RED)
+	public static final Supplier<GrammarTerm> BOSS			= register(ID_BOSS, () -> GrammarTerm.Builder.create(0x7D1D1D, DyeColor.RED)
 			.size(size(16, 16))
-			.withTileSet(CDRoomTileSets.BOSS_ROOM_TILESET)
 			.popCap(1)
 			.weight(10)
 			.neverAfter(CDTerms.START)
 			.onlyBefore(CDTerms.END)
 			.onApply(CDTerms::injectTreasure));
-	public static final Supplier<GrammarTerm> TREASURE		= register("treasure", () -> GrammarTerm.Builder.create(0xFFDC40, DyeColor.YELLOW)
+	public static final Supplier<GrammarTerm> TREASURE		= register(ID_TREASURE, () -> GrammarTerm.Builder.create(0xFFDC40, DyeColor.YELLOW)
 			.size(size(5, 5))
-			.withTileSet(CDRoomTileSets.TREASURE_ROOM_TILESET)
 			.popCap(3)
 			.weight(2)
 			.onlyAfter(CDTerms.BATTLE, CDTerms.SML_PUZZLE, CDTerms.EMPTY));
@@ -123,10 +125,14 @@ public class CDTerms
 	
 	private static Supplier<GrammarTerm> register(String name, Supplier<GrammarTerm.Builder> funcIn)
 	{
-		final Identifier id = prefix(name);
+		return register(prefix(name), funcIn);
+	}
+	
+	public static Supplier<GrammarTerm> register(Identifier id, Supplier<GrammarTerm.Builder> funcIn)
+	{
 		final GrammarTerm term = funcIn.get().build(id);
 		if(term.isPlaceable())
-			tally++;
+			placeableTally++;
 		Supplier<GrammarTerm> sup = () -> term;
 		TERMS.put(id, sup);
 		return sup;
@@ -140,6 +146,6 @@ public class CDTerms
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info("# Initialised {} grammar terms ({} placeable)", TERMS.size(), tally);
+		CyclicDungeons.LOGGER.info("# Initialised {} grammar terms ({} placeable)", TERMS.size(), placeableTally);
 	}
 }

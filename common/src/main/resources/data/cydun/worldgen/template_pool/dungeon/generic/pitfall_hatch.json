@@ -1,0 +1,42 @@
+{
+	"name": "cydun:dungeon/generic/pitfall_hatch",
+	"elements": [
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/pitfall_hatch/generic/hatch_01",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/pitfall_hatch/generic/hatch_02",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/pitfall_hatch/generic/hatch_03",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/pitfall_hatch/generic/hatch_04",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		}
+	],
+	"fallback": "minecraft:empty"
+}

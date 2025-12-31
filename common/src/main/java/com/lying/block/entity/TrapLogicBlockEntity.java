@@ -5,9 +5,9 @@ import static com.lying.reference.Reference.ModInfo.prefix;
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.TrapLogicBlock;
-import com.lying.block.entity.logic.TrapLogicRegistry;
-import com.lying.block.entity.logic.TrapLogicRegistry.LogicHandler;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDTrapLogicHandlers;
+import com.lying.init.CDTrapLogicHandlers.LogicHandler;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -89,7 +89,7 @@ public class TrapLogicBlockEntity extends AbstractWireableBlockEntity
 	public LogicHandler getHandler()
 	{
 		if(handler == null)
-			handler = TrapLogicRegistry.get(logicType);
+			handler = CDTrapLogicHandlers.get(logicType);
 		
 		return handler;
 	}

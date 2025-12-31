@@ -1,7 +1,6 @@
 package com.lying.grammar;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,11 +19,9 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
-import com.lying.init.CDRoomTileSets;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
-import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -61,7 +58,6 @@ public abstract class GrammarTerm
 	private final Supplier<IRoomProcessor> processorGetter;
 	private final Function<Random, Vector2i> sizeFunc;
 	private final PrepareRoom prepFunc;
-	private final Map<Tile,Float> tileSet;
 	
 	private GrammarTerm(
 			Identifier idIn, 
@@ -74,8 +70,7 @@ public abstract class GrammarTerm
 			boolean placeable, 
 			boolean replaceable, 
 			boolean injectsBranch,
-			TermConditions conditionsIn,
-			Map<Tile,Float> tileSetIn)
+			TermConditions conditionsIn)
 	{
 		registryName = idIn;
 		weight = weightIn;
@@ -85,7 +80,6 @@ public abstract class GrammarTerm
 		prepFunc = prepFuncIn;
 		sizeFunc = sizeFuncIn;
 		conditions = conditionsIn;
-		tileSet = tileSetIn;
 		isPlaceable = placeable;
 		isReplaceable = replaceable;
 		isBranchInjector = injectsBranch;
@@ -132,11 +126,11 @@ public abstract class GrammarTerm
 			processor.applyPreProcessing(node, meta, map, world);
 			
 			// Fill rest of tileset with WFC generation
-			TileGenerator.generate(map, tileSet, world.getRandom());
+			TileGenerator.generate(map, node.metadata().theme().getTileSet(this), world.getRandom());
 		}
 		catch(Exception e) { }
 		
-		map.finalise();
+		map.finalise(meta.theme());
 		
 		if(map.generate(position, world))
 		{
@@ -242,7 +236,6 @@ public abstract class GrammarTerm
 		private Supplier<IRoomProcessor> processor = IRoomProcessor.NOOP;
 		private PrepareRoom prepFunc = (d,t,r) -> d.setSize(t.size(r));
 		private Function<Random, Vector2i> sizeFunc = r -> new Vector2i(3 + r.nextInt(4), 3 + r.nextInt(4));
-		private Map<Tile,Float> tileSet = CDRoomTileSets.DEFAULT_TILESET;
 		
 		private Builder(int colourIn, DyeColor colorIn)
 		{
@@ -355,12 +348,6 @@ public abstract class GrammarTerm
 			return this;
 		}
 		
-		public Builder withTileSet(Map<Tile,Float> tileSetIn)
-		{
-			tileSet = tileSetIn;
-			return this;
-		}
-		
 		public Builder setProcessor(Supplier<IRoomProcessor> processorIn)
 		{
 			processor = processorIn;
@@ -378,7 +365,7 @@ public abstract class GrammarTerm
 					.onlyAfter(after).neverAfter(notAfter)
 					.onlyBefore(before).neverBefore(notBefore);
 			
-			return new GrammarTerm(registryName, weight, colour, color, processor, prepFunc, sizeFunc, placeable, replaceable, injects, conditions, tileSet)
+			return new GrammarTerm(registryName, weight, colour, color, processor, prepFunc, sizeFunc, placeable, replaceable, injects, conditions)
 				{
 					public void onApply(GrammarRoom room, GrammarPhrase graph) { applyFunc.apply(this, room, graph); }
 				};
