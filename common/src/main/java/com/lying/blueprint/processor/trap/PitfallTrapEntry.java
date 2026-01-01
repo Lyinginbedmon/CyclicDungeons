@@ -18,6 +18,7 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
 import com.lying.worldgen.Tile;
@@ -44,16 +45,15 @@ public class PitfallTrapEntry extends TrapEntry
 		// Pre-seed tile map with hatches
 		List<BlockPos> blanks = Lists.newArrayList();
 		blanks.addAll(tileMap.getBoundaries(List.of(Direction.DOWN)).stream()
-				.filter(pos -> HATCH.canExistAt(pos, tileMap))
-				.filter(pos -> 
-				{
-					Optional<Tile> tileAt = tileMap.get(pos);
-					return tileAt.isPresent() && tileAt.get().isBlank();
-					})
-				.toList());
+			.filter(pos -> tileMap.get(pos).get().isBlank())
+			.filter(pos -> HATCH.canExistAt(pos, tileMap))
+			.toList());
 		
 		if(blanks.isEmpty())
+		{
+			CDLoggers.WORLDGEN.warn("Couldn't find anywhere to place hatches in room");
 			return;
+		}
 		
 		final int count = (int)((float)blanks.size() * (0.35F + (world.random.nextFloat() * 0.15F)));
 		int tally = 0;
@@ -76,7 +76,10 @@ public class PitfallTrapEntry extends TrapEntry
 	{
 		int count = meta.processorData.getInt("PitsPlaced");
 		if(count == 0)
+		{
+			CDLoggers.WORLDGEN.warn("No hatches found to wire to");
 			return;
+		}
 
 		final Random rand = world.random;
 		final int floorY = min.getY() + 2;

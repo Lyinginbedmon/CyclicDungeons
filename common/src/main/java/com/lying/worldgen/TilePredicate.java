@@ -4,14 +4,28 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.worldgen.condition.Condition;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 
 import net.minecraft.util.math.BlockPos;
 
 public class TilePredicate
 {
-	private final List<TileConditions.Condition> primitives = Lists.newArrayList();
+	public static final Codec<TilePredicate> CODEC	= Condition.CODEC.listOf().comapFlatMap(
+			conditions -> DataResult.success(new TilePredicate(conditions)),
+			TilePredicate::contents);
 	
-	public static TilePredicate fromCondition(TileConditions.Condition condition)
+	private final List<Condition> primitives = Lists.newArrayList();
+	
+	protected TilePredicate(List<Condition> conditionsIn)
+	{
+		primitives.addAll(conditionsIn);
+	}
+	
+	public List<Condition> contents() { return primitives; }
+	
+	public static TilePredicate fromCondition(Condition condition)
 	{
 		return Builder.create().condition(condition).build();
 	}
@@ -23,13 +37,13 @@ public class TilePredicate
 	
 	public static class Builder
 	{
-		private final List<TileConditions.Condition> conditions = Lists.newArrayList();
+		private final List<Condition> conditions = Lists.newArrayList();
 		
 		protected Builder() { }
 		
 		public static Builder create() { return new Builder(); }
 		
-		public Builder condition(TileConditions.Condition condition)
+		public Builder condition(Condition condition)
 		{
 			conditions.add(condition);
 			return this;
@@ -37,9 +51,7 @@ public class TilePredicate
 		
 		public TilePredicate build()
 		{
-			TilePredicate predicate = new TilePredicate();
-			conditions.forEach(predicate.primitives::add);
-			return predicate;
+			return new TilePredicate(conditions);
 		}
 	}
 }

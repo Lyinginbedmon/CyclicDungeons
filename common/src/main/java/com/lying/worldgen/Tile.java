@@ -16,6 +16,8 @@ import com.lying.init.CDLoggers;
 import com.lying.init.CDTileTags.TileTag;
 import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -33,6 +35,7 @@ import net.minecraft.structure.pool.StructurePoolElement;
 import net.minecraft.structure.pool.alias.StructurePoolAliasLookup;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -41,6 +44,19 @@ import net.minecraft.util.math.random.Random;
 
 public abstract class Tile
 {
+	public static final Codec<Tile> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+			Identifier.CODEC.fieldOf("id").forGetter(Tile::registryName),
+			Identifier.CODEC.listOf().optionalFieldOf("tags").forGetter(t -> ((Tile)t).tileTags.isEmpty() ? Optional.empty() : Optional.of(((Tile)t).tileTags)),
+			GenStyle.CODEC.fieldOf("generation").forGetter(t -> ((Tile)t).type),
+			TilePredicate.CODEC.fieldOf("conditions").forGetter(t -> t.predicate)
+			// Rotation supplier
+			)
+			.apply(instance, (id,tags,type,predicate) -> 
+			{
+				Tile.Builder builder = Tile.Builder.of(predicate);
+				return builder.build().apply(id);
+			}));
+	
 	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	public static final int TILE_SIZE = 2;
 	public static final Vec2f TILE = new Vec2f(TILE_SIZE, TILE_SIZE);
@@ -69,6 +85,9 @@ public abstract class Tile
 	
 	public final boolean isIn(TileTag tag) { return tileTags.contains(tag.id()); }
 	
+	/** Shallow reference list of tile tags, each only containing this tile. Only used at startup. */
+	public final List<TileTag> tags() { return tileTags.stream().map(id -> new TileTag(id).add(registryName)).toList(); }
+	
 	public final boolean isBlank() { return this.registryName.equals(CDTiles.BLANK.get().registryName()); }
 	
 	public final boolean isFlag() { return type == GenStyle.FLAG; }
@@ -94,16 +113,30 @@ public abstract class Tile
 			world.setBlockState(pos, state);
 	}
 	
-	public static enum GenStyle
+	public static enum GenStyle implements StringIdentifiable
 	{
 		FLAG,
 		BLOCK,
 		STRUCTURE;
+		
+		@SuppressWarnings("deprecation")
+		public static final EnumCodec<GenStyle> CODEC = StringIdentifiable.createCodec(GenStyle::values);
+		
+		public String asString() { return name().toLowerCase(); }
+		
+		public static GenStyle fromString(String name)
+		{
+			for(GenStyle style : values())
+				if(style.asString().equalsIgnoreCase(name))
+					return style;
+			return FLAG;
+		}
 	}
 	
 	@FunctionalInterface
 	public static interface RotationSupplier
 	{
+		// FIXME Serialise RotationSupplier
 		public static final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
 				Direction.NORTH, BlockRotation.NONE,
 				Direction.EAST, BlockRotation.CLOCKWISE_90,
@@ -125,7 +158,6 @@ public abstract class Tile
 		
 		public static RotationSupplier againstBoundary(RotationSupplier fallback)
 		{
-			
 			return (pos, getter, rand) -> 
 			{
 				for(Entry<Direction, BlockRotation> entry : faceToRotationMap.entrySet())

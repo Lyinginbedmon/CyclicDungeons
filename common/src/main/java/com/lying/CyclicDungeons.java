@@ -17,6 +17,7 @@ import com.lying.init.CDScreenHandlerTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
+import com.lying.init.CDTileConditions;
 import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
@@ -50,6 +51,7 @@ public final class CyclicDungeons
 		config = new ServerConfig("config/CyclicDungeonsServer.cfg");
 		config.read();
 		
+		CDTileConditions.init();
 		CDTiles.init();
 		CDTileTags.init();
 		CDRoomTileSets.init();

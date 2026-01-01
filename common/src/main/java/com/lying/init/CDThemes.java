@@ -68,31 +68,36 @@ public class CDThemes
 		ID_JUNGLE	= prefix("jungle"),
 		ID_SWAMP	= prefix("swamp");
 	
-	public static final Supplier<Theme> GENERIC	= register(ID_GENERIC, new EncounterSet(), 
+	public static final Supplier<Theme> GENERIC	= register(ID_GENERIC, 
+			new EncounterSet(), 
 			List.of(),
 			Map.of());
-	public static final Supplier<Theme> DESERT	= register(ID_DESERT, new EncounterSet()
-			.addSimple(prefix("husk_crowd"), EntityType.HUSK, 4, 8)
-			.addSquad(prefix("fire_team"), e -> e
-				.add(SquadEntry.Builder.of(EntityType.WITHER_SKELETON).build())
-				.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()))
-			.addEntry(ENCOUNTER_PILLAGER_SQUAD)
-			.addEntry(ENCOUNTER_WOLF_PACK), 
+	public static final Supplier<Theme> DESERT	= register(ID_DESERT, 
+			new EncounterSet()
+				.addSimple(prefix("husk_crowd"), EntityType.HUSK, 4, 8)
+				.addSquad(prefix("fire_team"), e -> e
+					.add(SquadEntry.Builder.of(EntityType.WITHER_SKELETON).build())
+					.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()))
+				.addEntry(ENCOUNTER_PILLAGER_SQUAD)
+				.addEntry(ENCOUNTER_WOLF_PACK), 
 			List.of(),
 			Map.of());
-	public static final Supplier<Theme> UNDEAD	= register(ID_UNDEAD, new EncounterSet()
-			.addEntry(ENCOUNTER_SKELETONS)
-			.addEntry(ENCOUNTER_ZOMBIE_CROWD), 
+	public static final Supplier<Theme> UNDEAD	= register(ID_UNDEAD, 
+			new EncounterSet()
+				.addEntry(ENCOUNTER_SKELETONS)
+				.addEntry(ENCOUNTER_ZOMBIE_CROWD), 
 			List.of(),
 			Map.of());
-	public static final Supplier<Theme> JUNGLE	= register(ID_JUNGLE, new EncounterSet(), 
+	public static final Supplier<Theme> JUNGLE	= register(ID_JUNGLE, 
+			new EncounterSet(), 
 			List.of(),
 			Map.of());
-	public static final Supplier<Theme> SWAMP	= register(ID_SWAMP, new EncounterSet()
-			.addSimple(prefix("skeletons"), EntityType.BOGGED, 3, 5)
-			.addSimple(prefix("coven"), EntityType.WITCH, 2, 3)
-			.addEntry(ENCOUNTER_ZOMBIE_CROWD)
-			.addEntry(ENCOUNTER_PILLAGER_SQUAD), 
+	public static final Supplier<Theme> SWAMP	= register(ID_SWAMP, 
+			new EncounterSet()
+				.addSimple(prefix("skeletons"), EntityType.BOGGED, 3, 5)
+				.addSimple(prefix("coven"), EntityType.WITCH, 2, 3)
+				.addEntry(ENCOUNTER_ZOMBIE_CROWD)
+				.addEntry(ENCOUNTER_PILLAGER_SQUAD), 
 			List.of(),
 			Map.of());
 	
