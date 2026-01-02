@@ -5,10 +5,15 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.lying.worldgen.Tile;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 public class CDRoomTileSets
 {
 	public static final TileSet DEFAULT_TILESET			= new TileSet();
+	public static final TileSet DEFAULT_PASSAGE_TILESET	= new TileSet();
 	
 	public static final TileSet START_ROOM_TILESET		= new TileSet();
 	public static final TileSet END_ROOM_TILESET		= new TileSet();
@@ -33,6 +38,10 @@ public class CDRoomTileSets
 				CDTiles.TABLE, 1F,
 				CDTiles.TABLE_LIGHT, 1F,
 				CDTiles.WORKSTATION, 1F));
+		
+		DEFAULT_PASSAGE_TILESET
+				.add(CDTiles.PASSAGE_FLOOR.get(), 10000F)
+				.add(CDTiles.FLOOR_LIGHT.get(), 1F);
 		
 		// Start room tile set
 		START_ROOM_TILESET
@@ -90,6 +99,13 @@ public class CDRoomTileSets
 	public static class TileSet extends HashMap<Tile,Float>
 	{
 		private static final long serialVersionUID = 1L;
+		public static final Codec<TileSet> CODEC	= TileEntry.CODEC.listOf().comapFlatMap(set -> 
+		{
+			TileSet tileSet = new TileSet();
+			set.forEach(e -> tileSet.add(e.tile, e.weight));
+			return DataResult.success(tileSet);
+		}, set -> 
+			set.entrySet().stream().map(e -> new TileEntry(e.getKey(), e.getValue())).toList());
 		
 		public TileSet()
 		{
@@ -97,7 +113,7 @@ public class CDRoomTileSets
 			add(CDTiles.AIR.get(), 10F);
 		}
 		
-		public TileSet add(Tile tileIn, Float weightIn)
+		public TileSet add(Tile tileIn, float weightIn)
 		{
 			super.put(tileIn, weightIn);
 			return this;
@@ -125,6 +141,24 @@ public class CDRoomTileSets
 			put(CDTiles.WET_FLOOR.get(), 200F);
 			put(CDTiles.POOL.get(), 10F);
 			return this;
+		}
+		
+		public <T> DataResult<T> encode(final DynamicOps<T> ops)
+		{
+			return CODEC.encodeStart(ops, this);
+		}
+		
+		public static <T> TileSet decode(final DynamicOps<T> ops, final T input)
+		{
+			return CODEC.parse(ops, input).getOrThrow();
+		}
+		
+		private static record TileEntry(Tile tile, float weight)
+		{
+			public static final Codec<TileEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+					Tile.CODEC.fieldOf("tile").forGetter(TileEntry::tile), 
+					Codec.FLOAT.fieldOf("weight").forGetter(TileEntry::weight))
+					.apply(instance, TileEntry::new));
 		}
 	}
 }

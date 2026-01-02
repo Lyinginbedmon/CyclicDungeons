@@ -1,11 +1,8 @@
 package com.lying.worldgen;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +35,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.random.Random;
 
@@ -48,12 +44,15 @@ public abstract class Tile
 			Identifier.CODEC.fieldOf("id").forGetter(Tile::registryName),
 			Identifier.CODEC.listOf().optionalFieldOf("tags").forGetter(t -> ((Tile)t).tileTags.isEmpty() ? Optional.empty() : Optional.of(((Tile)t).tileTags)),
 			GenStyle.CODEC.fieldOf("generation").forGetter(t -> ((Tile)t).type),
-			TilePredicate.CODEC.fieldOf("conditions").forGetter(t -> t.predicate)
-			// Rotation supplier
+			TilePredicate.CODEC.fieldOf("conditions").forGetter(t -> t.predicate),
+			RotationSupplier.CODEC.fieldOf("rotation").forGetter(t -> t.rotator)
 			)
-			.apply(instance, (id,tags,type,predicate) -> 
+			.apply(instance, (id,tags,type,predicate,rotator) -> 
 			{
 				Tile.Builder builder = Tile.Builder.of(predicate);
+				builder.withRotation(rotator);
+				tags.ifPresent(set -> builder.tags(set));
+				// FIXME Apply generation type properly from data for block tiles
 				return builder.build().apply(id);
 			}));
 	
@@ -99,9 +98,9 @@ public abstract class Tile
 	
 	/** Returns a valid rotation for an instance of this tile at the given coordinates in the tile set */
 	@NotNull
-	public final BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Optional<Tile>> getter, Random rand)
+	public final BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, Function<BlockPos,Optional<Tile>> func, Random rand)
 	{
-		return rotator.assignRotation(pos, getter, rand);
+		return rotator.assignRotation(pos, grid, func, rand);
 	}
 	
 	public abstract void generate(TileInstance inst, BlockPos pos, ServerWorld world);
@@ -133,74 +132,13 @@ public abstract class Tile
 		}
 	}
 	
-	@FunctionalInterface
-	public static interface RotationSupplier
-	{
-		// FIXME Serialise RotationSupplier
-		public static final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
-				Direction.NORTH, BlockRotation.NONE,
-				Direction.EAST, BlockRotation.CLOCKWISE_90,
-				Direction.SOUTH, BlockRotation.CLOCKWISE_180,
-				Direction.WEST, BlockRotation.COUNTERCLOCKWISE_90
-				);
-		
-		@NotNull
-		public BlockRotation assignRotation(BlockPos pos, Function<BlockPos,Optional<Tile>> getter, Random rand);
-		
-		public static RotationSupplier none() { return (p,g,r) -> BlockRotation.NONE; }
-		
-		public static RotationSupplier random() { return (p,g,r) -> BlockRotation.values()[r.nextInt(BlockRotation.values().length)]; }
-		
-		public static RotationSupplier toFaceAdjacent(Predicate<Tile> predicate)
-		{
-			return toFaceAdjacent(predicate, none());
-		}
-		
-		public static RotationSupplier againstBoundary(RotationSupplier fallback)
-		{
-			return (pos, getter, rand) -> 
-			{
-				for(Entry<Direction, BlockRotation> entry : faceToRotationMap.entrySet())
-				{
-					Optional<Tile> neighbour = getter.apply(pos.offset(entry.getKey()));
-					if(neighbour.isEmpty())
-						return entry.getValue();
-				}
-				
-				return fallback.assignRotation(pos, getter, rand);
-			};
-		}
-		
-		public static RotationSupplier toFaceAdjacent(Predicate<Tile> predicate, RotationSupplier fallback)
-		{
-			final Map<Direction, BlockRotation> faceToRotationMap = Map.of(
-					Direction.NORTH, BlockRotation.NONE,
-					Direction.EAST, BlockRotation.CLOCKWISE_90,
-					Direction.SOUTH, BlockRotation.CLOCKWISE_180,
-					Direction.WEST, BlockRotation.COUNTERCLOCKWISE_90
-					);
-			
-			return (pos, getter, rand) -> 
-			{
-				for(Entry<Direction, BlockRotation> entry : faceToRotationMap.entrySet())
-				{
-					Optional<Tile> neighbour = getter.apply(pos.offset(entry.getKey()));
-					if(neighbour.isPresent() && predicate.test(neighbour.get()))
-						return entry.getValue();
-				}
-				
-				return fallback.assignRotation(pos, getter, rand);
-			};
-		}
-	}
-	
 	public static class Builder
 	{
 		private final TilePredicate predicate;
 		
 		private GenStyle style = GenStyle.FLAG;
 		private BlockState[] blockStates = new BlockState[0];
-		private RotationSupplier rotationFunc = (p,g,r) -> BlockRotation.NONE;
+		private RotationSupplier rotationFunc = RotationSupplier.NONE.get();
 		private List<Identifier> tileTags = Lists.newArrayList();
 		
 		private Builder(TilePredicate predicateIn)
@@ -209,6 +147,14 @@ public abstract class Tile
 		}
 		
 		public static Builder of(TilePredicate predicate) { return new Builder(predicate); }
+		
+		public Builder tags(List<Identifier> tags)
+		{
+			for(Identifier id : tags)
+				if(!tileTags.contains(id))
+					tileTags.add(id);
+			return this;
+		}
 		
 		public Builder tags(Identifier... tags)
 		{
@@ -246,12 +192,12 @@ public abstract class Tile
 		
 		public Builder freeRotation()
 		{
-			return withRotation(RotationSupplier.random());
+			return withRotation(RotationSupplier.RANDOM.get());
 		}
 		
 		public Builder noRotation()
 		{
-			return withRotation((p,g,r) -> BlockRotation.NONE);
+			return withRotation(RotationSupplier.NONE.get());
 		}
 		
 		public Builder withRotation(RotationSupplier funcIn)
@@ -266,12 +212,12 @@ public abstract class Tile
 			{
 				default:
 				case FLAG:
-					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.none())
+					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.NONE.get())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world) { }
 					};
 				case BLOCK:
-					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.none())
+					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.NONE.get())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{

@@ -1,7 +1,6 @@
 package com.lying.blueprint;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -22,8 +21,8 @@ import com.lying.utility.CompoundBox2f;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
 import com.lying.utility.RotaryBox2f;
+import com.lying.worldgen.RotationSupplier;
 import com.lying.worldgen.Tile;
-import com.lying.worldgen.Tile.RotationSupplier;
 import com.lying.worldgen.TileGenerator;
 
 import net.minecraft.server.world.ServerWorld;
@@ -39,11 +38,6 @@ public class BlueprintPassage
 	public static final int PASSAGE_HEIGHT = 4;
 	public static final int TILE_SIZE = Tile.TILE_SIZE;
 	public static final int PASSAGE_WIDTH = 3 * TILE_SIZE;
-	public static final Map<Tile, Float> PASSAGE_TILE_SET = Map.of(
-			CDTiles.PASSAGE_FLOOR.get(), 10000F,
-			CDTiles.AIR.get(), 10F,
-			CDTiles.FLOOR_LIGHT.get(), 1F
-			);
 	
 	private final BlueprintRoom parent;
 	private final List<BlueprintRoom> children = Lists.newArrayList();
@@ -358,8 +352,8 @@ public class BlueprintPassage
 			break;
 		}
 		
-		TileGenerator.generate(map, PASSAGE_TILE_SET, world.random);
 		final Theme theme = parent().metadata().theme();
+		TileGenerator.generate(map, theme.passageTileSet(), world.random);
 		map.finalise(theme);
 		
 		// Ensure doorway from parent room has correct orientation

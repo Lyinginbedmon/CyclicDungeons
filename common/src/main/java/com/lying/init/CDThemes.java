@@ -152,6 +152,11 @@ public class CDThemes
 				return tileSets.get(name);
 		}
 		
+		public TileSet passageTileSet()
+		{
+			return CDRoomTileSets.DEFAULT_PASSAGE_TILESET;
+		}
+		
 		public RegistryKey<StructurePool> getTilePool(Tile tileIn)
 		{
 			return getTilePool(tileIn.registryName());

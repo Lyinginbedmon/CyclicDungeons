@@ -10,8 +10,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
+import com.lying.worldgen.RotationSupplier;
 import com.lying.worldgen.Tile;
-import com.lying.worldgen.Tile.RotationSupplier;
 import com.lying.worldgen.TilePredicate;
 import com.lying.worldgen.condition.Adjacent;
 import com.lying.worldgen.condition.Boundary;
@@ -169,7 +169,7 @@ public class CDTiles
 				.condition(Adjacent.of(Direction.Type.HORIZONTAL, IsAnyOf.HasTag.of(CDTileTags.ID_TABLES)))
 				.build())
 			.asStructure()
-			.withRotation(RotationSupplier.toFaceAdjacent(CDTileTags.TABLES::contains))
+			.withRotation(RotationSupplier.FaceAdjacent.of(IsAnyOf.HasTag.of(CDTileTags.ID_TABLES)))
 			.tags(CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR).build());
 	public static final Supplier<Tile> FLOOR_LIGHT	= register(ID_FLOOR_LIGHT, Tile.Builder
 			.of(TilePredicate.Builder.create()
@@ -190,7 +190,7 @@ public class CDTiles
 				.condition(NearBox.Inverse.of(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), IsAnyOf.HasTag.of(CDTileTags.ID_DECOR)))
 				.build())
 			.asStructure()
-			.withRotation(RotationSupplier.againstBoundary(RotationSupplier.random()))
+			.withRotation(RotationSupplier.FaceBoundary.of(RotationSupplier.RANDOM.get()))
 			.tags(CDTileTags.ID_DECOR)
 			.build());
 	public static final Supplier<Tile> PILLAR_BASE	= register(ID_PILLAR_BASE, Tile.Builder

@@ -34,6 +34,7 @@ public class CDTileConditions
 {
 	private static final Map<Identifier, Supplier<Condition>> REGISTRY = new HashMap<>();
 	
+	// Static yes/no conditions
 	public static final Supplier<Condition> NEVER			= register("never", id -> new Condition(id)
 	{
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return false; }
@@ -43,12 +44,17 @@ public class CDTileConditions
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return true; }
 	});
 	
+	// Conditions for boolean logic applications
 	public static final Supplier<Condition> NOT				= register("not", Not::new);
 	public static final Supplier<Condition> AND				= register("and", Boolean.And::new);
 	public static final Supplier<Condition> OR				= register("or", Boolean.Or::new);
 	
+	// Conditions for the existing tile being evaluated
 	public static final Supplier<Condition> IS_ANY_OF		= register("is_any_of", IsAnyOf::new);
 	public static final Supplier<Condition> HAS_TAG			= register("has_tag", IsAnyOf.HasTag::new);
+	
+	// Conditions for the neighbourhood around the tile being evaluated
+	
 	public static final Supplier<Condition> ON_FLOOR		= register("on_solid_floor", id -> new Condition(id)
 	{
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)

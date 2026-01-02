@@ -2,6 +2,8 @@ package com.lying.worldgen.condition;
 
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
@@ -50,6 +52,7 @@ public abstract class Condition
 	
 	public Condition fromJson(JsonObject json, JsonOps ops) { return this; }
 	
+	@Nullable
 	public static Condition fromJson(JsonElement json, JsonOps ops)
 	{
 		JsonObject obj;

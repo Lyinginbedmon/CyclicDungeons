@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDLoggers;
+import com.lying.init.CDRoomTileSets.TileSet;
 import com.lying.init.CDTiles;
 import com.lying.utility.CDUtils;
 import com.lying.utility.DebugLogger;
@@ -22,7 +23,7 @@ public class TileGenerator
 	public static final DebugLogger LOGGER = CDLoggers.WFC;
 	public static boolean DEBUG = false;
 	
-	public static void generate(BlueprintTileGrid map, Map<Tile,Float> tiles, Random rand)
+	public static void generate(BlueprintTileGrid map, TileSet tiles, Random rand)
 	{
 		if(map.isEmpty())
 		{
@@ -59,7 +60,7 @@ public class TileGenerator
 		LOGGER.info("WFC complete");
 	}
 	
-	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, Map<Tile,Float> tiles, Random rand)
+	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, TileSet tiles, Random rand)
 	{
 		if(slots.isEmpty() || tiles.isEmpty())
 		{
@@ -111,7 +112,7 @@ public class TileGenerator
 		return most;
 	}
 	
-	public static Tile selectTile(List<Tile> options, Map<Tile,Float> weights, Random rand)
+	public static Tile selectTile(List<Tile> options, TileSet weights, Random rand)
 	{
 		List<Pair<Tile,Float>> weightedList = Lists.newArrayList();
 		options.forEach(tile -> weightedList.add(Pair.of(tile, (float)weights.get(tile))));

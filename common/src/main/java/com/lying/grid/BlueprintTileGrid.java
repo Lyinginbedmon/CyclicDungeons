@@ -138,7 +138,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 				return;
 			
 			BlockPos pos = entry.getKey();
-			BlockRotation rotation = tile.assignRotation(pos, this::get, rand);
+			BlockRotation rotation = tile.assignRotation(pos, this, this::get, rand);
 			finalised.add(new TileInstance(pos, tile, theme, rotation));
 		});
 		if(!finalised.isEmpty())
