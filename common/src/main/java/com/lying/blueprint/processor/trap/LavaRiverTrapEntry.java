@@ -10,7 +10,8 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDThemes.Theme;
 import com.lying.init.CDTiles;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.DefaultTiles;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -19,20 +20,20 @@ import net.minecraft.util.math.Direction;
 
 public class LavaRiverTrapEntry extends TrapEntry
 {
-	private static final Tile LAVA_TILE = CDTiles.LAVA_RIVER.get();
+	private static final Optional<Tile> LAVA_TILE = CDTiles.instance().get(DefaultTiles.ID_LAVA_RIVER);
 	
 	public LavaRiverTrapEntry(Identifier name)
 	{
 		super(name);
 	}
 	
-	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return room.hasChildren(); }
+	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return LAVA_TILE.isPresent() && room.hasChildren(); }
 	
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world)
 	{
 		List<BlockPos> blanks = Lists.newArrayList();
 		blanks.addAll(tileMap.getBoundaries(List.of(Direction.DOWN)).stream()
-				.filter(pos -> LAVA_TILE.canExistAt(pos, tileMap))
+				.filter(pos -> LAVA_TILE.get().canExistAt(pos, tileMap))
 				.filter(pos -> 
 				{
 					Optional<Tile> tileAt = tileMap.get(pos);
@@ -50,8 +51,8 @@ public class LavaRiverTrapEntry extends TrapEntry
 				break;
 			else
 			{
-				tileMap.put(blanks.remove(world.random.nextInt(blanks.size())), LAVA_TILE);
-				blanks.removeIf(pos -> !LAVA_TILE.canExistAt(pos, tileMap));
+				tileMap.put(blanks.remove(world.random.nextInt(blanks.size())), LAVA_TILE.get());
+				blanks.removeIf(pos -> !LAVA_TILE.get().canExistAt(pos, tileMap));
 			}
 		}
 	}

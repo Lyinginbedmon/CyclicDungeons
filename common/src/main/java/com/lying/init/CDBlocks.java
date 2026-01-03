@@ -108,6 +108,6 @@ public class CDBlocks
 	public static void init()
 	{
 		BLOCKS.register();
-		CyclicDungeons.LOGGER.info("# Initialised {} blocks", ALL_BLOCKS.size());
+		CyclicDungeons.LOGGER.info(" # Initialised {} blocks", ALL_BLOCKS.size());
 	}
 }

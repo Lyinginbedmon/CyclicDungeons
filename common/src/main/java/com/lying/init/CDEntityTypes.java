@@ -42,6 +42,6 @@ public class CDEntityTypes
 		
 		EntityAttributeRegistry.register(RABID_WOLF, () -> WolfEntity.createWolfAttributes());
 		
-		CyclicDungeons.LOGGER.info("# Initialised {} entity types", tally);
+		CyclicDungeons.LOGGER.info(" # Initialised {} entity types", tally);
 	}
 }

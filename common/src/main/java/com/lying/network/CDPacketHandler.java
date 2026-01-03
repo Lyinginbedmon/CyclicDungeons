@@ -13,6 +13,6 @@ public class CDPacketHandler
 	
 	public static void initServer()
 	{
-		CyclicDungeons.LOGGER.info("# Registered server-side packet receivers");
+		CyclicDungeons.LOGGER.info(" # Registered server-side packet receivers");
 	}
 }

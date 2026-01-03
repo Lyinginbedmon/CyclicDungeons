@@ -9,7 +9,7 @@ import org.joml.Vector2i;
 import com.google.common.collect.Lists;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDLoggers;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;

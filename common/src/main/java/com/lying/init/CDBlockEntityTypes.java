@@ -58,6 +58,6 @@ public class CDBlockEntityTypes
 	{
 		TYPES.register();
 		
-		CyclicDungeons.LOGGER.info("# Initialised {} block entity types", tally);
+		CyclicDungeons.LOGGER.info(" # Initialised {} block entity types", tally);
 	}
 }

@@ -1,4 +1,4 @@
-package com.lying.worldgen.condition;
+package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileConditions;
 import com.lying.init.CDTiles;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;
@@ -18,7 +18,7 @@ import net.minecraft.util.math.Direction;
 
 public class Adjacent extends Condition
 {
-	protected List<Direction> faces = Lists.newArrayList(Direction.stream().iterator());
+	protected List<Direction> faces = Lists.newArrayList(Direction.values());
 	protected Condition child = CDTileConditions.NEVER.get();
 	
 	public Adjacent(Identifier idIn)
@@ -62,15 +62,21 @@ public class Adjacent extends Condition
 	public JsonElement toJson(JsonOps ops)
 	{
 		JsonObject obj = asJsonObject(ops);
-		obj.add("sides", FACE_LIST_CODEC.encodeStart(ops, faces).getOrThrow());
+		if(faces.size() < Direction.values().length)
+			obj.add("sides", FACE_LIST_CODEC.encodeStart(ops, faces).getOrThrow());
 		obj.add("condition", child.toJson(ops));
 		return obj;
 	}
 	
 	public Condition fromJson(JsonObject obj, JsonOps ops)
 	{
-		faces.clear();
-		faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
+		if(obj.has("sides"))
+		{
+			faces.clear();
+			faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
+		}
+		else
+			faces = Lists.newArrayList(Direction.values());
 		child = Condition.fromJson(obj.get("condition"), ops);
 		return this;
 	}
@@ -183,6 +189,9 @@ public class Adjacent extends Condition
 
 		public JsonElement toJson(JsonOps ops)
 		{
+			if(faces.size() == Direction.values().length)
+				return Identifier.CODEC.encodeStart(ops, id).getOrThrow();
+			
 			JsonObject obj = asJsonObject(ops);
 			obj.add("sides", FACE_LIST_CODEC.encodeStart(ops, faces).getOrThrow());
 			return obj;
@@ -190,8 +199,13 @@ public class Adjacent extends Condition
 		
 		public Condition fromJson(JsonObject obj, JsonOps ops)
 		{
-			faces.clear();
-			faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
+			if(obj.has("sides"))
+			{
+				faces.clear();
+				faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
+			}
+			else
+				faces = Lists.newArrayList(Direction.values());
 			return this;
 		}
 		
@@ -202,7 +216,8 @@ public class Adjacent extends Condition
 					.filter(set::contains)
 					.map(set::get)
 					.map(Optional::get)
-					.anyMatch(CDTiles.PASSAGE.get()::is);
+					.map(Tile::registryName)
+					.anyMatch(CDTiles.ID_PASSAGE_FLAG::equals);
 		}
 		
 		public static class Inverse extends Passage
@@ -231,7 +246,8 @@ public class Adjacent extends Condition
 						.filter(set::contains)
 						.map(set::get)
 						.map(Optional::get)
-						.noneMatch(CDTiles.PASSAGE.get()::is);
+						.map(Tile::registryName)
+						.noneMatch(CDTiles.ID_PASSAGE_FLAG::equals);
 			}
 		}
 	}

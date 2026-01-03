@@ -1,0 +1,21 @@
+{
+  "conditions": [
+    "cydun:non_boundary",
+    {
+      "condition": {
+        "id": "cydun:is_any_of",
+        "set": [
+          "cydun:pillar_base",
+          "cydun:pillar"
+        ]
+      },
+      "id": "cydun:adjacent",
+      "sides": [
+        "down"
+      ]
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:pillar",
+  "rotation": "cydun:random"
+}

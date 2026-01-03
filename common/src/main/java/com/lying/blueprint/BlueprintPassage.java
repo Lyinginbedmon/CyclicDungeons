@@ -21,9 +21,10 @@ import com.lying.utility.CompoundBox2f;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
 import com.lying.utility.RotaryBox2f;
-import com.lying.worldgen.RotationSupplier;
-import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
+import com.lying.worldgen.tile.DefaultTiles;
+import com.lying.worldgen.tile.RotationSupplier;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;
@@ -336,18 +337,18 @@ public class BlueprintPassage
 				continue;
 			
 			doorPos = p.withY(1);
-			map.put(doorPos.down(), CDTiles.FLOOR_PRISTINE.get());
-			map.put(doorPos, CDTiles.DOORWAY.get());
+			map.put(doorPos.down(), CDTiles.instance().getElse(DefaultTiles.ID_PRISTINE_FLOOR, CDTiles.STONE));
+			map.put(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
 			if(PASSAGE_HEIGHT > 2)
 			{
 				BlockPos pos = doorPos.up();
 				
 				// Place a lintel above the door
-				map.put(pos, CDTiles.DOORWAY_LINTEL.get());
+				map.put(pos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
 				
 				// Fill remaining vertical space above the door with boundary
 				while(map.contains(pos.up()))
-					map.put((pos = pos.up()), CDTiles.PASSAGE_BOUNDARY.get());
+					map.put((pos = pos.up()), CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
 			}
 			break;
 		}
@@ -362,10 +363,10 @@ public class BlueprintPassage
 				if(parent.contains(doorGrid.offset(face)))
 				{
 					BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
-					map.finalise(new TileInstance(doorPos, CDTiles.DOORWAY.get(), theme, rotation));
+					map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY, CDTiles.AIR), theme, rotation));
 					
 					if(map.contains(doorPos.up()))
-						map.finalise(new TileInstance(doorPos.up(), CDTiles.DOORWAY_LINTEL.get(), theme, rotation));
+						map.finalise(new TileInstance(doorPos.up(), CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE), theme, rotation));
 					break;
 				}
 		

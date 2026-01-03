@@ -19,9 +19,11 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDLoggers;
+import com.lying.init.CDThemes.Theme;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.DefaultTiles;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -33,12 +35,14 @@ import net.minecraft.util.math.random.Random;
 
 public class PitfallTrapEntry extends TrapEntry
 {
-	private static final Tile HATCH = CDTiles.HATCH.get();
+	private static final Optional<Tile> HATCH = CDTiles.instance().get(DefaultTiles.ID_HATCH);
 	
 	public PitfallTrapEntry(Identifier name)
 	{
 		super(name);
 	}
+	
+	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return HATCH.isPresent(); }
 	
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world)
 	{
@@ -46,7 +50,7 @@ public class PitfallTrapEntry extends TrapEntry
 		List<BlockPos> blanks = Lists.newArrayList();
 		blanks.addAll(tileMap.getBoundaries(List.of(Direction.DOWN)).stream()
 			.filter(pos -> tileMap.get(pos).get().isBlank())
-			.filter(pos -> HATCH.canExistAt(pos, tileMap))
+			.filter(pos -> HATCH.get().canExistAt(pos, tileMap))
 			.toList());
 		
 		if(blanks.isEmpty())
@@ -63,8 +67,8 @@ public class PitfallTrapEntry extends TrapEntry
 				break;
 			else
 			{
-				tileMap.put(blanks.remove(world.random.nextInt(blanks.size())), HATCH);
-				blanks.removeIf(pos -> !HATCH.canExistAt(pos, tileMap));
+				tileMap.put(blanks.remove(world.random.nextInt(blanks.size())), HATCH.get());
+				blanks.removeIf(pos -> !HATCH.get().canExistAt(pos, tileMap));
 				tally++;
 			}
 		}

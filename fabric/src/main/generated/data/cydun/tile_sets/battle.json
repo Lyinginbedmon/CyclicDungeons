@@ -1,0 +1,41 @@
+{
+  "id": "cydun:battle",
+  "values": [
+    {
+      "tile": "cydun:pristine_floor",
+      "weight": 750.0
+    },
+    {
+      "tile": "cydun:seat",
+      "weight": 10.0
+    },
+    {
+      "tile": "cydun:hot_floor",
+      "weight": 1000.0
+    },
+    {
+      "tile": "cydun:air",
+      "weight": 10.0
+    },
+    {
+      "tile": "cydun:floor_light",
+      "weight": 1.0
+    },
+    {
+      "tile": "cydun:floor",
+      "weight": 1000.0
+    },
+    {
+      "tile": "cydun:table_light",
+      "weight": 1.0
+    },
+    {
+      "tile": "cydun:workstation",
+      "weight": 1.0
+    },
+    {
+      "tile": "cydun:table",
+      "weight": 1.0
+    }
+  ]
+}

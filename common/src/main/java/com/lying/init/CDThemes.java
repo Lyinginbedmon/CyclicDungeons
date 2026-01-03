@@ -16,8 +16,9 @@ import com.lying.blueprint.processor.battle.SimpleBattleEntry;
 import com.lying.blueprint.processor.battle.SquadBattleEntry;
 import com.lying.blueprint.processor.battle.SquadBattleEntry.SquadEntry;
 import com.lying.grammar.GrammarTerm;
-import com.lying.init.CDRoomTileSets.TileSet;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tileset.DefaultTileSets;
+import com.lying.worldgen.tileset.TileSet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -31,16 +32,16 @@ public class CDThemes
 {
 	private static final Map<Identifier, Supplier<Theme>> THEMES = new HashMap<>();
 	
-	private static final Map<Identifier, TileSet> BASIC_TILESETS = Map.of(
-			CDTerms.ID_START, CDRoomTileSets.START_ROOM_TILESET,
-			CDTerms.ID_END, CDRoomTileSets.END_ROOM_TILESET,
-			CDTerms.ID_EMPTY, CDRoomTileSets.EMPTY_ROOM_TILESET,
-			CDTerms.ID_BATTLE, CDRoomTileSets.BATTLE_ROOM_TILESET,
-			CDTerms.ID_TRAP, CDRoomTileSets.TRAP_ROOM_TILESET,
-			CDTerms.ID_BIG_PUZZLE, CDRoomTileSets.PUZZLE_ROOM_TILESET,
-			CDTerms.ID_SML_PUZZLE, CDRoomTileSets.PUZZLE_ROOM_TILESET,
-			CDTerms.ID_BOSS, CDRoomTileSets.BOSS_ROOM_TILESET,
-			CDTerms.ID_TREASURE, CDRoomTileSets.TREASURE_ROOM_TILESET
+	private static final Map<Identifier, Identifier> BASIC_TILESETS = Map.of(
+			CDTerms.ID_START, DefaultTileSets.ID_START,
+			CDTerms.ID_END, DefaultTileSets.ID_END,
+			CDTerms.ID_EMPTY, DefaultTileSets.ID_EMPTY,
+			CDTerms.ID_BATTLE, DefaultTileSets.ID_BATTLE,
+			CDTerms.ID_TRAP, DefaultTileSets.ID_TRAP,
+			CDTerms.ID_BIG_PUZZLE, DefaultTileSets.ID_PUZZLE,
+			CDTerms.ID_SML_PUZZLE, DefaultTileSets.ID_PUZZLE,
+			CDTerms.ID_BOSS, DefaultTileSets.ID_BOSS,
+			CDTerms.ID_TREASURE, DefaultTileSets.ID_TREASURE
 			);
 	
 	private static final List<Identifier> BASIC_TRAPS	= List.of(
@@ -101,9 +102,9 @@ public class CDThemes
 			List.of(),
 			Map.of());
 	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, TileSet> tileSets)
+	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
 	{
-		final Supplier<Theme> entry = () -> new Theme(id, combat, traps, tileSets);
+		final Supplier<Theme> entry = () -> new Theme(id, combat, traps, tileSets, DefaultTileSets.ID_DEFAULT_PASSAGE);
 		THEMES.put(id, entry);
 		return entry;
 	}
@@ -115,10 +116,10 @@ public class CDThemes
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info("# Initialised {} themes", THEMES.size());
+		CyclicDungeons.LOGGER.info(" # Initialised {} themes", THEMES.size());
 	}
 	
-	public static record Theme(Identifier registryName, EncounterSet combatEncounters, List<Identifier> trapEncounters, Map<Identifier,TileSet> tileSets)
+	public static record Theme(Identifier registryName, EncounterSet combatEncounters, List<Identifier> trapEncounters, Map<Identifier,Identifier> tileSets, Identifier passageTiles)
 	{
 		public static final Codec<Theme> CODEC = Identifier.CODEC.comapFlatMap(id -> 
 		{
@@ -146,15 +147,18 @@ public class CDThemes
 		
 		public TileSet getTileSet(Identifier name)
 		{
-			if(tileSets.isEmpty() || !tileSets.containsKey(name))
-				return BASIC_TILESETS.getOrDefault(name, CDRoomTileSets.DEFAULT_TILESET);
+			Identifier setId = null;
+			if(tileSets.containsKey(name))
+				setId = tileSets.get(name);
 			else
-				return tileSets.get(name);
+				setId = BASIC_TILESETS.getOrDefault(name, CDTileSets.DEFAULT.registryName());
+			
+			return CDTileSets.instance().get(setId).orElse(CDTileSets.DEFAULT);
 		}
 		
 		public TileSet passageTileSet()
 		{
-			return CDRoomTileSets.DEFAULT_PASSAGE_TILESET;
+			return CDTileSets.instance().get(passageTiles).orElse(CDTileSets.DEFAULT);
 		}
 		
 		public RegistryKey<StructurePool> getTilePool(Tile tileIn)

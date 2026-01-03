@@ -24,9 +24,12 @@ import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
+import com.lying.reference.Reference;
 import com.lying.utility.DebugLogger;
-import com.lying.worldgen.Tile;
 import com.lying.worldgen.TileGenerator;
+import com.lying.worldgen.tile.DefaultTiles;
+import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tileset.TileSet;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -238,7 +241,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		graph.addToVolume(tilePos);
 		
 		BlueprintTileGrid grid = BlueprintTileGrid.fromGraphGrid(graph, 2);
-		TileGenerator.generate(grid, Map.of(CDTiles.FLOOR_PRISTINE.get(), 1F), Random.create());
+		
+		TileGenerator.generate(grid, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), Random.create());
 		grid.finalise(start.metadata().theme());
 		grid.generate(position, world);
 	}

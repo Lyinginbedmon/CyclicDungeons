@@ -1,10 +1,10 @@
-package com.lying.worldgen;
+package com.lying.worldgen.tile;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
-import com.lying.worldgen.condition.Condition;
+import com.lying.worldgen.tile.condition.Condition;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 

@@ -13,7 +13,7 @@ import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;

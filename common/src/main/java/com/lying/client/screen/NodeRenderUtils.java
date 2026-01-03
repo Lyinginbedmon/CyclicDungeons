@@ -21,7 +21,7 @@ import com.lying.utility.CompoundBox2f;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.RotaryBox2f;
 import com.lying.utility.Vector2iUtils;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;

@@ -26,7 +26,7 @@ public class CDParticleTypes
 	public static void init()
 	{
 		PARTICLES.register();
-		CyclicDungeons.LOGGER.info("# Initialised {} custom particles", tally);
+		CyclicDungeons.LOGGER.info(" # Initialised {} custom particles", tally);
 	}
 	
 	private static class EasyParticleType extends SimpleParticleType

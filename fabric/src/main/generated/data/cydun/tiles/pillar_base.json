@@ -1,0 +1,28 @@
+{
+  "conditions": [
+    "cydun:on_solid_floor",
+    "cydun:non_boundary",
+    {
+      "cap": 2,
+      "id": "cydun:min_adjacent_boundaries",
+      "sides": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    },
+    "cydun:nonconsecutive",
+    {
+      "cap": 4,
+      "id": "cydun:max_per_room"
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:pillar_base",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:obtrusive",
+    "cydun:decor"
+  ]
+}

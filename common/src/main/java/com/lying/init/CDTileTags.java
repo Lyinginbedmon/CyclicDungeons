@@ -10,7 +10,7 @@ import java.util.Optional;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -32,17 +32,6 @@ public class CDTileTags
 		ID_OBTRUSIVE		= prefix("obtrusive"),
 		ID_TRAPS			= prefix("traps");
 	
-	public static final TileTag SOLID_FLOORING	= make(ID_SOLID_FLOORING);
-	public static final TileTag WET				= make(ID_WET);
-	public static final TileTag DAMP			= make(ID_DAMP);
-	public static final TileTag HOT				= make(ID_HOT);
-	public static final TileTag CEILING			= make(ID_CEILING);
-	public static final TileTag TABLES			= make(ID_TABLES);
-	public static final TileTag LIGHTING		= make(ID_LIGHTING);
-	public static final TileTag DECOR			= make(ID_DECOR);
-	public static final TileTag OBTRUSIVE		= make(ID_OBTRUSIVE);
-	public static final TileTag TRAPS			= make(ID_TRAPS);
-	
 	public static TileTag make(Identifier registryName, Identifier... idsIn)
 	{
 		return new TileTag(registryName, idsIn);
@@ -52,16 +41,20 @@ public class CDTileTags
 	
 	public static void init()
 	{
-		List<Tile> allTiles = CDTiles.getAllTiles();
-		
-		for(Tile tile : allTiles)
+		CyclicDungeons.LOGGER.info(" # Initialised tile tag registry");
+	}
+	
+	public static void reload()
+	{
+		TAGS.clear();
+		for(Tile tile : CDTiles.instance().getAll())
 			for(TileTag tag : tile.tags())
 				if(TAGS.containsKey(tag.id()))
 					TAGS.put(tag.id(), TAGS.get(tag.id()).mergeWith(tag));
 				else
 					TAGS.put(tag.id(), tag);
 		
-		CyclicDungeons.LOGGER.info("# Initialised {} tile tags", TAGS.size());
+		CyclicDungeons.LOGGER.info(" # Loaded {} tile tags", TAGS.size());
 	}
 	
 	public static final class TileTag

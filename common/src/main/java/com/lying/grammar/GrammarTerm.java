@@ -159,7 +159,7 @@ public abstract class GrammarTerm
 				GridTile tile = new GridTile(t.getX(), t.getZ());
 				return connectingPassages.stream().anyMatch(g -> g.containsAdjacent(tile));
 			})
-			.forEach(t -> map.put(t.withY(1), CDTiles.PASSAGE.get()));
+			.forEach(t -> map.put(t.withY(1), CDTiles.instance().get(CDTiles.ID_PASSAGE_FLAG).orElse(CDTiles.AIR.get())));
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)

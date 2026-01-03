@@ -1,0 +1,13 @@
+{
+  "conditions": [
+    "cydun:non_boundary",
+    "cydun:on_solid_floor"
+  ],
+  "generation": "structure",
+  "id": "cydun:treasure",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:obtrusive",
+    "cydun:decor"
+  ]
+}

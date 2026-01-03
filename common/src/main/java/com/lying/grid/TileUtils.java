@@ -8,7 +8,7 @@ import com.lying.blueprint.BlueprintRoom;
 import com.lying.utility.Line2f;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;

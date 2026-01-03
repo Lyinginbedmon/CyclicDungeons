@@ -146,6 +146,6 @@ public class CDTerms
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info("# Initialised {} grammar terms ({} placeable)", TERMS.size(), placeableTally);
+		CyclicDungeons.LOGGER.info(" # Initialised {} grammar terms ({} placeable)", TERMS.size(), placeableTally);
 	}
 }

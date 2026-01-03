@@ -1,0 +1,27 @@
+{
+  "blocks": [
+    {
+      "Name": "minecraft:lava",
+      "Properties": {
+        "level": "0"
+      }
+    }
+  ],
+  "conditions": [
+    "cydun:on_bottom",
+    "cydun:not_by_passage",
+    {
+      "cap": 2,
+      "id": "cydun:max_consecutive",
+      "sides": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    }
+  ],
+  "generation": "block",
+  "id": "cydun:lava_river",
+  "rotation": "cydun:none"
+}

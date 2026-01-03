@@ -31,7 +31,7 @@ public class CDSoundEvents
 	public static void init()
 	{
 		SOUND_EVENTS.register();
-		CyclicDungeons.LOGGER.info("# Registered {} sound events", tally);
+		CyclicDungeons.LOGGER.info(" # Registered {} sound events", tally);
 	}
 	
 	private static class SupplierSoundGroup extends BlockSoundGroup

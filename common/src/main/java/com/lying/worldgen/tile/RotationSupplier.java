@@ -1,4 +1,4 @@
-package com.lying.worldgen;
+package com.lying.worldgen.tile;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
@@ -16,7 +16,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileConditions;
-import com.lying.worldgen.condition.Condition;
+import com.lying.worldgen.tile.condition.Condition;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;

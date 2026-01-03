@@ -1,0 +1,37 @@
+{
+  "id": "cydun:boss",
+  "values": [
+    {
+      "tile": "cydun:pristine_floor",
+      "weight": 1000.0
+    },
+    {
+      "tile": "cydun:pillar",
+      "weight": 3000.0
+    },
+    {
+      "tile": "cydun:pillar_cap",
+      "weight": 3000.0
+    },
+    {
+      "tile": "cydun:lava",
+      "weight": 750.0
+    },
+    {
+      "tile": "cydun:hot_floor",
+      "weight": 750.0
+    },
+    {
+      "tile": "cydun:air",
+      "weight": 10.0
+    },
+    {
+      "tile": "cydun:floor",
+      "weight": 1000.0
+    },
+    {
+      "tile": "cydun:pillar_base",
+      "weight": 3000.0
+    }
+  ]
+}

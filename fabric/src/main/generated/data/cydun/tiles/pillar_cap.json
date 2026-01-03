@@ -1,0 +1,25 @@
+{
+  "conditions": [
+    "cydun:on_top",
+    {
+      "condition": {
+        "id": "cydun:is_any_of",
+        "set": [
+          "cydun:pillar_base",
+          "cydun:pillar"
+        ]
+      },
+      "id": "cydun:adjacent",
+      "sides": [
+        "down"
+      ]
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:pillar_cap",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:solid_flooring",
+    "cydun:ceiling"
+  ]
+}

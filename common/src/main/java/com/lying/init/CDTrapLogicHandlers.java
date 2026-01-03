@@ -71,7 +71,7 @@ public class CDTrapLogicHandlers
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info("# Initialised {} trap logic behaviours", REGISTRY.size());
+		CyclicDungeons.LOGGER.info(" # Initialised {} trap logic behaviours", REGISTRY.size());
 	}
 	
 	@NotNull

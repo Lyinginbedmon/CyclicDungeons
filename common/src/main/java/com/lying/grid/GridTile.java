@@ -8,7 +8,7 @@ import org.joml.Vector2i;
 
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.Box2f;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;

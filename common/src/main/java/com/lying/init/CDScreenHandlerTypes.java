@@ -28,6 +28,6 @@ public class CDScreenHandlerTypes
 	{
 		HANDLERS.register();
 		
-		CyclicDungeons.LOGGER.info("# Initialised {} screen handler types", tally);
+		CyclicDungeons.LOGGER.info(" # Initialised {} screen handler types", tally);
 	}
 }

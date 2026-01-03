@@ -13,7 +13,7 @@ import com.lying.init.CDThemes;
 import com.lying.init.CDThemes.Theme;
 import com.lying.reference.Reference;
 import com.lying.utility.Vector2iUtils;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 

@@ -1,0 +1,11 @@
+{
+  "conditions": [
+    "cydun:on_bottom"
+  ],
+  "generation": "structure",
+  "id": "cydun:passage_floor",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:solid_flooring"
+  ]
+}

@@ -12,19 +12,19 @@ import org.jetbrains.annotations.NotNull;
 
 import com.lying.CyclicDungeons;
 import com.lying.grid.BlueprintTileGrid;
-import com.lying.worldgen.Tile;
-import com.lying.worldgen.condition.Adjacent;
-import com.lying.worldgen.condition.Boolean;
-import com.lying.worldgen.condition.Boundary;
-import com.lying.worldgen.condition.Condition;
-import com.lying.worldgen.condition.Consecutive;
-import com.lying.worldgen.condition.IsAnyOf;
-import com.lying.worldgen.condition.MaxAdjacentBoundaries;
-import com.lying.worldgen.condition.MaxConsecutive;
-import com.lying.worldgen.condition.MaxPerRoom;
-import com.lying.worldgen.condition.Near;
-import com.lying.worldgen.condition.NearBox;
-import com.lying.worldgen.condition.Not;
+import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.condition.Adjacent;
+import com.lying.worldgen.tile.condition.Boolean;
+import com.lying.worldgen.tile.condition.Boundary;
+import com.lying.worldgen.tile.condition.Condition;
+import com.lying.worldgen.tile.condition.Consecutive;
+import com.lying.worldgen.tile.condition.IsAnyOf;
+import com.lying.worldgen.tile.condition.MaxAdjacentBoundaries;
+import com.lying.worldgen.tile.condition.MaxConsecutive;
+import com.lying.worldgen.tile.condition.MaxPerRoom;
+import com.lying.worldgen.tile.condition.Near;
+import com.lying.worldgen.tile.condition.NearBox;
+import com.lying.worldgen.tile.condition.Not;
 
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -64,7 +64,7 @@ public class CDTileConditions
 			return 
 				set.contains(down) && 
 				(tile = set.get(down)).isPresent() &&
-				CDTileTags.SOLID_FLOORING.contains(tile.get());
+				CDTileTags.get(CDTileTags.ID_SOLID_FLOORING).get().contains(tile.get());
 		}
 	});
 	public static final Supplier<Condition> ON_BOTTOM		= register("on_bottom", id -> new Condition(id)
@@ -107,7 +107,7 @@ public class CDTileConditions
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info("# Initialised {} tile conditions", REGISTRY.size());
+		CyclicDungeons.LOGGER.info(" # Initialised {} tile conditions", REGISTRY.size());
 	}
 	
 	@NotNull

@@ -1,14 +1,14 @@
-package com.lying.worldgen.condition;
+package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileConditions;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -52,7 +52,7 @@ public abstract class Condition
 	
 	public Condition fromJson(JsonObject json, JsonOps ops) { return this; }
 	
-	@Nullable
+	@NotNull
 	public static Condition fromJson(JsonElement json, JsonOps ops)
 	{
 		JsonObject obj;
@@ -63,7 +63,7 @@ public abstract class Condition
 			Condition condition = CDTileConditions.get(Identifier.CODEC.parse(ops, obj.get("id")).getOrThrow());
 			return obj.size() > 1 ? condition.fromJson(obj, ops) : condition;
 		}
-		return null;
+		return CDTileConditions.NEVER.get();
 	}
 	
 	@SuppressWarnings("unchecked")

@@ -1,0 +1,50 @@
+{
+  "conditions": [
+    {
+      "id": "cydun:boundary",
+      "sides": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    },
+    "cydun:on_solid_floor",
+    "cydun:nonconsecutive",
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:lighting"
+        ]
+      },
+      "id": "cydun:avoid_box",
+      "max": [
+        4,
+        2,
+        4
+      ],
+      "min": [
+        -2,
+        0,
+        -2
+      ]
+    },
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:tables"
+        ]
+      },
+      "id": "cydun:non_adjacent"
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:floor_light",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:lighting",
+    "cydun:decor"
+  ]
+}

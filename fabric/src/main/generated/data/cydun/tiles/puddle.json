@@ -1,0 +1,21 @@
+{
+  "conditions": [
+    "cydun:on_bottom",
+    {
+      "condition": {
+        "id": "cydun:is_any_of",
+        "set": [
+          "cydun:pool"
+        ]
+      },
+      "id": "cydun:non_adjacent"
+    },
+    "cydun:not_by_passage"
+  ],
+  "generation": "structure",
+  "id": "cydun:puddle",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:damp"
+  ]
+}

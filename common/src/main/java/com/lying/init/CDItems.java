@@ -130,6 +130,6 @@ public class CDItems
 			.forEach(item -> 
 				Item.BLOCK_ITEMS.put(item.getBlock(), item));
 		
-		CyclicDungeons.LOGGER.info("# Initialised {} items ({} block items)", itemTally, blockTally);
+		CyclicDungeons.LOGGER.info(" # Initialised {} items ({} block items)", itemTally, blockTally);
 	}
 }

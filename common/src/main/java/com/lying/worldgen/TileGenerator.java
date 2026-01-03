@@ -10,10 +10,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDLoggers;
-import com.lying.init.CDRoomTileSets.TileSet;
 import com.lying.init.CDTiles;
 import com.lying.utility.CDUtils;
 import com.lying.utility.DebugLogger;
+import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tileset.TileSet;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
@@ -68,7 +69,7 @@ public class TileGenerator
 			return;
 		}
 		
-		final List<Tile> candidates = tiles.keySet().stream().filter(t -> !t.isBlank()).toList();
+		final List<Tile> candidates = tiles.keys().stream().filter(t -> !t.isBlank()).toList();
 		/**
 		 * Sort open slots by number of available options
 		 * Pop slot with fewest options

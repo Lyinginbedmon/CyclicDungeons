@@ -1,10 +1,10 @@
-package com.lying.worldgen.condition;
+package com.lying.worldgen.tile.condition;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileConditions;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;

@@ -1,4 +1,4 @@
-package com.lying.worldgen;
+package com.lying.worldgen.tile;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,6 +7,7 @@ import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonElement;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.init.CDLoggers;
@@ -14,6 +15,7 @@ import com.lying.init.CDTileTags.TileTag;
 import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.block.BlockState;
@@ -42,17 +44,29 @@ public abstract class Tile
 {
 	public static final Codec<Tile> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Tile::registryName),
+			TilePredicate.CODEC.fieldOf("conditions").forGetter(t -> t.predicate),
 			Identifier.CODEC.listOf().optionalFieldOf("tags").forGetter(t -> ((Tile)t).tileTags.isEmpty() ? Optional.empty() : Optional.of(((Tile)t).tileTags)),
 			GenStyle.CODEC.fieldOf("generation").forGetter(t -> ((Tile)t).type),
-			TilePredicate.CODEC.fieldOf("conditions").forGetter(t -> t.predicate),
+			BlockState.CODEC.listOf().optionalFieldOf("blocks").forGetter(t -> ((Tile)t).states),
 			RotationSupplier.CODEC.fieldOf("rotation").forGetter(t -> t.rotator)
 			)
-			.apply(instance, (id,tags,type,predicate,rotator) -> 
+			.apply(instance, (id,conditions,tags,generation,blocks,rotation) -> 
 			{
-				Tile.Builder builder = Tile.Builder.of(predicate);
-				builder.withRotation(rotator);
+				Tile.Builder builder = Tile.Builder.of(conditions);
+				switch(generation)
+				{
+					case BLOCK:
+						blocks.ifPresent(set -> builder.asBlock(set.toArray(new BlockState[0])));
+						break;
+					case STRUCTURE:
+						builder.asStructure();
+						break;
+					default:
+					case FLAG:
+						break;
+				}
+				builder.withRotation(rotation);
 				tags.ifPresent(set -> builder.tags(set));
-				// FIXME Apply generation type properly from data for block tiles
 				return builder.build().apply(id);
 			}));
 	
@@ -65,15 +79,27 @@ public abstract class Tile
 	private final List<Identifier> tileTags = Lists.newArrayList();
 	
 	private final GenStyle type;
+	private final Optional<List<BlockState>> states;
 	private final RotationSupplier rotator;
 	
-	public Tile(Identifier id, List<Identifier> tagsIn, GenStyle style, TilePredicate predicateIn, RotationSupplier rotatorIn)
+	public Tile(Identifier id, List<Identifier> tagsIn, GenStyle style, Optional<List<BlockState>> states, TilePredicate predicateIn, RotationSupplier rotatorIn)
 	{
 		this.registryName = id;
 		tileTags.addAll(tagsIn);
 		this.type = style;
+		this.states = states;
 		this.predicate = predicateIn;
 		this.rotator = rotatorIn;
+	}
+	
+	public JsonElement writeToJson(JsonOps ops)
+	{
+		return CODEC.encodeStart(ops, this).getOrThrow();
+	}
+	
+	public static Tile readFromJson(JsonElement element, JsonOps ops)
+	{
+		return CODEC.parse(ops, element).getOrThrow();
 	}
 	
 	public final boolean equals(Object obj) { return obj instanceof Tile && is((Tile)obj); }
@@ -115,6 +141,7 @@ public abstract class Tile
 	public static enum GenStyle implements StringIdentifiable
 	{
 		FLAG,
+		AIR,
 		BLOCK,
 		STRUCTURE;
 		
@@ -137,7 +164,7 @@ public abstract class Tile
 		private final TilePredicate predicate;
 		
 		private GenStyle style = GenStyle.FLAG;
-		private BlockState[] blockStates = new BlockState[0];
+		private Optional<List<BlockState>> states = Optional.empty();
 		private RotationSupplier rotationFunc = RotationSupplier.NONE.get();
 		private List<Identifier> tileTags = Lists.newArrayList();
 		
@@ -170,17 +197,16 @@ public abstract class Tile
 			return this;
 		}
 		
-		public Builder asBlock(BlockState... states)
+		public Builder asBlock(BlockState... statesIn)
 		{
 			style = GenStyle.BLOCK;
-			blockStates = states;
+			states = Optional.of(Lists.newArrayList(statesIn));
 			return this;
 		}
 		
 		public Builder asAir()
 		{
-			style = GenStyle.BLOCK;
-			blockStates = new BlockState[] { Blocks.AIR.getDefaultState() };
+			style = GenStyle.AIR;
 			return this;
 		}
 		
@@ -212,21 +238,33 @@ public abstract class Tile
 			{
 				default:
 				case FLAG:
-					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.NONE.get())
+					return id -> new Tile(id, tileTags, style, Optional.empty(), predicate, RotationSupplier.NONE.get())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world) { }
 					};
-				case BLOCK:
-					return id -> new Tile(id, tileTags, style, predicate, RotationSupplier.NONE.get())
+				case AIR:
+					return id -> new Tile(id, tileTags, style, states, predicate, RotationSupplier.NONE.get())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{
 							final int sc = Tile.TILE_SIZE - 1;
-							BlockPos.Mutable.iterate(pos, pos.add(sc, sc, sc)).forEach(p -> Tile.tryPlace(blockStates[world.random.nextInt(blockStates.length)], p, world));
+							BlockPos.Mutable.iterate(pos, pos.add(sc, sc, sc)).forEach(p -> Tile.tryPlace(Blocks.AIR.getDefaultState(), p, world));
+						}
+					};
+				case BLOCK:
+					return id -> new Tile(id, tileTags, style, states, predicate, RotationSupplier.NONE.get())
+					{
+						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
+						{
+							final int sc = Tile.TILE_SIZE - 1;
+							List<BlockState> blocks = states.orElse(Lists.newArrayList(Blocks.AIR.getDefaultState()));
+							if(blocks.isEmpty())
+								return;
+							BlockPos.Mutable.iterate(pos, pos.add(sc, sc, sc)).forEach(p -> Tile.tryPlace(blocks.get(world.random.nextInt(blocks.size())), p, world));
 						}
 					};
 				case STRUCTURE:
-					return id -> new Tile(id, tileTags, style, predicate, rotationFunc)
+					return id -> new Tile(id, tileTags, style, Optional.empty(), predicate, rotationFunc)
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{

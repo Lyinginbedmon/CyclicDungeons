@@ -10,7 +10,7 @@ import com.lying.init.CDLoggers;
 import com.lying.init.CDThemes.Theme;
 import com.lying.init.CDTiles;
 import com.lying.utility.DebugLogger;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;

@@ -7,6 +7,7 @@ import com.lying.CyclicDungeons;
 import com.lying.init.CDThemes;
 import com.lying.init.CDTiles;
 import com.lying.reference.Reference;
+import com.lying.worldgen.tile.DefaultTiles;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.registry.Registerable;
@@ -33,65 +34,65 @@ public class CDTemplatePoolProvider
 		
 		RegistryEntryLookup<StructurePool> lookup = context.getRegistryLookup(RegistryKeys.TEMPLATE_POOL);
 		RegistryEntry.Reference<StructurePool> registry = lookup.getOrThrow(StructurePools.EMPTY);
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_FLOOR), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_FLOOR), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/floor/generic/flooring_01", 1),
 				create("dungeon/floor/generic/flooring_02", 1),
 				create("dungeon/floor/generic/flooring_03", 1),
 				create("dungeon/floor/generic/flooring_04", 1),
 				create("dungeon/floor/generic/flooring_05", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_PRISTINE_FLOOR), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_PRISTINE_FLOOR), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/pristine_floor/generic/floor_1", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_FLOOR_LIGHT), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_FLOOR_LIGHT), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/floor_light/generic/desk_lamp", 1),
 				create("dungeon/floor_light/generic/lantern", 1),
 				create("dungeon/floor_light/generic/tiki_torch", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_WET_FLOOR), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_WET_FLOOR), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/wet_floor/generic/floor_01", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_PILLAR), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_PILLAR), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/pillar/generic/pillar_01", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_PILLAR_BASE), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_PILLAR_BASE), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/pillar_base/generic/pillar_01", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_PILLAR_CAP), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_PILLAR_CAP), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/pillar_cap/generic/pillar_01", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_HOT_FLOOR), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_HOT_FLOOR), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/hot_floor/generic/flooring_01", 1),
 				create("dungeon/hot_floor/generic/flooring_02", 1),
 				create("dungeon/hot_floor/generic/flooring_03", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_PUDDLE), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_PUDDLE), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/puddle/generic/puddle_01", 1),
 				create("dungeon/puddle/generic/puddle_02", 1),
 				create("dungeon/puddle/generic/puddle_03", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_TABLE_LIGHT), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_TABLE_LIGHT), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/table_light/generic/table_01", 1),
 				create("dungeon/table_light/generic/table_02", 1),
 				create("dungeon/table_light/generic/table_03", 1),
 				create("dungeon/table_light/generic/table_04", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_SEAT), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_SEAT), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/seat/generic/seat_01", 1),
 				create("dungeon/seat/generic/seat_02", 1),
 				create("dungeon/seat/generic/seat_03", 1),
 				create("dungeon/seat/generic/seat_04", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_TABLE), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_TABLE), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/table/generic/table_01", 1),
 				create("dungeon/table/generic/table_02", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_WORKSTATION), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_WORKSTATION), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/workstation/generic/workstation_01", 1),
 				create("dungeon/workstation/generic/workstation_02", 1),
 				create("dungeon/workstation/generic/workstation_03", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_PASSAGE_FLOOR), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_PASSAGE_FLOOR), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/passage_floor/generic/floor_01", 1),
 				create("dungeon/passage_floor/generic/floor_02", 1),
 				create("dungeon/passage_floor/generic/floor_03", 1),
@@ -109,12 +110,12 @@ public class CDTemplatePoolProvider
 				create("dungeon/doorway_lintel/generic/door_03", 1),
 				create("dungeon/doorway_lintel/generic/door_04", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_TREASURE), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_TREASURE), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/treasure/generic/chest_01", 1),
 				create("dungeon/treasure/generic/chest_02", 1),
 				create("dungeon/treasure/generic/chest_03", 1)
 				), StructurePool.Projection.RIGID));
-		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_HATCH), new StructurePool(registry, ImmutableList.of(
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_HATCH), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/pitfall_hatch/generic/hatch_01", 1),
 				create("dungeon/pitfall_hatch/generic/hatch_02", 1),
 				create("dungeon/pitfall_hatch/generic/hatch_03", 1),

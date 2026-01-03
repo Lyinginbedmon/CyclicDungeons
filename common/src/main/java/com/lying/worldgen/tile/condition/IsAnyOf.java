@@ -1,4 +1,4 @@
-package com.lying.worldgen.condition;
+package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +10,7 @@ import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileConditions;
 import com.lying.init.CDTileTags;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;

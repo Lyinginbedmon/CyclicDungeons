@@ -1,10 +1,10 @@
-package com.lying.worldgen.condition;
+package com.lying.worldgen.tile.condition;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileConditions;
-import com.lying.worldgen.Tile;
+import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;
@@ -42,7 +42,7 @@ public class NearBox extends Condition
 	{
 		JsonObject obj = asJsonObject(ops);
 		obj.add("min", BlockPos.CODEC.encodeStart(ops, BlockPos.ofFloored(bounds.minX, bounds.minY, bounds.minZ)).getOrThrow());
-		obj.add("max", BlockPos.CODEC.encodeStart(ops, BlockPos.ofFloored(bounds.maxX, bounds.maxY, bounds.maxZ)).getOrThrow());
+		obj.add("max", BlockPos.CODEC.encodeStart(ops, BlockPos.ofFloored(bounds.maxX -1, bounds.maxY -1, bounds.maxZ -1)).getOrThrow());
 		obj.add("condition", child.toJson(ops));
 		return obj;
 	}
@@ -50,7 +50,7 @@ public class NearBox extends Condition
 	public Condition fromJson(JsonObject obj, JsonOps ops)
 	{
 		bounds = Box.enclosing(BlockPos.CODEC.parse(ops, obj.get("min")).getOrThrow(), BlockPos.CODEC.parse(ops, obj.get("max")).getOrThrow());
-		child = Condition.fromJson(obj.get("child"), ops);
+		child = Condition.fromJson(obj.get("condition"), ops);
 		return this;
 	}
 	

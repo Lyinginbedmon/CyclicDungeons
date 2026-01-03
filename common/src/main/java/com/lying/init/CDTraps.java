@@ -40,6 +40,6 @@ public class CDTraps
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info("# Initialised {} traps", TRAPS.size());
+		CyclicDungeons.LOGGER.info(" # Initialised {} traps", TRAPS.size());
 	}
 }

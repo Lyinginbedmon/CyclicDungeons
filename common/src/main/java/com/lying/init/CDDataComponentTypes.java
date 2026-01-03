@@ -27,6 +27,6 @@ public class CDDataComponentTypes
 	public static void init()
 	{
 		TYPES.register();
-		CyclicDungeons.LOGGER.info("# Registered {} data component types", tally);
+		CyclicDungeons.LOGGER.info(" # Registered {} data component types", tally);
 	}
 }
