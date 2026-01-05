@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Lists;
 import com.lying.reference.Reference;
-import com.lying.worldgen.tile.DefaultTiles;
+import com.lying.worldgen.theme.DefaultThemes;
 import com.mojang.serialization.JsonOps;
 
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
@@ -15,14 +15,14 @@ import net.minecraft.data.DataProvider;
 import net.minecraft.data.DataWriter;
 import net.minecraft.registry.RegistryWrapper.WrapperLookup;
 
-public class CDTileProvider implements DataProvider
+public class CDThemeProvider implements DataProvider
 {
 	private final PathResolver path;
 	private final CompletableFuture<WrapperLookup> wrapperLookup;
 	
-	public CDTileProvider(FabricDataOutput generator, CompletableFuture<WrapperLookup> managerIn)
+	public CDThemeProvider(FabricDataOutput generator, CompletableFuture<WrapperLookup> managerIn)
 	{
-		this.path = generator.getResolver(OutputType.DATA_PACK, "tiles/");
+		this.path = generator.getResolver(OutputType.DATA_PACK, "themes/");
 		this.wrapperLookup = managerIn;
 	}
 	
@@ -30,11 +30,11 @@ public class CDTileProvider implements DataProvider
 	{
 		return wrapperLookup.thenCompose(lookup -> {
 			List<CompletableFuture<?>> futures = Lists.newArrayList();
-			DefaultTiles.getAll().forEach(tile ->
-				futures.add(DataProvider.writeToPath(dataWriter, tile.writeToJson(JsonOps.INSTANCE), this.path.resolveJson(tile.registryName()))));
+			DefaultThemes.getDefaults().forEach(set -> 
+				futures.add(DataProvider.writeToPath(dataWriter, set.toJson(JsonOps.INSTANCE), this.path.resolveJson(set.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
 		});
 	}
 	
-	public String getName() { return Reference.ModInfo.MOD_NAME+" default tiles"; }
+	public String getName() { return Reference.ModInfo.MOD_NAME+" default themes"; }
 }

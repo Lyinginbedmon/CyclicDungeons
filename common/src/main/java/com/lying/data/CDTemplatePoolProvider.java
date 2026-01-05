@@ -7,6 +7,7 @@ import com.lying.CyclicDungeons;
 import com.lying.init.CDThemes;
 import com.lying.init.CDTiles;
 import com.lying.reference.Reference;
+import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.mojang.datafixers.util.Pair;
 
@@ -125,7 +126,7 @@ public class CDTemplatePoolProvider
 	
 	public static RegistryKey<StructurePool> getPool(Identifier theme, Identifier tile)
 	{
-		return CDThemes.Theme.getTilePool(theme, tile);
+		return Theme.getTilePool(theme, tile);
 	}
 	
 	private static Pair<Function<Projection, ? extends StructurePoolElement>, Integer> create(String name, int weight)

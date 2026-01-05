@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.lying.CyclicDungeons;
 import com.lying.init.CDTileConditions;
 import com.lying.init.CDTileTags;
 import com.lying.worldgen.tile.condition.Adjacent;
@@ -28,7 +27,6 @@ import net.minecraft.util.math.Direction;
 public class DefaultTiles
 {
 	private static final Map<Identifier, Supplier<Tile>> TILES = new HashMap<>();
-	private static int tally = 0;
 	
 	public static final Identifier 
 		ID_FLOOR			= prefix("floor"),
@@ -249,17 +247,11 @@ public class DefaultTiles
 	{
 		Supplier<Tile> sup = () -> funcIn.apply(id);
 		TILES.put(id, sup);
-		tally++;
 		return sup;
 	}
 	
 	public static List<Tile> getAll()
 	{
 		return TILES.values().stream().map(Supplier::get).toList();
-	}
-	
-	public static void init()
-	{
-		CyclicDungeons.LOGGER.info("# Initialised {} default generator tiles", tally);
 	}
 }

@@ -1,0 +1,52 @@
+{
+  "id": "cydun:swamp",
+  "monsters": [
+    {
+      "type": "minecraft:bogged",
+      "id": "cydun:crowd",
+      "max": 5,
+      "min": 3,
+      "name": "cydun:skeletons"
+    },
+    {
+      "type": "minecraft:witch",
+      "id": "cydun:crowd",
+      "max": 3,
+      "min": 2,
+      "name": "cydun:coven"
+    },
+    {
+      "type": "minecraft:zombie",
+      "id": "cydun:crowd",
+      "max": 8,
+      "min": 4,
+      "name": "cydun:zombie_crowd"
+    },
+    {
+      "id": "cydun:squad",
+      "name": "cydun:pillager_squad",
+      "squads": [
+        {
+          "type": "minecraft:evoker",
+          "max": 1,
+          "min": 0,
+          "name": "cydun:leader"
+        },
+        {
+          "type": "minecraft:vindicator",
+          "max": 2,
+          "min": 1,
+          "name": "cydun:elite"
+        },
+        {
+          "type": "minecraft:pillager",
+          "max": 3,
+          "min": 2,
+          "name": "cydun:mob"
+        }
+      ]
+    }
+  ],
+  "tilesets": [],
+  "traps": []
+}

@@ -22,6 +22,7 @@ public class CDDataGenerators implements DataGeneratorEntrypoint
 		
 		pack.addProvider(CDTileProvider::new);
 		pack.addProvider(CDTileSetProvider::new);
+		pack.addProvider(CDThemeProvider::new);
 	}
 	
 	public void buildRegistry(RegistryBuilder registryBuilder)

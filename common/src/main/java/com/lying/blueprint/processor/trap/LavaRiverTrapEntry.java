@@ -8,8 +8,8 @@ import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
-import com.lying.init.CDThemes.Theme;
 import com.lying.init.CDTiles;
+import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
 

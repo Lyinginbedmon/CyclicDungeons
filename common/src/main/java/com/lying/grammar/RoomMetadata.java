@@ -10,9 +10,9 @@ import com.lying.blueprint.processor.IRoomProcessor;
 import com.lying.grid.GridTile;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
-import com.lying.init.CDThemes.Theme;
 import com.lying.reference.Reference;
 import com.lying.utility.Vector2iUtils;
+import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -33,15 +33,16 @@ public class RoomMetadata
 			).apply(instance, (x,y) -> new Vector2i(x,y)));
 	public static final Codec<RoomMetadata> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Codec.INT.fieldOf("Depth").forGetter(RoomMetadata::depth),
+			Identifier.CODEC.fieldOf("Theme").forGetter(RoomMetadata::themeId),
 			VEC_CODEC.fieldOf("Size").forGetter(RoomMetadata::size),
 			GrammarTerm.CODEC.fieldOf("Type").forGetter(RoomMetadata::type),
 			Identifier.CODEC.optionalFieldOf("Variant").forGetter(RoomMetadata::processorID),
 			NbtCompound.CODEC.fieldOf("VariantData").forGetter(r -> r.processorData)
-			).apply(instance, (d,s,t,v,n) -> 
+			).apply(instance, (depth,theme,size,type,variant,nbt) -> 
 			{
-				RoomMetadata meta = new RoomMetadata().setDepth(d).setSize(s).setType(t);
-				v.ifPresent(id -> meta.setProcessorID(id));
-				meta.processorData = n;
+				RoomMetadata meta = new RoomMetadata().setDepth(depth).setSize(size).setType(type).setThemeId(theme);
+				variant.ifPresent(id -> meta.setProcessorID(id));
+				meta.processorData = nbt;
 				return meta;
 			}));
 	
@@ -49,7 +50,7 @@ public class RoomMetadata
 	private Vector2i tileSize = new Vector2i(3, 3);
 	private List<GridTile> tileFootprint = Lists.newArrayList();
 	private int depth = 0;
-	private Theme theme = CDThemes.GENERIC.get();
+	private Identifier themeId = CDThemes.ID_GENERIC;
 	private Optional<Identifier> processorID = Optional.empty();
 	public NbtCompound processorData = new NbtCompound();
 	
@@ -88,8 +89,9 @@ public class RoomMetadata
 		return Reference.ModInfo.translate("debug", "room", vec2ToString(tileSize), type.name(), depth);
 	}
 	
-	public RoomMetadata setTheme(Theme themeIn) { theme = themeIn; return this; }
-	public Theme theme() { return this.theme; }
+	public RoomMetadata setThemeId(Identifier themeIn) { themeId = themeIn; return this; }
+	public Identifier themeId() { return themeId; }
+	public Theme theme() { return CDThemes.instance().get(themeId).orElse(Theme.BLANK); }
 	
 	public RoomMetadata setDepth(int d) { depth = d; return this; }
 	public int depth() { return depth; }

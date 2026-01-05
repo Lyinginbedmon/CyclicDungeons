@@ -19,9 +19,9 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDLoggers;
-import com.lying.init.CDThemes.Theme;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
+import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
 

@@ -6,7 +6,7 @@ import com.google.common.collect.Lists;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
-import com.lying.init.CDThemes.Theme;
+import com.lying.worldgen.theme.Theme;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;

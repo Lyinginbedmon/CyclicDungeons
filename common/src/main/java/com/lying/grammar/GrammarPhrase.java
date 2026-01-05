@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import com.google.common.collect.Lists;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
-import com.lying.init.CDThemes.Theme;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -22,31 +21,32 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 /** Rewritable structure composed of {@link GrammarRoom} objects */
 public class GrammarPhrase
 {
 	public static final Codec<GrammarPhrase> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-			Theme.CODEC.fieldOf("Theme").forGetter(GrammarPhrase::theme),
+			Identifier.CODEC.fieldOf("Theme").forGetter(GrammarPhrase::theme),
 			GrammarRoom.CODEC.listOf().fieldOf("Rooms").forGetter(GrammarPhrase::rooms)
 			).apply(instance, GrammarPhrase::new));
-	private final Theme theme;
+	private final Identifier theme;
 	private List<GrammarRoom> rooms = Lists.newArrayList();
 	
-	public GrammarPhrase(Theme themeIn)
+	public GrammarPhrase(Identifier themeIn)
 	{
 		theme = themeIn;
 	}
 	
-	public GrammarPhrase() { this(CDThemes.GENERIC.get()); }
+	public GrammarPhrase() { this(CDThemes.ID_GENERIC); }
 	
-	protected GrammarPhrase(Theme themeIn, List<GrammarRoom> roomsIn)
+	protected GrammarPhrase(Identifier themeIn, List<GrammarRoom> roomsIn)
 	{
 		this(themeIn);
 		rooms.addAll(roomsIn);
 	}
 	
-	public static GrammarPhrase parsePhrase(String[] phrase, Theme theme)
+	public static GrammarPhrase parsePhrase(String[] phrase, Identifier theme)
 	{
 		GrammarPhrase graph = new GrammarPhrase(theme);
 		
@@ -58,7 +58,7 @@ public class GrammarPhrase
 				continue;
 			
 			GrammarRoom room = new GrammarRoom();
-			room.metadata().setType(term.get()).setTheme(theme);
+			room.metadata().setType(term.get()).setThemeId(theme);
 			if(prev != null)
 				prev.linkTo(room);
 			
@@ -91,7 +91,7 @@ public class GrammarPhrase
 		return new GrammarPhrase();
 	}
 	
-	protected Theme theme() { return this.theme; }
+	protected Identifier theme() { return this.theme; }
 	
 	protected List<GrammarRoom> rooms() { return this.rooms; }
 	

@@ -1,7 +1,7 @@
 package com.lying.blueprint.processor;
 
 import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
-import com.lying.init.CDThemes.Theme;
+import com.lying.worldgen.theme.Theme;
 
 import net.minecraft.util.Identifier;
 

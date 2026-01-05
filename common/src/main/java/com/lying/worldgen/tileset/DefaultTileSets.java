@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
-import com.lying.CyclicDungeons;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.tile.DefaultTiles;
 
@@ -85,11 +84,6 @@ public class DefaultTileSets
 	{
 		// Adds a low-weight air entry to all default tile sets, to prevent overcrowding
 		DEFAULTS.forEach(set -> set.add(CDTiles.ID_AIR, 10F));
-	}
-	
-	public static void init()
-	{
-		CyclicDungeons.LOGGER.info("# Initialised {} default generator tile sets", DEFAULTS.size());
 	}
 	
 	public static List<TileSet> getDefaults()

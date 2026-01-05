@@ -30,7 +30,6 @@ public class CDTileSetProvider implements DataProvider
 	{
 		return wrapperLookup.thenCompose(lookup -> {
 			List<CompletableFuture<?>> futures = Lists.newArrayList();
-			DefaultTileSets.init();
 			DefaultTileSets.getDefaults().forEach(set -> 
 				futures.add(DataProvider.writeToPath(dataWriter, set.encode(JsonOps.INSTANCE).getOrThrow(), this.path.resolveJson(set.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));

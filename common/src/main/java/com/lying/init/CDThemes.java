@@ -2,178 +2,98 @@ package com.lying.init;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.Nullable;
+
+import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
-import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
-import com.lying.blueprint.processor.BattleRoomProcessor.EncounterSet;
-import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
-import com.lying.blueprint.processor.battle.SimpleBattleEntry;
-import com.lying.blueprint.processor.battle.SquadBattleEntry;
-import com.lying.blueprint.processor.battle.SquadBattleEntry.SquadEntry;
-import com.lying.grammar.GrammarTerm;
-import com.lying.worldgen.tile.Tile;
-import com.lying.worldgen.tileset.DefaultTileSets;
-import com.lying.worldgen.tileset.TileSet;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
+import com.lying.data.ReloadListener;
+import com.lying.worldgen.theme.Theme;
+import com.mojang.serialization.JsonOps;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.structure.pool.StructurePool;
-import net.minecraft.structure.pool.StructurePools;
+import dev.architectury.registry.ReloadListenerRegistry;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 
-public class CDThemes
+public class CDThemes implements ReloadListener<List<JsonObject>>
 {
-	private static final Map<Identifier, Supplier<Theme>> THEMES = new HashMap<>();
+	private static CDThemes INSTANCE;
+	private final Map<Identifier, Supplier<Theme>> REGISTRY = new HashMap<>();
 	
-	private static final Map<Identifier, Identifier> BASIC_TILESETS = Map.of(
-			CDTerms.ID_START, DefaultTileSets.ID_START,
-			CDTerms.ID_END, DefaultTileSets.ID_END,
-			CDTerms.ID_EMPTY, DefaultTileSets.ID_EMPTY,
-			CDTerms.ID_BATTLE, DefaultTileSets.ID_BATTLE,
-			CDTerms.ID_TRAP, DefaultTileSets.ID_TRAP,
-			CDTerms.ID_BIG_PUZZLE, DefaultTileSets.ID_PUZZLE,
-			CDTerms.ID_SML_PUZZLE, DefaultTileSets.ID_PUZZLE,
-			CDTerms.ID_BOSS, DefaultTileSets.ID_BOSS,
-			CDTerms.ID_TREASURE, DefaultTileSets.ID_TREASURE
-			);
+	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
+	public static final String FILE_PATH = "themes";
 	
-	private static final List<Identifier> BASIC_TRAPS	= List.of(
-			CDTraps.ID_SIMPLE_PITFALL,
-			CDTraps.ID_LAVA_RIVER
-			);
+	public static final Identifier ID_GENERIC	= prefix("generic");
 	
-	private static final BattleEntry ENCOUNTER_PILLAGER_SQUAD = new SquadBattleEntry(prefix("pillager_squad"))
-			.add(SquadEntry.Builder.of(EntityType.EVOKER).name("leader").count(0, 1).build())
-			.add(SquadEntry.Builder.of(EntityType.VINDICATOR).name("elite").count(1, 2).build())
-			.add(SquadEntry.Builder.of(EntityType.PILLAGER).count(2, 3).build());
-	private static final BattleEntry ENCOUNTER_WOLF_PACK = new SimpleBattleEntry<>(prefix("wolf_pack"), CDEntityTypes.RABID_WOLF.get(), 3, 4);
-	private static final BattleEntry ENCOUNTER_ZOMBIE_CROWD = new SimpleBattleEntry<>(prefix("zombie_crowd"), EntityType.ZOMBIE, 4, 8);
-	private static final BattleEntry ENCOUNTER_SKELETONS = new SimpleBattleEntry<>(prefix("skeletons"), EntityType.SKELETON, 3, 5);
-	private static final EncounterSet BASIC_ENCOUNTERS = new EncounterSet()
-			.addEntry(ENCOUNTER_ZOMBIE_CROWD)
-			.addEntry(ENCOUNTER_SKELETONS)
-			.addEntry(ENCOUNTER_PILLAGER_SQUAD)
-			.addEntry(ENCOUNTER_WOLF_PACK);
-	
-	public static final Identifier
-		ID_GENERIC	= prefix("generic"),
-		ID_DESERT	= prefix("desert"),
-		ID_UNDEAD	= prefix("undead"),
-		ID_JUNGLE	= prefix("jungle"),
-		ID_SWAMP	= prefix("swamp");
-	
-	public static final Supplier<Theme> GENERIC	= register(ID_GENERIC, 
-			new EncounterSet(), 
-			List.of(),
-			Map.of());
-	public static final Supplier<Theme> DESERT	= register(ID_DESERT, 
-			new EncounterSet()
-				.addSimple(prefix("husk_crowd"), EntityType.HUSK, 4, 8)
-				.addSquad(prefix("fire_team"), e -> e
-					.add(SquadEntry.Builder.of(EntityType.WITHER_SKELETON).build())
-					.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()))
-				.addEntry(ENCOUNTER_PILLAGER_SQUAD)
-				.addEntry(ENCOUNTER_WOLF_PACK), 
-			List.of(),
-			Map.of());
-	public static final Supplier<Theme> UNDEAD	= register(ID_UNDEAD, 
-			new EncounterSet()
-				.addEntry(ENCOUNTER_SKELETONS)
-				.addEntry(ENCOUNTER_ZOMBIE_CROWD), 
-			List.of(),
-			Map.of());
-	public static final Supplier<Theme> JUNGLE	= register(ID_JUNGLE, 
-			new EncounterSet(), 
-			List.of(),
-			Map.of());
-	public static final Supplier<Theme> SWAMP	= register(ID_SWAMP, 
-			new EncounterSet()
-				.addSimple(prefix("skeletons"), EntityType.BOGGED, 3, 5)
-				.addSimple(prefix("coven"), EntityType.WITCH, 2, 3)
-				.addEntry(ENCOUNTER_ZOMBIE_CROWD)
-				.addEntry(ENCOUNTER_PILLAGER_SQUAD), 
-			List.of(),
-			Map.of());
-	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
-	{
-		final Supplier<Theme> entry = () -> new Theme(id, combat, traps, tileSets, DefaultTileSets.ID_DEFAULT_PASSAGE);
-		THEMES.put(id, entry);
-		return entry;
-	}
-	
-	public static Optional<Theme> get(Identifier id)
-	{
-		return THEMES.containsKey(id) ? Optional.of(THEMES.get(id).get()) : Optional.empty();
-	}
+	public static CDThemes instance() { return INSTANCE; }
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info(" # Initialised {} themes", THEMES.size());
+		INSTANCE = new CDThemes();
+		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INSTANCE, INSTANCE.getId());
+		CyclicDungeons.LOGGER.info(" # Initialised dungeon theme registry");
 	}
 	
-	public static record Theme(Identifier registryName, EncounterSet combatEncounters, List<Identifier> trapEncounters, Map<Identifier,Identifier> tileSets, Identifier passageTiles)
+	public Identifier getId()
 	{
-		public static final Codec<Theme> CODEC = Identifier.CODEC.comapFlatMap(id -> 
+		return prefix(FILE_PATH);
+	}
+	
+	public void register(@Nullable Theme themeIn)
+	{
+		if(themeIn == null)
+			return;
+		
+		REGISTRY.put(themeIn.registryName(), () -> themeIn);
+		CyclicDungeons.LOGGER.info(" ## Loaded {}", themeIn.registryName().toString());
+	}
+	
+	public Optional<Theme> get(Identifier id)
+	{
+		return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id).get()) : Optional.empty();
+	}
+	
+	public CompletableFuture<List<JsonObject>> load(ResourceManager manager)
+	{
+		return CompletableFuture.supplyAsync(() -> 
 		{
-			Optional<Theme> type = CDThemes.get(id);
-			if(type.isPresent())
-				return DataResult.success(type.get());
-			else
-				return DataResult.error(() -> "Not a recognised theme: '"+String.valueOf(id) + "'");
-		}, Theme::registryName);
-		
-		public boolean is(Theme b) { return b.registryName().equals(registryName); }
-		
-		public EncounterSet encounters() { return combatEncounters.isEmpty() ? BASIC_ENCOUNTERS : combatEncounters; }
-		
-		public List<TrapEntry> traps()
+			List<JsonObject> objects = Lists.newArrayList();
+			manager.findAllResources(FILE_PATH, Predicates.alwaysTrue()).forEach((fileName,fileSet) -> 
+			{
+				Resource file = fileSet.getFirst();
+				try
+				{
+					objects.add(JsonHelper.deserialize(GSON, (Reader)file.getReader(), JsonObject.class));
+				}
+				catch(Exception e) { CyclicDungeons.LOGGER.error("Error while loading theme "+fileName.toString()); }
+			});
+			return objects;
+		});
+	}
+	
+	public CompletableFuture<Void> apply(List<JsonObject> data, ResourceManager manager, Executor executor)
+	{
+		return CompletableFuture.runAsync(() -> 
 		{
-			List<Identifier> names = trapEncounters.isEmpty() ? BASIC_TRAPS : trapEncounters;
-			return names.stream().map(CDTraps::get).filter(Optional::isPresent).map(Optional::get).toList();
-		}
-		
-		public TileSet getTileSet(GrammarTerm termIn)
-		{
-			return getTileSet(termIn.registryName());
-		}
-		
-		public TileSet getTileSet(Identifier name)
-		{
-			Identifier setId = null;
-			if(tileSets.containsKey(name))
-				setId = tileSets.get(name);
-			else
-				setId = BASIC_TILESETS.getOrDefault(name, CDTileSets.DEFAULT.registryName());
-			
-			return CDTileSets.instance().get(setId).orElse(CDTileSets.DEFAULT);
-		}
-		
-		public TileSet passageTileSet()
-		{
-			return CDTileSets.instance().get(passageTiles).orElse(CDTileSets.DEFAULT);
-		}
-		
-		public RegistryKey<StructurePool> getTilePool(Tile tileIn)
-		{
-			return getTilePool(tileIn.registryName());
-		}
-		
-		public RegistryKey<StructurePool> getTilePool(Identifier tile)
-		{
-			return getTilePool(registryName(), tile);
-		}
-		
-		public static RegistryKey<StructurePool> getTilePool(Identifier theme, Identifier tile)
-		{
-			return StructurePools.of(tile.getNamespace()+":dungeon/"+theme.getPath()+"/"+tile.getPath());
-		}
+			CyclicDungeons.LOGGER.info(" # Loading themes from datapack", REGISTRY.size());
+			REGISTRY.clear();
+			data.forEach(prep -> register(Theme.fromJson(JsonOps.INSTANCE, prep)));
+			CyclicDungeons.LOGGER.info(" # {} themes loaded", REGISTRY.size());
+		});
 	}
 }

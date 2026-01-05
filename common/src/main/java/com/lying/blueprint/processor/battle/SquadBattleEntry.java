@@ -8,11 +8,18 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.function.Consumers;
+import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
 import com.lying.grammar.RoomMetadata;
 import com.lying.reference.Reference;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -20,6 +27,7 @@ import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -37,9 +45,10 @@ public class SquadBattleEntry extends BattleEntry
 		super(name);
 	}
 	
-	public SquadBattleEntry add(SquadBattleEntry.SquadEntry entry)
+	public SquadBattleEntry add(@Nullable SquadBattleEntry.SquadEntry entry)
 	{
-		squad.add(entry);
+		if(entry != null)
+			squad.add(entry);
 		return this;
 	}
 	
@@ -55,7 +64,7 @@ public class SquadBattleEntry extends BattleEntry
 		SquadBattleEntry.Roster roster = new Roster();
 		for(SquadBattleEntry.SquadEntry entry : squad)
 		{
-			List<MobEntity> list = roster.getOrDefault(entry.name(), Lists.newArrayList());
+			List<Entity> list = roster.getOrDefault(entry.name(), Lists.newArrayList());
 			int count = 
 					entry.min() == entry.max() ? 
 						entry.min() : 
@@ -67,7 +76,7 @@ public class SquadBattleEntry extends BattleEntry
 					BlockPos pos = findSpawnablePosition(entry.type, min, max, world, rand, SEARCH_ATTEMPTS);
 					if(pos != null)
 					{
-						MobEntity mob = entry.trySpawn(pos, world);
+						Entity mob = entry.trySpawn(pos, world);
 						if(mob != null)
 							list.add(mob);
 					}
@@ -77,26 +86,68 @@ public class SquadBattleEntry extends BattleEntry
 		setup.accept(roster);
 	}
 	
+	protected void writeToJson(JsonOps ops, JsonObject obj)
+	{
+		JsonArray set = new JsonArray();
+		squad.forEach(s -> set.add(s.toJson(ops)));
+		obj.add("squads", set);
+	}
+	
+	protected BattleEntry readFromJson(JsonOps ops, JsonObject obj)
+	{
+		SquadBattleEntry entry = new SquadBattleEntry(name());
+		
+		JsonArray set = obj.getAsJsonArray("squads");
+		set.forEach(ele -> 
+		{
+			SquadEntry e = SquadEntry.fromJson(ops, ele);
+			if(e != null)
+				entry.add(e);
+		});
+		
+		return entry;
+	}
+	
 	/** Delineated set of mobs representing different roles in the squad */
-	public static class Roster extends HashMap<Identifier, List<MobEntity>>
+	public static class Roster extends HashMap<Identifier, List<Entity>>
 	{
 		private static final long serialVersionUID = 7601896549322837235L;
 		public static final Identifier DEFAULT_NAME	= prefix("mob");
 		
-		public List<MobEntity> get(String nameIn)
+		public List<Entity> get(String nameIn)
 		{
 			return get(prefix(nameIn));
 		}
 		
-		public List<MobEntity> getOrDefault(String nameIn, List<MobEntity> defaultValue)
+		public List<Entity> getOrDefault(String nameIn, List<Entity> defaultValue)
 		{
 			return getOrDefault(prefix(nameIn), defaultValue);
 		}
 	}
 	
-	public static record SquadEntry(EntityType<? extends MobEntity> type, Optional<NbtCompound> data, int min, int max, Identifier name)
+	public static record SquadEntry(EntityType<? extends Entity> type, Optional<NbtCompound> data, int min, int max, Identifier name)
 	{
-		protected MobEntity trySpawn(BlockPos pos, ServerWorld world)
+		public static final Codec<SquadEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+				Identifier.CODEC.fieldOf("type").forGetter(s -> s.type().arch$registryName()),
+				NbtCompound.CODEC.optionalFieldOf("nbt").forGetter(SquadEntry::data),
+				Codec.INT.fieldOf("min").forGetter(SquadEntry::min),
+				Codec.INT.fieldOf("max").forGetter(SquadEntry::max),
+				Identifier.CODEC.fieldOf("name").forGetter(SquadEntry::name)
+				).apply(instance, (typeId, nbt, min, max, name) -> 
+				{
+					EntityType<?> type = Registries.ENTITY_TYPE.get(typeId);
+					if(type == null)
+						return null;
+					
+					SquadEntry.Builder builder = SquadEntry.Builder.of(type);
+					builder.name(name);
+					builder.count(min, max);
+					nbt.ifPresent(builder::nbt);
+					return builder.build();
+				}));
+		
+		@Nullable
+		protected Entity trySpawn(BlockPos pos, ServerWorld world)
 		{
 			Entity entity = type.create(world, SpawnReason.STRUCTURE);
 			entity.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 360F * world.random.nextFloat(), 0);
@@ -115,22 +166,36 @@ public class SquadBattleEntry extends BattleEntry
 				if(world.spawnNewEntityAndPassengers(entity))
 					return mob;
 			}
+			else if(world.spawnNewEntityAndPassengers(entity))
+				return entity;
+			
 			return null;
+		}
+		
+		public JsonElement toJson(JsonOps ops)
+		{
+			return CODEC.encodeStart(ops, this).getOrThrow();
+		}
+		
+		@Nullable
+		public static SquadEntry fromJson(JsonOps ops, JsonElement ele)
+		{
+			return CODEC.parse(ops, ele).getOrThrow();
 		}
 		
 		public static class Builder
 		{
-			private final EntityType<? extends MobEntity> type;
+			private final EntityType<? extends Entity> type;
 			private Optional<NbtCompound> data = Optional.empty();
 			private Identifier name = Roster.DEFAULT_NAME;
 			private int min = 1, max = 1;
 			
-			protected Builder(EntityType<? extends MobEntity> typeIn)
+			protected Builder(EntityType<? extends Entity> typeIn)
 			{
 				type = typeIn;
 			}
 			
-			public static SquadEntry.Builder of(EntityType<? extends MobEntity> typeIn)
+			public static SquadEntry.Builder of(EntityType<? extends Entity> typeIn)
 			{
 				return new Builder(typeIn);
 			}

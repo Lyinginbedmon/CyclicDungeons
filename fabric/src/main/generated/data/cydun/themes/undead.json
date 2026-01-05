@@ -1,0 +1,21 @@
+{
+  "id": "cydun:undead",
+  "monsters": [
+    {
+      "type": "minecraft:skeleton",
+      "id": "cydun:crowd",
+      "max": 5,
+      "min": 3,
+      "name": "cydun:skeletons"
+    },
+    {
+      "type": "minecraft:zombie",
+      "id": "cydun:crowd",
+      "max": 8,
+      "min": 4,
+      "name": "cydun:zombie_crowd"
+    }
+  ],
+  "tilesets": [],
+  "traps": []
+}
