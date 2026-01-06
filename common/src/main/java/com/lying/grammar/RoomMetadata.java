@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
-import com.lying.blueprint.processor.IRoomProcessor;
+import com.lying.grammar.content.RoomContent;
 import com.lying.grid.GridTile;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
@@ -46,7 +46,7 @@ public class RoomMetadata
 				return meta;
 			}));
 	
-	private GrammarTerm type = CDTerms.BLANK.get();
+	private GrammarTerm type = CDTerms.instance().blank();
 	private Vector2i tileSize = new Vector2i(3, 3);
 	private List<GridTile> tileFootprint = Lists.newArrayList();
 	private int depth = 0;
@@ -96,7 +96,7 @@ public class RoomMetadata
 	public RoomMetadata setDepth(int d) { depth = d; return this; }
 	public int depth() { return depth; }
 	
-	/** An ID value used by {@link IRoomProcessor} when choosing a variation */
+	/** An ID value used by {@link RoomContent} when choosing a variation */
 	public Optional<Identifier> processorID() { return this.processorID; }
 	public void setProcessorID(Identifier idIn)
 	{
@@ -153,7 +153,11 @@ public class RoomMetadata
 		return tileFootprint.stream().map(t -> t.add(tilePosition)).toList();
 	}
 	
-	public RoomMetadata setType(GrammarTerm term) { type = term; return this; }
+	public RoomMetadata setType(Identifier idIn)
+	{
+		return setType(CDTerms.instance().get(idIn).orElse(CDTerms.instance().blank()));
+	}
+	public RoomMetadata setType(GrammarTerm term){ type = term; return this; }
 	public GrammarTerm type() { return type; }
 	
 	public boolean is(GrammarTerm term) { return type.matches(term); }

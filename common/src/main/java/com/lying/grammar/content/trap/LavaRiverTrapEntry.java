@@ -1,12 +1,12 @@
-package com.lying.blueprint.processor.trap;
+package com.lying.grammar.content.trap;
 
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.lying.blueprint.BlueprintRoom;
-import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.theme.Theme;

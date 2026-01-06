@@ -1,4 +1,4 @@
-package com.lying.blueprint.processor.battle;
+package com.lying.grammar.content.battle;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
@@ -14,8 +14,8 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grammar.content.BattleRoomContent.BattleEntry;
 import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;

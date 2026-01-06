@@ -53,7 +53,7 @@ public class GrammarPhrase
 		GrammarRoom prev = null;
 		for(int i=0; i<phrase.length; i++)
 		{
-			Optional<GrammarTerm> term = CDTerms.get(phrase[i]);
+			Optional<GrammarTerm> term = CDTerms.instance().parse(phrase[i]);
 			if(term.isEmpty())
 				continue;
 			

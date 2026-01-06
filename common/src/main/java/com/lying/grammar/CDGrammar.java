@@ -16,20 +16,20 @@ public class CDGrammar
 {
 	private static final DebugLogger LOGGER = CDLoggers.GRAMMAR;
 	
-	public static final List<GrammarTerm> PLACEABLE = CDTerms.placeables();
+	private static List<GrammarTerm> PLACEABLES = List.of();
 	
 	/** Generates a relatively linear initial starting graph */
 	public static GrammarPhrase initialGraph(int blanks)
 	{
-		return initialGraph(blanks, Random.create());
+		return initialPhrase(blanks, Random.create());
 	}
 	
 	/** Generates a relatively linear initial starting graph */
-	public static GrammarPhrase initialGraph(int blanks, Random rand)
+	public static GrammarPhrase initialPhrase(int blanks, Random rand)
 	{
 		GrammarPhrase graph = new GrammarPhrase();
 		GrammarRoom start = new GrammarRoom();
-		start.metadata().setType(CDTerms.START.get());
+		start.metadata().setType(CDTerms.instance().start());
 		graph.add(start);
 		
 		GrammarRoom previous = start;
@@ -46,7 +46,7 @@ public class CDGrammar
 		}
 		
 		GrammarRoom end = new GrammarRoom();
-		end.metadata().setType(CDTerms.END.get());
+		end.metadata().setType(CDTerms.instance().end());
 		previous.linkTo(end);
 		graph.add(end);
 		return graph;
@@ -61,6 +61,7 @@ public class CDGrammar
 	/** Populates the given graph */
 	public static GrammarPhrase generate(GrammarPhrase graph, Random rand)
 	{
+		PLACEABLES = CDTerms.instance().placeables();
 		int iterationCap = 5;
 		while(!graph.isEmpty() && graph.hasBlanks() && --iterationCap > 0)
 			recursiveGenerate(graph.get(0).get(), graph, rand);
@@ -85,8 +86,8 @@ public class CDGrammar
 		/** Rooms immediately following this one */
 		final List<GrammarRoom> next = room.getChildRooms(graph);
 		
-		GrammarTerm term = CDTerms.VOID.get();
-		List<GrammarTerm> candidates = PLACEABLE.stream().filter(t -> t.canBePlaced(room, previous, next, graph)).toList();
+		GrammarTerm term = CDTerms.instance().nan();
+		List<GrammarTerm> candidates = PLACEABLES.stream().filter(t -> t.canBePlaced(room, previous, next, graph)).toList();
 		if(!candidates.isEmpty())
 		{
 			if(candidates.size() == 1)

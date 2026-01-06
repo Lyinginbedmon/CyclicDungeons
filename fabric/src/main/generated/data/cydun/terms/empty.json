@@ -1,0 +1,23 @@
+{
+  "colour": 10921638,
+  "conditions": {
+    "consecutive": false,
+    "dead_ends": false,
+    "never_after": [
+      "cydun:start"
+    ],
+    "never_before": [
+      "cydun:end"
+    ]
+  },
+  "content": "cydun:none",
+  "id": "cydun:empty",
+  "is_placeable": true,
+  "size": {
+    "x_max": 10,
+    "x_min": 7,
+    "y_max": 10,
+    "y_min": 7
+  },
+  "weight": 1
+}

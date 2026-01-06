@@ -9,7 +9,7 @@
       "name": "cydun:husk_crowd"
     },
     {
-      "id": "cydun:squad",
+      "id": "cydun:basic_squad",
       "name": "cydun:fire_team",
       "squads": [
         {
@@ -27,7 +27,7 @@
       ]
     },
     {
-      "id": "cydun:squad",
+      "id": "cydun:basic_squad",
       "name": "cydun:pillager_squad",
       "squads": [
         {

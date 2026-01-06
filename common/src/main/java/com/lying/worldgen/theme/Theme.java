@@ -9,12 +9,13 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
-import com.lying.blueprint.processor.BattleRoomProcessor;
-import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
-import com.lying.blueprint.processor.BattleRoomProcessor.EncounterSet;
-import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
-import com.lying.blueprint.processor.battle.SquadBattleEntry.SquadEntry;
+import com.lying.grammar.DefaultTerms;
 import com.lying.grammar.GrammarTerm;
+import com.lying.grammar.content.BattleRoomContent;
+import com.lying.grammar.content.BattleRoomContent.BattleEntry;
+import com.lying.grammar.content.BattleRoomContent.EncounterSet;
+import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.lying.grammar.content.battle.SquadBattleEntry.SquadEntry;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTileSets;
@@ -34,6 +35,7 @@ import net.minecraft.util.Identifier;
 
 public record Theme(Identifier registryName, EncounterSet combatEncounters, List<Identifier> trapEncounters, Map<Identifier,Identifier> tileSets, Optional<Identifier> passageTiles)
 {
+	// TODO Incorporate term sets and initial grammar phrases into themes
 	public static final Codec<Theme> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Theme::registryName),
 			EncounterSet.CODEC.fieldOf("monsters").forGetter(Theme::combatEncounters),
@@ -47,14 +49,14 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 				return new Theme(id, mobs, traps, tileSets, passage);
 			}));
 	
-	public static final BattleEntry ENCOUNTER_PILLAGER_SQUAD = BattleRoomProcessor.BASIC_SQUAD.get()
+	public static final BattleEntry ENCOUNTER_PILLAGER_SQUAD = BattleRoomContent.BASIC_SQUAD.get()
 			.add(SquadEntry.Builder.of(EntityType.EVOKER).name("leader").count(0, 1).build())
 			.add(SquadEntry.Builder.of(EntityType.VINDICATOR).name("elite").count(1, 2).build())
 			.add(SquadEntry.Builder.of(EntityType.PILLAGER).count(2, 3).build())
 			.setName(prefix("pillager_squad"));
-	public static final BattleEntry ENCOUNTER_WOLF_PACK = BattleRoomProcessor.CROWD.get().of(CDEntityTypes.RABID_WOLF.get(), 3, 4).setName(prefix("wolf_pack"));
-	public static final BattleEntry ENCOUNTER_ZOMBIE_CROWD = BattleRoomProcessor.CROWD.get().of(EntityType.ZOMBIE, 4, 8).setName(prefix("zombie_crowd"));
-	public static final BattleEntry ENCOUNTER_SKELETONS = BattleRoomProcessor.CROWD.get().of(EntityType.SKELETON, 3, 5).setName(prefix("skeletons"));
+	public static final BattleEntry ENCOUNTER_WOLF_PACK = BattleRoomContent.CROWD.get().of(CDEntityTypes.RABID_WOLF.get(), 3, 4).setName(prefix("wolf_pack"));
+	public static final BattleEntry ENCOUNTER_ZOMBIE_CROWD = BattleRoomContent.CROWD.get().of(EntityType.ZOMBIE, 4, 8).setName(prefix("zombie_crowd"));
+	public static final BattleEntry ENCOUNTER_SKELETONS = BattleRoomContent.CROWD.get().of(EntityType.SKELETON, 3, 5).setName(prefix("skeletons"));
 	public static final EncounterSet DEFAULT_ENCOUNTERS	= new EncounterSet()
 			.addEntry(Theme.ENCOUNTER_ZOMBIE_CROWD)
 			.addEntry(Theme.ENCOUNTER_SKELETONS)
@@ -69,11 +71,11 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 			CDTerms.ID_START, DefaultTileSets.ID_START,
 			CDTerms.ID_END, DefaultTileSets.ID_END,
 			CDTerms.ID_EMPTY, DefaultTileSets.ID_EMPTY,
-			CDTerms.ID_BATTLE, DefaultTileSets.ID_BATTLE,
-			CDTerms.ID_TRAP, DefaultTileSets.ID_TRAP,
-			CDTerms.ID_BIG_PUZZLE, DefaultTileSets.ID_PUZZLE,
-			CDTerms.ID_SML_PUZZLE, DefaultTileSets.ID_PUZZLE,
-			CDTerms.ID_BOSS, DefaultTileSets.ID_BOSS,
+			DefaultTerms.ID_BATTLE, DefaultTileSets.ID_BATTLE,
+			DefaultTerms.ID_TRAP, DefaultTileSets.ID_TRAP,
+			DefaultTerms.ID_BIG_PUZZLE, DefaultTileSets.ID_PUZZLE,
+			DefaultTerms.ID_SML_PUZZLE, DefaultTileSets.ID_PUZZLE,
+			DefaultTerms.ID_BOSS, DefaultTileSets.ID_BOSS,
 			CDTerms.ID_TREASURE, DefaultTileSets.ID_TREASURE
 			);
 	

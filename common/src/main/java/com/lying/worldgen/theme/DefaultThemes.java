@@ -8,9 +8,9 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import com.lying.blueprint.processor.BattleRoomProcessor;
-import com.lying.blueprint.processor.BattleRoomProcessor.EncounterSet;
-import com.lying.blueprint.processor.battle.SquadBattleEntry.SquadEntry;
+import com.lying.grammar.content.BattleRoomContent;
+import com.lying.grammar.content.BattleRoomContent.EncounterSet;
+import com.lying.grammar.content.battle.SquadBattleEntry.SquadEntry;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.Identifier;
@@ -33,7 +33,7 @@ public class DefaultThemes
 	public static final Supplier<Theme> DESERT	= register(ID_DESERT, 
 			new EncounterSet()
 				.addCrowd(prefix("husk_crowd"), EntityType.HUSK, 4, 8)
-				.addSquad(prefix("fire_team"), BattleRoomProcessor.BASIC_SQUAD.get()
+				.addSquad(prefix("fire_team"), BattleRoomContent.BASIC_SQUAD.get()
 					.add(SquadEntry.Builder.of(EntityType.WITHER_SKELETON).build())
 					.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()))
 				.addEntry(Theme.ENCOUNTER_PILLAGER_SQUAD)

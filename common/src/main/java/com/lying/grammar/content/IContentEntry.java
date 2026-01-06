@@ -1,4 +1,4 @@
-package com.lying.blueprint.processor;
+package com.lying.grammar.content;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
-public interface IProcessorEntry
+public interface IContentEntry
 {
 	public Identifier registryName();
 	

@@ -9,9 +9,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
-import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
-import com.lying.blueprint.processor.trap.LavaRiverTrapEntry;
-import com.lying.blueprint.processor.trap.PitfallTrapEntry;
+import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.lying.grammar.content.trap.LavaRiverTrapEntry;
+import com.lying.grammar.content.trap.PitfallTrapEntry;
 
 import net.minecraft.util.Identifier;
 

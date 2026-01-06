@@ -1,4 +1,4 @@
-package com.lying.blueprint.processor;
+package com.lying.grammar.content;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,11 +18,16 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 /** A room processor with a built-in typed registry that selects an entry at pre-processing and enacts it in post-processing */
-public abstract class RegistryRoomProcessor<T extends IProcessorEntry> implements IRoomProcessor
+public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomContent
 {
 	protected final Map<Identifier, T> registry = new HashMap<>();
 	
-	public final Optional<T> get(Identifier id) { return registry.containsKey(id) ? Optional.of(registry.get(id)) : Optional.empty(); }
+	protected RegistryRoomContent(Identifier idIn)
+	{
+		super(idIn);
+	}
+	
+	public final Optional<T> getEntry(Identifier id) { return registry.containsKey(id) ? Optional.of(registry.get(id)) : Optional.empty(); }
 	
 	public abstract void buildRegistry(Theme theme);
 	
@@ -48,7 +53,7 @@ public abstract class RegistryRoomProcessor<T extends IProcessorEntry> implement
 			Identifier id = ids.size() == 1 ? ids.getFirst() : ids.get(world.random.nextInt(ids.size()));
 			meta.setProcessorID(id);
 			CDLoggers.WORLDGEN.info("# Processor selected registry entry {}", id.toString());
-			get(id).ifPresent(entry -> entry.prepare(room, tileMap, world));
+			getEntry(id).ifPresent(entry -> entry.prepare(room, tileMap, world));
 		}
 	}
 	

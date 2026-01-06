@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.common.collect.Lists;
+import com.lying.init.CDTerms;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -15,6 +16,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.MutableText;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Uuids;
 
 /** Graph object holding structural information */
@@ -154,6 +156,10 @@ public class GrammarRoom
 		return links;
 	}
 	
+	public GrammarRoom applyTerm(Identifier termIn, GrammarPhrase graph)
+	{
+		return applyTerm(CDTerms.instance().get(termIn).orElse(CDTerms.instance().blank()), graph);
+	}
 	public GrammarRoom applyTerm(GrammarTerm termIn, GrammarPhrase graph)
 	{
 		termIn.applyTo(this, graph);

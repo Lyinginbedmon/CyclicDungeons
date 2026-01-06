@@ -20,6 +20,7 @@ public class CDDataGenerators implements DataGeneratorEntrypoint
 		pack.addProvider(CDBlockLootTableProvider::new);
 		pack.addProvider(CDRecipeProvider::new);
 		
+		pack.addProvider(CDTermProvider::new);
 		pack.addProvider(CDTileProvider::new);
 		pack.addProvider(CDTileSetProvider::new);
 		pack.addProvider(CDThemeProvider::new);

@@ -83,9 +83,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		return clone;
 	}
 	
-	public Optional<BlueprintRoom> start() { return stream().filter(n -> n.metadata().is(CDTerms.START.get())).findFirst(); }
+	public Optional<BlueprintRoom> start() { return stream().filter(n -> n.metadata().is(CDTerms.instance().start())).findFirst(); }
 	
-	public Optional<BlueprintRoom> end() { return stream().filter(n -> n.metadata().is(CDTerms.END.get())).findFirst(); }
+	public Optional<BlueprintRoom> end() { return stream().filter(n -> n.metadata().is(CDTerms.instance().end())).findFirst(); }
 	
 	public boolean add(BlueprintRoom node)
 	{
@@ -226,7 +226,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	public void buildEntrance(BlockPos position, ServerWorld world)
 	{
-		BlueprintRoom start = stream().filter(r -> r.metadata().type() == CDTerms.START.get()).findFirst().get();
+		BlueprintRoom start = stream().filter(r -> r.metadata().is(CDTerms.instance().start())).findFirst().get();
 		GridTile tilePos = start.tilePosition();
 		for(int i=0; i<start.metadata().size().y; i++)
 		{

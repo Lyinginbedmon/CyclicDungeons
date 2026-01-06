@@ -1,0 +1,18 @@
+{
+  "colour": 2582730,
+  "conditions": {
+    "consecutive": false,
+    "dead_ends": true,
+    "max_count": 4
+  },
+  "content": "cydun:none",
+  "id": "cydun:small_puzzle",
+  "is_placeable": true,
+  "size": {
+    "x_max": 8,
+    "x_min": 5,
+    "y_max": 8,
+    "y_min": 5
+  },
+  "weight": 1
+}

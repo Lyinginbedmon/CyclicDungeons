@@ -94,7 +94,7 @@ public class CDCommands
 	
 	private static int tryPreview(int size, Random rand, ServerCommandSource source)
 	{
-		GrammarPhrase graph = CDGrammar.initialGraph(size, rand);
+		GrammarPhrase graph = CDGrammar.initialPhrase(size, rand);
 		CDGrammar.generate(graph, rand);
 		if(source.getPlayer() != null)
 			ShowDungeonLayoutPacket.sendTo(source.getPlayer(), graph, true);
@@ -117,7 +117,7 @@ public class CDCommands
 	private static int generateInWorld(int size, BlockPos position, ServerCommandSource source) throws CommandSyntaxException
 	{
 		Random rand = Random.create(position.getX() * position.getX() + position.getZ() * position.getZ());
-		GrammarPhrase graph = CDGrammar.initialGraph(size, rand);
+		GrammarPhrase graph = CDGrammar.initialPhrase(size, rand);
 		CDGrammar.generate(graph, rand);
 		
 		Blueprint blueprint = Blueprint.fromGraph(graph);

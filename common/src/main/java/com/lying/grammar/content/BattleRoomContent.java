@@ -1,4 +1,4 @@
-package com.lying.blueprint.processor;
+package com.lying.grammar.content;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
@@ -15,9 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
-import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
-import com.lying.blueprint.processor.battle.CrowdBattleEntry;
-import com.lying.blueprint.processor.battle.SquadBattleEntry;
+import com.lying.grammar.content.BattleRoomContent.BattleEntry;
+import com.lying.grammar.content.battle.CrowdBattleEntry;
+import com.lying.grammar.content.battle.SquadBattleEntry;
 import com.lying.worldgen.theme.Theme;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
@@ -38,12 +38,18 @@ import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.Heightmap;
 
-public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
+public class BattleRoomContent extends RegistryRoomContent<BattleEntry>
 {
+	public static final Identifier ID	= prefix("combat_encounter");
 	private static final Map<Identifier, Supplier<? extends BattleEntry>> REGISTRY	= new HashMap<>();
 	
 	public static final Supplier<CrowdBattleEntry<?>> CROWD	= registerBattle("crowd", CrowdBattleEntry::new);
 	public static final Supplier<SquadBattleEntry> BASIC_SQUAD	= registerBattle("basic_squad", SquadBattleEntry::new);
+	
+	public BattleRoomContent()
+	{
+		super(ID);
+	}
 	
 	private static <T extends BattleEntry> Supplier<T> registerBattle(String nameIn, Function<Identifier, T> factory)
 	{
@@ -112,14 +118,14 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 		
 		public <T extends MobEntity> EncounterSet addCrowd(Identifier name, EntityType<T> typeIn, int min, int max)
 		{
-			return addEntry(BattleRoomProcessor.CROWD.get().of(typeIn, min, max).setName(name));
+			return addEntry(BattleRoomContent.CROWD.get().of(typeIn, min, max).setName(name));
 		}
 	}
 	
-	public static abstract class BattleEntry implements IProcessorEntry
+	public static abstract class BattleEntry implements IContentEntry
 	{
 		public static final Codec<BattleEntry> CODEC = Codec.of(BattleEntry::encode, BattleEntry::decode);
-		private static final BattleEntry ERROR	= BattleRoomProcessor.CROWD.get().of(EntityType.RABBIT, 1).setName(prefix("error"));
+		private static final BattleEntry ERROR	= BattleRoomContent.CROWD.get().of(EntityType.RABBIT, 1).setName(prefix("error"));
 		protected static final int SEARCH_ATTEMPTS = 20;
 		protected final Identifier registryName;
 		protected Identifier name;
@@ -218,7 +224,7 @@ public class BattleRoomProcessor extends RegistryRoomProcessor<BattleEntry>
 		public static BattleEntry fromJson(JsonOps ops, JsonObject obj)
 		{
 			Identifier id = Identifier.of(obj.get("id").getAsString());
-			Supplier<? extends BattleEntry> type = BattleRoomProcessor.getBattle(id);
+			Supplier<? extends BattleEntry> type = BattleRoomContent.getBattle(id);
 			if(type == null)
 			{
 				CyclicDungeons.LOGGER.error(" # Unrecognised battle entry type {}, replaced with a rabbit", id.toString());

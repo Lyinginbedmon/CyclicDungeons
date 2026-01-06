@@ -1,0 +1,23 @@
+{
+  "colour": 8199453,
+  "conditions": {
+    "consecutive": true,
+    "dead_ends": true,
+    "max_count": 1,
+    "never_after": [
+      "cydun:start"
+    ],
+    "only_before": [
+      "cydun:end"
+    ]
+  },
+  "content": "cydun:none",
+  "id": "cydun:boss",
+  "is_placeable": true,
+  "phrase_modifier": "cydun:inject_treasure",
+  "size": {
+    "x": 16,
+    "y": 16
+  },
+  "weight": 10
+}

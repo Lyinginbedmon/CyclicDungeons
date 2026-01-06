@@ -1,8 +1,8 @@
-package com.lying.blueprint.processor.battle;
+package com.lying.grammar.content.battle;
 
 import com.google.gson.JsonObject;
-import com.lying.blueprint.processor.BattleRoomProcessor.BattleEntry;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grammar.content.BattleRoomContent.BattleEntry;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.entity.Entity;

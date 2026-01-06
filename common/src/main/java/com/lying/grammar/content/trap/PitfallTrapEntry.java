@@ -1,4 +1,4 @@
-package com.lying.blueprint.processor.trap;
+package com.lying.grammar.content.trap;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -12,9 +12,9 @@ import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.blueprint.BlueprintRoom;
-import com.lying.blueprint.processor.IProcessorEntry;
-import com.lying.blueprint.processor.TrapRoomProcessor.TrapEntry;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grammar.content.IContentEntry;
+import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
@@ -108,7 +108,7 @@ public class PitfallTrapEntry extends TrapEntry
 		final TrapLogicBlockEntity logic = world.getBlockEntity(logicPos, CDBlockEntityTypes.TRAP_LOGIC.get()).get().setLogic(CDTrapLogicHandlers.ID_1S_FALLOFF);
 		
 		// Wire hatches to logic
-		List<TrapActorBlockEntity> hatches = IProcessorEntry.getTileEntities(min, max, world, CDBlockEntityTypes.TRAP_ACTOR.get());
+		List<TrapActorBlockEntity> hatches = IContentEntry.getTileEntities(min, max, world, CDBlockEntityTypes.TRAP_ACTOR.get());
 		hatches.forEach(hatch -> 
 			logic.processWireConnection(hatch.getPos(), WireRecipient.ACTOR));
 		
