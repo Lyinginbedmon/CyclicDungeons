@@ -1,0 +1,19 @@
+{
+  "conditions": [
+    "cydun:on_bottom",
+    "cydun:not_by_passage",
+    {
+      "cap": 2,
+      "id": "cydun:max_consecutive",
+      "sides": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:pit_fallaway",
+  "rotation": "cydun:none"
+}

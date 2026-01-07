@@ -54,11 +54,20 @@ public class CDItems
 	public static final RegistrySupplier<Item> SENSOR_PROXIMITY	= registerRareBlock("proximity_sensor", CDBlocks.SENSOR_PROXIMITY, Rarity.RARE);
 	
 	public static final RegistrySupplier<Item> PIT					= registerRareBlockNoItem("pit", CDBlocks.PIT, Rarity.RARE);
+	public static final RegistrySupplier<Item> CRUMBLING_STONE				= registerBlock("crumbling_stone", CDBlocks.CRUMBLING_STONE);
+	public static final RegistrySupplier<Item> CRUMBLING_COBBLESTONE		= registerBlock("crumbling_cobblestone", CDBlocks.CRUMBLING_COBBLESTONE);
+	public static final RegistrySupplier<Item> CRUMBLING_MOSSY_COBBLESTONE	= registerBlock("crumbling_mossy_cobblestone", CDBlocks.CRUMBLING_MOSSY_COBBLESTONE);
+	public static final RegistrySupplier<Item> CRUMBLING_SANDSTONE			= registerBlock("crumbling_sandstone", CDBlocks.CRUMBLING_SANDSTONE);
+	public static final RegistrySupplier<Item> CRUMBLING_RED_SANDSTONE		= registerBlock("crumbling_red_sandstone", CDBlocks.CRUMBLING_RED_SANDSTONE);
+	public static final RegistrySupplier<Item> CRUMBLING_STONE_BRICK		= registerBlock("crumbling_stone_bricks", CDBlocks.CRUMBLING_STONE_BRICKS);
 	public static final RegistrySupplier<Item> ACTOR_REDSTONE		= registerRareBlock("redstone_actor", CDBlocks.ACTOR_REDSTONE, Rarity.RARE);
 	public static final RegistrySupplier<Item> STONE_BRICK_HATCH	= registerRareBlock("stone_brick_hatch", CDBlocks.STONE_BRICK_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> STONE_HATCH			= registerRareBlock("stone_hatch", CDBlocks.STONE_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> COBBLESTONE_HATCH	= registerRareBlock("cobblestone_hatch", CDBlocks.COBBLESTONE_HATCH, Rarity.RARE);
+	public static final RegistrySupplier<Item> MOSSY_COBBLESTONE_HATCH	= registerRareBlock("mossy_cobblestone_hatch", CDBlocks.MOSSY_COBBLESTONE_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> GRASS_HATCH			= registerRareBlock("grass_hatch", CDBlocks.GRASS_HATCH, Rarity.RARE);
+	public static final RegistrySupplier<Item> SANDSTONE_HATCH		= registerRareBlock("sandstone_hatch", CDBlocks.SANDSTONE_HATCH, Rarity.RARE);
+	public static final RegistrySupplier<Item> RED_SANDSTONE_HATCH	= registerRareBlock("red_sandstone_hatch", CDBlocks.RED_SANDSTONE_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> DIRT_HATCH			= registerRareBlock("dirt_hatch", CDBlocks.DIRT_HATCH, Rarity.RARE);
 	public static final RegistrySupplier<Item> SWINGING_BLADE		= registerRareBlockNoItem("swinging_blade", CDBlocks.SWINGING_BLADE, Rarity.RARE);
 	public static final RegistrySupplier<Item> FLAME_JET			= registerRareBlock("flame_jet", CDBlocks.FLAME_JET, Rarity.RARE);
@@ -123,12 +132,6 @@ public class CDItems
 	{
 		TABS.register();
 		ITEMS.register();
-		
-		ALL_BLOCKS.stream()
-			.map(Supplier::get)
-			.map(i -> (BlockItem)i)
-			.forEach(item -> 
-				Item.BLOCK_ITEMS.put(item.getBlock(), item));
 		
 		CyclicDungeons.LOGGER.info(" # Initialised {} items ({} block items)", itemTally, blockTally);
 	}

@@ -7,6 +7,8 @@ import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.BladeBlock;
 import com.lying.block.CollisionSensorBlock;
+import com.lying.block.CrumblingBlock;
+import com.lying.block.CrumblingBlockResetting;
 import com.lying.block.FlameJetBlock;
 import com.lying.block.HatchBlock;
 import com.lying.block.PitBlock;
@@ -24,6 +26,7 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -64,13 +67,23 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> PIT					= register("pit", PitBlock::new);
 	public static final RegistrySupplier<Block> ACTOR_REDSTONE		= register("redstone_actor", RedstoneActorBlock::new);
 	public static final RegistrySupplier<Block> COBBLESTONE_HATCH	= register("cobblestone_hatch", HatchBlock::new);
+	public static final RegistrySupplier<Block> MOSSY_COBBLESTONE_HATCH	= register("mossy_cobblestone_hatch", HatchBlock::new);
 	public static final RegistrySupplier<Block> DIRT_HATCH			= register("dirt_hatch", HatchBlock::new);
 	public static final RegistrySupplier<Block> GRASS_HATCH			= register("grass_hatch", HatchBlock::new);
 	public static final RegistrySupplier<Block> STONE_HATCH			= register("stone_hatch", HatchBlock::new);
+	public static final RegistrySupplier<Block> SANDSTONE_HATCH		= register("sandstone_hatch", HatchBlock::new);
+	public static final RegistrySupplier<Block> RED_SANDSTONE_HATCH	= register("red_sandstone_hatch", HatchBlock::new);
 	public static final RegistrySupplier<Block> STONE_BRICK_HATCH	= register("stone_brick_hatch", HatchBlock::new);
 	public static final RegistrySupplier<Block> SWINGING_BLADE		= register("swinging_blade", SwingingBladeBlock::new);
 	public static final RegistrySupplier<Block> BLADE				= register("blade", BladeBlock::new);
 	public static final RegistrySupplier<Block> FLAME_JET			= register("flame_jet", FlameJetBlock::new);
+	
+	public static final RegistrySupplier<Block> CRUMBLING_STONE				= register("crumbling_stone", settings -> new CrumblingBlock(settings, () -> Blocks.STONE));
+	public static final RegistrySupplier<Block> CRUMBLING_COBBLESTONE		= register("crumbling_cobblestone", settings -> new CrumblingBlock(settings, () -> Blocks.COBBLESTONE));
+	public static final RegistrySupplier<Block> CRUMBLING_MOSSY_COBBLESTONE	= register("crumbling_mossy_cobblestone", settings -> new CrumblingBlock(settings, () -> Blocks.MOSSY_COBBLESTONE));
+	public static final RegistrySupplier<Block> CRUMBLING_SANDSTONE			= register("crumbling_sandstone", settings -> new CrumblingBlock(settings, () -> Blocks.SANDSTONE));
+	public static final RegistrySupplier<Block> CRUMBLING_RED_SANDSTONE		= register("crumbling_red_sandstone", settings -> new CrumblingBlock(settings, () -> Blocks.RED_SANDSTONE));
+	public static final RegistrySupplier<Block> CRUMBLING_STONE_BRICKS		= register("crumbling_stone_bricks", settings -> new CrumblingBlock(settings, () -> Blocks.STONE_BRICKS));
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

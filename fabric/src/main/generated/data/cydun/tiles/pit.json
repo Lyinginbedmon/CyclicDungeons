@@ -1,0 +1,9 @@
+{
+  "conditions": [
+    "cydun:on_bottom",
+    "cydun:not_by_passage"
+  ],
+  "generation": "structure",
+  "id": "cydun:pit",
+  "rotation": "cydun:none"
+}

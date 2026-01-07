@@ -40,8 +40,11 @@ public class CDBlockEntityTypes
 			CDBlocks.STONE_BRICK_HATCH,
 			CDBlocks.STONE_HATCH,
 			CDBlocks.COBBLESTONE_HATCH,
+			CDBlocks.MOSSY_COBBLESTONE_HATCH,
 			CDBlocks.GRASS_HATCH,
-			CDBlocks.DIRT_HATCH);
+			CDBlocks.DIRT_HATCH,
+			CDBlocks.SANDSTONE_HATCH,
+			CDBlocks.RED_SANDSTONE_HATCH);
 	public static final RegistrySupplier<BlockEntityType<SwingingBladeBlockEntity>> SWINGING_BLADE	= register("swinging_blade", SwingingBladeBlockEntity::new, CDBlocks.SWINGING_BLADE);
 	public static final RegistrySupplier<BlockEntityType<FlameJetBlockEntity>> FLAME_JET		= register("flame_jet", FlameJetBlockEntity::new, CDBlocks.FLAME_JET);
 	

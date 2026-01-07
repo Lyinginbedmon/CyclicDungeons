@@ -10,8 +10,9 @@ import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
-import com.lying.grammar.content.trap.LavaRiverTrapEntry;
 import com.lying.grammar.content.trap.PitfallTrapEntry;
+import com.lying.grammar.content.trap.LavaRiverTrapEntry;
+import com.lying.grammar.content.trap.HatchPitfallTrapEntry;
 
 import net.minecraft.util.Identifier;
 
@@ -21,10 +22,12 @@ public class CDTraps
 	
 	public static final Identifier 
 		ID_SIMPLE_PITFALL	= prefix("simple_pitfall"),
-		ID_LAVA_RIVER		= prefix("lava_river");
+		ID_LAVA_RIVER		= prefix("lava_river"),
+		ID_PITFALL			= prefix("pitfall");
 	
-	public static final Supplier<TrapEntry> SIMPLE_PITFALL	= register(ID_SIMPLE_PITFALL, PitfallTrapEntry::new);
+	public static final Supplier<TrapEntry> SIMPLE_PITFALL	= register(ID_SIMPLE_PITFALL, HatchPitfallTrapEntry::new);
 	public static final Supplier<TrapEntry> LAVA_RIVER		= register(ID_LAVA_RIVER, LavaRiverTrapEntry::new);
+	public static final Supplier<TrapEntry> PITFALL			= register(ID_PITFALL, PitfallTrapEntry::new);
 	
 	public static Supplier<TrapEntry> register(Identifier name, Function<Identifier, TrapEntry> func)
 	{

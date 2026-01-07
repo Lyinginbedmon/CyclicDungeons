@@ -16,10 +16,17 @@
 	"block.cydun.stone_brick_hatch": "Stone Brick Hatch",
 	"block.cydun.stone_hatch": "Stone Hatch",
 	"block.cydun.cobblestone_hatch": "Cobblestone Hatch",
+	"block.cydun.mossy_cobblestone_hatch": "Mossy_Cobblestone Hatch",
 	"block.cydun.grass_hatch": "Grass Hatch",
 	"block.cydun.dirt_hatch": "Dirt Hatch",
 	"block.cydun.swinging_blade": "Swinging Blade",
 	"block.cydun.flame_jet": "Flame Jet",
+	"block.cydun.crumbling_stone": "Crumbling Stone",
+	"block.cydun.crumbling_cobblestone": "Crumbling Cobblestone",
+	"block.cydun.crumbling_mossy_cobblestone": "Crumbling Mossy Cobblestone",
+	"block.cydun.crumbling_stone_bricks": "Crumbling Stone Bricks",
+	"block.cydun.crumbling_sandstone": "Crumbling Sandstone",
+	"block.cydun.crumbling_red_sandstone": "Crumbling Red Sandstone",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",
 	// Item tags

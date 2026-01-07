@@ -38,6 +38,8 @@ public class DefaultTiles
 		ID_PILLAR_CAP		= prefix("pillar_cap"),
 		ID_PILLAR			= prefix("pillar"),
 		ID_HATCH			= prefix("pitfall_hatch"),
+		ID_PITFALL			= prefix("pit_fallaway"),
+		ID_PIT				= prefix("pit"),
 		ID_PRISTINE_FLOOR	= prefix("pristine_floor"),
 		ID_PUDDLE			= prefix("puddle"),
 		ID_SEAT				= prefix("seat"),
@@ -241,6 +243,21 @@ public class DefaultTiles
 			.asStructure()
 			.freeRotation()
 			.tags(CDTileTags.ID_TRAPS)
+			.build());
+	public static final Supplier<Tile> PITFALL	= register(ID_PITFALL, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(CDTileConditions.ON_BOTTOM.get())
+				.condition(CDTileConditions.NOT_BY_PASSAGE.get())
+				.condition(MaxConsecutive.of(Direction.Type.HORIZONTAL.stream().toList(), 2))
+				.build())
+			.asStructure()
+			.build());
+	public static final Supplier<Tile> PIT		= register(ID_PIT, Tile.Builder
+			.of(TilePredicate.Builder.create()
+				.condition(CDTileConditions.ON_BOTTOM.get())
+				.condition(CDTileConditions.NOT_BY_PASSAGE.get())
+				.build())
+			.asStructure()
 			.build());
 	
 	private static Supplier<Tile> register(final Identifier id, Function<Identifier,Tile> funcIn)

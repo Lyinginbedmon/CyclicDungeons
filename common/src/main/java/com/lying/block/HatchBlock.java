@@ -51,6 +51,7 @@ public class HatchBlock extends AbstractTrapActorBlock
 	
 	public BlockState getPlacementState(ItemPlacementContext ctx)
 	{
+		// TODO Revise to attached face
 		return getDefaultState()
 				.with(FACING, ctx.getHorizontalPlayerFacing())
 				.with(INTERSTITIAL, isInterstitial(ctx.getHorizontalPlayerFacing(), ctx.getWorld(), ctx.getBlockPos()));

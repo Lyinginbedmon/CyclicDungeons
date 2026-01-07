@@ -10,6 +10,7 @@ import java.util.function.Function;
 import com.lying.block.BladeBlock;
 import com.lying.block.BladeBlock.Part;
 import com.lying.block.CollisionSensorBlock;
+import com.lying.block.CrumblingBlock;
 import com.lying.block.FlameJetBlock;
 import com.lying.block.HatchBlock;
 import com.lying.block.ProximitySensorBlock;
@@ -35,6 +36,7 @@ import net.minecraft.client.data.ModelSupplier;
 import net.minecraft.client.data.Models;
 import net.minecraft.client.data.TextureKey;
 import net.minecraft.client.data.TextureMap;
+import net.minecraft.client.data.TexturedModel;
 import net.minecraft.client.data.VariantSettings;
 import net.minecraft.client.data.VariantsBlockStateSupplier;
 import net.minecraft.item.BlockItem;
@@ -85,11 +87,21 @@ public class CDModelProvider extends FabricModelProvider
 		HatchActor.register(CDBlocks.STONE_BRICK_HATCH.get(), Blocks.STONE_BRICKS, generator);
 		HatchActor.register(CDBlocks.STONE_HATCH.get(), Blocks.STONE, generator);
 		HatchActor.register(CDBlocks.COBBLESTONE_HATCH.get(), Blocks.COBBLESTONE, generator);
+		HatchActor.register(CDBlocks.MOSSY_COBBLESTONE_HATCH.get(), Blocks.MOSSY_COBBLESTONE, generator);
 		HatchActor.registerGrass(CDBlocks.GRASS_HATCH.get(), generator);
 		HatchActor.register(CDBlocks.DIRT_HATCH.get(), Blocks.DIRT, generator);
+		HatchActor.registerColumn(CDBlocks.SANDSTONE_HATCH.get(), Blocks.SANDSTONE, generator);
+		HatchActor.registerColumn(CDBlocks.RED_SANDSTONE_HATCH.get(), Blocks.RED_SANDSTONE, generator);
 		SwingingBlade.registerBlade(CDBlocks.BLADE.get(), generator);
 		SwingingBlade.register(CDBlocks.SWINGING_BLADE.get(), generator);
 		FlameJet.register(CDBlocks.FLAME_JET.get(), generator);
+		
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_STONE.get(), generator);
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_COBBLESTONE.get(), generator);
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_MOSSY_COBBLESTONE.get(), generator);
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_STONE_BRICKS.get(), generator);
+		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.CRUMBLING_SANDSTONE.get(), generator);
+		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.CRUMBLING_RED_SANDSTONE.get(), generator);
 	}
 	
 	public void registerUnrotatedPillar(Block block, BlockStateModelGenerator generator)
@@ -299,6 +311,22 @@ public class CDModelProvider extends FabricModelProvider
 		}
 	}
 	
+	private static class CrumblingBlocks
+	{
+		private static void registerColumn(CrumblingBlock block, BlockStateModelGenerator generator)
+		{
+			Identifier model = TexturedModel.SIDE_TOP_BOTTOM_WALL.get(block.getEmulated()).upload(block, generator.modelCollector);
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block, BlockStateVariant.create().put(VariantSettings.MODEL, model)));
+		}
+		
+		private static void register(CrumblingBlock block, BlockStateModelGenerator generator)
+		{
+			TextureMap map = TextureMap.all(block.getEmulated());
+			Identifier model = Models.CUBE_ALL.upload(block, map, generator.modelCollector);
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block, BlockStateVariant.create().put(VariantSettings.MODEL, model)));
+		}
+	}
+	
 	private static class HatchActor
 	{
 		private static final Model MODEL = new Model(
@@ -310,9 +338,38 @@ public class CDModelProvider extends FabricModelProvider
 				Optional.of("_open"),
 				TextureKey.TEXTURE);
 		
+		private static final Model MODEL_COLUMN = new Model(
+				Optional.of(prefix("block/template_hatch_column")),
+				Optional.empty(),
+				TextureKey.SIDE, TextureKey.TOP, TextureKey.BOTTOM);
+		private static final Model MODEL_COLUMN_OPEN = new Model(
+				Optional.of(prefix("block/template_hatch_column_open")),
+				Optional.of("_open"),
+				TextureKey.SIDE, TextureKey.TOP, TextureKey.BOTTOM);
+		
 		private static void registerGrass(Block block, BlockStateModelGenerator generator)
 		{
 			register(block, TextureMap.getSubId(Blocks.GRASS_BLOCK, "_top"), generator);
+		}
+		
+		private static void registerColumn(Block block, Block emulated, BlockStateModelGenerator generator)
+		{
+			TextureMap map = new TextureMap();
+				map.put(TextureKey.SIDE, TextureMap.getId(emulated));
+				map.put(TextureKey.TOP, TextureMap.getSubId(emulated, "_top"));
+				map.put(TextureKey.BOTTOM, TextureMap.getSubId(emulated, "_bottom"));
+			
+			Identifier model = MODEL_COLUMN.upload(block, map, generator.modelCollector);
+			Identifier modelOn = MODEL_COLUMN_OPEN.upload(block, map, generator.modelCollector);
+			Identifier modelVoid = Models.PARTICLE.upload(block, "_interstitial", TextureMap.particle(TextureMap.getId(emulated)), generator.modelCollector);
+			
+			BlockStateVariantMap.TripleProperty<Boolean, Boolean, Direction> variants = BlockStateVariantMap.create(HatchBlock.POWERED, HatchBlock.INTERSTITIAL, HatchBlock.FACING);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, variants, model, modelOn, modelVoid);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R90, variants, model, modelOn, modelVoid);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R180, variants, model, modelOn, modelVoid);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R270, variants, model, modelOn, modelVoid);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
 		}
 		
 		private static void register(Block block, Block emulated, BlockStateModelGenerator generator)
