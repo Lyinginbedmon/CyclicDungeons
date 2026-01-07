@@ -27,6 +27,12 @@
 	"block.cydun.crumbling_stone_bricks": "Crumbling Stone Bricks",
 	"block.cydun.crumbling_sandstone": "Crumbling Sandstone",
 	"block.cydun.crumbling_red_sandstone": "Crumbling Red Sandstone",
+	"block.cydun.resetting_crumbling_stone": "Resetting Crumbling Stone",
+	"block.cydun.resetting_crumbling_cobblestone": "Resetting Crumbling Cobblestone",
+	"block.cydun.resetting_crumbling_mossy_cobblestone": "Resetting Crumbling Mossy Cobblestone",
+	"block.cydun.resetting_crumbling_stone_bricks": "Resetting Crumbling Stone Bricks",
+	"block.cydun.resetting_crumbling_sandstone": "Resetting Crumbling Sandstone",
+	"block.cydun.resetting_crumbling_red_sandstone": "Resetting Crumbling Red Sandstone",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",
 	// Item tags

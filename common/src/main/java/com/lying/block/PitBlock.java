@@ -4,12 +4,14 @@ import com.lying.init.CDBlocks;
 import com.lying.init.CDItems;
 
 import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.SideShapeType;
+import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -40,8 +42,9 @@ public class PitBlock extends Block
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView World, BlockPos pos, ShapeContext context)
 	{
-		if(CDItems.PIT.isPresent())
-			return context.isHolding(CDItems.PIT.get()) ? VoxelShapes.fullCube() : VoxelShapes.empty();
+		RegistrySupplier<Item> item = CDItems.getBlockItem(CDBlocks.PIT);
+		if(item.isPresent())
+			return context.isHolding(item.get()) ? VoxelShapes.fullCube() : VoxelShapes.empty();
 		return VoxelShapes.fullCube();
 	}
 	

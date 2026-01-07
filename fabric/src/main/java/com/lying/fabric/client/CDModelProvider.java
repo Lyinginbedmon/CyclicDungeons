@@ -102,6 +102,13 @@ public class CDModelProvider extends FabricModelProvider
 		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_STONE_BRICKS.get(), generator);
 		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.CRUMBLING_SANDSTONE.get(), generator);
 		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.CRUMBLING_RED_SANDSTONE.get(), generator);
+		
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_STONE.get(), generator);
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_COBBLESTONE.get(), generator);
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_MOSSY_COBBLESTONE.get(), generator);
+		CrumblingBlocks.register((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_STONE_BRICKS.get(), generator);
+		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_SANDSTONE.get(), generator);
+		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_RED_SANDSTONE.get(), generator);
 	}
 	
 	public void registerUnrotatedPillar(Block block, BlockStateModelGenerator generator)
