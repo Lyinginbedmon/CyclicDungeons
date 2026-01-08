@@ -14,7 +14,7 @@ public abstract class AbstractTrapSensorBlock extends Block implements IWireable
 	
 	protected AbstractTrapSensorBlock(Settings settings)
 	{
-		super(settings);
+		super(settings.strength(50F, 0F).dropsNothing());
 	}
 	
 	public WireRecipient type() { return WireRecipient.SENSOR; }

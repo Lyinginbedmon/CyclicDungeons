@@ -47,7 +47,7 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 	
 	public SoundSensorBlock(Settings settings)
 	{
-		super(settings);
+		super(settings.strength(50F, 0F).dropsNothing());
 		setDefaultState(getDefaultState().with(FACING, Direction.UP).with(PHASE, SculkSensorPhase.INACTIVE).with(POWER, 0));
 	}
 	

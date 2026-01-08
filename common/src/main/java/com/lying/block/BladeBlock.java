@@ -12,7 +12,7 @@ public class BladeBlock extends Block
 	
 	public BladeBlock(Settings settings)
 	{
-		super(settings.nonOpaque());
+		super(settings.strength(50F, 0F).dropsNothing().nonOpaque());
 		setDefaultState(getDefaultState().with(PART, Part.MOUNT));
 	}
 	

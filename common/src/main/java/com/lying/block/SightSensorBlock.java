@@ -32,7 +32,7 @@ public class SightSensorBlock extends BlockWithEntity implements IWireableBlock
 	
 	public SightSensorBlock(Settings settings)
 	{
-		super(settings.nonOpaque().emissiveLighting(CDBlocks::always).luminance(state -> state.get(POWERED) ? 4 : 0));
+		super(settings.strength(50F, 0F).dropsNothing().nonOpaque().emissiveLighting(CDBlocks::always).luminance(state -> state.get(POWERED) ? 4 : 0));
 		setDefaultState(getDefaultState().with(POWER, 0).with(POWERED, false));
 	}
 	

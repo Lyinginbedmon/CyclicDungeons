@@ -17,7 +17,7 @@ public abstract class AbstractTrapActorBlock extends BlockWithEntity implements 
 {
 	protected AbstractTrapActorBlock(Settings settingsIn)
 	{
-		super(settingsIn);
+		super(settingsIn.strength(50F, 0F).dropsNothing());
 	}
 	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
