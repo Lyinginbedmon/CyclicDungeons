@@ -1,7 +1,5 @@
 package com.lying.block;
 
-import org.jetbrains.annotations.Nullable;
-
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.mojang.serialization.MapCodec;
@@ -31,13 +29,6 @@ public class TrapLogicBlock extends BlockWithEntity implements IWireableBlock
 	protected MapCodec<? extends BlockWithEntity> getCodec()
 	{
 		return CODEC;
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Nullable
-	public static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<A> validateTicker(BlockEntityType<A> given, BlockEntityType<E> expected, BlockEntityTicker<? super E> ticker)
-	{
-		return expected == given ? (BlockEntityTicker<A>)ticker : null;
 	}
 	
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)

@@ -64,6 +64,7 @@ public class CDBlockLootTableProvider extends FabricBlockLootTableProvider
 					.with(
 						ofItem(drop)
 							.conditionally(BlockStatePropertyLootCondition.builder(drop).properties(StatePredicate.Builder.create().exactMatch(property, property.name(val))))
+							// FIXME Ensure block only dropped when mined by entity
 					)
 			);
 	}

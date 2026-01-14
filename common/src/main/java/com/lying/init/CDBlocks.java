@@ -8,6 +8,7 @@ import com.lying.CyclicDungeons;
 import com.lying.block.BladeBlock;
 import com.lying.block.CollisionSensorBlock;
 import com.lying.block.CrumblingBlock;
+import com.lying.block.DartTrapBlock;
 import com.lying.block.FlameJetBlock;
 import com.lying.block.HatchBlock;
 import com.lying.block.PitBlock;
@@ -16,6 +17,7 @@ import com.lying.block.RedstoneActorBlock;
 import com.lying.block.RedstoneSensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
+import com.lying.block.SpikeTrapBlock;
 import com.lying.block.SwingingBladeBlock;
 import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
@@ -78,6 +80,8 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> SWINGING_BLADE		= register("swinging_blade", SwingingBladeBlock::new);
 	public static final RegistrySupplier<Block> BLADE				= register("blade", BladeBlock::new);
 	public static final RegistrySupplier<Block> FLAME_JET			= register("flame_jet", FlameJetBlock::new);
+	public static final RegistrySupplier<Block> DART_TRAP			= register("dart_trap", DartTrapBlock::new);
+	public static final RegistrySupplier<Block> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlock::new);
 	
 	// Hazards
 	private static final Function<Settings, Settings> stoneSettings				= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);
@@ -86,8 +90,8 @@ public class CDBlocks
 	private static final Function<Settings, Settings> redSandstoneSettings		= settings -> settings.mapColor(MapColor.ORANGE).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(0.8F);
 	private static final Function<Settings, Settings> mossyCobblestoneSettings	= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(2.0F, 6.0F);
 	private static final Function<Settings, Settings> stoneBricksSettings		= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);
-	public static final RegistrySupplier<Block> CRUMBLING_STONE							= register("crumbling_stone", settings -> new CrumblingBlock(() -> Blocks.STONE, stoneSettings.apply(settings)));
 	public static final RegistrySupplier<Block> PIT										= register("pit", PitBlock::new);
+	public static final RegistrySupplier<Block> CRUMBLING_STONE							= register("crumbling_stone", settings -> new CrumblingBlock(() -> Blocks.STONE, stoneSettings.apply(settings)));
 	public static final RegistrySupplier<Block> RESETTING_CRUMBLING_STONE				= register("resetting_crumbling_stone", settings -> new CrumblingBlock.Resetting(() -> Blocks.STONE, stoneSettings.apply(settings)));
 	public static final RegistrySupplier<Block> CRUMBLING_COBBLESTONE					= register("crumbling_cobblestone", settings -> new CrumblingBlock(() -> Blocks.COBBLESTONE, cobblestoneSettings.apply(settings)));
 	public static final RegistrySupplier<Block> RESETTING_CRUMBLING_COBBLESTONE			= register("resetting_crumbling_cobblestone", settings -> new CrumblingBlock.Resetting(() -> Blocks.COBBLESTONE, cobblestoneSettings.apply(settings)));

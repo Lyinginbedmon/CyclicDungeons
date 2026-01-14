@@ -114,12 +114,13 @@ public class CrumblingBlock extends Block
 				BlockPos offset = pos.offset(face);
 				BlockState state = world.getBlockState(offset);
 				if(state.getBlock() instanceof CrumblingBlock && !((CrumblingBlock)state.getBlock()).isBroken(state) && world.getRandom().nextInt(3) == 0)
-					recursiveBreak(world, offset, iteration);
+					((CrumblingBlock)state.getBlock()).recursiveBreak(world, offset, iteration);
 			}
 	}
 	
 	protected void crumble(World world, BlockPos pos)
 	{
+		// FIXME Ensure block only dropped when mined by entity
 		world.breakBlock(pos, false);
 	}
 	
@@ -177,7 +178,7 @@ public class CrumblingBlock extends Block
 						return;
 				}
 				
-				world.setBlockState(pos, state.with(BREAK, val));
+				world.setBlockState(pos, state.with(BREAK, val), 3);
 			}
 		}
 		
@@ -185,7 +186,7 @@ public class CrumblingBlock extends Block
 		{
 			BlockState state = world.getBlockState(pos);
 			world.breakBlock(pos, false);
-			world.setBlockState(pos, state.with(BREAK, 3));
+			world.setBlockState(pos, state.with(BREAK, 3), 3);
 		}
 		
 		@Override

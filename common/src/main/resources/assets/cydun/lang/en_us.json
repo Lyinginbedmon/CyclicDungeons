@@ -33,6 +33,8 @@
 	"block.cydun.resetting_crumbling_stone_bricks": "Resetting Crumbling Stone Bricks",
 	"block.cydun.resetting_crumbling_sandstone": "Resetting Crumbling Sandstone",
 	"block.cydun.resetting_crumbling_red_sandstone": "Resetting Crumbling Red Sandstone",
+	"block.cydun.dart_trap": "Dart Trap",
+	"block.cydun.spike_trap": "Spike Trap",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",
 	// Item tags

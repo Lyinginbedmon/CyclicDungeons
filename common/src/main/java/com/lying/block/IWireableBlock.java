@@ -1,8 +1,13 @@
 package com.lying.block;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.mojang.serialization.Codec;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.util.StringIdentifiable;
@@ -11,6 +16,13 @@ import net.minecraft.world.World;
 
 public interface IWireableBlock
 {
+	@SuppressWarnings("unchecked")
+	@Nullable
+	public static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<A> validateTicker(BlockEntityType<A> given, BlockEntityType<E> expected, BlockEntityTicker<? super E> ticker)
+	{
+		return expected == given ? (BlockEntityTicker<A>)ticker : null;
+	}
+	
 	public static IWireableBlock getWireable(BlockPos pos, World world)
 	{
 		return (IWireableBlock)world.getBlockState(pos).getBlock();

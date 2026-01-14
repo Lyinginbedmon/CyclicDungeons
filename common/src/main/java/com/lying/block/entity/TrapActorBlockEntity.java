@@ -2,7 +2,6 @@ package com.lying.block.entity;
 
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
-import com.lying.block.TrapLogicBlock;
 import com.lying.init.CDBlockEntityTypes;
 
 import net.minecraft.block.BlockState;
@@ -28,7 +27,7 @@ public class TrapActorBlockEntity extends AbstractWireableBlockEntity
 	{
 		return type != CDBlockEntityTypes.TRAP_ACTOR.get() ? 
 				null : 
-				TrapLogicBlock.validateTicker(type, CDBlockEntityTypes.TRAP_ACTOR.get(), 
+				IWireableBlock.validateTicker(type, CDBlockEntityTypes.TRAP_ACTOR.get(), 
 					world.isClient() ? 
 						TrapActorBlockEntity::tickClient : 
 						TrapActorBlockEntity::tickServer);

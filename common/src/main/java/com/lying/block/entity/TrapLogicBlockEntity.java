@@ -4,7 +4,6 @@ import static com.lying.reference.Reference.ModInfo.prefix;
 
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
-import com.lying.block.TrapLogicBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDTrapLogicHandlers;
 import com.lying.init.CDTrapLogicHandlers.LogicHandler;
@@ -46,7 +45,7 @@ public class TrapLogicBlockEntity extends AbstractWireableBlockEntity
 	{
 		return type != CDBlockEntityTypes.TRAP_LOGIC.get() ? 
 				null : 
-				TrapLogicBlock.validateTicker(type, CDBlockEntityTypes.TRAP_LOGIC.get(), 
+				IWireableBlock.validateTicker(type, CDBlockEntityTypes.TRAP_LOGIC.get(), 
 					world.isClient() ? 
 						TrapLogicBlockEntity::tickClient : 
 						TrapLogicBlockEntity::tickServer);
