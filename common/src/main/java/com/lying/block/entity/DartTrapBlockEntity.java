@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
+import com.lying.entity.DartEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
 
@@ -15,7 +16,6 @@ import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.projectile.ArrowEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
@@ -33,7 +33,7 @@ import net.minecraft.world.World;
 public class DartTrapBlockEntity extends TrapActorBlockEntity
 {
 	protected List<StatusEffectInstance> effects = Lists.newArrayList(
-			new StatusEffectInstance(StatusEffects.POISON, Reference.Values.TICKS_PER_SECOND * 15, 0)
+			new StatusEffectInstance(StatusEffects.POISON, Reference.Values.TICKS_PER_SECOND * 7, 0)
 			);
 	
 	public DartTrapBlockEntity(BlockPos pos, BlockState state)
@@ -89,7 +89,7 @@ public class DartTrapBlockEntity extends TrapActorBlockEntity
 	
 	public ProjectileEntity createDart(ServerWorld world, Position position, Direction direction)
 	{
-		ArrowEntity dart = new ArrowEntity(world, position.getX(), position.getY(), position.getZ(), new ItemStack(Items.ARROW), null);
+		DartEntity dart = new DartEntity(world, position.getX(), position.getY(), position.getZ(), new ItemStack(Items.ARROW));
 		dart.pickupType = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
 		effects.forEach(dart::addEffect);
 		return dart;

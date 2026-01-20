@@ -18,6 +18,7 @@ import net.minecraft.client.color.block.BlockColorProvider;
 import net.minecraft.client.color.world.BiomeColors;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.entity.ArrowEntityRenderer;
 import net.minecraft.client.render.entity.WolfEntityRenderer;
 import net.minecraft.world.biome.GrassColors;
 
@@ -44,9 +45,12 @@ public class CyclicDungeonsClient
 	
 	private static void registerRenderers()
 	{
+		EntityRendererRegistry.register(CDEntityTypes.DART, ArrowEntityRenderer::new);
 		EntityRendererRegistry.register(CDEntityTypes.RABID_WOLF, WolfEntityRenderer::new);
 		
-		RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.SENSOR_SOUND.get());
+		RenderTypeRegistry.register(RenderLayer.getCutout(), 
+				CDBlocks.SENSOR_SOUND.get(), 
+				CDBlocks.DART_TRAP.get());
 	}
 	
 	public static void registerColorHandlers(BiConsumer<BlockColorProvider, Block[]> function)

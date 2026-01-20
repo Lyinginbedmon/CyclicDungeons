@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "cydun:block/dart_trap",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "cydun:block/dart_trap",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "cydun:block/dart_trap"
+    },
+    "facing=south": {
+      "model": "cydun:block/dart_trap",
+      "y": 180
+    },
+    "facing=up": {
+      "model": "cydun:block/dart_trap",
+      "x": 270
+    },
+    "facing=west": {
+      "model": "cydun:block/dart_trap",
+      "y": 270
+    }
+  }
+}

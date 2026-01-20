@@ -1,0 +1,41 @@
+{
+	"format_version": "1.21.11",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"texture": "cydun:block/dart_trap",
+		"particle": "#texture"
+	},
+	"elements": [
+		{
+			"name": "spout",
+			"from": [6, 6, 15],
+			"to": [10, 10, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 7, 14]},
+			"faces": {
+				"north": {"uv": [5, 1, 9, 5], "texture": "#texture"},
+				"east": {"uv": [4, 1, 5, 5], "texture": "#texture"},
+				"west": {"uv": [9, 1, 10, 5], "texture": "#texture"},
+				"up": {"uv": [5, 0, 9, 1], "texture": "#texture"},
+				"down": {"uv": [5, 5, 9, 6], "texture": "#texture"}
+			}
+		},
+		{
+			"name": "left_eye",
+			"from": [1, 8, 15.75],
+			"to": [5, 12, 15.75],
+			"rotation": {"angle": 0, "axis": "y", "origin": [3, 10, 13.75]},
+			"faces": {
+				"north": {"uv": [10, 0, 14, 4], "texture": "#texture"}
+			}
+		},
+		{
+			"name": "right_eye",
+			"from": [11, 8, 15.75],
+			"to": [15, 12, 15.75],
+			"rotation": {"angle": 0, "axis": "y", "origin": [13, 10, 13.75]},
+			"faces": {
+				"north": {"uv": [4, 0, 0, 4], "texture": "#texture"}
+			}
+		}
+	]
+}

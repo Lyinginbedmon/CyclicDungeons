@@ -95,6 +95,8 @@ public class CDModelProvider extends FabricModelProvider
 		SwingingBlade.registerBlade(CDBlocks.BLADE.get(), generator);
 		SwingingBlade.register(CDBlocks.SWINGING_BLADE.get(), generator);
 		FlameJet.register(CDBlocks.FLAME_JET.get(), generator);
+		registerFreeRotated(CDBlocks.DART_TRAP.get(), generator);
+		registerFreeRotated(CDBlocks.SPIKE_TRAP.get(), generator);
 		
 		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_STONE.get(), generator);
 		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_COBBLESTONE.get(), generator);
@@ -109,6 +111,13 @@ public class CDModelProvider extends FabricModelProvider
 		CrumblingBlocks.register((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_STONE_BRICKS.get(), generator);
 		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_SANDSTONE.get(), generator);
 		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_RED_SANDSTONE.get(), generator);
+	}
+	
+	public void registerFreeRotated(Block block, BlockStateModelGenerator generator)
+	{
+		Identifier model = TextureMap.getId(block);
+		generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block, BlockStateVariant.create().put(VariantSettings.MODEL, model))
+				.coordinate(BlockStateModelGenerator.createNorthDefaultRotationStates()));
 	}
 	
 	public void registerUnrotatedPillar(Block block, BlockStateModelGenerator generator)

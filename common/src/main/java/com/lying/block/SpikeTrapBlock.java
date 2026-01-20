@@ -1,10 +1,10 @@
 package com.lying.block;
 
+import java.util.Map;
 import java.util.Optional;
 
 import com.lying.block.entity.SpikeTrapBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDItems;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -31,6 +31,14 @@ public class SpikeTrapBlock extends AbstractTrapActorBlock
 	public static final MapCodec<FlameJetBlock> CODEC = RedstoneActorBlock.createCodec(FlameJetBlock::new);
 	public static final BooleanProperty POWERED	= Properties.POWERED;
 	public static final EnumProperty<Direction> FACING	= Properties.FACING;
+	protected static final Map<Direction, VoxelShape> BASE_SHAPE = Map.of(
+			Direction.UP, Block.createCuboidShape(1, 0, 1, 15, 1, 15),
+			Direction.DOWN, Block.createCuboidShape(1, 15, 1, 15, 16, 15),
+			Direction.NORTH, Block.createCuboidShape(1, 1, 15, 15, 15, 16),
+			Direction.WEST, Block.createCuboidShape(15, 1, 1, 16, 15, 15),
+			Direction.SOUTH, Block.createCuboidShape(1, 1, 0, 15, 15, 1),
+			Direction.EAST, Block.createCuboidShape(0, 1, 1, 1, 15, 15)
+		);
 	
 	public SpikeTrapBlock(Settings settingsIn)
 	{
@@ -86,15 +94,18 @@ public class SpikeTrapBlock extends AbstractTrapActorBlock
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
 	{
-		if(CDItems.WIRING_GUN.isPresent() && context.isHolding(CDItems.WIRING_GUN.get()))
-			return VoxelShapes.fullCube();
-		
+		VoxelShape shape = getBaseShape(state.get(FACING));
 		if(!CDBlockEntityTypes.SPIKE_TRAP.isPresent())
-			return VoxelShapes.empty();
+			return shape;
 		
 		Optional<SpikeTrapBlockEntity> opt;
 		return (opt = world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get())).isPresent()
-				? VoxelShapes.cuboid(opt.get().getBoundingBox(state))
-				: VoxelShapes.empty();
+				? VoxelShapes.union(shape, VoxelShapes.cuboid(opt.get().getBoundingBox(state)))
+				: shape;
+	}
+	
+	public static VoxelShape getBaseShape(Direction facing)
+	{
+		return BASE_SHAPE.get(facing);
 	}
 }

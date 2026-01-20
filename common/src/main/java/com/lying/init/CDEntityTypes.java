@@ -3,6 +3,7 @@ package com.lying.init;
 import static com.lying.reference.Reference.ModInfo.prefix;
 
 import com.lying.CyclicDungeons;
+import com.lying.entity.DartEntity;
 import com.lying.entity.RabidWolfEntity;
 import com.lying.reference.Reference;
 
@@ -22,7 +23,13 @@ public class CDEntityTypes
 	private static final DeferredRegister<EntityType<?>> ENTITIES	= DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.ENTITY_TYPE);
 	private static int tally = 0;
 	
-	public static final RegistrySupplier<EntityType<RabidWolfEntity>> RABID_WOLF	= register("rabid_wolf", EntityType.Builder.create(RabidWolfEntity::new, SpawnGroup.MONSTER)
+	public static final RegistrySupplier<EntityType<DartEntity>> DART				= register("dart", EntityType.Builder.<DartEntity>create(DartEntity::new, SpawnGroup.MISC)
+			.dropsNothing()
+			.dimensions(0.5F, 0.5F)
+			.eyeHeight(0.13F)
+			.maxTrackingRange(4)
+			.trackingTickInterval(20));
+	public static final RegistrySupplier<EntityType<RabidWolfEntity>> RABID_WOLF	= register("rabid_wolf", EntityType.Builder.<RabidWolfEntity>create(RabidWolfEntity::new, SpawnGroup.MONSTER)
 			.dimensions(0.6F, 0.85F)
 			.eyeHeight(0.68F)
 			.passengerAttachments(new Vec3d(0, 0.81875, -0.0625))

@@ -1,5 +1,7 @@
 package com.lying.block;
 
+import java.util.Map;
+
 import com.lying.block.entity.DartTrapBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.mojang.serialization.MapCodec;
@@ -7,6 +9,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
@@ -25,6 +28,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Position;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
 public class DartTrapBlock extends AbstractTrapActorBlock
@@ -32,8 +37,16 @@ public class DartTrapBlock extends AbstractTrapActorBlock
 	public static final MapCodec<FlameJetBlock> CODEC = RedstoneActorBlock.createCodec(FlameJetBlock::new);
 	public static final BooleanProperty POWERED	= Properties.POWERED;
 	public static final EnumProperty<Direction> FACING	= Properties.FACING;
+	protected static final Map<Direction, VoxelShape> OUTLINE_BY_FACE = Map.of(
+				Direction.UP, Block.createCuboidShape(6, 0, 6, 10, 1, 10),
+				Direction.DOWN, Block.createCuboidShape(6, 15, 6, 10, 16, 10),
+				Direction.NORTH, Block.createCuboidShape(6, 6, 15, 10, 10, 16),
+				Direction.WEST, Block.createCuboidShape(15, 6, 6, 16, 10, 10),
+				Direction.SOUTH, Block.createCuboidShape(6, 6, 0, 10, 10, 1),
+				Direction.EAST, Block.createCuboidShape(0, 6, 6, 1, 10, 10)
+			);
 	
-	protected static final float DART_POWER = 1.1F;	// TODO Change to 11F when darts don't change damage by velocity
+	protected static final float DART_POWER = 11F;
 	protected static final float DART_ERROR = 0.6F;
 	
 	public DartTrapBlock(Settings settingsIn)
@@ -52,6 +65,11 @@ public class DartTrapBlock extends AbstractTrapActorBlock
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
 		return new DartTrapBlockEntity(pos, state);
+	}
+	
+	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
+	{
+		return OUTLINE_BY_FACE.get(state.get(FACING));
 	}
 	
 	public BlockState getPlacementState(ItemPlacementContext ctx)
