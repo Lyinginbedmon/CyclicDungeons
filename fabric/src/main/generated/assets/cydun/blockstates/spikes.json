@@ -1,0 +1,56 @@
+{
+  "variants": {
+    "facing=down,part=pole": {
+      "model": "cydun:block/spikes_pole",
+      "x": 180
+    },
+    "facing=down,part=spike": {
+      "model": "cydun:block/spikes_tip",
+      "x": 180
+    },
+    "facing=east,part=pole": {
+      "model": "cydun:block/spikes_pole",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,part=spike": {
+      "model": "cydun:block/spikes_tip",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north,part=pole": {
+      "model": "cydun:block/spikes_pole",
+      "x": 90
+    },
+    "facing=north,part=spike": {
+      "model": "cydun:block/spikes_tip",
+      "x": 90
+    },
+    "facing=south,part=pole": {
+      "model": "cydun:block/spikes_pole",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,part=spike": {
+      "model": "cydun:block/spikes_tip",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up,part=pole": {
+      "model": "cydun:block/spikes_pole"
+    },
+    "facing=up,part=spike": {
+      "model": "cydun:block/spikes_tip"
+    },
+    "facing=west,part=pole": {
+      "model": "cydun:block/spikes_pole",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,part=spike": {
+      "model": "cydun:block/spikes_tip",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

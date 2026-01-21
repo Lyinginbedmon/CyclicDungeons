@@ -16,6 +16,8 @@ import com.lying.block.HatchBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
+import com.lying.block.SpikesBlock;
+import com.lying.block.SpikesBlock.SpikePart;
 import com.lying.block.SwingingBladeBlock;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDItems;
@@ -111,6 +113,8 @@ public class CDModelProvider extends FabricModelProvider
 		CrumblingBlocks.register((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_STONE_BRICKS.get(), generator);
 		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_SANDSTONE.get(), generator);
 		CrumblingBlocks.registerColumn((CrumblingBlock)CDBlocks.RESETTING_CRUMBLING_RED_SANDSTONE.get(), generator);
+		
+		Spikes.register(CDBlocks.SPIKES.get(), generator);
 	}
 	
 	public void registerFreeRotated(Block block, BlockStateModelGenerator generator)
@@ -197,6 +201,43 @@ public class CDModelProvider extends FabricModelProvider
 		
 		variants.register(face, false, func.apply(false));
 		variants.register(face, true, func.apply(true));
+	}
+	
+	private static class Spikes
+	{
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			Identifier modelPole = TextureMap.getSubId(block, "_pole");
+			Identifier modelTip = TextureMap.getSubId(block, "_tip");
+			
+			BlockStateVariantMap.DoubleProperty<Direction, SpikePart> variants = BlockStateVariantMap.create(SpikesBlock.FACING, SpikesBlock.PART);
+			appendSettings(Direction.UP, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, variants, modelPole, modelTip);
+			appendSettings(Direction.DOWN, VariantSettings.Rotation.R180, VariantSettings.Rotation.R0, variants, modelPole, modelTip);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R0, variants, modelPole, modelTip);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R90, variants, modelPole, modelTip);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R90, VariantSettings.Rotation.R180, variants, modelPole, modelTip);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R90, VariantSettings.Rotation.R270, variants, modelPole, modelTip);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(variants));
+		}
+		
+		private static void appendSettings(Direction face, VariantSettings.Rotation x, VariantSettings.Rotation y, BlockStateVariantMap.DoubleProperty<Direction, SpikePart> variants, Identifier model, Identifier modelOn)
+		{
+			Function<Boolean, BlockStateVariant> func = phase -> 
+			{
+				BlockStateVariant variant = BlockStateVariant.create().put(VariantSettings.MODEL, phase ? modelOn : model);
+				
+				if(x != VariantSettings.Rotation.R0)
+					variant.put(VariantSettings.X, x);
+				
+				if(y != VariantSettings.Rotation.R0)
+					variant.put(VariantSettings.Y, y);
+				return variant;
+			};
+			
+			variants.register(face, SpikePart.POLE, func.apply(false));
+			variants.register(face, SpikePart.SPIKE, func.apply(true));
+		}
 	}
 	
 	private static class ProximitySensor

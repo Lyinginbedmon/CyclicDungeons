@@ -99,7 +99,7 @@ public class SpikeTrapBlock extends AbstractTrapActorBlock
 			return shape;
 		
 		Optional<SpikeTrapBlockEntity> opt;
-		return (opt = world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get())).isPresent()
+		return (opt = world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get())).isPresent() && opt.get().extension(1F) > 0F
 				? VoxelShapes.union(shape, VoxelShapes.cuboid(opt.get().getBoundingBox(state)))
 				: shape;
 	}

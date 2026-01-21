@@ -50,7 +50,8 @@ public class CyclicDungeonsClient
 		
 		RenderTypeRegistry.register(RenderLayer.getCutout(), 
 				CDBlocks.SENSOR_SOUND.get(), 
-				CDBlocks.DART_TRAP.get());
+				CDBlocks.DART_TRAP.get(),
+				CDBlocks.SPIKES.get());
 	}
 	
 	public static void registerColorHandlers(BiConsumer<BlockColorProvider, Block[]> function)

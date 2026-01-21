@@ -1,14 +1,21 @@
 package com.lying.block.entity;
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.SpikeTrapBlock;
+import com.lying.block.SpikesBlock;
+import com.lying.block.SpikesBlock.SpikePart;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDBlocks;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
@@ -16,8 +23,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Boxes;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Direction.AxisDirection;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
 
 public class SpikeTrapBlockEntity extends TrapActorBlockEntity
@@ -50,10 +59,17 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 	{
 		return type != CDBlockEntityTypes.SPIKE_TRAP.get() ? 
 				null : 
-				IWireableBlock.validateTicker(type, CDBlockEntityTypes.SPIKE_TRAP.get(), SpikeTrapBlockEntity::tick);
+				IWireableBlock.validateTicker(type, CDBlockEntityTypes.SPIKE_TRAP.get(), world.isClient() ? 
+					SpikeTrapBlockEntity::tickClient : 
+					SpikeTrapBlockEntity::tickServer);
 	}
 	
-	public static <T extends BlockEntity> void tick(World world, BlockPos pos, BlockState state, SpikeTrapBlockEntity tile)
+	public static <T extends BlockEntity> void tickClient(World world, BlockPos pos, BlockState state, SpikeTrapBlockEntity tile)
+	{
+		tile.handleExtension(pos, world, tile);
+	}
+	
+	public static <T extends BlockEntity> void tickServer(World world, BlockPos pos, BlockState state, SpikeTrapBlockEntity tile)
 	{
 		TrapActorBlockEntity.tickServer(world, pos, state, tile);
 		tile.handleExtension(pos, world, tile);
@@ -67,12 +83,14 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 	
 	public float extension(float partialTicks)
 	{
-		return extension + (extension - prevExtension) * partialTicks;
+		return MathHelper.clamp(extension + (extension - prevExtension) * partialTicks, 0F, 1F);
 	}
 	
 	public Direction facing() { return getWorld().getBlockState(getPos()).get(SpikeTrapBlock.FACING); }
 	
 	public boolean isActive() { return getWorld().getBlockState(getPos()).get(SpikeTrapBlock.POWERED); }
+	
+	public float maxExtension() { return MathHelper.clamp(FULL_SIZE, 1F, 8F); }
 	
 	protected void handleExtension(BlockPos pos, World world, SpikeTrapBlockEntity tile)
 	{
@@ -97,24 +115,29 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 	public Box getBoundingBox(BlockState state)
 	{
 		Direction facing = state.get(SpikeTrapBlock.FACING);
-		return calculateBoundingBox(facing, extension * FULL_SIZE);
+		return calculateExtensionBoundingBox(facing, getPos(), getWorld(), extension * FULL_SIZE);
 	}
 	
-	public static Box calculateBoundingBox(Direction facing, float height)
+	public static Box calculateExtensionBoundingBox(Direction facing, BlockPos pos, World world, final float height)
 	{
-		boolean isPos = facing.getDirection() == AxisDirection.POSITIVE;
-		double min = isPos ? 0D : 1D - height;
-		double max = isPos ? height : 1D;
-		switch(facing.getAxis())
+		if(height > 0F)
 		{
-			case X:
-				return new Box(min, 0D, 0D, max, 1D, 1D);
-			default:
-			case Y:
-				return new Box(0D, min, 0D, 1D, max, 1D);
-			case Z:
-				return new Box(0D, 0D, min, 1D, 1D, max);
+			float length = height - 1F;
+			final Vec3d offset = new Vec3d(facing.getOffsetX(), facing.getOffsetY(), facing.getOffsetZ());
+			
+			final BlockState tipState = CDBlocks.SPIKES.get().getDefaultState().with(SpikesBlock.FACING, facing);
+			final VoxelShape tipShape = tipState.getCollisionShape(world, pos).offset(offset.multiply(length));
+			
+			List<VoxelShape> subShapes = Lists.newArrayList();
+			final BlockState poleState = tipState.with(SpikesBlock.PART, SpikePart.POLE);
+			final VoxelShape poleShape = poleState.getCollisionShape(world, pos);
+			while(length-- > 0F)
+				subShapes.add(poleShape.offset(offset.multiply(length)));
+			
+			return VoxelShapes.union(tipShape, subShapes.toArray(new VoxelShape[0])).getBoundingBox();
 		}
+		
+		return new Box(0,0,0,0,0,0);
 	}
 	
 	public static void pushEntities(BlockPos pos, World world, BlockState state, float extension, SpikeTrapBlockEntity blockEntity)
@@ -123,12 +146,13 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 			return;
 		
 		final Direction direction = state.get(SpikeTrapBlock.FACING);
-		Box box = calculateBoundingBox(direction, extension).offset(pos);
+		Box box = calculateExtensionBoundingBox(direction, pos, world, extension).offset(pos);
 		world.getOtherEntities(null, Boxes.stretch(box, direction, extension + EXTEND_RATE).union(box)).stream()
 			.filter(e -> e.getPistonBehavior() != PistonBehavior.IGNORE)
 			.forEach(entity -> 
 				{
-					// TODO Damage entities
+					if(entity instanceof LivingEntity)
+						SpikesBlock.skewerEntity((LivingEntity)entity, 4F);
 					entity.move(
 						MovementType.SHULKER_BOX, 
 						new Vec3d(

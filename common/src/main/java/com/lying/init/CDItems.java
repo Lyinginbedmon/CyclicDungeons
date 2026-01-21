@@ -64,6 +64,7 @@ public class CDItems
 	public static final RegistrySupplier<Item> RESETTING_CRUMBLING_SANDSTONE			= registerRareBlock("resetting_crumbling_sandstone", CDBlocks.RESETTING_CRUMBLING_SANDSTONE, Rarity.RARE);
 	public static final RegistrySupplier<Item> RESETTING_CRUMBLING_RED_SANDSTONE		= registerRareBlock("resetting_crumbling_red_sandstone", CDBlocks.RESETTING_CRUMBLING_RED_SANDSTONE, Rarity.RARE);
 	public static final RegistrySupplier<Item> RESETTING_CRUMBLING_STONE_BRICK			= registerRareBlock("resetting_crumbling_stone_bricks", CDBlocks.RESETTING_CRUMBLING_STONE_BRICKS, Rarity.RARE);
+	public static final RegistrySupplier<Item> SPIKES						= registerBlock("spikes", CDBlocks.SPIKES);
 	
 	public static final RegistrySupplier<Item> TRAP_LOGIC		= registerRareBlock("trap_logic", CDBlocks.TRAP_LOGIC, Rarity.EPIC);
 	public static final RegistrySupplier<Item> TRAP_LOGIC_DECOY	= registerBlockNoItem("trap_logic_decoy", CDBlocks.TRAP_LOGIC_DECOY, s -> s.rarity(Rarity.RARE));

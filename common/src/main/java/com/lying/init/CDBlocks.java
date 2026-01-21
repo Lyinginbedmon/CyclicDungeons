@@ -18,6 +18,7 @@ import com.lying.block.RedstoneSensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
 import com.lying.block.SpikeTrapBlock;
+import com.lying.block.SpikesBlock;
 import com.lying.block.SwingingBladeBlock;
 import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
@@ -51,8 +52,6 @@ public class CDBlocks
 	 * Trap sensors
 	 * * Area
 	 * Trap actors
-	 * * Spikes
-	 * * Dart trap
 	 * * Entity spawner (mobs, potion clouds, etc.)
 	 */
 	
@@ -103,6 +102,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> RESETTING_CRUMBLING_RED_SANDSTONE		= register("resetting_crumbling_red_sandstone", settings -> new CrumblingBlock.Resetting(() -> Blocks.RED_SANDSTONE, redSandstoneSettings.apply(settings)));
 	public static final RegistrySupplier<Block> CRUMBLING_STONE_BRICKS					= register("crumbling_stone_bricks", settings -> new CrumblingBlock(() -> Blocks.STONE_BRICKS, stoneBricksSettings.apply(settings)));
 	public static final RegistrySupplier<Block> RESETTING_CRUMBLING_STONE_BRICKS		= register("resetting_crumbling_stone_bricks", settings -> new CrumblingBlock.Resetting(() -> Blocks.STONE_BRICKS, stoneBricksSettings.apply(settings)));
+	public static final RegistrySupplier<Block> SPIKES									= register("spikes", settings -> new SpikesBlock(settings));
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

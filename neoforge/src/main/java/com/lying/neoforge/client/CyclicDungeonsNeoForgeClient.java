@@ -2,11 +2,11 @@ package com.lying.neoforge.client;
 
 import com.lying.block.entity.DartTrapBlockEntity;
 import com.lying.block.entity.FlameJetBlockEntity;
-import com.lying.block.entity.SpikeTrapBlockEntity;
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
 import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
+import com.lying.client.renderer.block.SpikeTrapBlockEntityRenderer;
 import com.lying.client.renderer.block.SwingingBladeBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
@@ -38,7 +38,7 @@ public class CyclicDungeonsNeoForgeClient
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.DART_TRAP.get(), WireableBlockEntityRenderer<DartTrapBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SIGHT_SENSOR.get(), SightSensorBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SWINGING_BLADE.get(), SwingingBladeBlockEntityRenderer::new);
-    	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPIKE_TRAP.get(), WireableBlockEntityRenderer<SpikeTrapBlockEntity>::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPIKE_TRAP.get(), SpikeTrapBlockEntityRenderer::new);
     }
     
 	@SuppressWarnings("deprecation")
