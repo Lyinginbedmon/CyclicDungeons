@@ -1,0 +1,6 @@
+{
+  "parent": "cydun:block/template_pressure_sensor",
+  "textures": {
+    "texture": "minecraft:block/polished_andesite"
+  }
+}

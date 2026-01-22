@@ -1,0 +1,43 @@
+{
+  "conditions": [
+    {
+      "id": "cydun:boundary",
+      "sides": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    },
+    "cydun:on_solid_floor",
+    "cydun:nonconsecutive",
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:decor"
+        ]
+      },
+      "id": "cydun:avoid_box",
+      "max": [
+        2,
+        0,
+        2
+      ],
+      "min": [
+        -2,
+        0,
+        -2
+      ]
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:workstation",
+  "rotation": {
+    "fallback": "cydun:random",
+    "id": "cydun:face_boundary"
+  },
+  "tags": [
+    "cydun:decor"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "cydun:block/template_proximity_sensor",
+  "textures": {
+    "texture": "cydun:block/proximity_sensor_on"
+  }
+}

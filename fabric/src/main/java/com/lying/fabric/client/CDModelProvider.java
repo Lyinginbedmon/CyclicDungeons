@@ -207,8 +207,8 @@ public class CDModelProvider extends FabricModelProvider
 	{
 		private static void register(Block block, BlockStateModelGenerator generator)
 		{
+			Identifier modelTip = TextureMap.getId(block);
 			Identifier modelPole = TextureMap.getSubId(block, "_pole");
-			Identifier modelTip = TextureMap.getSubId(block, "_tip");
 			
 			BlockStateVariantMap.DoubleProperty<Direction, SpikePart> variants = BlockStateVariantMap.create(SpikesBlock.FACING, SpikesBlock.PART);
 			appendSettings(Direction.UP, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, variants, modelPole, modelTip);

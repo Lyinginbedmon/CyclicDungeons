@@ -1,0 +1,21 @@
+{
+  "colour": 16768064,
+  "conditions": {
+    "consecutive": true,
+    "dead_ends": true,
+    "max_count": 3,
+    "only_after": [
+      "cydun:battle",
+      "cydun:small_puzzle",
+      "cydun:empty"
+    ]
+  },
+  "content": "cydun:none",
+  "id": "cydun:treasure",
+  "is_placeable": true,
+  "size": {
+    "x": 5,
+    "y": 5
+  },
+  "weight": 2
+}

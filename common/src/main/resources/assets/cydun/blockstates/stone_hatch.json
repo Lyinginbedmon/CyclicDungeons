@@ -1,0 +1,69 @@
+{
+  "variants": {
+    "facing=east,interstitial=false,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=east,interstitial=false,powered=true": {
+      "model": "cydun:block/stone_hatch_open",
+      "y": 90
+    },
+    "facing=east,interstitial=true,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=east,interstitial=true,powered=true": {
+      "model": "cydun:block/stone_hatch_interstitial"
+    },
+    "facing=north,interstitial=false,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true
+    },
+    "facing=north,interstitial=false,powered=true": {
+      "model": "cydun:block/stone_hatch_open"
+    },
+    "facing=north,interstitial=true,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true
+    },
+    "facing=north,interstitial=true,powered=true": {
+      "model": "cydun:block/stone_hatch_interstitial"
+    },
+    "facing=south,interstitial=false,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=south,interstitial=false,powered=true": {
+      "model": "cydun:block/stone_hatch_open",
+      "y": 180
+    },
+    "facing=south,interstitial=true,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=south,interstitial=true,powered=true": {
+      "model": "cydun:block/stone_hatch_interstitial"
+    },
+    "facing=west,interstitial=false,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=west,interstitial=false,powered=true": {
+      "model": "cydun:block/stone_hatch_open",
+      "y": 270
+    },
+    "facing=west,interstitial=true,powered=false": {
+      "model": "cydun:block/stone_hatch",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=west,interstitial=true,powered=true": {
+      "model": "cydun:block/stone_hatch_interstitial"
+    }
+  }
+}

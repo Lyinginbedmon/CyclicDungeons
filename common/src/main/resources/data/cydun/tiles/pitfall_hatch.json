@@ -1,0 +1,12 @@
+{
+  "conditions": [
+    "cydun:not_by_passage",
+    "cydun:on_bottom"
+  ],
+  "generation": "structure",
+  "id": "cydun:pitfall_hatch",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:traps"
+  ]
+}

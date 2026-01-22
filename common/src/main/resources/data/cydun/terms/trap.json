@@ -1,0 +1,17 @@
+{
+  "colour": 11416030,
+  "conditions": {
+    "consecutive": false,
+    "dead_ends": true
+  },
+  "content": "cydun:trap",
+  "id": "cydun:trap",
+  "is_placeable": true,
+  "size": {
+    "x_max": 8,
+    "x_min": 6,
+    "y_max": 8,
+    "y_min": 6
+  },
+  "weight": 2
+}

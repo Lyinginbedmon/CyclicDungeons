@@ -1,0 +1,36 @@
+{
+  "conditions": [
+    "cydun:on_solid_floor",
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:tables"
+        ]
+      },
+      "id": "cydun:adjacent",
+      "sides": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:seat",
+  "rotation": {
+    "condition": {
+      "id": "cydun:has_tag",
+      "set": [
+        "cydun:tables"
+      ]
+    },
+    "fallback": "cydun:none",
+    "id": "cydun:face_adjacent"
+  },
+  "tags": [
+    "cydun:obtrusive",
+    "cydun:decor"
+  ]
+}

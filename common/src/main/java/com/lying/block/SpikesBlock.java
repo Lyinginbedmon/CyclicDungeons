@@ -17,6 +17,7 @@ import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
@@ -42,6 +43,14 @@ public class SpikesBlock extends Block
 			Direction.SOUTH, Block.createCuboidShape(3, 3, 0, 13, 13, 14),
 			Direction.EAST, Block.createCuboidShape(0, 3, 3, 14, 13, 13),
 			Direction.WEST, Block.createCuboidShape(2, 3, 3, 16, 13, 13)
+			);
+	protected static final Map<Direction, VoxelShape> HURT_SHAPES	= Map.of(
+			Direction.UP, Block.createCuboidShape(0, 10, 0, 16, 16, 16),
+			Direction.DOWN, Block.createCuboidShape(0, 0, 0, 16, 6, 16),
+			Direction.NORTH, Block.createCuboidShape(0, 0, 0, 16, 16, 6),
+			Direction.SOUTH, Block.createCuboidShape(0, 0, 10, 16, 16, 16),
+			Direction.WEST, Block.createCuboidShape(0, 0, 0, 6, 16, 16),
+			Direction.EAST, Block.createCuboidShape(10, 0, 0, 16, 16, 16)
 			);
 	
 	public SpikesBlock(Settings settings)
@@ -116,7 +125,11 @@ public class SpikesBlock extends Block
 	protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity)
 	{
 		if(state.get(PART) == SpikePart.SPIKE && entity instanceof LivingEntity)
-			skewerEntity((LivingEntity)entity, 1F);
+		{
+			Box hurtBox = getHurtShape(state.get(FACING)).offset(pos.getX(), pos.getY(), pos.getZ()).getBoundingBox();
+			if(entity.getBoundingBox().intersects(hurtBox))
+				skewerEntity((LivingEntity)entity, 1F);
+		}
 	}
 	
 	public static boolean skewerEntity(LivingEntity entity, float amount)
@@ -128,6 +141,8 @@ public class SpikesBlock extends Block
 		DamageSource damage = entity.getWorld().getDamageSources().generic();
 		return entity.damage((ServerWorld)world, damage, amount);
 	}
+	
+	public static VoxelShape getHurtShape(Direction facing) { return HURT_SHAPES.get(facing); }
 	
 	public static enum SpikePart implements StringIdentifiable
 	{

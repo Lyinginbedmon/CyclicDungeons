@@ -1,0 +1,17 @@
+{
+  "id": "cydun:passage",
+  "values": [
+    {
+      "tile": "cydun:passage_floor",
+      "weight": 10000.0
+    },
+    {
+      "tile": "cydun:air",
+      "weight": 10.0
+    },
+    {
+      "tile": "cydun:floor_light",
+      "weight": 1.0
+    }
+  ]
+}

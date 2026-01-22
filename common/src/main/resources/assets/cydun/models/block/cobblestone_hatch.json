@@ -1,0 +1,6 @@
+{
+  "parent": "cydun:block/template_hatch_block",
+  "textures": {
+    "texture": "minecraft:block/cobblestone"
+  }
+}

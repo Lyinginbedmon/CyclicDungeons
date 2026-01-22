@@ -32,9 +32,11 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.enums.NoteBlockInstrument;
+import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.entity.EntityType;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
@@ -102,7 +104,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> RESETTING_CRUMBLING_RED_SANDSTONE		= register("resetting_crumbling_red_sandstone", settings -> new CrumblingBlock.Resetting(() -> Blocks.RED_SANDSTONE, redSandstoneSettings.apply(settings)));
 	public static final RegistrySupplier<Block> CRUMBLING_STONE_BRICKS					= register("crumbling_stone_bricks", settings -> new CrumblingBlock(() -> Blocks.STONE_BRICKS, stoneBricksSettings.apply(settings)));
 	public static final RegistrySupplier<Block> RESETTING_CRUMBLING_STONE_BRICKS		= register("resetting_crumbling_stone_bricks", settings -> new CrumblingBlock.Resetting(() -> Blocks.STONE_BRICKS, stoneBricksSettings.apply(settings)));
-	public static final RegistrySupplier<Block> SPIKES									= register("spikes", settings -> new SpikesBlock(settings));
+	public static final RegistrySupplier<Block> SPIKES									= register("spikes", settings -> new SpikesBlock(settings.mapColor(MapColor.PALE_YELLOW).breakInstantly().strength(1F).sounds(BlockSoundGroup.BAMBOO).pistonBehavior(PistonBehavior.DESTROY)));
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

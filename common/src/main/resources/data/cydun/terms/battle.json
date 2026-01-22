@@ -1,0 +1,17 @@
+{
+  "colour": 13108999,
+  "conditions": {
+    "consecutive": false,
+    "dead_ends": true
+  },
+  "content": "cydun:combat_encounter",
+  "id": "cydun:battle",
+  "is_placeable": true,
+  "size": {
+    "x_max": 14,
+    "x_min": 8,
+    "y_max": 14,
+    "y_min": 8
+  },
+  "weight": 3
+}

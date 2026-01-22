@@ -1,0 +1,19 @@
+{
+  "colour": 3225310,
+  "conditions": {
+    "consecutive": false,
+    "dead_ends": true,
+    "max_count": 2
+  },
+  "content": "cydun:none",
+  "id": "cydun:big_puzzle",
+  "is_placeable": true,
+  "phrase_modifier": "cydun:inject_treasure",
+  "size": {
+    "x_max": 16,
+    "x_min": 10,
+    "y_max": 16,
+    "y_min": 10
+  },
+  "weight": 1
+}

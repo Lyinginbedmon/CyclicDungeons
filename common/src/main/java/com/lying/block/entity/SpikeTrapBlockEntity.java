@@ -31,12 +31,17 @@ import net.minecraft.world.World;
 
 public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 {
+	/** How quickly the spikes extend from the trap */
 	public static final float EXTEND_RATE = 0.4F;
+	/** How quickly the spikes retract back into the trap */
 	public static final float RETRACT_RATE = 0.15F;
+	/** Maximum block length the trap can extend, limited by block bounding box maximums */
 	public static final float FULL_SIZE	= 2F;
 	
 	protected float extension = 0F;
 	protected float prevExtension = 0F;
+	
+	protected VoxelShape extendedBounds = VoxelShapes.empty();
 	
 	public SpikeTrapBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -52,7 +57,7 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
-		extension = nbt.getFloat("Extension");
+		setExtension(nbt.getFloat("Extension"));
 	}
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
@@ -77,7 +82,22 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 	
 	protected void updateExtension(boolean val)
 	{
-		extension = Math.clamp(extension + (val ? +EXTEND_RATE : -RETRACT_RATE), 0F, 1F);
+		setExtension(extension + (val ? +EXTEND_RATE : -RETRACT_RATE));
+	}
+	
+	protected void setExtension(float amount)
+	{
+		final float prevExtension = extension;
+		extension = Math.clamp(amount, 0F, 1F);
+		
+		if(prevExtension != extension)
+			extendedBounds = calculateExtensionBoundingBox(
+					this.getCachedState().get(SpikeTrapBlock.FACING),
+					getPos(),
+					getWorld(),
+					extension * maxExtension()
+					);
+		
 		markDirty();
 	}
 	
@@ -90,7 +110,7 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 	
 	public boolean isActive() { return getWorld().getBlockState(getPos()).get(SpikeTrapBlock.POWERED); }
 	
-	public float maxExtension() { return MathHelper.clamp(FULL_SIZE, 1F, 8F); }
+	public float maxExtension() { return MathHelper.clamp(FULL_SIZE, 0.5F, 2F); }
 	
 	protected void handleExtension(BlockPos pos, World world, SpikeTrapBlockEntity tile)
 	{
@@ -110,15 +130,16 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 			if(extension > 0F)
 				tile.updateExtension(false);
 		}
+		
+		SpikeTrapBlockEntity.damageEntities(pos, world, state.get(SpikeTrapBlock.FACING), extension, tile);
 	}
 	
-	public Box getBoundingBox(BlockState state)
+	public VoxelShape getExtensionShape()
 	{
-		Direction facing = state.get(SpikeTrapBlock.FACING);
-		return calculateExtensionBoundingBox(facing, getPos(), getWorld(), extension * FULL_SIZE);
+		return extendedBounds;
 	}
 	
-	public static Box calculateExtensionBoundingBox(Direction facing, BlockPos pos, World world, final float height)
+	protected static VoxelShape calculateExtensionBoundingBox(Direction facing, BlockPos pos, World world, final float height)
 	{
 		if(height > 0F)
 		{
@@ -134,10 +155,10 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 			while(length-- > 0F)
 				subShapes.add(poleShape.offset(offset.multiply(length)));
 			
-			return VoxelShapes.union(tipShape, subShapes.toArray(new VoxelShape[0])).getBoundingBox();
+			return VoxelShapes.union(tipShape, subShapes.toArray(new VoxelShape[0]));
 		}
 		
-		return new Box(0,0,0,0,0,0);
+		return VoxelShapes.empty();
 	}
 	
 	public static void pushEntities(BlockPos pos, World world, BlockState state, float extension, SpikeTrapBlockEntity blockEntity)
@@ -146,19 +167,41 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 			return;
 		
 		final Direction direction = state.get(SpikeTrapBlock.FACING);
-		Box box = calculateExtensionBoundingBox(direction, pos, world, extension).offset(pos);
+		Box box = blockEntity.extendedBounds.getBoundingBox().offset(pos);
 		world.getOtherEntities(null, Boxes.stretch(box, direction, extension + EXTEND_RATE).union(box)).stream()
 			.filter(e -> e.getPistonBehavior() != PistonBehavior.IGNORE)
 			.forEach(entity -> 
 				{
-					if(entity instanceof LivingEntity)
-						SpikesBlock.skewerEntity((LivingEntity)entity, 4F);
 					entity.move(
 						MovementType.SHULKER_BOX, 
 						new Vec3d(
 								(box.getLengthX() + 0.01) * direction.getOffsetX(),
 								(box.getLengthY() + 0.05) * direction.getOffsetY(),
 								(box.getLengthZ() + 0.01) * direction.getOffsetZ()));
+				});
+	}
+	
+	public static void damageEntities(BlockPos pos, World world, Direction facing, float extension, SpikeTrapBlockEntity blockEntity)
+	{
+		if(extension == 0F || world.isClient())
+			return;
+		
+		Box hurtBox = SpikesBlock.getHurtShape(facing)
+			.offset(
+				pos.getX(), 
+				pos.getY(), 
+				pos.getZ())
+			.offset(
+					extension * facing.getOffsetX(), 
+					extension * facing.getOffsetY(), 
+					extension * facing.getOffsetZ()).getBoundingBox();
+		
+		world.getOtherEntities(null, hurtBox).stream()
+			.filter(e -> e.getPistonBehavior() != PistonBehavior.IGNORE)
+			.filter(e -> e instanceof LivingEntity)
+			.forEach(entity -> 
+				{
+					SpikesBlock.skewerEntity((LivingEntity)entity, 4F);
 				});
 	}
 }

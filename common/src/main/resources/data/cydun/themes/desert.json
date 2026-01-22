@@ -1,0 +1,63 @@
+{
+  "id": "cydun:desert",
+  "monsters": [
+    {
+      "type": "minecraft:husk",
+      "id": "cydun:crowd",
+      "max": 8,
+      "min": 4,
+      "name": "cydun:husk_crowd"
+    },
+    {
+      "id": "cydun:basic_squad",
+      "name": "cydun:fire_team",
+      "squads": [
+        {
+          "type": "minecraft:wither_skeleton",
+          "max": 1,
+          "min": 1,
+          "name": "cydun:mob"
+        },
+        {
+          "type": "minecraft:blaze",
+          "max": 3,
+          "min": 2,
+          "name": "cydun:mob"
+        }
+      ]
+    },
+    {
+      "id": "cydun:basic_squad",
+      "name": "cydun:pillager_squad",
+      "squads": [
+        {
+          "type": "minecraft:evoker",
+          "max": 1,
+          "min": 0,
+          "name": "cydun:leader"
+        },
+        {
+          "type": "minecraft:vindicator",
+          "max": 2,
+          "min": 1,
+          "name": "cydun:elite"
+        },
+        {
+          "type": "minecraft:pillager",
+          "max": 3,
+          "min": 2,
+          "name": "cydun:mob"
+        }
+      ]
+    },
+    {
+      "type": "cydun:rabid_wolf",
+      "id": "cydun:crowd",
+      "max": 4,
+      "min": 3,
+      "name": "cydun:wolf_pack"
+    }
+  ],
+  "tilesets": [],
+  "traps": []
+}

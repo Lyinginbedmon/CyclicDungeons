@@ -1,0 +1,39 @@
+{
+  "blocks": [
+    {
+      "Name": "minecraft:water",
+      "Properties": {
+        "level": "0"
+      }
+    }
+  ],
+  "conditions": [
+    "cydun:on_bottom",
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:wet"
+        ]
+      },
+      "id": "cydun:adjacent"
+    },
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:solid_flooring"
+        ]
+      },
+      "id": "cydun:non_adjacent"
+    },
+    "cydun:not_by_passage"
+  ],
+  "generation": "block",
+  "id": "cydun:pool",
+  "rotation": "cydun:none",
+  "tags": [
+    "cydun:wet",
+    "cydun:damp"
+  ]
+}

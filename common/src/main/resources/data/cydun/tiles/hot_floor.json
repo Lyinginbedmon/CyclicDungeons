@@ -1,0 +1,31 @@
+{
+  "conditions": [
+    "cydun:on_bottom",
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:damp"
+        ]
+      },
+      "id": "cydun:non_adjacent"
+    },
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
+          "cydun:solid_flooring"
+        ]
+      },
+      "id": "cydun:adjacent"
+    },
+    "cydun:not_by_passage"
+  ],
+  "generation": "structure",
+  "id": "cydun:hot_floor",
+  "rotation": "cydun:random",
+  "tags": [
+    "cydun:solid_flooring",
+    "cydun:hot"
+  ]
+}
