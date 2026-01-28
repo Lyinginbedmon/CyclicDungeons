@@ -31,8 +31,8 @@ import net.minecraft.world.event.GameEvent;
 
 public class CollisionSensorBlock extends AbstractTrapSensorBlock
 {
-	protected static final Box UP_BOUNDS	= new Box(0.0625, 0, 0.0625, 0.9375, 0.0625, 0.9375);
-	protected static final Box DOWN_BOUNDS	= new Box(0.0625, 0.9375, 0.0625, 0.9375, 1, 0.9375);
+	protected static final Box UP_BOUNDS	= new Box(0.0625, 0, 0.0625, 0.9375, 0.125, 0.9375);
+	protected static final Box DOWN_BOUNDS	= new Box(0.0625, 0.875, 0.0625, 0.9375, 1, 0.9375);
 	protected static final Box NORTH_BOUNDS	= new Box(0.0625, 0.0625, 0.875, 0.9375, 0.9375, 1);
 	protected static final Box EAST_BOUNDS	= new Box(0, 0.0625, 0.0625, 0.125, 0.9375, 0.9375);
 	protected static final Box SOUTH_BOUNDS	= new Box(0.0625, 0.0625, 0, 0.9375, 0.9375, 0.125);

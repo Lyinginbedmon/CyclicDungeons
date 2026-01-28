@@ -238,10 +238,6 @@ public abstract class Tile
 			{
 				default:
 				case FLAG:
-					return id -> new Tile(id, tileTags, style, Optional.empty(), predicate, RotationSupplier.NONE.get())
-					{
-						public void generate(TileInstance inst, BlockPos pos, ServerWorld world) { }
-					};
 				case AIR:
 					return id -> new Tile(id, tileTags, style, states, predicate, RotationSupplier.NONE.get())
 					{

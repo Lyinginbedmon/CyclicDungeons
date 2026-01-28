@@ -20,6 +20,7 @@ import com.lying.block.SoundSensorBlock;
 import com.lying.block.SpikeTrapBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SwingingBladeBlock;
+import com.lying.block.ToggledBlock;
 import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
 
@@ -55,20 +56,21 @@ public class CDBlocks
 	 * * Area
 	 * Trap actors
 	 * * Entity spawner (mobs, potion clouds, etc.)
+	 * * Toggled ceiling block
 	 */
 	
 	// Primary logic block for managing complex trap functions
 	public static final RegistrySupplier<Block> TRAP_LOGIC			= register("trap_logic", s -> new TrapLogicBlock(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
 	public static final RegistrySupplier<Block> TRAP_LOGIC_DECOY	= register("trap_logic_decoy", s -> new Block(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
 	
-	// Sensors
+	// Trap Sensors
 	public static final RegistrySupplier<Block> SENSOR_COLLISION	= register("collision_sensor", CollisionSensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_PROXIMITY	= register("proximity_sensor", ProximitySensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_REDSTONE		= register("redstone_sensor", RedstoneSensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_SIGHT		= register("sight_sensor", SightSensorBlock::new);
 	public static final RegistrySupplier<Block> SENSOR_SOUND		= register("sound_sensor", SoundSensorBlock::new);
 	
-	// Actors
+	// Trap Actors
 	public static final RegistrySupplier<Block> ACTOR_REDSTONE		= register("redstone_actor", RedstoneActorBlock::new);
 	public static final RegistrySupplier<Block> COBBLESTONE_HATCH	= register("cobblestone_hatch", HatchBlock::new);
 	public static final RegistrySupplier<Block> MOSSY_COBBLESTONE_HATCH	= register("mossy_cobblestone_hatch", HatchBlock::new);
@@ -83,6 +85,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> FLAME_JET			= register("flame_jet", FlameJetBlock::new);
 	public static final RegistrySupplier<Block> DART_TRAP			= register("dart_trap", DartTrapBlock::new);
 	public static final RegistrySupplier<Block> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlock::new);
+	public static final RegistrySupplier<Block> FALSE_STONE_BLOCK	= register("false_stone", ToggledBlock::new);
 	
 	// Hazards
 	private static final Function<Settings, Settings> stoneSettings				= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);

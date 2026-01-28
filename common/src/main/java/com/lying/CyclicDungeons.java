@@ -12,18 +12,21 @@ import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDParticleTypes;
-import com.lying.init.CDTileSets;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
 import com.lying.init.CDTileConditions;
+import com.lying.init.CDTileSets;
 import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
 import com.lying.init.CDTraps;
 import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
+import com.lying.utility.BlockResetUtility;
+
+import dev.architectury.event.events.common.TickEvent;
 
 public final class CyclicDungeons
 {
@@ -45,6 +48,7 @@ public final class CyclicDungeons
 	public static Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID);
 	
 	public static ServerConfig config;
+	public static BlockResetUtility resetUtility = new BlockResetUtility();
 	
 	public static void init()
 	{
@@ -75,5 +79,6 @@ public final class CyclicDungeons
 	private static void registerServerEvents()
 	{
 		PitBlock.registerEvent();
+		TickEvent.SERVER_LEVEL_POST.register(resetUtility::tickWorld);
 	}
 }

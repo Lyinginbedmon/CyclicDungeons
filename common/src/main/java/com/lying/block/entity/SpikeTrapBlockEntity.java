@@ -117,6 +117,8 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 		prevExtension = extension;
 		
 		BlockState state = world.getBlockState(pos);
+		SpikeTrapBlockEntity.damageEntities(pos, world, state.get(SpikeTrapBlock.FACING), extension, tile);
+		
 		if(state.get(SpikeTrapBlock.POWERED))
 		{
 			if(extension < 1F)
@@ -130,8 +132,6 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 			if(extension > 0F)
 				tile.updateExtension(false);
 		}
-		
-		SpikeTrapBlockEntity.damageEntities(pos, world, state.get(SpikeTrapBlock.FACING), extension, tile);
 	}
 	
 	public VoxelShape getExtensionShape()
@@ -186,6 +186,8 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 		if(extension == 0F || world.isClient())
 			return;
 		
+		// FIXME Improve entity-to-hurt detection
+		
 		Box hurtBox = SpikesBlock.getHurtShape(facing)
 			.offset(
 				pos.getX(), 
@@ -194,7 +196,7 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity
 			.offset(
 					extension * facing.getOffsetX(), 
 					extension * facing.getOffsetY(), 
-					extension * facing.getOffsetZ()).getBoundingBox();
+					extension * facing.getOffsetZ()).getBoundingBox().expand(0.2D);
 		
 		world.getOtherEntities(null, hurtBox).stream()
 			.filter(e -> e.getPistonBehavior() != PistonBehavior.IGNORE)

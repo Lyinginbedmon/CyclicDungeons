@@ -136,7 +136,7 @@ public class GrammarTerm
 			// Fill rest of tileset with WFC generation
 			TileGenerator.generate(map, node.metadata().theme().getTileSet(this), world.getRandom());
 		}
-		catch(Exception e) { }
+		catch(Exception e) { e.printStackTrace(); }
 		
 		map.finalise(meta.theme());
 		

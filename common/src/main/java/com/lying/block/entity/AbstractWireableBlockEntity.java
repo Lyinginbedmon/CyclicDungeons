@@ -30,6 +30,8 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		super(type, pos, state);
 	}
 	
+	// FIXME Permit wiring to be done via NBT loading
+	
 	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.writeNbt(nbt, registryLookup);

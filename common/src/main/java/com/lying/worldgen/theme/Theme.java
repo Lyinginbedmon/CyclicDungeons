@@ -66,7 +66,8 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 	public static final List<Identifier> DEFAULT_TRAPS	= Lists.newArrayList(
 			CDTraps.ID_SIMPLE_PITFALL,
 			CDTraps.ID_LAVA_RIVER,
-			CDTraps.ID_PITFALL
+			CDTraps.ID_PITFALL,
+			CDTraps.ID_BEAR_TRAP
 			);
 	public static final Map<Identifier, Identifier> DEFAULT_TILE_SETS = Map.of(
 			CDTerms.ID_START, DefaultTileSets.ID_START,
