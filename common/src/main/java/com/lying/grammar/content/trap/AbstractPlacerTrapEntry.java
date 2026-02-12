@@ -7,6 +7,8 @@ import org.joml.Vector2i;
 import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.lying.init.CDLoggers;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -25,7 +27,7 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 	{
 		// Find all viable places for trap
 		List<BlockPos> viablePoints = Lists.newArrayList();
-		int floorY = min.getY() + 2;
+		int floorY = min.getY() + Tile.TILE_SIZE;
 		BlockPos.Mutable.iterate(min.withY(floorY), max.withY(floorY)).forEach(p -> 
 		{
 			BlockPos next = p.toImmutable();
@@ -41,6 +43,9 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 			traps.add(viablePoints.remove(rand.nextInt(viablePoints.size())));
 		
 		// Place traps
+		if(traps.isEmpty())
+			CDLoggers.WORLDGEN.warn("Failed to find any place for trap");
+		
 		while(!traps.isEmpty())
 		{
 			placeTrap(traps.remove(rand.nextInt(traps.size())), world, rand);

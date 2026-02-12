@@ -7,9 +7,9 @@ import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SideShapeType;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
@@ -180,7 +180,7 @@ public class FlameJetBlockEntity extends TrapActorBlockEntity
 			
 			// End loop early if we reach a block the flame cannot pass through
 			BlockState stateAt = world.getBlockState(point);
-			if(stateAt.isSideSolid(world, point, facing.getOpposite(), SideShapeType.FULL))
+			if(Block.isFaceFullSquare(stateAt.getCollisionShape(world, point), facing))
 				return i - 1;
 		}
 		

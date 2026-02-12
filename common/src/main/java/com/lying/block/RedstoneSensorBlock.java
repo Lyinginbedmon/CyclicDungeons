@@ -49,7 +49,7 @@ public class RedstoneSensorBlock extends AbstractTrapSensorBlock
 	public int activity(BlockPos pos, World world)
 	{
 		int max = 0;
-		for(Direction face : Direction.Type.HORIZONTAL)
+		for(Direction face : Direction.values())
 			max = Math.max(max, world.getEmittedRedstonePower(pos.offset(face), face, false));
 		return max;
 	}

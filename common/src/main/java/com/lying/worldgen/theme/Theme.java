@@ -67,7 +67,10 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 			CDTraps.ID_SIMPLE_PITFALL,
 			CDTraps.ID_LAVA_RIVER,
 			CDTraps.ID_PITFALL,
-			CDTraps.ID_BEAR_TRAP
+			CDTraps.ID_BEAR_TRAP,
+			CDTraps.ID_GREED_TRAP,
+			CDTraps.ID_JUMPING_TRAP_PIT,
+			CDTraps.ID_JUMPING_TRAP_LAVA
 			);
 	public static final Map<Identifier, Identifier> DEFAULT_TILE_SETS = Map.of(
 			CDTerms.ID_START, DefaultTileSets.ID_START,
