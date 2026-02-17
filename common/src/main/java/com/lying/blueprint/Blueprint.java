@@ -309,15 +309,24 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			int tally = 0;
 			for(BlueprintPassage path : BlueprintOrganiser.getFinalisedPassages(chart))
 			{
-				path.exclude(path.parent().tileBounds());
+				final BlueprintRoom parent = path.parent();
+				path.exclude(parent.tileBounds());
 				path.children().stream().map(BlueprintRoom::tileBounds).forEach(path::exclude);
 				
-				if(path.intersectsOtherPassages(chart))
+				List<BlueprintRoom> attached = Lists.newArrayList();
+				attached.add(parent);
+				attached.addAll(path.children());
+				if(
+						// Path intersects unrelated passages
+						path.intersectsOtherPassages(chart) ||
+						// Path has too many tiles directly adjacent to any room boundary tiles
+						path.tiles().stream().filter(t -> attached.stream().anyMatch(r -> r.tileGrid().containsOrAdjacentTo(t))).count() > attached.size())
+				{
 					if(++tally >= limit && limit > 0)
 						return tally;
+				}
 			}
 			
-			// FIXME Include instances of passages with too many tiles adjacent to parent/child rooms
 			return tally;
 		});
 		

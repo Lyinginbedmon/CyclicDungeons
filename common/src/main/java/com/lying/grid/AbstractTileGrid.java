@@ -98,6 +98,8 @@ public abstract class AbstractTileGrid<T extends Object>
 		setTile(pos, tile == null ? BLANK : tile);
 	}
 	
+	public final boolean isEmpty(T pos) { return get(pos).isEmpty() || get(pos).get().isBlank(); }
+	
 	private final void setTile(T pos, @NotNull Tile tile)
 	{
 		get(pos).ifPresent(t -> tally.put(t, tallyOf(t) - 1));

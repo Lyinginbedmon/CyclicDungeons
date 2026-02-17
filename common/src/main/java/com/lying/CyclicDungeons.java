@@ -48,7 +48,6 @@ public final class CyclicDungeons
 	public static Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID);
 	
 	public static ServerConfig config;
-	public static BlockResetUtility resetUtility = new BlockResetUtility();
 	
 	public static void init()
 	{
@@ -79,6 +78,6 @@ public final class CyclicDungeons
 	private static void registerServerEvents()
 	{
 		PitBlock.registerEvent();
-		TickEvent.SERVER_LEVEL_POST.register(resetUtility::tickWorld);
+		TickEvent.SERVER_LEVEL_POST.register(w -> BlockResetUtility.getBlockResetUtility(w.getServer()).tickWorld(w));
 	}
 }

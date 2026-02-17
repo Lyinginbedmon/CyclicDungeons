@@ -34,7 +34,7 @@ import net.minecraft.world.World;
 
 public class DartTrapBlock extends AbstractTrapActorBlock
 {
-	public static final MapCodec<FlameJetBlock> CODEC = RedstoneActorBlock.createCodec(FlameJetBlock::new);
+	public static final MapCodec<DartTrapBlock> CODEC = RedstoneActorBlock.createCodec(DartTrapBlock::new);
 	public static final BooleanProperty POWERED	= Properties.POWERED;
 	public static final EnumProperty<Direction> FACING	= Properties.FACING;
 	protected static final Map<Direction, VoxelShape> OUTLINE_BY_FACE = Map.of(

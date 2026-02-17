@@ -31,8 +31,6 @@ public class GreedTrapEntry extends AbstractPlacerTrapEntry
 	
 	protected boolean isPosViableForTrap(BlockPos pos, ServerWorld world)
 	{
-		// TODO Ensure trap is not placed occluding doorways
-		
 		// Check 1: Could a chest here be opened
 		if(!world.isAir(pos) || ChestBlock.isChestBlocked(world, pos))
 			return false;

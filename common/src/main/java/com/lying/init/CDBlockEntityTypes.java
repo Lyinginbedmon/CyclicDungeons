@@ -12,6 +12,7 @@ import com.lying.block.entity.FlameJetBlockEntity;
 import com.lying.block.entity.ProximitySensorBlockEntity;
 import com.lying.block.entity.SightSensorBlockEntity;
 import com.lying.block.entity.SoundSensorBlockEntity;
+import com.lying.block.entity.SpawnerActorBlockEntity;
 import com.lying.block.entity.SpikeTrapBlockEntity;
 import com.lying.block.entity.SwingingBladeBlockEntity;
 import com.lying.block.entity.TrapActorBlockEntity;
@@ -51,6 +52,7 @@ public class CDBlockEntityTypes
 	public static final RegistrySupplier<BlockEntityType<FlameJetBlockEntity>> FLAME_JET			= register("flame_jet", FlameJetBlockEntity::new, CDBlocks.FLAME_JET);
 	public static final RegistrySupplier<BlockEntityType<DartTrapBlockEntity>> DART_TRAP			= register("dart_trap", DartTrapBlockEntity::new, CDBlocks.DART_TRAP);
 	public static final RegistrySupplier<BlockEntityType<SpikeTrapBlockEntity>> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlockEntity::new, CDBlocks.SPIKE_TRAP);
+	public static final RegistrySupplier<BlockEntityType<SpawnerActorBlockEntity>> SPAWNER			= register("spawner", SpawnerActorBlockEntity::new, CDBlocks.SPAWNER);
 	
 	@SafeVarargs
 	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, RegistrySupplier<Block>... blocksIn)

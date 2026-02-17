@@ -1,19 +1,22 @@
 package com.lying.block.entity;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.RegistryWrapper.WrapperLookup;
@@ -21,7 +24,7 @@ import net.minecraft.util.math.BlockPos;
 
 public abstract class AbstractWireableBlockEntity extends BlockEntity
 {
-	private static final Function<int[], BlockPos> intArrayToBlockPos = v -> new BlockPos(v[0], v[1], v[2]);
+	// TODO Replace with WiringManifest object
 	private List<BlockPos> actors = Lists.newArrayList();
 	private List<BlockPos> sensors = Lists.newArrayList();
 	
@@ -30,8 +33,6 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		super(type, pos, state);
 	}
 	
-	// FIXME Permit wiring to be done via NBT loading
-	
 	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.writeNbt(nbt, registryLookup);
@@ -39,19 +40,9 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		// Blank NBT isn't read when the block entity updates, so we ensure there's always SOME data
 		nbt.putBoolean("IsActive", IWireableBlock.getWireable(getPos(), getWorld()).isActive(getPos(), getWorld()));
 		
-		if(hasSensors())
-		{
-			NbtList set = new NbtList();
-			sensors.forEach(p -> set.add(NbtHelper.fromBlockPos(p)));
-			nbt.put("Sensors", set);
-		}
-		
-		if(hasActors())
-		{
-			NbtList set = new NbtList();
-			actors.forEach(p -> set.add(NbtHelper.fromBlockPos(p)));
-			nbt.put("Actors", set);
-		}
+		WiringManifest manifest = new WiringManifest(sensors, actors, Lists.newArrayList());
+		if(!manifest.isEmpty())
+			nbt.put("Wires", manifest.toNbt());
 	}
 	
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
@@ -59,19 +50,13 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		super.readNbt(nbt, registryLookup);
 		
 		sensors.clear();
-		if(nbt.contains("Sensors"))
-		{
-			NbtList set = nbt.getList("Sensors", NbtElement.INT_ARRAY_TYPE);
-			for(int i=0; i<set.size(); i++)
-				addWire(intArrayToBlockPos.apply(set.getIntArray(i)), WireRecipient.SENSOR);
-		}
-		
 		actors.clear();
-		if(nbt.contains("Actors"))
+		
+		if(nbt.contains("Wires", NbtElement.COMPOUND_TYPE))
 		{
-			NbtList set = nbt.getList("Actors", NbtElement.INT_ARRAY_TYPE);
-			for(int i=0; i<set.size(); i++)
-				addWire(intArrayToBlockPos.apply(set.getIntArray(i)), WireRecipient.ACTOR);
+			WiringManifest manifest = WiringManifest.fromNbt(nbt.get("Wires"));
+			sensors.addAll(manifest.getAll(WireRecipient.SENSOR));
+			actors.addAll(manifest.getAll(WireRecipient.ACTOR));
 		}
 	}
 	
@@ -152,5 +137,67 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	{
 		if(world != null)
 			world.updateListeners(getPos(), getCachedState(), getCachedState(), 3);
+	}
+	
+	public static class WiringManifest
+	{
+		private static final Codec<WiringManifest> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+			BlockPos.CODEC.listOf().optionalFieldOf("Sensors").forGetter(m -> m.tryGetAll(WireRecipient.SENSOR)),
+			BlockPos.CODEC.listOf().optionalFieldOf("Actors").forGetter(m -> m.tryGetAll(WireRecipient.ACTOR)),
+			BlockPos.CODEC.listOf().optionalFieldOf("Logic").forGetter(m -> m.tryGetAll(WireRecipient.LOGIC))
+				).apply(instance, (s,a,l) -> 
+				new WiringManifest(s.orElse(Lists.newArrayList()), a.orElse(Lists.newArrayList()), l.orElse(Lists.newArrayList()))));
+		
+		private Map<WireRecipient, List<BlockPos>> targets = new HashMap<>();
+		
+		public WiringManifest() { }
+		
+		public WiringManifest(List<BlockPos> sensors, List<BlockPos> actors, List<BlockPos> logic)
+		{
+			this();
+			targets.put(WireRecipient.SENSOR, sensors);
+			targets.put(WireRecipient.ACTOR, actors);
+			targets.put(WireRecipient.LOGIC, logic);
+		}
+		
+		public boolean isEmpty() { return targets.isEmpty() || targets.values().stream().allMatch(l -> l.isEmpty()); }
+		
+		public int size()
+		{
+			int tally = 0;
+			for(List<BlockPos> points : targets.values())
+				tally += points.size();
+			return tally;
+		}
+		
+		protected Optional<List<BlockPos>> tryGetAll(WireRecipient type)
+		{
+			List<BlockPos> values;
+			return !targets.containsKey(type) ? Optional.empty() : (values = getAll(type)).isEmpty() ? Optional.empty() : Optional.of(values);
+		}
+		
+		public List<BlockPos> getAll(WireRecipient type) { return targets.getOrDefault(type, Lists.newArrayList()); }
+		
+		public void add(BlockPos pos, WireRecipient type)
+		{
+			List<BlockPos> set = getAll(type);
+			set.add(pos);
+			targets.put(type, set);
+		}
+		
+		public void clear()
+		{
+			targets.clear();
+		}
+		
+		public NbtElement toNbt()
+		{
+			return CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+		}
+		
+		public static WiringManifest fromNbt(NbtElement ele)
+		{
+			return CODEC.parse(NbtOps.INSTANCE, ele).getOrThrow();
+		}
 	}
 }

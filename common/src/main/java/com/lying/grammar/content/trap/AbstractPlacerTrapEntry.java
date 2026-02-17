@@ -1,15 +1,19 @@
 package com.lying.grammar.content.trap;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.data.CDTags;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.init.CDLoggers;
 import com.lying.worldgen.tile.Tile;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -25,15 +29,29 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
 	{
-		// Find all viable places for trap
-		List<BlockPos> viablePoints = Lists.newArrayList();
 		int floorY = min.getY() + Tile.TILE_SIZE;
+		
+		// Find all doors
+		List<BlockPos> avoiders = Lists.newArrayList();
 		BlockPos.Mutable.iterate(min.withY(floorY), max.withY(floorY)).forEach(p -> 
 		{
 			BlockPos next = p.toImmutable();
-			if(isPosViableForTrap(next, world))
+			BlockState state = world.getBlockState(next);
+			if(state.isIn(BlockTags.DOORS) || state.isIn(CDTags.PLACER_AVOID))
+				avoiders.add(next);
+		});
+		
+		// Find all viable places for trap
+		final Predicate<BlockPos> avoidFunc = p -> avoiders.stream().noneMatch(a -> a.getManhattanDistance(p) >= minimumAvoiderDistance());
+		List<BlockPos> viablePoints = Lists.newArrayList();
+		BlockPos.Mutable.iterate(min.withY(floorY), max.withY(floorY)).forEach(p -> 
+		{
+			BlockPos next = p.toImmutable();
+			if(avoidFunc.test(next) && isPosViableForTrap(next, world))
 				viablePoints.add(next);
 		});
+		if(viablePoints.isEmpty())
+			CDLoggers.WORLDGEN.warn("Failed to find any place for trap");
 		
 		// Select N places for traps
 		Random rand = world.getRandom();
@@ -43,9 +61,6 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 			traps.add(viablePoints.remove(rand.nextInt(viablePoints.size())));
 		
 		// Place traps
-		if(traps.isEmpty())
-			CDLoggers.WORLDGEN.warn("Failed to find any place for trap");
-		
 		while(!traps.isEmpty())
 		{
 			placeTrap(traps.remove(rand.nextInt(traps.size())), world, rand);
@@ -54,6 +69,9 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 			traps.removeIf(p -> !isPosViableForTrap(p, world));
 		}
 	}
+	
+	/** Returns how far from any avoided blocks (such as doors) the traps should be placed */
+	protected int minimumAvoiderDistance() { return 3; }
 	
 	/** Returns how many traps to place throughout the room */
 	protected abstract int getTrapCountForRoom(Random rand, Vector2i roomSize);

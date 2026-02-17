@@ -17,6 +17,7 @@ import com.lying.block.RedstoneActorBlock;
 import com.lying.block.RedstoneSensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
+import com.lying.block.SpawnerActorBlock;
 import com.lying.block.SpikeTrapBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SwingingBladeBlock;
@@ -86,6 +87,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> DART_TRAP			= register("dart_trap", DartTrapBlock::new);
 	public static final RegistrySupplier<Block> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlock::new);
 	public static final RegistrySupplier<Block> FALSE_STONE_BLOCK	= register("false_stone", ToggledBlock::new);
+	public static final RegistrySupplier<Block> SPAWNER				= register("spawner", SpawnerActorBlock::new);
 	
 	// Hazards
 	private static final Function<Settings, Settings> stoneSettings				= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);

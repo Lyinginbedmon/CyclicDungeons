@@ -4,13 +4,14 @@ import java.util.function.Supplier;
 
 import org.joml.Math;
 
-import com.lying.CyclicDungeons;
+import com.lying.utility.BlockResetUtility;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SideShapeType;
 import net.minecraft.entity.Entity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -120,7 +121,7 @@ public class CrumblingBlock extends Block
 		protected void crumble(World world, BlockPos pos)
 		{
 			if(!world.isClient())
-				CyclicDungeons.resetUtility.logBlockToReset(getDefaultState(), pos, world.getRegistryKey(), true);
+				BlockResetUtility.getBlockResetUtility(((ServerWorld)world).getServer()).logBlockToReset(getDefaultState(), pos, world.getRegistryKey(), true);
 			
 			world.breakBlock(pos, false);
 		}

@@ -25,6 +25,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 
 public class JumpingTrapEntry extends TrapEntry
@@ -76,7 +77,17 @@ public class JumpingTrapEntry extends TrapEntry
 		
 		if(!room.hasChildren())
 		{
-			// TODO Implement treasure chest in dead-end rooms
+			final BlockPos entry = tileMap.getMatchingTiles((p,t) -> t.registryName().equals(CDTiles.ID_PASSAGE_FLAG)).getFirst();
+			platforms.stream()
+					.filter(p -> !tileMap.isBoundary(p, Direction.UP) && tileMap.isEmpty(p.up()))
+					.sorted((a,b) -> 
+					{
+						double distA = a.getSquaredDistance(entry);
+						double distB = b.getSquaredDistance(entry);
+						return distA > distB ? -1 : distA < distB ? 1 : 0;
+					})
+					.findFirst()
+					.ifPresent(p -> tileMap.put(p, DefaultTiles.TREASURE.get()));
 		}
 	}
 	
