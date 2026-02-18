@@ -107,7 +107,6 @@ public class DartTrapBlock extends AbstractTrapActorBlock
 		world.setBlockState(pos, state.with(POWERED, isActive));
 		if(isActive && !world.isClient())
 			shootDart(pos, (ServerWorld)world);
-		
 	}
 	
 	protected void shootDart(BlockPos pos, ServerWorld world)

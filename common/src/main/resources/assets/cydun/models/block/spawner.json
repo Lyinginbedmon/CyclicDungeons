@@ -1,0 +1,36 @@
+{
+	"format_version": "1.21.11",
+	"parent": "minecraft:block",
+	"textures": {
+		"particle": "#face",
+		"face": "cydun:block/spawner",
+		"jaw": "cydun:block/spawner_jaws"
+	},
+	"elements": [
+		{
+			"name": "jaw_closed",
+			"from": [4, 5, 15],
+			"to": [12, 8, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [10, 2, 14]},
+			"faces": {
+				"north": {"uv": [1, 1, 9, 4], "texture": "#jaw"},
+				"east": {"uv": [9, 1, 10, 4], "texture": "#jaw"},
+				"west": {"uv": [0, 1, 1, 4], "texture": "#jaw"},
+				"down": {"uv": [1, 4, 9, 5], "texture": "#jaw"}
+			}
+		},
+		{
+			"name": "face",
+			"from": [3, 8, 14],
+			"to": [13, 14, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [9, 9, 14]},
+			"faces": {
+				"north": {"uv": [2, 2, 12, 8], "texture": "#face"},
+				"east": {"uv": [12, 2, 14, 8], "texture": "#face"},
+				"west": {"uv": [0, 2, 2, 8], "texture": "#face"},
+				"up": {"uv": [2, 0, 12, 2], "texture": "#face"},
+				"down": {"uv": [2, 8, 12, 10], "texture": "#face"}
+			}
+		}
+	]
+}

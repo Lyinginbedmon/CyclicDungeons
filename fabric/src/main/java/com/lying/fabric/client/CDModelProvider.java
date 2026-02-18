@@ -16,6 +16,7 @@ import com.lying.block.HatchBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
+import com.lying.block.SpawnerActorBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SpikesBlock.SpikePart;
 import com.lying.block.SwingingBladeBlock;
@@ -99,6 +100,7 @@ public class CDModelProvider extends FabricModelProvider
 		FlameJet.register(CDBlocks.FLAME_JET.get(), generator);
 		registerFreeRotated(CDBlocks.DART_TRAP.get(), generator);
 		registerFreeRotated(CDBlocks.SPIKE_TRAP.get(), generator);
+		Spawner.register(CDBlocks.SPAWNER.get(), generator);
 		
 		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_STONE.get(), generator);
 		CrumblingBlocks.register((CrumblingBlock)CDBlocks.CRUMBLING_COBBLESTONE.get(), generator);
@@ -523,6 +525,25 @@ public class CDModelProvider extends FabricModelProvider
 			Identifier modelOn = MODEL.upload(block, "_active", TextureMap.texture(TextureMap.getSubId(block, "_active")), generator.modelCollector);
 			
 			BlockStateVariantMap.DoubleProperty<Direction, Boolean> map = BlockStateVariantMap.create(FlameJetBlock.FACING, FlameJetBlock.POWERED);
+			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, map, model, modelOn);
+			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R180, map, model, modelOn);
+			appendSettings(Direction.EAST, VariantSettings.Rotation.R0, VariantSettings.Rotation.R90, map, model, modelOn);
+			appendSettings(Direction.WEST, VariantSettings.Rotation.R0, VariantSettings.Rotation.R270, map, model, modelOn);
+			appendSettings(Direction.UP, VariantSettings.Rotation.R270, VariantSettings.Rotation.R0, map, model, modelOn);
+			appendSettings(Direction.DOWN, VariantSettings.Rotation.R90, VariantSettings.Rotation.R0, map, model, modelOn);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(map));
+		}
+	}
+	
+	private static class Spawner
+	{
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			Identifier model = TextureMap.getId(block);
+			Identifier modelOn = TextureMap.getSubId(block, "_on");
+			
+			BlockStateVariantMap.DoubleProperty<Direction, Boolean> map = BlockStateVariantMap.create(SpawnerActorBlock.FACING, SpawnerActorBlock.POWERED);
 			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, map, model, modelOn);
 			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R180, map, model, modelOn);
 			appendSettings(Direction.EAST, VariantSettings.Rotation.R0, VariantSettings.Rotation.R90, map, model, modelOn);

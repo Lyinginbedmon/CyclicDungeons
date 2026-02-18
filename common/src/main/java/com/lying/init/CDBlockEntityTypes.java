@@ -46,8 +46,7 @@ public class CDBlockEntityTypes
 			CDBlocks.GRASS_HATCH,
 			CDBlocks.DIRT_HATCH,
 			CDBlocks.SANDSTONE_HATCH,
-			CDBlocks.RED_SANDSTONE_HATCH,
-			CDBlocks.FALSE_STONE_BLOCK);
+			CDBlocks.RED_SANDSTONE_HATCH);
 	public static final RegistrySupplier<BlockEntityType<SwingingBladeBlockEntity>> SWINGING_BLADE	= register("swinging_blade", SwingingBladeBlockEntity::new, CDBlocks.SWINGING_BLADE);
 	public static final RegistrySupplier<BlockEntityType<FlameJetBlockEntity>> FLAME_JET			= register("flame_jet", FlameJetBlockEntity::new, CDBlocks.FLAME_JET);
 	public static final RegistrySupplier<BlockEntityType<DartTrapBlockEntity>> DART_TRAP			= register("dart_trap", DartTrapBlockEntity::new, CDBlocks.DART_TRAP);

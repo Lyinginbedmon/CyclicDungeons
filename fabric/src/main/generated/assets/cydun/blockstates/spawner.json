@@ -1,0 +1,50 @@
+{
+  "variants": {
+    "facing=down,powered=false": {
+      "model": "cydun:block/spawner",
+      "x": 90
+    },
+    "facing=down,powered=true": {
+      "model": "cydun:block/spawner_on",
+      "x": 90
+    },
+    "facing=east,powered=false": {
+      "model": "cydun:block/spawner",
+      "y": 90
+    },
+    "facing=east,powered=true": {
+      "model": "cydun:block/spawner_on",
+      "y": 90
+    },
+    "facing=north,powered=false": {
+      "model": "cydun:block/spawner"
+    },
+    "facing=north,powered=true": {
+      "model": "cydun:block/spawner_on"
+    },
+    "facing=south,powered=false": {
+      "model": "cydun:block/spawner",
+      "y": 180
+    },
+    "facing=south,powered=true": {
+      "model": "cydun:block/spawner_on",
+      "y": 180
+    },
+    "facing=up,powered=false": {
+      "model": "cydun:block/spawner",
+      "x": 270
+    },
+    "facing=up,powered=true": {
+      "model": "cydun:block/spawner_on",
+      "x": 270
+    },
+    "facing=west,powered=false": {
+      "model": "cydun:block/spawner",
+      "y": 270
+    },
+    "facing=west,powered=true": {
+      "model": "cydun:block/spawner_on",
+      "y": 270
+    }
+  }
+}

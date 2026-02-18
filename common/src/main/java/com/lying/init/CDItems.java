@@ -90,7 +90,7 @@ public class CDItems
 	public static final RegistrySupplier<Item> FLAME_JET				= registerRareBlock("flame_jet", CDBlocks.FLAME_JET, Rarity.RARE);
 	public static final RegistrySupplier<Item> DART_TRAP				= registerRareBlock("dart_trap", CDBlocks.DART_TRAP, Rarity.RARE);
 	public static final RegistrySupplier<Item> SPIKE_TRAP				= registerRareBlock("spike_trap", CDBlocks.SPIKE_TRAP, Rarity.RARE);
-	public static final RegistrySupplier<Item> FALSE_STONE				= registerRareBlock("false_stone", CDBlocks.FALSE_STONE_BLOCK, Rarity.RARE);
+	public static final RegistrySupplier<Item> SPAWNER					= registerRareBlock("spawner", CDBlocks.SPAWNER, Rarity.RARE);
 	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)
 	{

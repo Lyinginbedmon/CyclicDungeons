@@ -21,12 +21,11 @@ import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.RegistryWrapper.WrapperLookup;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 public abstract class AbstractWireableBlockEntity extends BlockEntity
 {
-	// TODO Replace with WiringManifest object
-	private List<BlockPos> actors = Lists.newArrayList();
-	private List<BlockPos> sensors = Lists.newArrayList();
+	private WiringManifest wiring = new WiringManifest();
 	
 	protected AbstractWireableBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state)
 	{
@@ -40,44 +39,36 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		// Blank NBT isn't read when the block entity updates, so we ensure there's always SOME data
 		nbt.putBoolean("IsActive", IWireableBlock.getWireable(getPos(), getWorld()).isActive(getPos(), getWorld()));
 		
-		WiringManifest manifest = new WiringManifest(sensors, actors, Lists.newArrayList());
-		if(!manifest.isEmpty())
-			nbt.put("Wires", manifest.toNbt());
+		if(!wiring.isEmpty())
+			nbt.put("Wires", wiring.toNbt());
 	}
 	
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
 		
-		sensors.clear();
-		actors.clear();
-		
+		wiring.clear();
 		if(nbt.contains("Wires", NbtElement.COMPOUND_TYPE))
-		{
-			WiringManifest manifest = WiringManifest.fromNbt(nbt.get("Wires"));
-			sensors.addAll(manifest.getAll(WireRecipient.SENSOR));
-			actors.addAll(manifest.getAll(WireRecipient.ACTOR));
-		}
+			wiring = WiringManifest.fromNbt(nbt.get("Wires"));
 	}
 	
-	public final List<BlockPos> getSensors() { return sensors; }
-	public final List<BlockPos> getActors() { return actors; }
+	public final List<BlockPos> getSensors() { return wiring.getAll(WireRecipient.SENSOR); }
+	public final List<BlockPos> getActors() { return wiring.getAll(WireRecipient.ACTOR); }
 	
-	public final boolean hasSensors() { return !sensors.isEmpty(); }
-	public final boolean hasActors() { return !actors.isEmpty(); }
+	public final boolean hasSensors() { return !getSensors().isEmpty(); }
+	public final boolean hasActors() { return !getActors().isEmpty(); }
 	
-	public final int wireCount() { return sensors.size() + actors.size(); }
+	public final int wireCount() { return wiring.size(); }
 	
 	public abstract boolean processWireConnection(BlockPos pos, WireRecipient type);
 	
 	public void reset()
 	{
 		// Deactivate any attached actors
-		actors.forEach(p -> IWireableBlock.getWireable(p, world).deactivate(p, world));
+		getActors().forEach(p -> IWireableBlock.getWireable(p, world).deactivate(p, world));
 		
 		// Clear connections
-		actors.clear();
-		sensors.clear();
+		wiring.clear();
 		
 		// Deactivate self
 		IWireableBlock wireable = IWireableBlock.getWireable(getPos(), getWorld());
@@ -89,21 +80,13 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	
 	protected void cleanActors()
 	{
-		if(actors.removeIf(pos -> 
-		{
-			BlockState sensorState = world.getBlockState(pos);
-			return !(sensorState.getBlock() instanceof IWireableBlock) || IWireableBlock.getWireable(pos, world).type() != WireRecipient.ACTOR;
-		}))
+		if(wiring.clean(WireRecipient.ACTOR, getWorld()))
 			markDirty();
 	}
 	
 	protected void cleanSensors()
 	{
-		if(sensors.removeIf(pos -> 
-		{
-			BlockState sensorState = world.getBlockState(pos);
-			return !(sensorState.getBlock() instanceof IWireableBlock) || IWireableBlock.getWireable(pos, world).type() != WireRecipient.SENSOR;
-		}))
+		if(wiring.clean(WireRecipient.SENSOR, getWorld()))
 			markDirty();
 	}
 	
@@ -112,16 +95,9 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		switch(type)
 		{
 			case ACTOR:
-				if(actors.stream().anyMatch(p -> p.getManhattanDistance(pos) == 0))
-					return;
-				actors.add(pos);
-				markDirty();
-				break;
 			case SENSOR:
-				if(sensors.stream().anyMatch(p -> p.getManhattanDistance(pos) == 0))
-					return;
-				sensors.add(pos);
-				markDirty();
+				if(wiring.add(pos, type))
+					markDirty();
 				break;
 			case LOGIC:
 			default:
@@ -178,16 +154,39 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		
 		public List<BlockPos> getAll(WireRecipient type) { return targets.getOrDefault(type, Lists.newArrayList()); }
 		
-		public void add(BlockPos pos, WireRecipient type)
+		public boolean add(BlockPos pos, WireRecipient type)
 		{
 			List<BlockPos> set = getAll(type);
+			if(set.stream().anyMatch(p -> p.getManhattanDistance(pos) == 0))
+				return false;
+			
 			set.add(pos);
 			targets.put(type, set);
+			return true;
 		}
 		
 		public void clear()
 		{
 			targets.clear();
+		}
+		
+		public boolean clean(WireRecipient type, World world)
+		{
+			List<BlockPos> points = Lists.newArrayList();
+			points.addAll(getAll(type));
+			if(points.isEmpty())
+				return false;
+			
+			if(points.removeIf(pos -> 
+			{
+				BlockState sensorState = world.getBlockState(pos);
+				return !(sensorState.getBlock() instanceof IWireableBlock) || IWireableBlock.getWireable(pos, world).type() != type;
+			}))
+			{
+				targets.put(type, points);
+				return true;
+			};
+			return false;
 		}
 		
 		public NbtElement toNbt()

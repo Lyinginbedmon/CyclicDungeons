@@ -55,20 +55,6 @@ public class CDBlockLootTableProvider extends FabricBlockLootTableProvider
 			).entrySet().forEach(entry -> addDrop(entry.getKey().get(), entry.getValue().get()));
 	}
 	
-	private <T extends Property<U>, U extends Comparable<U>> LootPool.Builder conditionalPool(Block drop, T property, U val)
-	{
-		return addSurvivesExplosionCondition(
-				drop,
-				LootPool.builder()
-					.rolls(ConstantLootNumberProvider.create(1.0F))
-					.with(
-						ofItem(drop)
-							.conditionally(BlockStatePropertyLootCondition.builder(drop).properties(StatePredicate.Builder.create().exactMatch(property, property.name(val))))
-							// FIXME Ensure block only dropped when mined by entity
-					)
-			);
-	}
-	
 	private static ItemEntry.Builder<?> ofItem(ItemConvertible item)
 	{
 		return ItemEntry.builder(item);

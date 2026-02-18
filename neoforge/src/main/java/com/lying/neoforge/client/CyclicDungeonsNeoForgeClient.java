@@ -2,6 +2,7 @@ package com.lying.neoforge.client;
 
 import com.lying.block.entity.DartTrapBlockEntity;
 import com.lying.block.entity.FlameJetBlockEntity;
+import com.lying.block.entity.SpawnerActorBlockEntity;
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
@@ -36,6 +37,7 @@ public class CyclicDungeonsNeoForgeClient
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.FLAME_JET.get(), WireableBlockEntityRenderer<FlameJetBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.DART_TRAP.get(), WireableBlockEntityRenderer<DartTrapBlockEntity>::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPAWNER.get(), WireableBlockEntityRenderer<SpawnerActorBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SIGHT_SENSOR.get(), SightSensorBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SWINGING_BLADE.get(), SwingingBladeBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPIKE_TRAP.get(), SpikeTrapBlockEntityRenderer::new);

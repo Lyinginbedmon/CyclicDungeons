@@ -21,7 +21,6 @@ import com.lying.block.SpawnerActorBlock;
 import com.lying.block.SpikeTrapBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SwingingBladeBlock;
-import com.lying.block.ToggledBlock;
 import com.lying.block.TrapLogicBlock;
 import com.lying.reference.Reference;
 
@@ -86,7 +85,6 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> FLAME_JET			= register("flame_jet", FlameJetBlock::new);
 	public static final RegistrySupplier<Block> DART_TRAP			= register("dart_trap", DartTrapBlock::new);
 	public static final RegistrySupplier<Block> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlock::new);
-	public static final RegistrySupplier<Block> FALSE_STONE_BLOCK	= register("false_stone", ToggledBlock::new);
 	public static final RegistrySupplier<Block> SPAWNER				= register("spawner", SpawnerActorBlock::new);
 	
 	// Hazards

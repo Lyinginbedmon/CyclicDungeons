@@ -36,6 +36,7 @@
 	"block.cydun.dart_trap": "Dart Trap",
 	"block.cydun.spike_trap": "Spike Trap",
 	"block.cydun.spikes": "Spikes",
+	"block.cydun.spawner": "Actuated Spawner",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",
 	// Item tags
