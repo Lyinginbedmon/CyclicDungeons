@@ -1,6 +1,8 @@
 package com.lying.block.entity;
 
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -237,55 +239,75 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 			this.spawnEntry = spawnEntry;
 		}
 		
-		protected void spawnNextEntry(ServerWorld world, BlockPos pos, Direction ignore)
+		protected void spawnNextEntry(ServerWorld world, BlockPos spawnerPos, Direction ignore)
 		{
 			boolean dirty = false;
 			final Random random = world.getRandom();
-			MobSpawnerEntry mobSpawnerEntry = this.getSpawnEntry(world, random, pos);
+			MobSpawnerEntry mobSpawnerEntry = this.getSpawnEntry(world, random, spawnerPos);
 			
-			for (int i = 0; i < this.spawnCount; i++)
+			for(int i = 0; i < this.spawnCount; i++)
 			{
 				NbtCompound entryNBT = mobSpawnerEntry.getNbt();
 				Optional<EntityType<?>> entityType = EntityType.fromNbt(entryNBT);
-				if (entityType.isEmpty())
+				if(entityType.isEmpty())
 				{
-					this.updateSpawns(world, pos, random);
+					this.updateSpawns(world, spawnerPos, random);
 					return;
 				}
 				
 				// Prevent non-Peaceful mobs from spawning in Peaceful difficulty
-				if(!((EntityType<?>)entityType.get()).getSpawnGroup().isPeaceful() && world.getDifficulty() == Difficulty.PEACEFUL)
-					continue;
+				if(world.getDifficulty() == Difficulty.PEACEFUL && !entityType.get().getSpawnGroup().isPeaceful())
+				{
+					this.updateSpawns(world, spawnerPos, random);
+					return;
+				}
 				
 				// Attempt to find a spawnable position
+				Optional<MobSpawnerEntry.CustomSpawnRules> customSpawnRules = mobSpawnerEntry.getCustomSpawnRules();
+				/** Predicate defining any spawn rules for this entry */
+				final Predicate<BlockPos> spawnRules = blockPos -> 
+				{
+					if(customSpawnRules.isPresent() && !customSpawnRules.get().canSpawn(blockPos, world))
+						return false;
+					if(!SpawnRestriction.canSpawn((EntityType<?>)entityType.get(), world, SpawnReason.SPAWNER, blockPos, world.getRandom()))
+						return false;
+					return true;
+				};
+				/** Set of any predefined coordinates */
 				NbtList coordinates = entryNBT.getList("Pos", NbtElement.DOUBLE_TYPE);
+				final BlockPos minimum = new BlockPos(-1, -1, -1).offset(ignore.getOpposite());
+				final BlockPos maximum = new BlockPos(1, 1, 1).offset(ignore.getOpposite());
 				Optional<BlockPos> spawnPos;
 				int attempts = 10;
 				do
 				{
-					spawnPos = findRandomPosition(coordinates, pos, ignore, world, random, spawnRange, entityType.get());
+					// Retrieve or calculate positions within range of the spawner
+					double posX = getOrMakeCoordinate(0, coordinates, BlockPos::getX, spawnerPos, minimum, maximum, 0.5D, random);
+					double posY = getOrMakeCoordinate(1, coordinates, BlockPos::getY, spawnerPos, minimum, maximum, 0D, random);
+					double posZ = getOrMakeCoordinate(2, coordinates, BlockPos::getZ, spawnerPos, minimum, maximum, 0.5D, random);
+					
+					// Check if we could spawn the mob at this position
+					final BlockPos pos = BlockPos.ofFloored(posX, posY, posZ);
+					spawnPos = world.isSpaceEmpty(entityType.get().getSpawnBox(posX, posY, posZ)) && spawnRules.test(pos) ? Optional.of(pos) : Optional.empty();
 				}
 				while(spawnPos.isEmpty() && attempts-- > 0);
-				if(spawnPos.isEmpty())
-					continue;
 				
+				// If we failed to find a spawn position, try to use the spawner's position directly
+				if(spawnPos.isEmpty() && spawnRules.test(spawnerPos))
+					spawnPos = Optional.of(spawnerPos);
+				else
+					return;
+				
+				// Generate the entity to spawn
 				BlockPos blockPos = spawnPos.get();
-				
-				// Apply other custom spawn rules, if any
-				Optional<MobSpawnerEntry.CustomSpawnRules> customSpawnRules;
-				if((customSpawnRules = mobSpawnerEntry.getCustomSpawnRules()).isPresent() && !customSpawnRules.get().canSpawn(blockPos, world))
-					continue;
-				else if(!SpawnRestriction.canSpawn((EntityType<?>)entityType.get(), world, SpawnReason.SPAWNER, blockPos, world.getRandom()))
-					continue;
-				
-				Entity entity = EntityType.loadEntityWithPassengers(entryNBT, world, SpawnReason.SPAWNER, entityx -> 
+				Entity entity = EntityType.loadEntityWithPassengers(entryNBT, world, SpawnReason.SPAWNER, e -> 
 				{
-					entityx.refreshPositionAndAngles(blockPos.getX() + 0.5D, blockPos.getY(), blockPos.getZ() + 0.5D, entityx.getYaw(), entityx.getPitch());
-					return entityx;
+					e.refreshPositionAndAngles(blockPos.getX() + 0.5D, blockPos.getY(), blockPos.getZ() + 0.5D, e.getYaw(), e.getPitch());
+					return e;
 				});
 				if(entity == null)
 				{
-					this.updateSpawns(world, pos, random);
+					this.updateSpawns(world, spawnerPos, random);
 					return;
 				}
 				
@@ -297,7 +319,7 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 					if(mobSpawnerEntry.getCustomSpawnRules().isEmpty() && !mobEntity.canSpawn(world, SpawnReason.SPAWNER) || !mobEntity.canSpawn(world))
 						continue;
 					
-					// If no complex entity data present, spawn according to local difficulty
+					// If no complex entity data present, equip according to local difficulty
 					if(mobSpawnerEntry.getNbt().getSize() == 1 && mobSpawnerEntry.getNbt().contains("id", 8))
 						((MobEntity)entity).initialize(world, world.getLocalDifficulty(entity.getBlockPos()), SpawnReason.SPAWNER, null);
 					
@@ -307,51 +329,30 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 				// Actually spawn the entity
 				if(!world.spawnNewEntityAndPassengers(entity))
 				{
-					this.updateSpawns(world, pos, random);
+					this.updateSpawns(world, spawnerPos, random);
 					return;
 				}
 				
-				world.syncWorldEvent(2004, pos, 0);
+				world.syncWorldEvent(2004, spawnerPos, 0);
 				world.emitGameEvent(entity, GameEvent.ENTITY_PLACE, blockPos);
-				if (entity instanceof MobEntity)
+				if(entity instanceof MobEntity)
 					((MobEntity)entity).playSpawnEffects();
 				
 				dirty = true;
 			}
 			
 			if (dirty)
-				this.updateSpawns(world, pos, random);
+				this.updateSpawns(world, spawnerPos, random);
 		}
 		
-		protected Optional<BlockPos> findRandomPosition(NbtList coordinates, BlockPos spawnerPos, Direction exclude, World world, Random random, int spawnRange, EntityType<?> type)
+		protected static double getOrMakeCoordinate(int index, NbtList coordinates, Function<BlockPos,Integer> getter, BlockPos spawnerPos, BlockPos minimum, BlockPos maximum, double offset, Random random)
 		{
-			int j = coordinates.size();
-			double posX = j >= 1 ? coordinates.getDouble(0) : (double)spawnerPos.getX() + (random.nextDouble() - random.nextDouble()) * (double)this.spawnRange + 0.5;
-			double posY = j >= 2 ? coordinates.getDouble(1) : (double)spawnerPos.getY() + (random.nextDouble() - random.nextDouble()) * (double)this.spawnRange + 0.5;
-			double posZ = j >= 3 ? coordinates.getDouble(2) : (double)spawnerPos.getZ() + (random.nextDouble() - random.nextDouble()) * (double)this.spawnRange + 0.5;
+			if(coordinates.size() >= (index + 1))
+				return coordinates.getDouble(index);
 			
-			// Check if the position is in the invalid direction for this orientation of spawner
-			switch(exclude.getAxis())
-			{
-				case X:
-					if(Math.signum(spawnerPos.getX() - posX) == exclude.getOffsetX())
-						return Optional.empty();
-					break;
-				case Y:
-					if(Math.signum(spawnerPos.getY() - posY) == exclude.getOffsetY())
-						return Optional.empty();
-					break;
-				case Z:
-					if(Math.signum(spawnerPos.getZ() - posZ) == exclude.getOffsetZ())
-						return Optional.empty();
-					break;
-			}
-			
-			// Check if we could spawn the mob at this position
-			if(!world.isSpaceEmpty(type.getSpawnBox(posX, posY, posZ)))
-				return Optional.empty();
-			
-			return Optional.of(BlockPos.ofFloored(posX, posY, posZ));
+			int min = Math.max(getter.apply(minimum), -1);
+			int max = Math.min(getter.apply(maximum), 1);
+			return getter.apply(spawnerPos) + offset + min + ((max - min) * random.nextDouble());
 		}
 		
 		/** Sets a random option from the spawn potentials list as the current spawn entry */

@@ -541,7 +541,7 @@ public class CDModelProvider extends FabricModelProvider
 		private static void register(Block block, BlockStateModelGenerator generator)
 		{
 			Identifier model = TextureMap.getId(block);
-			Identifier modelOn = TextureMap.getSubId(block, "_on");
+			Identifier modelOn = TextureMap.getSubId(block, "_active");
 			
 			BlockStateVariantMap.DoubleProperty<Direction, Boolean> map = BlockStateVariantMap.create(SpawnerActorBlock.FACING, SpawnerActorBlock.POWERED);
 			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, map, model, modelOn);

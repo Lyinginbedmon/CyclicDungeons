@@ -27,7 +27,7 @@ public class SpawnerActorBlock extends AbstractTrapActorBlock
 	
 	public SpawnerActorBlock(Settings settingsIn)
 	{
-		super(settingsIn.nonOpaque());
+		super(settingsIn.nonOpaque().noCollision());
 		setDefaultState(getDefaultState().with(POWERED, false).with(FACING, Direction.NORTH));
 	}
 	

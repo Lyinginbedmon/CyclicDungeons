@@ -1,22 +1,18 @@
 {
 	"format_version": "1.21.11",
-	"parent": "minecraft:block/block",
-	"textures": {
-		"particle": "#face",
-		"face": "cydun:block/spawner",
-		"jaw": "cydun:block/spawner_jaws"
-	},
+	"parent": "cydun:block/spawner",
 	"elements": [
 		{
-			"name": "jaw_closed",
-			"from": [4, 5, 15],
+			"name": "jaw_open",
+			"from": [4, 2, 15],
 			"to": [12, 8, 16],
 			"rotation": {"angle": 0, "axis": "y", "origin": [10, 2, 14]},
 			"faces": {
-				"north": {"uv": [1, 1, 9, 4], "texture": "#jaw"},
-				"east": {"uv": [9, 1, 10, 4], "texture": "#jaw"},
-				"west": {"uv": [0, 1, 1, 4], "texture": "#jaw"},
-				"down": {"uv": [1, 4, 9, 5], "texture": "#jaw"}
+				"north": {"uv": [1, 6, 9, 12], "texture": "#jaw"},
+				"east": {"uv": [9, 6, 10, 12], "texture": "#jaw"},
+				"south": {"uv": [1, 6, 9, 12], "texture": "#jaw", "cullface": "south"},
+				"west": {"uv": [0, 6, 1, 12], "texture": "#jaw"},
+				"down": {"uv": [1, 12, 9, 13], "texture": "#jaw"}
 			}
 		},
 		{
@@ -59,45 +55,5 @@
 				"down": {"uv": [16, 2, 14, 6], "texture": "#face"}
 			}
 		}
-	],
-	"display": {
-		"thirdperson_righthand": {
-			"rotation": [75, 45, 0],
-			"translation": [0, 2.5, 0],
-			"scale": [0.375, 0.375, 0.375]
-		},
-		"thirdperson_lefthand": {
-			"rotation": [75, 45, 0],
-			"translation": [0, 2.5, 0],
-			"scale": [0.375, 0.375, 0.375]
-		},
-		"firstperson_righthand": {
-			"rotation": [0, 45, 0],
-			"scale": [0.4, 0.4, 0.4]
-		},
-		"firstperson_lefthand": {
-			"rotation": [0, -135, 0],
-			"scale": [0.4, 0.4, 0.4]
-		},
-		"ground": {
-			"translation": [0, 3, 0],
-			"scale": [0.25, 0.25, 0.25]
-		},
-		"gui": {
-			"rotation": [-153.4, 35.01, -180],
-			"translation": [-3.5, -4.5, 0]
-		},
-		"head": {
-			"translation": [0, -2.25, -15.5],
-			"scale": [1.32813, 1.32813, 1.32813]
-		},
-		"fixed": {
-			"translation": [0, -2.25, -10],
-			"scale": [1.4375, 1.4375, 1.4375]
-		},
-		"on_shelf": {
-			"rotation": [-180, 0, -180],
-			"translation": [0, 0, 4]
-		}
-	}
+	]
 }
