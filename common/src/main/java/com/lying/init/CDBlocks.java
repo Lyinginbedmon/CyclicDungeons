@@ -85,7 +85,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> FLAME_JET			= register("flame_jet", FlameJetBlock::new);
 	public static final RegistrySupplier<Block> DART_TRAP			= register("dart_trap", DartTrapBlock::new);
 	public static final RegistrySupplier<Block> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlock::new);
-	public static final RegistrySupplier<Block> SPAWNER				= register("spawner", SpawnerActorBlock::new);
+	public static final RegistrySupplier<Block> SPAWNER				= register("spawner", s -> new SpawnerActorBlock(s.noCollision().allowsSpawning(CDBlocks::always)));
 	
 	// Hazards
 	private static final Function<Settings, Settings> stoneSettings				= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);
