@@ -9,6 +9,7 @@ import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.entity.FlameJetBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
+import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -68,7 +69,7 @@ public class GreedTrapEntry extends AbstractPlacerTrapEntry
 			.map(p -> tryPlaceJet(p, world))
 			.filter(Optional::isPresent)
 			.map(Optional::get)
-			.forEach(p -> p.processWireConnection(sensorPos, WireRecipient.SENSOR));
+			.forEach(p -> p.processWireConnection(sensorPos, WireMode.GLOBAL, WireRecipient.SENSOR));
 	}
 	
 	protected Optional<FlameJetBlockEntity> tryPlaceJet(BlockPos pos, ServerWorld world)

@@ -40,5 +40,4 @@ public record WiringComponent(Optional<BlockPos> pos, Optional<WireRecipient> ty
 	{
 		pos.ifPresent(p -> tooltip.accept(Reference.ModInfo.translate("gui", "wire_gun.target", p.toShortString())));
 	}
-
 }

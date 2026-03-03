@@ -21,6 +21,7 @@ import com.lying.init.CDBlocks;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
+import com.lying.item.WiringGunItem.WireMode;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
@@ -110,7 +111,7 @@ public class HatchPitfallTrapEntry extends TrapEntry
 		// Wire hatches to logic
 		List<TrapActorBlockEntity> hatches = IContentEntry.getTileEntities(min, max, world, CDBlockEntityTypes.TRAP_ACTOR.get());
 		hatches.forEach(hatch -> 
-			logic.processWireConnection(hatch.getPos(), WireRecipient.ACTOR));
+			logic.processWireConnection(hatch.getPos(), WireMode.GLOBAL, WireRecipient.ACTOR));
 		
 		// Place sensors and wire to logic
 		final Function<BlockPos,Double> distFunc = a -> hatches.stream()
@@ -132,7 +133,7 @@ public class HatchPitfallTrapEntry extends TrapEntry
 		
 		for(int i=0; i<count * 2; i++)
 			tryPlaceSensor(points.removeFirst(), world).ifPresent(p -> 
-				logic.processWireConnection(p, WireRecipient.SENSOR));
+				logic.processWireConnection(p, WireMode.GLOBAL, WireRecipient.SENSOR));
 	}
 	
 	protected Optional<BlockPos> tryPlaceSensor(BlockPos pos, ServerWorld world)

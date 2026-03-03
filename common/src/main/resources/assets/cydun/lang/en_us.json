@@ -53,6 +53,7 @@
 	"gui.cydun.wiring_gun.success": "Connected [%s] to [%s] successfully",
 	"gui.cydun.wiring_gun.wires_cleared.success": "Cleared %s wires from [%s]",
 	"gui.cydun.wiring_gun.wires_cleared.failed": "[%s] has no wires to clear",
+	"gui.cydun.wiring_gun.mode_change.success": "Wiring mode set to %s coordinates",
 	// Enums
 	// Keybinds
 	// Sounds

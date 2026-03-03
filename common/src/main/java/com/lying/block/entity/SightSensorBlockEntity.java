@@ -31,7 +31,7 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
-public class SightSensorBlockEntity extends BlockEntity
+public class SightSensorBlockEntity extends TrapSensorBlockEntity<SightSensorBlockEntity>
 {
 	public static final Predicate<Entity> IS_VISIBLE = EntityPredicates.EXCEPT_SPECTATOR.and(e -> !e.isInvisible());
 	
@@ -57,8 +57,6 @@ public class SightSensorBlockEntity extends BlockEntity
 	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.writeNbt(nbt, registryLookup);
-		nbt.putDouble("Range", sightRange);
-		nbt.putDouble("Radius", sightRadius);
 		
 		lookTargetPlayer.ifPresent(id -> nbt.putUuid("Target", id));
 		nbt.putDouble("LookX", lookVec.x);
@@ -69,8 +67,6 @@ public class SightSensorBlockEntity extends BlockEntity
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
-		sightRange = Math.max(1D, nbt.getDouble("Range"));
-		sightRadius = Math.max(0.5D, nbt.contains("Radius") ? nbt.getDouble("Radius") : sightRange * 0.5D);
 		
 		lookTargetPlayer = nbt.contains("Target") ? Optional.of(nbt.getUuid("Target")) : Optional.empty();
 		lookVec = new Vec3d(
@@ -78,6 +74,20 @@ public class SightSensorBlockEntity extends BlockEntity
 				nbt.getDouble("LookY"),
 				nbt.getDouble("LookZ")
 				).normalize();
+	}
+	
+	protected void storeSettings(NbtCompound nbt)
+	{
+		super.storeSettings(nbt);
+		nbt.putDouble("Range", sightRange);
+		nbt.putDouble("Radius", sightRadius);
+	}
+	
+	protected void loadSettings(NbtCompound nbt)
+	{
+		super.loadSettings(nbt);
+		sightRange = Math.max(1D, nbt.getDouble("Range"));
+		sightRadius = Math.max(0.5D, nbt.contains("Radius") ? nbt.getDouble("Radius") : sightRange * 0.5D);
 	}
 	
 	public Vec3d currentLook() { return this.lookVec; }
@@ -96,6 +106,8 @@ public class SightSensorBlockEntity extends BlockEntity
 	
 	public static <T extends BlockEntity> void tickClient(World world, BlockPos pos, BlockState state, SightSensorBlockEntity tile)
 	{
+		TrapSensorBlockEntity.tickClient(world, pos, state, tile);
+		
 		Vec3d look = tile.currentLook();
 		double adjustRate = 0.1D;
 		
@@ -111,6 +123,8 @@ public class SightSensorBlockEntity extends BlockEntity
 	
 	public static <T extends BlockEntity> void tickServer(World world, BlockPos pos, BlockState state, SightSensorBlockEntity tile)
 	{
+		TrapSensorBlockEntity.tickServer(world, pos, state, tile);
+		
 		if(tile.tickCount++%updateRate(tile) > 0)
 			return;
 		
@@ -147,7 +161,16 @@ public class SightSensorBlockEntity extends BlockEntity
 				tile.markDirty();
 			});
 		}
-		else if(tile.lookTargetPlayer.isPresent())
+	}
+	
+	public boolean shouldBeActive(SightSensorBlockEntity tile)
+	{
+		return tile.lookTargetPlayer.isPresent();
+	}
+	
+	public void runActive(SightSensorBlockEntity tile)
+	{
+		if(tile.lookTargetPlayer.isPresent())
 		{
 			// Try to look at player, if fail then stop following and set as looking in last valid direction
 			PlayerEntity player = world.getPlayerByUuid(tile.lookTargetPlayer.get());
@@ -162,7 +185,7 @@ public class SightSensorBlockEntity extends BlockEntity
 			{
 				int charge = tile.getCachedState().get(SightSensorBlock.POWER);
 				if(charge < 15)
-					world.setBlockState(tile.getPos(), state.with(SightSensorBlock.POWER, ++charge), 3);
+					world.setBlockState(tile.getPos(), tile.getCachedState().with(SightSensorBlock.POWER, ++charge), 3);
 			}
 			else
 			{

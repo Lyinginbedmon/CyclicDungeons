@@ -29,6 +29,7 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
 	{
+		min = min.add(1, 0, 1);
 		int floorY = min.getY() + Tile.TILE_SIZE;
 		
 		// Find all doors
@@ -61,17 +62,23 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 			traps.add(viablePoints.remove(rand.nextInt(viablePoints.size())));
 		
 		// Place traps
+		List<BlockPos> placedTraps = Lists.newArrayList();
 		while(!traps.isEmpty())
 		{
-			placeTrap(traps.remove(rand.nextInt(traps.size())), world, rand);
+			BlockPos place = traps.remove(rand.nextInt(traps.size())); 
+			placeTrap(place, world, rand);
+			placedTraps.add(place);
 			
 			// Traps may be chosen to be placed in areas that invalidate other traps, so re-evaluate the set each time one is placed
-			traps.removeIf(p -> !isPosViableForTrap(p, world));
+			traps.removeIf(p -> !isPosViableForTrap(p, world) || placedTraps.stream().anyMatch(p2 -> p.getManhattanDistance(p2) < minimumSpacing()));
 		}
 	}
 	
 	/** Returns how far from any avoided blocks (such as doors) the traps should be placed */
 	protected int minimumAvoiderDistance() { return 3; }
+	
+	/** Returns how far apart traps should be placed */
+	protected int minimumSpacing() { return 1; }
 	
 	/** Returns how many traps to place throughout the room */
 	protected abstract int getTrapCountForRoom(Random rand, Vector2i roomSize);

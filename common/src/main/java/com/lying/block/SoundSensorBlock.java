@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.SoundSensorBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -106,7 +107,7 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 	
 	public WireRecipient type() { return WireRecipient.SENSOR; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
 	{
 		return false;
 	}

@@ -33,13 +33,13 @@ import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.structure.pool.StructurePools;
 import net.minecraft.util.Identifier;
 
-public record Theme(Identifier registryName, EncounterSet combatEncounters, List<Identifier> trapEncounters, Map<Identifier,Identifier> tileSets, Optional<Identifier> passageTiles)
+public record Theme(Identifier registryName, EncounterSet combatEncounters, List<TrapEntry> trapEncounters, Map<Identifier,Identifier> tileSets, Optional<Identifier> passageTiles)
 {
 	// TODO Incorporate term sets and initial grammar phrases into themes
 	public static final Codec<Theme> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Theme::registryName),
 			EncounterSet.CODEC.fieldOf("monsters").forGetter(Theme::combatEncounters),
-			Identifier.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
+			TrapEntry.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
 			TileEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
 			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles)
 			).apply(instance, (id,mobs,traps,tiles,passage)-> 
@@ -63,14 +63,15 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 			.addEntry(Theme.ENCOUNTER_PILLAGER_SQUAD)
 			.addEntry(Theme.ENCOUNTER_WOLF_PACK);
 	
-	public static final List<Identifier> DEFAULT_TRAPS	= Lists.newArrayList(
-			CDTraps.ID_SIMPLE_PITFALL,
-			CDTraps.ID_LAVA_RIVER,
-			CDTraps.ID_PITFALL,
-			CDTraps.ID_BEAR_TRAP,
-			CDTraps.ID_GREED_TRAP,
-			CDTraps.ID_JUMPING_TRAP_PIT,
-			CDTraps.ID_JUMPING_TRAP_LAVA
+	public static final List<TrapEntry> DEFAULT_TRAPS	= Lists.newArrayList(
+			CDTraps.SIMPLE_PITFALL.get(),
+			CDTraps.LAVA_RIVER.get(),
+			CDTraps.PITFALL.get(),
+			CDTraps.BEAR_TRAP.get(),
+			CDTraps.GREED_TRAP.get(),
+			CDTraps.JUMPING_TRAP_PIT.get(),
+			CDTraps.JUMPING_TRAP_LAVA.get(),
+			CDTraps.MINEFIELD.get()
 			);
 	public static final Map<Identifier, Identifier> DEFAULT_TILE_SETS = Map.of(
 			CDTerms.ID_START, DefaultTileSets.ID_START,
@@ -110,8 +111,7 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 	
 	public List<TrapEntry> traps()
 	{
-		List<Identifier> names = trapEncounters.isEmpty() ? BLANK.trapEncounters() : trapEncounters;
-		return names.stream().map(CDTraps::get).filter(Optional::isPresent).map(Optional::get).toList();
+		return trapEncounters.isEmpty() ? BLANK.trapEncounters() : trapEncounters;
 	}
 	
 	public TileSet getTileSet(GrammarTerm termIn)

@@ -5,6 +5,7 @@ import org.joml.Vector3i;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.SpawnerActorBlock;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;
 
 import net.minecraft.block.BlockState;
@@ -53,16 +54,30 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 		spawnRate = nbt.getShort("SpawnRate");
 	}
 	
-	public boolean processWireConnection(BlockPos pos, WireRecipient type)
+	public boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type)
 	{
 		if(type != WireRecipient.ACTOR)
-			addWire(pos, type);
+			addWire(pos, space, type);
 		return type != WireRecipient.ACTOR;
+	}
+	
+	public TrapSpawnerLogic getLogic() { return this.logic; }
+	
+	public void setLogic(TrapSpawnerLogic logicIn)
+	{
+		this.logic = logicIn;
+		markDirty();
 	}
 	
 	public void setSpawnEntries(TrapSpawnerLogic logicIn)
 	{
 		logic = logicIn;
+		this.markDirty();
+	}
+	
+	public void setActivationType(ActivationType type)
+	{
+		this.activation = type;
 		this.markDirty();
 	}
 	

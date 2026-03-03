@@ -5,6 +5,7 @@ import java.util.Map;
 import com.lying.block.FlameJetBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;
 
 import net.minecraft.block.Block;
@@ -79,10 +80,10 @@ public class FlameJetBlockEntity extends TrapActorBlockEntity
 		setRange(nbt.getInt("Range"));
 	}
 	
-	public boolean processWireConnection(BlockPos pos, WireRecipient type)
+	public boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type)
 	{
 		if(type != WireRecipient.ACTOR)
-			addWire(pos, type);
+			addWire(pos, space, type);
 		return type != WireRecipient.ACTOR;
 	}
 	

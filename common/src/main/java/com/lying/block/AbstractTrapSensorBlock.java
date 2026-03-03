@@ -1,5 +1,7 @@
 package com.lying.block;
 
+import com.lying.item.WiringGunItem.WireMode;
+
 import net.minecraft.block.Block;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.IntProperty;
@@ -19,7 +21,7 @@ public abstract class AbstractTrapSensorBlock extends Block implements IWireable
 	
 	public WireRecipient type() { return WireRecipient.SENSOR; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
 	{
 		return false;
 	}

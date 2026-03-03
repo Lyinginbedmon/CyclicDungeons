@@ -3,6 +3,7 @@ package com.lying.block.entity;
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -54,12 +55,12 @@ public class TrapActorBlockEntity extends AbstractWireableBlockEntity
 		return hasSensors() && getSensors().stream().anyMatch(p -> IWireableBlock.getWireable(p, world).isActive(p, world));
 	}
 	
-	public boolean processWireConnection(BlockPos pos, WireRecipient type)
+	public boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type)
 	{
 		if(type != WireRecipient.SENSOR)
 			return false;
 		
-		addWire(pos, type);
+		addWire(pos, space, type);
 		return true;
 	}
 }

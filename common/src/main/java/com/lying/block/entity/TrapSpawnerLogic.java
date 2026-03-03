@@ -42,18 +42,30 @@ public class TrapSpawnerLogic
 {
 	@Nullable
 	public SpawnerEntry spawnEntry;
-	protected DataPool<SpawnerEntry> spawnPotentials;
+	protected DataPool<SpawnerEntry> spawnPotentials = DataPool.<SpawnerEntry>empty();
 	protected int[] spawnRange = new int[] {4, 4, 4};
 	
-	public TrapSpawnerLogic()
+	// FIXME Add minimum spawn range
+	
+	public TrapSpawnerLogic() { }
+	
+	public TrapSpawnerLogic(SpawnerEntry entry)
 	{
-		spawnPotentials = DataPool.<SpawnerEntry>of(SpawnerEntry.Builder.of(EntityType.PIG).count(1).build());
+		this();
+		spawnEntry = entry;
 	}
 	
 	public TrapSpawnerLogic(List<SpawnerEntry> entries)
 	{
 		this();
-		setSpawnPotentials(entries);
+		if(!entries.isEmpty())
+			if(entries.size() > 1)
+			{
+				setSpawnPotentials(entries);
+				spawnEntry = null;
+			}
+			else
+				spawnEntry = entries.get(0);
 	}
 	
 	public void readNbt(NbtCompound nbt)
@@ -78,7 +90,8 @@ public class TrapSpawnerLogic
 		nbt.putIntArray("SpawnRange", spawnRange);
 		if(this.spawnEntry != null)
 			nbt.put("SpawnData", SpawnerEntry.CODEC.encodeStart(NbtOps.INSTANCE, spawnEntry).getOrThrow(s -> new IllegalStateException("Invalid SpawnData: " + s)));
-		nbt.put("SpawnPotentials", SpawnerEntry.DATA_POOL_CODEC.encodeStart(NbtOps.INSTANCE, spawnPotentials).getOrThrow());
+		if(!spawnPotentials.isEmpty())
+			nbt.put("SpawnPotentials", SpawnerEntry.DATA_POOL_CODEC.encodeStart(NbtOps.INSTANCE, spawnPotentials).getOrThrow());
 		return nbt;
 	}
 	
@@ -92,19 +105,18 @@ public class TrapSpawnerLogic
 		world.addParticle(ParticleTypes.FLAME, d, e, f, 0.0, 0.0, 0.0);
 	}
 	
-	public void setEntityId(EntityType<?> type, @Nullable World world, Random random, BlockPos pos)
+	public TrapSpawnerLogic setEntityId(EntityType<?> type, @Nullable World world, Random random, BlockPos pos)
 	{
 		getSpawnEntry(world, random, pos).entityNBT().putString("id", Registries.ENTITY_TYPE.getId(type).toString());
+		return this;
 	}
 	
-	public void setSpawnPotentials(List<SpawnerEntry> entries)
+	public TrapSpawnerLogic setSpawnPotentials(List<SpawnerEntry> entries)
 	{
-		NbtList list = new NbtList();
-		entries.stream()
-				.map(e -> SpawnerEntry.CODEC.encodeStart(NbtOps.INSTANCE, e).getOrThrow())
-				.forEach(e -> list.add(e));
-		
-		setSpawnPotentials(list);
+		DataPool.Builder<SpawnerEntry> builder = DataPool.builder();
+		entries.forEach(builder::add);
+		this.spawnPotentials = builder.build();
+		return this;
 	}
 	
 	public void setSpawnPotentials(NbtElement list)
@@ -117,14 +129,15 @@ public class TrapSpawnerLogic
 	
 	public int getSpawnRange(Axis index) { return index.ordinal() < spawnRange.length ? spawnRange[index.ordinal()] : 0; }
 	
-	public void setSpawnRange(Vector3i vec)
+	public TrapSpawnerLogic setSpawnRange(Vector3i vec)
 	{
-		setSpawnRange(vec.x, vec.y, vec.z);
+		return setSpawnRange(vec.x, vec.y, vec.z);
 	}
 	
-	protected void setSpawnRange(int x, int y, int z)
+	public TrapSpawnerLogic setSpawnRange(int x, int y, int z)
 	{
 		this.spawnRange = new int[] {x, y, z};
+		return this;
 	}
 	
 	protected SpawnerEntry getSpawnEntry(@Nullable World world, Random random, BlockPos pos)
@@ -138,9 +151,10 @@ public class TrapSpawnerLogic
 		}
 	}
 	
-	protected void setSpawnEntry(SpawnerEntry spawnEntry)
+	public TrapSpawnerLogic setSpawnEntry(SpawnerEntry spawnEntry)
 	{
 		this.spawnEntry = spawnEntry;
+		return this;
 	}
 	
 	protected void spawnNextEntry(ServerWorld world, BlockPos spawnerPos, Box spawnArea)
@@ -360,6 +374,11 @@ public class TrapSpawnerLogic
 			{
 				entityNbt = nbt;
 				return this;
+			}
+			
+			public Builder nbt(Function<NbtCompound, NbtCompound> nbt)
+			{
+				return nbt(nbt.apply(new NbtCompound()));
 			}
 			
 			public Builder spawnRules(MobSpawnerEntry.CustomSpawnRules spawnRulesIn)

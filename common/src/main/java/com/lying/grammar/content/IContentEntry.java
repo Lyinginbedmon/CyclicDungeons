@@ -3,10 +3,14 @@ package com.lying.grammar.content;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.worldgen.theme.Theme;
+import com.mojang.serialization.JsonOps;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
@@ -15,7 +19,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 public interface IContentEntry
-{
+{	
 	public Identifier registryName();
 	
 	/** Returns true if this entry can be applied to the given room */
@@ -36,5 +40,16 @@ public interface IContentEntry
 					world.getBlockEntity(new BlockPos(x, y, z), type).ifPresent(tiles::add);
 		
 		return tiles;
+	}
+	
+	public default JsonElement toJson(JsonOps ops) { return new JsonPrimitive(registryName().toString()); }
+	
+	public default IContentEntry fromJson(JsonOps ops, JsonElement ele) { return this; }
+	
+	public default JsonObject asJsonObject()
+	{
+		JsonObject obj = new JsonObject();
+		obj.addProperty("Type", registryName().toString());
+		return obj;
 	}
 }

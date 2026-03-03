@@ -3,6 +3,7 @@ package com.lying.init;
 import java.util.function.UnaryOperator;
 
 import com.lying.CyclicDungeons;
+import com.lying.item.component.WireModeComponent;
 import com.lying.item.component.WiringComponent;
 import com.lying.reference.Reference;
 
@@ -17,6 +18,7 @@ public class CDDataComponentTypes
 	private static int tally;
 	
 	public static final RegistrySupplier<ComponentType<WiringComponent>> LINK_POS	= register("link_pos", builder -> builder.codec(WiringComponent.CODEC).packetCodec(WiringComponent.PACKET_CODEC));
+	public static final RegistrySupplier<ComponentType<WireModeComponent>> WIRE_MODE	= register("wire_mode", builder -> builder.codec(WireModeComponent.CODEC).packetCodec(WireModeComponent.PACKET_CODEC));
 	
 	private static <T extends Object> RegistrySupplier<ComponentType<T>> register(String nameIn, UnaryOperator<ComponentType.Builder<T>> builderOperator)
 	{

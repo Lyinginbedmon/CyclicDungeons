@@ -14,6 +14,7 @@ import com.lying.grammar.content.trap.BearTrapEntry;
 import com.lying.grammar.content.trap.GreedTrapEntry;
 import com.lying.grammar.content.trap.HatchPitfallTrapEntry;
 import com.lying.grammar.content.trap.JumpingTrapEntry;
+import com.lying.grammar.content.trap.LandmineTrapEntry;
 import com.lying.grammar.content.trap.LavaRiverTrapEntry;
 import com.lying.grammar.content.trap.PitfallTrapEntry;
 import com.lying.worldgen.tile.DefaultTiles;
@@ -31,7 +32,8 @@ public class CDTraps
 		ID_BEAR_TRAP		= prefix("bear_trap"),
 		ID_GREED_TRAP		= prefix("greed_trap"),
 		ID_JUMPING_TRAP_PIT		= prefix("jumping_trap_pit"),
-		ID_JUMPING_TRAP_LAVA	= prefix("jumping_trap_lava");
+		ID_JUMPING_TRAP_LAVA	= prefix("jumping_trap_lava"),
+		ID_MINEFIELD		= prefix("minefield");
 	
 	/*
 	 * Corridor trap - Long room lined with darts/spikes and pressure plates
@@ -56,6 +58,7 @@ public class CDTraps
 	public static final Supplier<TrapEntry> GREED_TRAP		= register(ID_GREED_TRAP, GreedTrapEntry::new);
 	public static final Supplier<TrapEntry> JUMPING_TRAP_PIT	= register(ID_JUMPING_TRAP_PIT, id -> new JumpingTrapEntry(id, DefaultTiles.ID_PIT));
 	public static final Supplier<TrapEntry> JUMPING_TRAP_LAVA	= register(ID_JUMPING_TRAP_LAVA, id -> new JumpingTrapEntry(id, DefaultTiles.ID_LAVA));
+	public static final Supplier<TrapEntry> MINEFIELD			= register(ID_MINEFIELD, LandmineTrapEntry::new);
 	
 	public static Supplier<TrapEntry> register(Identifier name, Function<Identifier, TrapEntry> func)
 	{

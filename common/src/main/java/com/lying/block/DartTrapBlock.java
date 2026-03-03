@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.lying.block.entity.DartTrapBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -84,9 +85,9 @@ public class DartTrapBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.DART_TRAP.get()).get().wireCount(); }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
 	{
-		return world.getBlockEntity(pos, CDBlockEntityTypes.DART_TRAP.get()).get().processWireConnection(target, type);
+		return world.getBlockEntity(pos, CDBlockEntityTypes.DART_TRAP.get()).get().processWireConnection(target, space, type);
 	}
 	
 	public void clearWires(BlockPos pos, World world)

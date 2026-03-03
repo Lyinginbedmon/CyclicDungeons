@@ -2,6 +2,7 @@ package com.lying.block;
 
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.BlockState;
@@ -38,10 +39,10 @@ public class TrapLogicBlock extends BlockWithEntity implements IWireableBlock
 	
 	public WireRecipient type() { return WireRecipient.LOGIC; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
 	{
 		TrapLogicBlockEntity tile = world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_LOGIC.get()).get();
-		return type != WireRecipient.LOGIC && tile.processWireConnection(target, type);
+		return type != WireRecipient.LOGIC && tile.processWireConnection(target, space, type);
 	}
 	
 	public void clearWires(BlockPos pos, World world)

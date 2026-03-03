@@ -11,6 +11,7 @@ import com.lying.block.SpikeTrapBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDLoggers;
+import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SideShapeType;
@@ -75,6 +76,6 @@ public class BearTrapEntry extends AbstractPlacerTrapEntry
 		
 		// Wire spikes to sensor
 		for(BlockPos spike : spikes)
-			world.getBlockEntity(spike, CDBlockEntityTypes.SPIKE_TRAP.get()).ifPresent(t -> t.processWireConnection(pos, WireRecipient.SENSOR));
+			world.getBlockEntity(spike, CDBlockEntityTypes.SPIKE_TRAP.get()).ifPresent(t -> t.processWireConnection(pos, WireMode.GLOBAL, WireRecipient.SENSOR));
 	}
 }

@@ -2,6 +2,7 @@ package com.lying.block;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.Codec;
 
 import io.netty.buffer.ByteBuf;
@@ -28,7 +29,7 @@ public interface IWireableBlock
 		return (IWireableBlock)world.getBlockState(pos).getBlock();
 	}
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world);
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world);
 	
 	public WireRecipient type();
 	

@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -39,9 +40,9 @@ public abstract class AbstractTrapActorBlock extends BlockWithEntity implements 
 	
 	public WireRecipient type() { return WireRecipient.ACTOR; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
 	{
-		return world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).get().processWireConnection(target, type);
+		return world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).get().processWireConnection(target, space, type);
 	}
 	
 	public void clearWires(BlockPos pos, World world)

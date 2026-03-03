@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.ProximitySensorBlockEntity;
 import com.lying.init.CDBlocks;
+import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -94,7 +95,7 @@ public class ProximitySensorBlock extends BlockWithEntity implements IWireableBl
 	
 	protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world) { return false; }
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world) { return false; }
 
 	@Override
 	public WireRecipient type() { return WireRecipient.SENSOR; }

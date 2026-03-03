@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.SightSensorBlockEntity;
 import com.lying.init.CDBlocks;
+import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -58,7 +59,7 @@ public class SightSensorBlock extends BlockWithEntity implements IWireableBlock
 	
 	public int activity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
 	{
 		return false;
 	}

@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import com.google.common.collect.Lists;
 import com.lying.grammar.content.BattleRoomContent;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
+import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grammar.content.battle.SquadBattleEntry.SquadEntry;
 
 import net.minecraft.entity.EntityType;
@@ -59,12 +60,12 @@ public class DefaultThemes
 			List.of(),
 			Map.of());
 	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
+	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<TrapEntry> traps, Map<Identifier, Identifier> tileSets)
 	{
 		return register(id, combat, traps, tileSets, Optional.empty());
 	}
 	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)
+	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<TrapEntry> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)
 	{
 		final Supplier<Theme> entry = () -> new Theme(id, combat, traps, tileSets, passageTileSet);
 		THEMES.add(entry);

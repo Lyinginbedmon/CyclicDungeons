@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.lying.block.entity.SpawnerActorBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -106,9 +107,9 @@ public class SpawnerActorBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.SPAWNER.get()).get().wireCount(); }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, BlockPos pos, World world)
+	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
 	{
-		return world.getBlockEntity(pos, CDBlockEntityTypes.SPAWNER.get()).get().processWireConnection(target, type);
+		return world.getBlockEntity(pos, CDBlockEntityTypes.SPAWNER.get()).get().processWireConnection(target, space, type);
 	}
 	
 	public void clearWires(BlockPos pos, World world)
