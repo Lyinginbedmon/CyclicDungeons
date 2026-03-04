@@ -2,17 +2,18 @@ package com.lying.grammar.content.trap;
 
 import java.util.Optional;
 
-import org.joml.Vector2i;
-
 import com.lying.block.FlameJetBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.entity.FlameJetBlockEntity;
+import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 import com.lying.item.WiringGunItem.WireMode;
+import com.lying.reference.Reference;
+import com.lying.utility.BlockPredicate;
+import com.lying.utility.BlockPredicate.BlockFlags;
+import com.lying.utility.BlockPredicate.SubPredicate;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.server.world.ServerWorld;
@@ -21,40 +22,26 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 
-public class GreedTrapEntry extends AbstractPlacerTrapEntry
+public class GreedTrap extends AbstractPlacerTrap
 {
-	public GreedTrapEntry(Identifier idIn)
-	{
-		super(idIn);
-	}
+	public static final Identifier ID	= Reference.ModInfo.prefix("greed");
 	
-	protected int getTrapCountForRoom(Random rand, Vector2i roomSize) { return 1; }
+	public GreedTrap(Identifier idIn)
+	{
+		super(idIn, new RoomNumberProvider.Absolute(1), BlockPredicate.Builder.create()
+			.child(new SubPredicate(BlockPos.ORIGIN, BlockPredicate.Builder.create().invert().addFlag(BlockFlags.AIR).build()))
+			.child(new SubPredicate(BlockPos.ORIGIN.up(), BlockPredicate.Builder.create().invert().addFlag(BlockFlags.SOLID).build()))
+			.build(), 1, 3);
+	}
 	
 	protected boolean isPosViableForTrap(BlockPos pos, ServerWorld world)
 	{
-		// Check 1: Could a chest here be opened
-		if(!world.isAir(pos) || ChestBlock.isChestBlocked(world, pos))
+		if(!super.isPosViableForTrap(pos, world))
 			return false;
 		
 		// Check 2: Could a player stand next to this space
 		// Check 3: Is the ceiling above an adjacent space solid
-		return Direction.Type.HORIZONTAL.stream().map(pos::offset).anyMatch(p -> isPlayerAccessible(p, world));
-	}
-	
-	protected static boolean isPlayerAccessible(BlockPos pos, ServerWorld world)
-	{
-		if(!world.isAir(pos))
-			return false;
-		else if(!world.isAir(pos.up()))
-			return false;
-		
-		Optional<BlockPos> trace = getCeilingAbove(pos, world);
-		if(trace.isEmpty())
-			return false;
-		
-		BlockPos hit = trace.get();
-		BlockState hitState = world.getBlockState(hit);
-		return Block.isFaceFullSquare(hitState.getCollisionShape(world, hit), Direction.DOWN);
+		return Direction.Type.HORIZONTAL.stream().map(pos::offset).anyMatch(p -> BlockFlags.PLAYER_ACCESSIBLE.test(world, pos, world.getBlockState(p)));
 	}
 	
 	protected void placeTrap(BlockPos pos, ServerWorld world, Random rand)
@@ -65,7 +52,7 @@ public class GreedTrapEntry extends AbstractPlacerTrapEntry
 		
 		Direction.Type.HORIZONTAL.stream()
 			.map(pos::offset)
-			.filter(p -> isPlayerAccessible(p, world))
+			.filter(p -> BlockFlags.PLAYER_ACCESSIBLE.test(world, p, world.getBlockState(p)))
 			.map(p -> tryPlaceJet(p, world))
 			.filter(Optional::isPresent)
 			.map(Optional::get)
@@ -85,19 +72,5 @@ public class GreedTrapEntry extends AbstractPlacerTrapEntry
 		Optional<FlameJetBlockEntity> jet = world.getBlockEntity(jetPos, CDBlockEntityTypes.FLAME_JET.get());
 		jet.ifPresent(j -> j.setRange(jetPos.getY() - pos.getY()));
 		return jet;
-	}
-	
-	public static Optional<BlockPos> getCeilingAbove(BlockPos pos, ServerWorld world) { return getCeilingAbove(pos, world, 10); }
-	
-	public static Optional<BlockPos> getCeilingAbove(BlockPos pos, ServerWorld world, int maxRange)
-	{
-		for(int i=1; i<maxRange; i++)
-		{
-			BlockPos point = pos.offset(Direction.UP, i);
-			BlockState state = world.getBlockState(point);
-			if(Block.isFaceFullSquare(state.getCollisionShape(world, point), Direction.DOWN))
-				return Optional.of(point);
-		}
-		return Optional.empty();
 	}
 }

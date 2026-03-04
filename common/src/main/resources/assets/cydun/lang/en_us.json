@@ -46,6 +46,7 @@
 	"gui.cydun.dungeon_data": "%s:%s, %s errors",
 	"gui.cydun.dungeon_data_long": "%s:%s, %s errors (%s c, %s i, %s t)",
 	"gui.cydun.wiring_gun.target": "Target: %s",
+	"gui.cydun.wiring_gun.xyz_mode": "Coordinate mode: %s",
 	"gui.cydun.wiring_gun.failed": "[%s] is not wireable",
 	"gui.cydun.wiring_gun.start": "Started wire from [%s]",
 	"gui.cydun.wiring_gun.cancel": "Wiring cancelled",
@@ -55,6 +56,8 @@
 	"gui.cydun.wiring_gun.wires_cleared.failed": "[%s] has no wires to clear",
 	"gui.cydun.wiring_gun.mode_change.success": "Wiring mode set to %s coordinates",
 	// Enums
+	"enum.cydun.xyz_mode.global": "Absolute",
+	"enum.cydun.xyz_mode.local": "Relative",
 	// Keybinds
 	// Sounds
 	"sound.cydun.wiring_gun": "Wiring Gun fires"

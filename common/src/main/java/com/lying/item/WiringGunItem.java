@@ -9,6 +9,7 @@ import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.item.component.WireModeComponent;
 import com.lying.item.component.WiringComponent;
+import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 
 import io.netty.buffer.ByteBuf;
@@ -123,7 +124,7 @@ public class WiringGunItem extends Item
 					// Cycle gun setting
 					final WireMode mode2 = mode.cycle();
 					stack.set(CDDataComponentTypes.WIRE_MODE.get(), new WireModeComponent(mode2));
-					context.getPlayer().sendMessage(translate("gui", "wiring_gun.mode_change.success", mode2.name()), false);
+					context.getPlayer().sendMessage(translate("gui", "wiring_gun.mode_change.success", mode2.translate()), false);
 					return ActionResult.SUCCESS;
 				}
 			}
@@ -173,5 +174,7 @@ public class WiringGunItem extends Item
 		{
 			return WireMode.values()[(ordinal() + 1)%WireMode.values().length];
 		}
+		
+		public MutableText translate() { return Reference.ModInfo.translate("enum", "xyz_mode."+asString()); }
 	}
 }

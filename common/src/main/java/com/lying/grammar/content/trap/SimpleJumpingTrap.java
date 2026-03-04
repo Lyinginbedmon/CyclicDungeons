@@ -6,13 +6,15 @@ import java.util.Optional;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileConditions;
 import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
+import com.lying.reference.Reference;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
@@ -20,6 +22,7 @@ import com.lying.worldgen.tile.TilePredicate;
 import com.lying.worldgen.tile.condition.Condition;
 import com.lying.worldgen.tile.condition.IsAnyOf;
 import com.lying.worldgen.tile.condition.NearBox;
+import com.mojang.serialization.JsonOps;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -28,17 +31,42 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 
-public class JumpingTrapEntry extends TrapEntry
+public class SimpleJumpingTrap extends Trap
 {
+	public static final Identifier ID	= Reference.ModInfo.prefix("simple_jumping");
 	private static final Optional<Tile> FLOOR = CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR);
-	private final Identifier fillTile;
+	private Identifier fillTile = CDTiles.ID_STONE;
 	
 	private static final Condition IS_FLOOR = IsAnyOf.HasTag.of(CDTileTags.ID_SOLID_FLOORING);
 	
-	public JumpingTrapEntry(Identifier idIn, Identifier fillTileID)
+	public SimpleJumpingTrap(Identifier idIn)
+	{
+		super(idIn);
+	}
+	
+	protected SimpleJumpingTrap(Identifier idIn, Identifier fillTileID)
 	{
 		super(idIn);
 		fillTile = fillTileID;
+	}
+	
+	public static SimpleJumpingTrap of(Identifier tileId)
+	{
+		return new SimpleJumpingTrap(ID, tileId);
+	}
+	
+	public JsonElement toJson(JsonOps ops)
+	{
+		JsonObject obj = asJsonObject();
+		obj.addProperty("Hazard", fillTile.toString());
+		return obj;
+	}
+	
+	public Trap fromJson(JsonOps ops, JsonElement ele)
+	{
+		JsonObject obj = ele.getAsJsonObject();
+		fillTile = Identifier.of(obj.get("Hazard").getAsString());
+		return this;
 	}
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return CDTiles.instance().get(fillTile).isPresent() && FLOOR.isPresent(); }

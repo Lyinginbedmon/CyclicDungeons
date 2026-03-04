@@ -3,6 +3,7 @@ package com.lying.item.component;
 import java.util.function.Consumer;
 
 import com.lying.item.WiringGunItem.WireMode;
+import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -20,6 +21,6 @@ public record WireModeComponent(WireMode mode) implements TooltipAppender
 	
 	public void appendTooltip(TooltipContext context, Consumer<Text> tooltip, TooltipType type)
 	{
-		tooltip.accept(Text.of(mode.name()));
+		tooltip.accept(Reference.ModInfo.translate("gui", "wiring_gun.xyz_mode", mode.translate()));
 	}
 }

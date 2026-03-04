@@ -14,7 +14,6 @@ import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.IContentEntry;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
@@ -22,6 +21,7 @@ import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
 import com.lying.item.WiringGunItem.WireMode;
+import com.lying.reference.Reference;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
@@ -34,11 +34,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 
-public class HatchPitfallTrapEntry extends TrapEntry
+public class HatchPitfallTrap extends Trap
 {
+	public static final Identifier ID	= Reference.ModInfo.prefix("hatch_pitfall");
 	private static final Optional<Tile> HATCH = CDTiles.instance().get(DefaultTiles.ID_HATCH);
 	
-	public HatchPitfallTrapEntry(Identifier name)
+	public HatchPitfallTrap(Identifier name)
 	{
 		super(name);
 	}

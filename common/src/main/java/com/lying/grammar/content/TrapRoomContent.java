@@ -2,29 +2,18 @@ package com.lying.grammar.content;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
-import java.util.Optional;
-
-import org.jetbrains.annotations.NotNull;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.lying.blueprint.BlueprintRoom;
+import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
-import com.lying.init.CDTraps;
+import com.lying.grammar.content.trap.Trap;
+import com.lying.grid.BlueprintTileGrid;
 import com.lying.worldgen.theme.Theme;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult.Type;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.BlockStateRaycastContext;
 
 public class TrapRoomContent extends RegistryRoomContent<TrapEntry>
 {
@@ -40,66 +29,19 @@ public class TrapRoomContent extends RegistryRoomContent<TrapEntry>
 		theme.traps().forEach(trap -> register(trap.registryName(), trap));
 	}
 	
-	public static abstract class TrapEntry implements IContentEntry
+	public static record TrapEntry(Identifier registryName, Trap type) implements IContentEntry
 	{
-		public static final Codec<TrapEntry> CODEC = Codec.of(TrapEntry::encode, TrapEntry::decode);
+		public static final Codec<TrapEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+				Identifier.CODEC.fieldOf("Name").forGetter(TrapEntry::registryName),
+				Trap.CODEC.fieldOf("Type").forGetter(TrapEntry::type)
+				).apply(instance, TrapEntry::new));
 		
-		private final Identifier id;
+		/** Returns true if this entry can be applied to the given room */
+		public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return type.isApplicableTo(room, meta, theme); }
 		
-		protected TrapEntry(Identifier idIn)
-		{
-			id = idIn;
-		}
+		/** Applied when the entry is selected, before the room goes through tile generation */
+		public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world) { type.prepare(room, tileMap, world); }
 		
-		public Identifier registryName() { return id; }
-		
-		@SuppressWarnings("unchecked")
-		private static <T> DataResult<T> encode(final TrapEntry func, final DynamicOps<T> ops, final T prefix)
-		{
-			return ops == JsonOps.INSTANCE ? (DataResult<T>)DataResult.success(func.toJson(JsonOps.INSTANCE)) : DataResult.error(() -> "Storing trap entry as NBT is not supported");
-		}
-		
-		private static <T> DataResult<Pair<TrapEntry, T>> decode(final DynamicOps<T> ops, final T input)
-		{
-			if(ops != JsonOps.INSTANCE)
-				return DataResult.error(() -> "Loading trap entry from NBT is not supported");
-			
-			Optional<TrapEntry> entry = createFromJson(JsonOps.INSTANCE, (JsonElement)input);
-			return entry.isPresent() ? DataResult.success(Pair.of(entry.get(), input)) : DataResult.error(() -> "Failed to load trap entry from JSON");
-		}
-		
-		@NotNull
-		public static Optional<TrapEntry> createFromJson(JsonOps ops, JsonElement ele)
-		{
-			if(ele.isJsonPrimitive())
-				return CDTraps.get(Identifier.of(ele.getAsString()));
-			else
-			{
-				JsonObject obj = ele.getAsJsonObject();
-				Optional<TrapEntry> entry = CDTraps.get(Identifier.of(obj.get("Type").getAsString()));
-				if(entry.isPresent())
-				{
-					TrapEntry ent = entry.get();
-					ent.fromJson(ops, ele);
-					return Optional.of(ent);
-				}
-			}
-			return Optional.empty();
-		}
-		
-		public static Optional<BlockPos> getCeilingAbove(BlockPos pos, ServerWorld world) { return getCeilingAbove(pos, world, 10); }
-		
-		// FIXME Ensure raytrace actually succeeds
-		public static Optional<BlockPos> getCeilingAbove(BlockPos pos, ServerWorld world, int maxRange)
-		{
-			BlockPos top = pos.offset(Direction.UP, maxRange);
-			BlockStateRaycastContext context = new BlockStateRaycastContext(
-					new Vec3d(pos.getX(), pos.getY(), pos.getZ()).add(0.5D),
-					new Vec3d(top.getX(), top.getY(), top.getZ()).add(0.5D),
-					s -> s.isAir());
-			
-			BlockHitResult trace = world.raycast(context);
-			return trace.getType() != Type.BLOCK ? Optional.empty() : Optional.of(trace.getBlockPos());
-		}
+		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta) { type.apply(min, max, world, meta); }
 	}
 }

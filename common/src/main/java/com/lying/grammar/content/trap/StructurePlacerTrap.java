@@ -3,13 +3,13 @@ package com.lying.grammar.content.trap;
 import java.util.List;
 import java.util.Optional;
 
-import org.joml.Vector2i;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.lying.grammar.content.IContentEntry;
+import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.init.CDLoggers;
+import com.lying.reference.Reference;
+import com.lying.utility.BlockPredicate;
 import com.lying.utility.DebugLogger;
 import com.mojang.serialization.JsonOps;
 
@@ -30,32 +30,34 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 
-public class StructurePlacerTrapEntry extends AbstractPlacerTrapEntry
+public class StructurePlacerTrap extends AbstractPlacerTrap
 {
+	public static final Identifier ID	= Reference.ModInfo.prefix("structure_placer");
 	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	private RegistryKey<StructurePool> structureKey = StructurePools.ofVanilla("placer_trap");
 	private BlockPos offset = BlockPos.ORIGIN;
-	private int avoiderDistance = 3;
-	private int spacing = 1;
 	
-	public StructurePlacerTrapEntry(Identifier idIn)
+	public StructurePlacerTrap(Identifier idIn)
 	{
 		super(idIn);
 	}
 	
-	public StructurePlacerTrapEntry(Identifier idIn, Identifier keyIn, BlockPos offsetIn)
+	protected StructurePlacerTrap(Identifier idIn, RoomNumberProvider countFunc, BlockPredicate viability, int spacing, int avoidance, Identifier keyIn, BlockPos offsetIn)
 	{
-		this(idIn);
+		super(idIn, countFunc, viability, spacing, avoidance);
 		structureKey = StructurePools.of(keyIn);
 		offset = offsetIn;
+	}
+	
+	public static StructurePlacerTrap of(Identifier keyIn, BlockPos offsetIn, int spacing, int avoidance, RoomNumberProvider countFunc, BlockPredicate viability)
+	{
+		return new StructurePlacerTrap(ID, countFunc, viability, spacing, avoidance, keyIn, offsetIn);
 	}
 	
 	public JsonElement toJson(JsonOps ops)
 	{
 		JsonObject obj = asJsonObject();
 		obj.addProperty("Structure", structureKey.getValue().toString());
-		obj.addProperty("Spacing", spacing);
-		obj.addProperty("Avoidance", avoiderDistance);
 		
 		JsonArray off = new JsonArray();
 		off.add(offset.getX());
@@ -66,33 +68,16 @@ public class StructurePlacerTrapEntry extends AbstractPlacerTrapEntry
 		return obj;
 	}
 	
-	public IContentEntry fromJson(JsonOps ops, JsonElement ele)
+	protected Trap fromJson(JsonOps ops, JsonElement ele)
 	{
+		super.fromJson(ops, ele);
 		JsonObject obj = ele.getAsJsonObject();
 		structureKey = StructurePools.of(Identifier.of(obj.get("Structure").getAsString()));
-		spacing = obj.get("Spacing").getAsInt();
-		avoiderDistance = obj.get("Avoidance").getAsInt();
 		
 		JsonArray off = obj.getAsJsonArray("Offset");
 		offset = new BlockPos(off.get(0).getAsInt(), off.get(1).getAsInt(), off.get(2).getAsInt());
 		
 		return this;
-	}
-	
-	protected int minimumAvoiderDistance() { return avoiderDistance; }
-	
-	protected int minimumSpacing() { return spacing; }
-	
-	protected int getTrapCountForRoom(Random rand, Vector2i roomSize)
-	{
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
-	protected boolean isPosViableForTrap(BlockPos pos, ServerWorld world)
-	{
-		// TODO Auto-generated method stub
-		return false;
 	}
 	
 	protected void placeTrap(BlockPos pos, ServerWorld world, Random rand)
@@ -107,9 +92,14 @@ public class StructurePlacerTrapEntry extends AbstractPlacerTrapEntry
 			return;
 		}
 		
+		placeStructure(pos, poolOpt.get(), offset, world, rand);
+	}
+	
+	protected static void placeStructure(BlockPos pos, StructurePool pool, BlockPos offset, ServerWorld world, Random rand)
+	{
 		StructureTemplateManager structureManager = world.getStructureTemplateManager();
 		BlockPos place = pos.add(offset);
-		StructurePoolElement element = poolOpt.get().getRandomElement(rand);
+		StructurePoolElement element = pool.getRandomElement(rand);
 		PoolStructurePiece piece = new PoolStructurePiece(
 				structureManager,
 				element,
@@ -128,5 +118,4 @@ public class StructurePlacerTrapEntry extends AbstractPlacerTrapEntry
 				place, 
 				false);
 	}
-
 }

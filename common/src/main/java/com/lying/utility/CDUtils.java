@@ -3,6 +3,7 @@ package com.lying.utility;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -10,8 +11,12 @@ import org.jetbrains.annotations.Nullable;
 import com.google.common.collect.Lists;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 
 public class CDUtils
@@ -83,5 +88,34 @@ public class CDUtils
 				(float)(a.x * cos - a.y * sin),
 				(float)(a.x * sin + a.y * cos)
 				);
+	}
+	
+	/** Returns a pair containing an optional for:<br> * the input list (if it is present and greater than size 2)<br>* the only value in that list (if it is present and of size 1) */
+	public static <T extends Object> Pair<Optional<List<T>>, Optional<T>> listOrSolo(Optional<List<T>> primary)
+	{
+		List<T> list = primary.orElse(Lists.newArrayList());
+		Optional<List<T>> a = list.size() < 2 ? Optional.empty() : primary;
+		Optional<T> b = list.size() == 1 ? Optional.of(list.get(0)) : Optional.empty();
+		return Pair.of(a, b);
+	}
+	
+	/** Returns an optional of the given list or an empty optional if it is empty */
+	public static <T extends Object> Optional<List<T>> orEmpty(List<T> list)
+	{
+		return list.isEmpty() ? Optional.empty() : Optional.of(list);
+	}
+	
+	public static Optional<BlockPos> getCeilingAbove(BlockPos pos, ServerWorld world) { return getCeilingAbove(pos, world, 10); }
+	
+	public static Optional<BlockPos> getCeilingAbove(BlockPos pos, ServerWorld world, int maxRange)
+	{
+		for(int i=1; i<maxRange; i++)
+		{
+			BlockPos point = pos.offset(Direction.UP, i);
+			BlockState state = world.getBlockState(point);
+			if(Block.isFaceFullSquare(state.getCollisionShape(world, point), Direction.DOWN))
+				return Optional.of(point);
+		}
+		return Optional.empty();
 	}
 }

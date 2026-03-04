@@ -6,11 +6,14 @@ import java.util.function.Predicate;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonObject;
 import com.lying.data.CDTags;
 import com.lying.grammar.RoomMetadata;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.init.CDLoggers;
+import com.lying.utility.BlockPredicate;
 import com.lying.worldgen.tile.Tile;
+import com.mojang.serialization.JsonOps;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.tag.BlockTags;
@@ -20,11 +23,44 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 
 /** Describes a trap entry consisting of a small trap placed one or more times throughout a room after tile generation */
-public abstract class AbstractPlacerTrapEntry extends TrapEntry
+public abstract class AbstractPlacerTrap extends Trap
 {
-	public AbstractPlacerTrapEntry(Identifier idIn)
+	protected RoomNumberProvider trapCounter = new RoomNumberProvider.Absolute(1);
+	protected BlockPredicate viabilityCheck = BlockPredicate.Builder.create().build();
+	protected int avoiderDistance = 3;
+	protected int spacing = 1;
+	
+	protected AbstractPlacerTrap(Identifier idIn)
 	{
 		super(idIn);
+	}
+	
+	protected AbstractPlacerTrap(Identifier idIn, RoomNumberProvider providerIn, BlockPredicate viabilityIn, int spacingIn, int avoidanceIn)
+	{
+		super(idIn);
+		trapCounter = providerIn;
+		viabilityCheck = viabilityIn;
+		spacing = spacingIn;
+		avoiderDistance = avoidanceIn;
+	}
+	
+	public JsonObject asJsonObject()
+	{
+		JsonObject obj = super.asJsonObject();
+		obj.add("Predicate", viabilityCheck.toJson());
+		obj.add("Count", trapCounter.toJson());
+		obj.addProperty("Spacing", spacing);
+		obj.addProperty("Avoidance", avoiderDistance);
+		return obj;
+	}
+	
+	protected Trap fromJson(JsonOps ops, JsonObject obj)
+	{
+		viabilityCheck = BlockPredicate.fromJson(obj.getAsJsonObject("Predicate"));
+		trapCounter = RoomNumberProvider.get(obj.get("Count"));
+		spacing = obj.get("Spacing").getAsInt();
+		avoiderDistance = obj.get("Avoidance").getAsInt();
+		return this;
 	}
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
@@ -75,16 +111,16 @@ public abstract class AbstractPlacerTrapEntry extends TrapEntry
 	}
 	
 	/** Returns how far from any avoided blocks (such as doors) the traps should be placed */
-	protected int minimumAvoiderDistance() { return 3; }
+	protected final int minimumAvoiderDistance() { return avoiderDistance; }
 	
 	/** Returns how far apart traps should be placed */
-	protected int minimumSpacing() { return 1; }
+	protected final int minimumSpacing() { return spacing; }
 	
 	/** Returns how many traps to place throughout the room */
-	protected abstract int getTrapCountForRoom(Random rand, Vector2i roomSize);
+	protected final int getTrapCountForRoom(Random rand, Vector2i roomSize) { return trapCounter.getCount(rand, roomSize); }
 	
 	/** Returns true if the position is valid for trap placement */
-	protected abstract boolean isPosViableForTrap(BlockPos pos, ServerWorld world);
+	protected boolean isPosViableForTrap(BlockPos pos, ServerWorld world) { return viabilityCheck.applyTo(pos, world); }
 	
 	/** Generates the trap in the world */
 	protected abstract void placeTrap(BlockPos pos, ServerWorld world, Random rand);

@@ -6,9 +6,9 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTiles;
+import com.lying.reference.Reference;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
@@ -18,22 +18,23 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
-public class LavaRiverTrapEntry extends TrapEntry
+public class PitfallTrap extends Trap
 {
-	private static final Optional<Tile> LAVA_TILE = CDTiles.instance().get(DefaultTiles.ID_LAVA_RIVER);
+	public static final Identifier ID	= Reference.ModInfo.prefix("pitfall");
+	private static final Optional<Tile> PIT = CDTiles.instance().get(DefaultTiles.ID_PITFALL);
 	
-	public LavaRiverTrapEntry(Identifier name)
+	public PitfallTrap(Identifier name)
 	{
 		super(name);
 	}
 	
-	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return LAVA_TILE.isPresent() && room.hasChildren(); }
+	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return PIT.isPresent(); }
 	
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world)
 	{
 		List<BlockPos> blanks = Lists.newArrayList();
 		blanks.addAll(tileMap.getBoundaries(List.of(Direction.DOWN)).stream()
-				.filter(pos -> LAVA_TILE.get().canExistAt(pos, tileMap))
+				.filter(pos -> PIT.get().canExistAt(pos, tileMap))
 				.filter(pos -> 
 				{
 					Optional<Tile> tileAt = tileMap.get(pos);
@@ -44,17 +45,21 @@ public class LavaRiverTrapEntry extends TrapEntry
 		if(blanks.isEmpty())
 			return;
 		
-		final int count = (int)((float)blanks.size() * 0.70F);
-		for(int i=0; i<count; i++)
-		{
-			if(blanks.isEmpty())
-				break;
-			else
-			{
-				tileMap.put(blanks.remove(world.random.nextInt(blanks.size())), LAVA_TILE.get());
-				blanks.removeIf(pos -> !LAVA_TILE.get().canExistAt(pos, tileMap));
-			}
-		}
+		BlockPos start = blanks.remove(world.random.nextInt(blanks.size()));
+		recursivePlacePit(start, tileMap);
+		
+		// TODO Place treasure at position away from entryway
+	}
+	
+	protected void recursivePlacePit(BlockPos pos, BlueprintTileGrid tileMap)
+	{
+		tileMap.put(pos, PIT.get());
+		Direction.Type.HORIZONTAL.stream()
+			.map(pos::offset)
+			.filter(tileMap::contains)
+			.filter(p -> tileMap.get(p).get().isBlank())
+			.filter(p -> PIT.get().canExistAt(p, tileMap))
+			.forEach(p -> recursivePlacePit(p, tileMap));
 	}
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta) { }
