@@ -3,6 +3,8 @@
 	// Debug
 	"debug.cydun.room": "%s %s (%s)",
 	// Entities
+	"entity.cydun.rabid_wolf": "Rabid Wolf",
+	"entity.cydun.rabid_polar_bear": "Rabid Polar Bear",
 	// Blocks
 	"block.cydun.trap_logic": "Trap Logic Block",
 	"block.cydun.trap_logic_decoy": "Decoy Trap Logic Block",
@@ -39,6 +41,8 @@
 	"block.cydun.spawner": "Actuated Spawner",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",
+	"item.cydun.rabid_wolf_spawn_egg": "Rabid Wolf Egg",
+	"item.cydun.rabid_polar_bear_spawn_egg": "Rabid Polar Bear Egg",
 	// Item tags
 	// Status effects
 	// Commands
@@ -60,5 +64,6 @@
 	"enum.cydun.xyz_mode.local": "Relative",
 	// Keybinds
 	// Sounds
-	"sound.cydun.wiring_gun": "Wiring Gun fires"
+	"sound.cydun.wiring_gun": "Wiring Gun fires",
+	"sound.cydun.actuated_spawner_spawn": "Actuated Spawner spawns something..."
 }

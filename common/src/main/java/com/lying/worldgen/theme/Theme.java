@@ -75,13 +75,32 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 	public static final List<TrapEntry> DEFAULT_TRAPS	= Lists.newArrayList(
 			new TrapEntry(prefix("hatch_pitfall"), CDTraps.SIMPLE_PITFALL.get()),
 			new TrapEntry(prefix("pitfall"), CDTraps.PITFALL.get()),
-			new TrapEntry(prefix("greed"), CDTraps.GREED.get()),
-			new TrapEntry(prefix("bear_trap"), CDTraps.BEAR_TRAP.get()),
+//			new TrapEntry(prefix("greed"), CDTraps.GREED.get()),
 			new TrapEntry(prefix("lava_river"), TileTrap.of(DefaultTiles.ID_LAVA_RIVER, false)),
 			new TrapEntry(prefix("pit_jumping"), SimpleJumpingTrap.of(DefaultTiles.ID_PIT)),
 			new TrapEntry(prefix("lava_jumping"), SimpleJumpingTrap.of(DefaultTiles.ID_LAVA)),
 			new TrapEntry(prefix("minefield"), StructurePlacerTrap.of(
 					prefix("trap/landmine"), 
+					new BlockPos(0, -2, 0), 
+					4, 
+					3, 
+					new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
+					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
+						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
+						.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
+						.build())),
+			new TrapEntry(prefix("beartraps"), StructurePlacerTrap.of(
+					prefix("trap/beartrap"), 
+					new BlockPos(0, -2, 0), 
+					4, 
+					3, 
+					new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
+					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
+						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
+						.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
+						.build())),
+			new TrapEntry(prefix("bear_traps"), StructurePlacerTrap.of(
+					prefix("trap/bear_trap"), 
 					new BlockPos(0, -2, 0), 
 					4, 
 					3, 

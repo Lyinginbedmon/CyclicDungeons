@@ -7,8 +7,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
-import com.lying.grammar.content.trap.BearTrap;
-import com.lying.grammar.content.trap.GreedTrap;
 import com.lying.grammar.content.trap.HatchPitfallTrap;
 import com.lying.grammar.content.trap.PitfallTrap;
 import com.lying.grammar.content.trap.SatelliteStructurePlacerTrap;
@@ -42,8 +40,7 @@ public class CDTraps
 	// Non-configurable
 	public static final Supplier<Trap> SIMPLE_PITFALL	= register(HatchPitfallTrap.ID, HatchPitfallTrap::new);
 	public static final Supplier<Trap> PITFALL			= register(PitfallTrap.ID, PitfallTrap::new);
-	public static final Supplier<Trap> GREED			= register(GreedTrap.ID, GreedTrap::new);
-	public static final Supplier<Trap> BEAR_TRAP		= register(BearTrap.ID, BearTrap::new);
+//	public static final Supplier<Trap> GREED			= register(GreedTrap.ID, GreedTrap::new);
 	
 	// Configurable
 	public static final Supplier<Trap> STRUCTURE_PLACER		= register(StructurePlacerTrap.ID, StructurePlacerTrap::new);

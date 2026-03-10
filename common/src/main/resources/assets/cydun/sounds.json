@@ -4,5 +4,16 @@
 		"sounds": [
 			"cydun:wiring_gun"
 		]
+	},
+	"actuated_spawner_spawn": {
+		"subtitle": "sound.cydun.actuated_spawner_spawn",
+		"sounds": [
+			"cydun:actuated_spawner_spawn_01",
+			"cydun:actuated_spawner_spawn_02",
+			"cydun:actuated_spawner_spawn_03",
+			"cydun:actuated_spawner_spawn_04",
+			"cydun:actuated_spawner_spawn_05",
+			"cydun:actuated_spawner_spawn_06"
+		]
 	}
 }

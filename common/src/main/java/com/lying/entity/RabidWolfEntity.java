@@ -1,7 +1,11 @@
 package com.lying.entity;
 
+import java.util.UUID;
+
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.ActiveTargetGoal;
 import net.minecraft.entity.ai.goal.AttackWithOwnerGoal;
 import net.minecraft.entity.ai.goal.FollowOwnerGoal;
@@ -21,15 +25,15 @@ import net.minecraft.entity.passive.TurtleEntity;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.tag.DamageTypeTags;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
-import net.minecraft.world.WorldView;
 
 public class RabidWolfEntity extends WolfEntity 
 {
 	public RabidWolfEntity(EntityType<? extends WolfEntity> entityType, World world)
 	{
 		super(entityType, world);
+		this.experiencePoints = 5;
 	}
 	
 	protected void initGoals()
@@ -53,13 +57,12 @@ public class RabidWolfEntity extends WolfEntity
 	
 	public boolean hasAngerTime() { return true; }
 	
-	public boolean canSpawn(WorldAccess world, SpawnReason spawnReason)
-	{
-		return true;
-	}
+	public int getAngerTime() { return 1; }
 	
-	public boolean canSpawn(WorldView world)
-	{
-		return !world.containsFluid(getBoundingBox()) && world.doesNotIntersectEntities(this);
-	}
+	public boolean isAngryAt(ServerWorld world, PlayerEntity player) { return true; }
+	
+	@Nullable
+	public UUID getAngryAt() { return null; }
+	
+	public boolean canTarget(LivingEntity entity) { return entity instanceof PlayerEntity && entity.canTakeDamage(); }
 }

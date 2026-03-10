@@ -1,8 +1,9 @@
 package com.lying.block;
 
+import java.util.List;
 import java.util.Map;
 
-import com.lying.block.entity.SpawnerActorBlockEntity;
+import com.lying.block.entity.TrapSpawnerBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
@@ -14,21 +15,33 @@ import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.block.entity.Spawner;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SpawnEggItem;
+import net.minecraft.item.ThrowablePotionItem;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
+import net.minecraft.world.event.GameEvent;
 
-public class SpawnerActorBlock extends AbstractTrapActorBlock
+public class TrapSpawnerBlock extends AbstractTrapActorBlock
 {
-	public static final MapCodec<SpawnerActorBlock> CODEC = RedstoneActorBlock.createCodec(SpawnerActorBlock::new);
+	public static final MapCodec<TrapSpawnerBlock> CODEC = RedstoneActorBlock.createCodec(TrapSpawnerBlock::new);
 	public static final EnumProperty<Direction> FACING	= Properties.FACING;
 	public static final BooleanProperty POWERED	= Properties.POWERED;
 	public static final Map<Direction, VoxelShape> SKULL_BY_ORIENTATION	= Map.of(
@@ -56,7 +69,7 @@ public class SpawnerActorBlock extends AbstractTrapActorBlock
 			Direction.WEST, Block.createCuboidShape(15, 2, 4, 16, 8, 12)
 			);
 	
-	public SpawnerActorBlock(Settings settingsIn)
+	public TrapSpawnerBlock(Settings settingsIn)
 	{
 		super(settingsIn.nonOpaque());
 		setDefaultState(getDefaultState().with(POWERED, false).with(FACING, Direction.NORTH));
@@ -71,7 +84,7 @@ public class SpawnerActorBlock extends AbstractTrapActorBlock
 	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
-		return new SpawnerActorBlockEntity(pos, state);
+		return new TrapSpawnerBlockEntity(pos, state);
 	}
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
@@ -85,12 +98,49 @@ public class SpawnerActorBlock extends AbstractTrapActorBlock
 	
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
 	{
-		return SpawnerActorBlockEntity.getTicker(world, state, type);
+		return TrapSpawnerBlockEntity.getTicker(world, state, type);
 	}
 	
 	public BlockState getPlacementState(ItemPlacementContext ctx)
 	{
 		return getDefaultState().with(FACING, ctx.getSide());
+	}
+	
+	public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType options)
+	{
+		super.appendTooltip(stack, context, tooltip, options);
+		Spawner.appendSpawnDataToTooltip(stack, tooltip, "SpawnData");
+	}
+	
+	protected ActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit)
+	{
+		if(player.isCreative() && !stack.isEmpty())
+		{
+			TrapSpawnerBlockEntity spawner = world.getBlockEntity(pos, CDBlockEntityTypes.SPAWNER.get()).get();
+			boolean changed = false;
+			if(stack.getItem() instanceof SpawnEggItem)
+			{
+				SpawnEggItem egg = (SpawnEggItem)stack.getItem();
+				spawner.getLogic().setByEntityType(egg.getEntityType(world.getRegistryManager(), stack));
+				changed = true;
+			}
+			else if(stack.getItem() instanceof ThrowablePotionItem)
+			{
+				ThrowablePotionItem potion = (ThrowablePotionItem)stack.getItem();
+				spawner.getLogic().setByEntity(potion.createEntity(world, player.getPos(), stack, Direction.UP));
+				changed = true;
+			}
+			
+			if(changed)
+			{
+				world.updateListeners(pos, state, state, 3);
+				world.emitGameEvent(player, GameEvent.BLOCK_CHANGE, pos);
+				stack.decrement(1);
+				return ActionResult.SUCCESS;
+			}
+		}
+		
+		return super.onUse(state, world, pos, player, hit);
 	}
 	
 	public boolean isActive(BlockPos pos, World world)

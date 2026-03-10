@@ -27,6 +27,7 @@ import net.minecraft.item.Item.Settings;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.SpawnEggItem;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -49,6 +50,8 @@ public class CDItems
 	private static final Map<RegistrySupplier<Block>,RegistrySupplier<Item>> BLOCK_ITEMS	= new HashMap<>();
 	
 	public static final RegistrySupplier<Item> WIRING_GUN	= register("wiring_gun", s -> new WiringGunItem(s.maxCount(1).fireproof().rarity(Rarity.EPIC)));
+	public static final RegistrySupplier<Item> RABID_WOLF_SPAWN_EGG	= register("rabid_wolf_spawn_egg", s -> new SpawnEggItem(CDEntityTypes.RABID_WOLF.get(), s));
+	public static final RegistrySupplier<Item> RABID_POLAR_BEAR_SPAWN_EGG	= register("rabid_polar_bear_spawn_egg", s -> new SpawnEggItem(CDEntityTypes.RABID_POLAR_BEAR.get(), s));
 	
 	// Hazards
 	public static final RegistrySupplier<Item> PIT							= registerRareBlockNoItem("pit", CDBlocks.PIT, Rarity.RARE);

@@ -20,7 +20,8 @@ public class CDSoundEvents
 	public static final DeferredRegister<SoundEvent> SOUND_EVENTS 	= DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.SOUND_EVENT);
 	private static int tally;
 	
-	public static final RegistrySupplier<SoundEvent> WIRING_GUN	= register(prefix("wiring_gun"));
+	public static final RegistrySupplier<SoundEvent> WIRING_GUN		= register(prefix("wiring_gun"));
+	public static final RegistrySupplier<SoundEvent> SPAWNER_SPAWN	= register(prefix("actuated_spawner_spawn"));
 	
 	private static RegistrySupplier<SoundEvent> register(Identifier name)
 	{

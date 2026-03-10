@@ -16,7 +16,7 @@ import com.lying.block.HatchBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
-import com.lying.block.SpawnerActorBlock;
+import com.lying.block.TrapSpawnerBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SpikesBlock.SpikePart;
 import com.lying.block.SwingingBladeBlock;
@@ -73,7 +73,10 @@ public class CDModelProvider extends FabricModelProvider
 		// Block items
 		CDItems.BASIC_BLOCK_ITEMS.stream().map(e -> (BlockItem)e.get()).forEach(entry -> registerBlockModel(entry, itemModelGenerator));
 		
-		registerSimpleItem(CDItems.PIT.get(), itemModelGenerator);
+		registerSimpleItems(itemModelGenerator, 
+				CDItems.PIT.get(), 
+				CDItems.RABID_POLAR_BEAR_SPAWN_EGG.get(), 
+				CDItems.RABID_WOLF_SPAWN_EGG.get());
 		registerBlockModel((BlockItem)CDItems.SWINGING_BLADE.get(), "_horizontal", itemModelGenerator);
 	}
 	
@@ -148,6 +151,12 @@ public class CDModelProvider extends FabricModelProvider
 		generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(createBooleanModelMap(Properties.POWERED, 
 				createSubModel(block, "_on", Models.CUBE_COLUMN, texMapFunc, generator.modelCollector), 
 				Models.CUBE_COLUMN.upload(block, texMapFunc.apply(TextureMap.getId(block)), generator.modelCollector))));
+	}
+	
+	private static void registerSimpleItems(ItemModelGenerator generator, Item... items)
+	{
+		for(Item item : items)
+			registerSimpleItem(item, generator);
 	}
 	
 	private static void registerSimpleItem(Item item, ItemModelGenerator generator)
@@ -543,7 +552,7 @@ public class CDModelProvider extends FabricModelProvider
 			Identifier model = TextureMap.getId(block);
 			Identifier modelOn = TextureMap.getSubId(block, "_active");
 			
-			BlockStateVariantMap.DoubleProperty<Direction, Boolean> map = BlockStateVariantMap.create(SpawnerActorBlock.FACING, SpawnerActorBlock.POWERED);
+			BlockStateVariantMap.DoubleProperty<Direction, Boolean> map = BlockStateVariantMap.create(TrapSpawnerBlock.FACING, TrapSpawnerBlock.POWERED);
 			appendSettings(Direction.NORTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R0, map, model, modelOn);
 			appendSettings(Direction.SOUTH, VariantSettings.Rotation.R0, VariantSettings.Rotation.R180, map, model, modelOn);
 			appendSettings(Direction.EAST, VariantSettings.Rotation.R0, VariantSettings.Rotation.R90, map, model, modelOn);

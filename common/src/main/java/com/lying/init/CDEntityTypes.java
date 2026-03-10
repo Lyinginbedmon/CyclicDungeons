@@ -4,15 +4,18 @@ import static com.lying.reference.Reference.ModInfo.prefix;
 
 import com.lying.CyclicDungeons;
 import com.lying.entity.DartEntity;
+import com.lying.entity.RabidPolarBearEntity;
 import com.lying.entity.RabidWolfEntity;
 import com.lying.reference.Reference;
 
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
+import net.minecraft.entity.passive.PolarBearEntity;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -34,6 +37,10 @@ public class CDEntityTypes
 			.eyeHeight(0.68F)
 			.passengerAttachments(new Vec3d(0, 0.81875, -0.0625))
 			.maxTrackingRange(10));
+	public static final RegistrySupplier<EntityType<RabidPolarBearEntity>> RABID_POLAR_BEAR	= register("rabid_polar_bear", EntityType.Builder.create(RabidPolarBearEntity::new, SpawnGroup.MONSTER)
+			.dimensions(1.4F, 1.4F)
+			.allowSpawningInside(Blocks.POWDER_SNOW)
+			.maxTrackingRange(10));
 	
 	private static <T extends Entity> RegistrySupplier<EntityType<T>> register(String nameIn, EntityType.Builder<T> entry)
 	{
@@ -48,6 +55,7 @@ public class CDEntityTypes
 		ENTITIES.register();
 		
 		EntityAttributeRegistry.register(RABID_WOLF, () -> WolfEntity.createWolfAttributes());
+		EntityAttributeRegistry.register(RABID_POLAR_BEAR, () -> PolarBearEntity.createPolarBearAttributes());
 		
 		CyclicDungeons.LOGGER.info(" # Initialised {} entity types", tally);
 	}

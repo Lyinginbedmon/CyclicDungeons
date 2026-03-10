@@ -19,6 +19,7 @@ import net.minecraft.client.color.world.BiomeColors;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.entity.ArrowEntityRenderer;
+import net.minecraft.client.render.entity.PolarBearEntityRenderer;
 import net.minecraft.client.render.entity.WolfEntityRenderer;
 import net.minecraft.world.biome.GrassColors;
 
@@ -47,6 +48,7 @@ public class CyclicDungeonsClient
 	{
 		EntityRendererRegistry.register(CDEntityTypes.DART, ArrowEntityRenderer::new);
 		EntityRendererRegistry.register(CDEntityTypes.RABID_WOLF, WolfEntityRenderer::new);
+		EntityRendererRegistry.register(CDEntityTypes.RABID_POLAR_BEAR, PolarBearEntityRenderer::new);
 		
 		RenderTypeRegistry.register(RenderLayer.getCutout(), 
 				CDBlocks.SENSOR_SOUND.get(), 

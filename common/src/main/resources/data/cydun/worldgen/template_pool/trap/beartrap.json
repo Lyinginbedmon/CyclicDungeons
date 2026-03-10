@@ -1,0 +1,15 @@
+{
+	"name": "cydun:trap/beartrap",
+	"elements": [
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:trap/beartrap",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		}
+	],
+	"fallback": "minecraft:empty"
+}

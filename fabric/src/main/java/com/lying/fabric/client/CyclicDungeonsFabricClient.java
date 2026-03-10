@@ -2,13 +2,14 @@ package com.lying.fabric.client;
 
 import com.lying.block.entity.DartTrapBlockEntity;
 import com.lying.block.entity.FlameJetBlockEntity;
-import com.lying.block.entity.SpawnerActorBlockEntity;
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
+import com.lying.client.renderer.block.ProximitySensorBlockEntityRenderer;
 import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
 import com.lying.client.renderer.block.SpikeTrapBlockEntityRenderer;
 import com.lying.client.renderer.block.SwingingBladeBlockEntityRenderer;
+import com.lying.client.renderer.block.TrapSpawnerBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
@@ -33,7 +34,8 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.FLAME_JET.get(), WireableBlockEntityRenderer<FlameJetBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.DART_TRAP.get(), WireableBlockEntityRenderer<DartTrapBlockEntity>::new);
-    	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPAWNER.get(), WireableBlockEntityRenderer<SpawnerActorBlockEntity>::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPAWNER.get(), TrapSpawnerBlockEntityRenderer::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.PROXIMITY_SENSOR.get(), ProximitySensorBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SIGHT_SENSOR.get(), SightSensorBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SWINGING_BLADE.get(), SwingingBladeBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPIKE_TRAP.get(), SpikeTrapBlockEntityRenderer::new);

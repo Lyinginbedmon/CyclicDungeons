@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "cydun:item/rabid_polar_bear_spawn_egg"
+  }
+}

@@ -3,7 +3,7 @@ package com.lying.block.entity;
 import org.joml.Vector3i;
 
 import com.lying.block.IWireableBlock.WireRecipient;
-import com.lying.block.SpawnerActorBlock;
+import com.lying.block.TrapSpawnerBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;
@@ -25,7 +25,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 
-public class SpawnerActorBlockEntity extends TrapActorBlockEntity
+public class TrapSpawnerBlockEntity extends TrapActorBlockEntity
 {
 	private TrapSpawnerLogic logic = new TrapSpawnerLogic();
 	private ActivationType activation = ActivationType.CONSTANT;
@@ -33,7 +33,7 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 	private int tickCount = 0;
 	private boolean prevPower = false;
 	
-	public SpawnerActorBlockEntity(BlockPos pos, BlockState state)
+	public TrapSpawnerBlockEntity(BlockPos pos, BlockState state)
 	{
 		super(CDBlockEntityTypes.SPAWNER.get(), pos, state);
 	}
@@ -85,40 +85,33 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 	{
 		return type != CDBlockEntityTypes.SPAWNER.get() ? 
 				null : 
-				SpawnerActorBlock.validateTicker(type, CDBlockEntityTypes.SPAWNER.get(), 
+				TrapSpawnerBlock.validateTicker(type, CDBlockEntityTypes.SPAWNER.get(), 
 					world.isClient() ? 
-						SpawnerActorBlockEntity::tickClient : 
-						SpawnerActorBlockEntity::tickServer);
+						TrapSpawnerBlockEntity::tickClient : 
+						TrapSpawnerBlockEntity::tickServer);
 	}
 	
-	public static <T extends BlockEntity> void tickClient(World world, BlockPos pos, BlockState state, SpawnerActorBlockEntity tile)
+	public static <T extends BlockEntity> void tickClient(World world, BlockPos pos, BlockState state, TrapSpawnerBlockEntity tile)
 	{
 		TrapActorBlockEntity.tickClient(world, pos, state, tile);
 		
 		Random rand = world.getRandom();
-		boolean power = state.get(SpawnerActorBlock.POWERED);
+		boolean power = state.get(TrapSpawnerBlock.POWERED);
 		if(power)
 		{
-			if(!tile.prevPower)
-				world.playSoundAtBlockCenter(pos, SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.BLOCKS, 1, 0.75F + rand.nextFloat() * 0.2F, true);
-			
-			Direction facing = state.get(SpawnerActorBlock.FACING);
 			tile.logic.clientTick(world, pos);
-			
-		}
-		else if(tile.prevPower)
-		{
-			
+			if(!tile.prevPower)
+				world.playSoundAtBlockCenter(pos, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 1, 0.75F + rand.nextFloat() * 0.2F, true);
 		}
 		
 		tile.prevPower = power;
 	}
 	
-	public static <T extends BlockEntity> void tickServer(World world, BlockPos pos, BlockState state, SpawnerActorBlockEntity tile)
+	public static <T extends BlockEntity> void tickServer(World world, BlockPos pos, BlockState state, TrapSpawnerBlockEntity tile)
 	{
 		TrapActorBlockEntity.tickServer(world, pos, state, tile);
 		
-		if(state.get(SpawnerActorBlock.POWERED))
+		if(state.get(TrapSpawnerBlock.POWERED))
 		{
 			if(tile.logic.spawnEntry == null)
 				tile.logic.setEntityId(EntityType.PIG, world, world.getRandom(), pos);
@@ -129,13 +122,13 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 					case IMPULSE:
 						if(tile.tickCount == 0)
 						{
-							tile.logic.spawnNextEntry((ServerWorld)world, pos, tile.getSpawningArea());
+							tile.logic.spawnNextEntry((ServerWorld)world, pos, tile.getFullSpawningArea());
 							tile.tickCount++;
 						}
 						break;
 					case CONSTANT:
 						if(tile.tickCount++%tile.spawnRate == 0)
-							tile.logic.spawnNextEntry((ServerWorld)world, pos, tile.getSpawningArea());
+							tile.logic.spawnNextEntry((ServerWorld)world, pos, tile.getFullSpawningArea());
 						break;
 				}
 			}
@@ -148,9 +141,9 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 	 * Returns the local coordinates area within which this spawner can spawn things<br>
 	 * This is derived from the sum footprint of all directions, excepting the one the spawner is facing away from.
 	 */
-	public Box getSpawningArea()
+	public Box getBaseSpawningArea()
 	{
-		final Direction facing = getCachedState().get(SpawnerActorBlock.FACING).getOpposite();
+		final Direction facing = getCachedState().get(TrapSpawnerBlock.FACING).getOpposite();
 		Vector3i 
 			min = new Vector3i(0,0,0), 
 			max = new Vector3i(0,0,0);
@@ -172,6 +165,19 @@ public class SpawnerActorBlockEntity extends TrapActorBlockEntity
 		}
 		
 		return new Box(min.x, min.y, min.z, max.x, max.y, max.z);
+	}
+	
+	public Box getFullSpawningArea()
+	{
+		Box base = getBaseSpawningArea();
+		int[] range = logic.spawnRanges;
+		return new Box(
+				base.minX * range[0], 
+				base.minY * range[1], 
+				base.minZ * range[2], 
+				1D + base.maxX * range[0], 
+				1D + base.maxY * range[1], 
+				1D + base.maxZ * range[2]);
 	}
 	
 	public static enum ActivationType implements StringIdentifiable

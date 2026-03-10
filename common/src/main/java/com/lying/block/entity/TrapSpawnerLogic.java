@@ -9,10 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
 import com.lying.CyclicDungeons;
+import com.lying.init.CDBlocks;
+import com.lying.init.CDSoundEvents;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.block.Blocks;
 import net.minecraft.block.spawner.MobSpawnerEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -20,8 +21,10 @@ import net.minecraft.entity.EquipmentTable;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.particle.ParticleTypes;
@@ -43,9 +46,9 @@ public class TrapSpawnerLogic
 	@Nullable
 	public SpawnerEntry spawnEntry;
 	protected DataPool<SpawnerEntry> spawnPotentials = DataPool.<SpawnerEntry>empty();
-	protected int[] spawnRange = new int[] {4, 4, 4};
-	
-	// FIXME Add minimum spawn range
+	protected int[] spawnRanges = new int[] {4, 4, 4};
+	protected BlockPos fallbackOffset = BlockPos.ORIGIN;
+	protected Optional<BlockPos> forcePos = Optional.empty();
 	
 	public TrapSpawnerLogic() { }
 	
@@ -82,12 +85,20 @@ public class TrapSpawnerLogic
 			this.spawnPotentials = DataPool.of(this.spawnEntry != null ? this.spawnEntry : new SpawnerEntry());
 		
 		if(nbt.contains("SpawnRange", NbtElement.INT_ARRAY_TYPE))
-			this.spawnRange = nbt.getIntArray("SpawnRange");
+			this.spawnRanges = nbt.getIntArray("SpawnRange");
+		
+		if(nbt.contains("Fallback"))
+			this.fallbackOffset = NbtHelper.toBlockPos(nbt, "Fallback").orElse(BlockPos.ORIGIN);
+		
+		this.forcePos = nbt.contains("ForcedPos") ? NbtHelper.toBlockPos(nbt, "ForcedPos") : Optional.empty();
 	}
 	
 	public NbtCompound writeNbt(NbtCompound nbt)
 	{
-		nbt.putIntArray("SpawnRange", spawnRange);
+		nbt.putIntArray("SpawnRange", spawnRanges);
+		if(fallbackOffset.getManhattanDistance(BlockPos.ORIGIN) > 0)
+			nbt.put("Fallback", NbtHelper.fromBlockPos(fallbackOffset));
+		forcePos.ifPresent(p -> nbt.put("ForcedPos", NbtHelper.fromBlockPos(p)));
 		if(this.spawnEntry != null)
 			nbt.put("SpawnData", SpawnerEntry.CODEC.encodeStart(NbtOps.INSTANCE, spawnEntry).getOrThrow(s -> new IllegalStateException("Invalid SpawnData: " + s)));
 		if(!spawnPotentials.isEmpty())
@@ -98,16 +109,39 @@ public class TrapSpawnerLogic
 	public void clientTick(World world, BlockPos pos)
 	{
 		Random random = world.getRandom();
+		if(random.nextInt(8) > 0)
+			return;
+		
 		double d = (double)pos.getX() + random.nextDouble();
 		double e = (double)pos.getY() + random.nextDouble();
 		double f = (double)pos.getZ() + random.nextDouble();
-		world.addParticle(ParticleTypes.SMOKE, d, e, f, 0.0, 0.0, 0.0);
-		world.addParticle(ParticleTypes.FLAME, d, e, f, 0.0, 0.0, 0.0);
+		world.addParticle(ParticleTypes.WITCH, d, e, f, 0.0, 0.0, 0.0);
 	}
 	
 	public TrapSpawnerLogic setEntityId(EntityType<?> type, @Nullable World world, Random random, BlockPos pos)
 	{
 		getSpawnEntry(world, random, pos).entityNBT().putString("id", Registries.ENTITY_TYPE.getId(type).toString());
+		return this;
+	}
+	
+	public TrapSpawnerLogic setByEntityType(EntityType<?> type)
+	{
+		SpawnerEntry entry = SpawnerEntry.Builder.of(type).build();
+		this.spawnEntry = entry;
+		setSpawnPotentials(List.of(entry));
+		return this;
+	}
+	
+	public TrapSpawnerLogic setByEntity(Entity entity)
+	{
+		NbtCompound nbt = new NbtCompound();
+		entity.saveSelfNbt(nbt);
+		nbt.remove("Pos");
+		nbt.remove("Motion");
+		
+		SpawnerEntry entry = SpawnerEntry.Builder.of(entity.getType()).nbt(nbt).build();
+		this.spawnEntry = entry;
+		setSpawnPotentials(List.of(entry));
 		return this;
 	}
 	
@@ -127,7 +161,7 @@ public class TrapSpawnerLogic
 				.orElseGet(() -> DataPool.<SpawnerEntry>empty());
 	}
 	
-	public int getSpawnRange(Axis index) { return index.ordinal() < spawnRange.length ? spawnRange[index.ordinal()] : 0; }
+	public int getSpawnRange(Axis index) { return index.ordinal() < spawnRanges.length ? spawnRanges[index.ordinal()] : 0; }
 	
 	public TrapSpawnerLogic setSpawnRange(Vector3i vec)
 	{
@@ -136,7 +170,7 @@ public class TrapSpawnerLogic
 	
 	public TrapSpawnerLogic setSpawnRange(int x, int y, int z)
 	{
-		this.spawnRange = new int[] {x, y, z};
+		this.spawnRanges = new int[] {x, y, z};
 		return this;
 	}
 	
@@ -185,12 +219,20 @@ public class TrapSpawnerLogic
 			return;
 		
 		// Attempt to find a spawnable position
-		Optional<BlockPos> spawnPos = findSpawnablePosition(mobSpawnerEntry, entityType.get(), spawnerPos, spawnArea, this::getSpawnRange, world, random);
-		if(spawnPos.isEmpty())
-			return;
+		BlockPos spawnPos = spawnerPos;
+		if(this.forcePos.isPresent())
+			spawnPos = spawnerPos.add(this.forcePos.get());
+		else
+		{
+			Optional<BlockPos> posOpt = findSpawnablePosition(mobSpawnerEntry, entityType.get(), spawnerPos, spawnArea, this.fallbackOffset, world, random);
+			if(posOpt.isEmpty())
+				return;
+			else
+				spawnPos = posOpt.get();
+		}
 		
 		// Generate the entity to spawn
-		BlockPos blockPos = spawnPos.get();
+		final BlockPos blockPos = spawnPos;
 		Entity entity = EntityType.loadEntityWithPassengers(entryNBT, world, SpawnReason.SPAWNER, e -> 
 		{
 			e.refreshPositionAndAngles(blockPos.getX() + 0.5D, blockPos.getY(), blockPos.getZ() + 0.5D, e.getYaw(), e.getPitch());
@@ -204,7 +246,8 @@ public class TrapSpawnerLogic
 		// Populate mob equipment
 		if(entity instanceof MobEntity mobEntity)
 		{
-			if(mobSpawnerEntry.customSpawnRules().isEmpty() && !mobEntity.canSpawn(world, SpawnReason.SPAWNER) || !mobEntity.canSpawn(world))
+			// Check if we're going to cause entity overcrowding and avoid
+			if(!mobEntity.canSpawn(world))
 				return;
 			
 			// If no complex entity data present, equip according to local difficulty
@@ -218,12 +261,11 @@ public class TrapSpawnerLogic
 		if(!world.spawnNewEntityAndPassengers(entity))
 			return;
 		
-		world.syncWorldEvent(2004, spawnerPos, 0);
 		world.emitGameEvent(entity, GameEvent.ENTITY_PLACE, blockPos);
 		if(entity instanceof MobEntity)
 			((MobEntity)entity).playSpawnEffects();
 		
-		return;
+		entity.playSound(CDSoundEvents.SPAWNER_SPAWN.get(), 0.5F, random.nextFloat() * 0.5F + 0.5F);;
 	}
 	
 	protected static Optional<BlockPos> findSpawnablePosition(
@@ -231,7 +273,7 @@ public class TrapSpawnerLogic
 			EntityType<?> entityType, 
 			BlockPos spawnerPos, 
 			Box spawnArea, 
-			Function<Axis,Integer> rangeGetter, 
+			BlockPos fallbackOffset,
 			ServerWorld world, 
 			Random random)
 	{
@@ -240,24 +282,15 @@ public class TrapSpawnerLogic
 		
 		final Optional<MobSpawnerEntry.CustomSpawnRules> customSpawnRules = mobSpawnerEntry.customSpawnRules();
 		/** Predicate defining any spawn rules for this entry */
-		final Predicate<BlockPos> spawnRules = blockPos -> 
-		{
-			if(customSpawnRules.isPresent() && !customSpawnRules.get().canSpawn(blockPos, world))
-				return false;
-			
-			if(!SpawnRestriction.canSpawn(entityType, world, SpawnReason.SPAWNER, blockPos, random))
-				return false;
-			
-			return true;
-		};
+		final Predicate<BlockPos> spawnRules = getSpawnConditions(customSpawnRules, entityType, world);
 		
 		int attempts = 10;
 		do
 		{
 			// Retrieve or calculate positions within range of the spawner
-			int posX = getOrMakeCoordinate(Axis.X, coordinates, spawnerPos, spawnArea, rangeGetter, random);
-			int posY = getOrMakeCoordinate(Axis.Y, coordinates, spawnerPos, spawnArea, rangeGetter, random);
-			int posZ = getOrMakeCoordinate(Axis.Z, coordinates, spawnerPos, spawnArea, rangeGetter, random);
+			int posX = getOrMakeCoordinate(Axis.X, coordinates, spawnerPos, spawnArea, random);
+			int posY = getOrMakeCoordinate(Axis.Y, coordinates, spawnerPos, spawnArea, random);
+			int posZ = getOrMakeCoordinate(Axis.Z, coordinates, spawnerPos, spawnArea, random);
 			
 			// Check if we could spawn the mob at this position
 			final BlockPos pos = new BlockPos(posX, posY, posZ);
@@ -266,11 +299,12 @@ public class TrapSpawnerLogic
 		}
 		while(attempts-- > 0);
 		
-		// If we failed to find a spawn position, try to use the spawner's position directly
-		return spawnRules.test(spawnerPos) ? Optional.of(spawnerPos) : Optional.empty();
+		// If we failed to find a spawn position, try to use the fallback position 
+		BlockPos fallback = spawnerPos.add(fallbackOffset);
+		return spawnRules.test(fallback) ? Optional.of(fallback) : Optional.empty();
 	}
 	
-	protected static int getOrMakeCoordinate(Axis axis, NbtList coordinates, BlockPos spawnerPos, Box spawnArea, Function<Axis, Integer> rangeGetter, Random random)
+	protected static int getOrMakeCoordinate(Axis axis, NbtList coordinates, BlockPos spawnerPos, Box spawnArea, Random random)
 	{
 		// If this coordinate has been predefined, retrieve it 
 		if(axis.ordinal() < coordinates.size())
@@ -280,27 +314,54 @@ public class TrapSpawnerLogic
 		int origin = axis.choose(spawnerPos.getX(), spawnerPos.getY(), spawnerPos.getZ());
 		
 		// How far we can move on this axis
-		int range = rangeGetter.apply(axis);
-		if(range > 0)
+		int min = (int)axis.choose(spawnArea.minX, spawnArea.minY, spawnArea.minZ);
+		int max = (int)axis.choose(spawnArea.maxX, spawnArea.maxY, spawnArea.maxZ);
+		
+		// Calculate the position along this axis within our range
+		int local = min + (int)((max - min) * random.nextDouble());
+		
+		// Combine the local position with the origin
+		return origin + local;
+	}
+	
+	/**
+	 * Returns a bespoke predicate determining if a position is valid for spawning the mob.<br>
+	 * This bypasses other checks such as biome validity and light level, to ensure a safe but still flexible predicate.
+	 */
+	@SuppressWarnings("unchecked")
+	protected static <T extends Entity> Predicate<BlockPos> getSpawnConditions(Optional<MobSpawnerEntry.CustomSpawnRules> customSpawnRules, EntityType<T> entityType, ServerWorld world)
+	{
+		final T entity = entityType.create(world, SpawnReason.COMMAND);
+		final Predicate<BlockPos> custom = p -> customSpawnRules.isEmpty() || customSpawnRules.get().canSpawn(p, world);
+		Predicate<BlockPos> mob = p -> 
 		{
-			int min = (int)axis.choose(spawnArea.minX, spawnArea.minY, spawnArea.minZ) * range;
-			int max = (int)axis.choose(spawnArea.maxX, spawnArea.maxY, spawnArea.maxZ) * range;
+			if(entity instanceof MobEntity)
+			{
+				EntityType<? extends MobEntity> mobType = (EntityType<? extends MobEntity>)entityType;
+				
+				// Does the blockstate permit spawning?
+				if(!MobEntity.canMobSpawn(mobType, world, SpawnReason.SPAWN_ITEM_USE, p, world.getRandom()))
+					return false;
+				
+				// Is the spawn location valid for this mob type?
+				if(!SpawnRestriction.isSpawnPosAllowed(mobType, world, p))
+					return false;
+				
+				// Is the position pathable?
+				if(entity instanceof PathAwareEntity && !PathAwareEntity.canMobSpawn(mobType, world, SpawnReason.SPAWN_ITEM_USE, p, world.getRandom()))
+					return false;
+			}
 			
-			// Calculate the position along this axis within our range
-			int local = min + (int)((max - min) * random.nextDouble());
-			
-			// Combine the local position with the origin
-			return origin + local;
-		}
-		else
-			return origin;
+			return true;
+		};
+		return blockPos -> custom.test(blockPos) && mob.test(blockPos);
 	}
 	
 	/** Sets a random option from the spawn potentials list as the current spawn entry */
 	protected void updateSpawns(World world, BlockPos pos, Random random)
 	{
 		this.spawnPotentials.getOrEmpty(random).ifPresent(spawnPotential -> this.setSpawnEntry((SpawnerEntry)spawnPotential.data()));
-		world.addSyncedBlockEvent(pos, Blocks.SPAWNER, 1, 0);
+		world.addSyncedBlockEvent(pos, CDBlocks.SPAWNER.get(), 1, 0);
 	}
 	
 	public record SpawnerEntry(NbtCompound entityNBT, Optional<MobSpawnerEntry.CustomSpawnRules> customSpawnRules, Optional<EquipmentTable> equipment, int min, int max)
