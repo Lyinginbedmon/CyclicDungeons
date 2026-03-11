@@ -45,7 +45,7 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 		ID_BLANK			= prefix("blank"), 
 		ID_AIR				= prefix("air"),
 		ID_STONE			= prefix("stone"),
-		ID_PASSAGE_FLAG			= prefix("passage_flag"),
+		ID_PASSAGE_FLAG		= prefix("passage_flag"),
 		ID_DOORWAY			= prefix("doorway"),
 		ID_DOORWAY_LINTEL	= prefix("doorway_lintel");
 	

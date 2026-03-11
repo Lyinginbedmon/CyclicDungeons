@@ -9,23 +9,26 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
+import com.lying.data.CDTags;
 import com.lying.grammar.DefaultTerms;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent;
-import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.grammar.content.BattleRoomContent.BattleEntry;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
+import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grammar.content.battle.SquadBattleEntry.SquadEntry;
 import com.lying.grammar.content.trap.SimpleJumpingTrap;
 import com.lying.grammar.content.trap.StructurePlacerTrap;
+import com.lying.grammar.content.trap.TileSetTrap;
+import com.lying.grammar.content.trap.TileToBlockTrap;
 import com.lying.grammar.content.trap.TileTrap;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTileSets;
-import com.lying.init.CDTraps;
 import com.lying.utility.BlockPredicate;
 import com.lying.utility.BlockPredicate.BlockFlags;
+import com.lying.utility.BlockPredicate.ChildLogic;
 import com.lying.utility.BlockPredicate.SubPredicate;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
@@ -73,10 +76,9 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 			.addEntry(Theme.ENCOUNTER_WOLF_PACK);
 	
 	public static final List<TrapEntry> DEFAULT_TRAPS	= Lists.newArrayList(
-			new TrapEntry(prefix("hatch_pitfall"), CDTraps.SIMPLE_PITFALL.get()),
-			new TrapEntry(prefix("pitfall"), CDTraps.PITFALL.get()),
+			new TrapEntry(prefix("pitfall"), TileSetTrap.of(DefaultTileSets.ID_PITFALL_TRAP)),
 //			new TrapEntry(prefix("greed"), CDTraps.GREED.get()),
-			new TrapEntry(prefix("lava_river"), TileTrap.of(DefaultTiles.ID_LAVA_RIVER, false)),
+			new TrapEntry(prefix("lava_river"), TileTrap.of(DefaultTiles.ID_LAVA_RIVER, new RoomNumberProvider.Unlimited(), false)),
 			new TrapEntry(prefix("pit_jumping"), SimpleJumpingTrap.of(DefaultTiles.ID_PIT)),
 			new TrapEntry(prefix("lava_jumping"), SimpleJumpingTrap.of(DefaultTiles.ID_LAVA)),
 			new TrapEntry(prefix("minefield"), StructurePlacerTrap.of(
@@ -108,7 +110,22 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
 						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
 						.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
-						.build()))
+						.build())),
+			new TrapEntry(prefix("hatch_pitfall"), TileToBlockTrap.of(
+					DefaultTiles.ID_HATCH, 
+					new RoomNumberProvider.SizeRatio(1, 1, 0.3),
+					prefix("trap/pressure_plate"), 
+					new RoomNumberProvider.RandBetween(1, 5, 2),
+					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
+						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
+						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create()
+								.childLogic(ChildLogic.OR)
+								.child(new SubPredicate(BlockPos.ORIGIN.north(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
+								.child(new SubPredicate(BlockPos.ORIGIN.east(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
+								.child(new SubPredicate(BlockPos.ORIGIN.south(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
+								.child(new SubPredicate(BlockPos.ORIGIN.west(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
+							.build()))
+					.build(), BlockPos.ORIGIN))
 			);
 	public static final Map<Identifier, Identifier> DEFAULT_TILE_SETS = Map.of(
 			CDTerms.ID_START, DefaultTileSets.ID_START,

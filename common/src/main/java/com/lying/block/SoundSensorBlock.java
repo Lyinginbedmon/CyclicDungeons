@@ -25,6 +25,7 @@ import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
@@ -65,6 +66,12 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
 		builder.add(FACING, PHASE, POWER);
+	}
+	
+	public Vec3d wireRenderOffset(BlockState state)
+	{
+		Direction face = state.get(FACING);
+		return new Vec3d(face.getOffsetX(), face.getOffsetY(), face.getOffsetZ()).multiply(0.3).negate();
 	}
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)

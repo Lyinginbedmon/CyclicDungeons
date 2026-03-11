@@ -33,6 +33,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
@@ -85,6 +86,12 @@ public class TrapSpawnerBlock extends AbstractTrapActorBlock
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
 		return new TrapSpawnerBlockEntity(pos, state);
+	}
+	
+	public Vec3d wireRenderOffset(BlockState state)
+	{
+		Direction face = state.get(FACING);
+		return new Vec3d(face.getOffsetX(), face.getOffsetY(), face.getOffsetZ()).multiply(0.5).negate();
 	}
 	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)

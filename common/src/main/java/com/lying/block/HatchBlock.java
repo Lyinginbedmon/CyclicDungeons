@@ -14,6 +14,7 @@ import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
@@ -47,6 +48,12 @@ public class HatchBlock extends AbstractTrapActorBlock
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
 		builder.add(POWERED, FACING, INTERSTITIAL);
+	}
+	
+	public Vec3d wireRenderOffset(BlockState state)
+	{
+		Direction face = state.get(FACING);
+		return new Vec3d(face.getOffsetX(), 0, face.getOffsetZ()).multiply(0.45).negate().add(0D, 0.5D, 0D);
 	}
 	
 	public BlockState getPlacementState(ItemPlacementContext ctx)

@@ -1,0 +1,9 @@
+{
+  "id": "cydun:pitfall_trap",
+  "values": [
+    {
+      "tile": "cydun:pit_fallaway",
+      "weight": 30.0
+    }
+  ]
+}

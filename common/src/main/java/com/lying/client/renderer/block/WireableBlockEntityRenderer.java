@@ -1,9 +1,11 @@
 package com.lying.client.renderer.block;
 
+import com.lying.block.IWireableBlock;
 import com.lying.block.entity.AbstractWireableBlockEntity;
 import com.lying.init.CDItems;
 import com.lying.reference.Reference;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
@@ -18,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 public class WireableBlockEntityRenderer<T extends AbstractWireableBlockEntity> implements BlockEntityRenderer<T>
 {
@@ -39,23 +42,31 @@ public class WireableBlockEntityRenderer<T extends AbstractWireableBlockEntity> 
 				))
 			return;
 		
-		final BlockPos here = entity.getPos();
-		entity.getSensors().forEach(pos -> drawWireBetween(pos, here, here, tickDelta, matrices, vertexConsumers));
-		entity.getActors().forEach(pos -> drawWireBetween(here, pos, here, tickDelta, matrices, vertexConsumers));
+		final Vec3d here = toWireConnector(entity.getPos(), entity.getWorld());
+		entity.getSensors().stream().map(p -> toWireConnector(p, entity.getWorld())).forEach(pos -> drawWireBetween(pos, here, entity.getPos(), tickDelta, matrices, vertexConsumers));
+		entity.getActors().stream().map(p -> toWireConnector(p, entity.getWorld())).forEach(pos -> drawWireBetween(here, pos, entity.getPos(), tickDelta, matrices, vertexConsumers));
 	}
 	
-	private static void drawWireBetween(BlockPos start, BlockPos end, BlockPos origin, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers)
+	private static Vec3d toWireConnector(BlockPos pos, World world)
+	{
+		BlockState state = world.getBlockState(pos);
+		Vec3d connector = new Vec3d(pos.getX(), pos.getY(), pos.getZ()).add(0.5D);
+		if(state.getBlock() instanceof IWireableBlock)
+			connector = connector.add(((IWireableBlock)state.getBlock()).wireRenderOffset(state));
+		
+		return connector;
+	}
+	
+	private static void drawWireBetween(Vec3d start, Vec3d end, BlockPos origin, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers)
 	{
 		matrices.push();
 			Vec3d o = new Vec3d(origin.getX(), origin.getY(), origin.getZ());
-			Vec3d v1 = new Vec3d(start.getX(), start.getY(), start.getZ()).add(0.5D);
-			Vec3d v2 = new Vec3d(end.getX(), end.getY(), end.getZ()).add(0.5D);
 			
             int red = ((WIRE_COLOUR & 0xFF0000) >> 16);
             int green = ((WIRE_COLOUR & 0xFF00) >> 8);
             int blue = ((WIRE_COLOUR & 0xFF) >> 0);
 			
-			renderWire(v1, v2, o, (float)Math.toRadians(45D), matrices, vertexConsumers, LAYER, 1, red, green, blue);
+			renderWire(start, end, o, (float)Math.toRadians(45D), matrices, vertexConsumers, LAYER, 1, red, green, blue);
 		matrices.pop();
 	}
 	

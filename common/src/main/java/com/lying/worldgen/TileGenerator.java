@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -25,6 +26,11 @@ public class TileGenerator
 	public static boolean DEBUG = false;
 	
 	public static void generate(BlueprintTileGrid map, TileSet tiles, Random rand)
+	{
+		generate(map, tiles, CDTiles.AIR, rand);
+	}
+	
+	public static void generate(BlueprintTileGrid map, TileSet tiles, Supplier<Tile> fallback, Random rand)
 	{
 		if(map.isEmpty())
 		{
@@ -53,7 +59,7 @@ public class TileGenerator
 		{
 			List<BlockPos> positions = positionsPerY.get(level);
 			int size = positions.size();
-			processSet(positions, map, tiles, rand);
+			processSet(positions, map, tiles, fallback, rand);
 			
 			LOGGER.info(" ## Generated set {} of {}, {} positions", ++index, levels.size(), size);
 		}
@@ -61,7 +67,7 @@ public class TileGenerator
 		LOGGER.info("WFC complete");
 	}
 	
-	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, TileSet tiles, Random rand)
+	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, TileSet tiles, Supplier<Tile> fallback, Random rand)
 	{
 		if(slots.isEmpty() || tiles.isEmpty())
 		{
@@ -84,7 +90,7 @@ public class TileGenerator
 			switch(entry.options().size())
 			{
 				case 0:
-					tile = CDTiles.AIR.get();
+					tile = fallback.get();
 					break;
 				case 1:
 					tile = entry.options().get(0);
@@ -94,7 +100,8 @@ public class TileGenerator
 					break;
 			}
 			
-			map.put(entry.pos(), tile);
+			if(tile != null)
+				map.put(entry.pos(), tile);
 			slots.remove(entry.index());
 		}
 	}

@@ -9,4 +9,7 @@ import net.minecraft.registry.tag.TagKey;
 public class CDTags
 {
 	public static final TagKey<Block> PLACER_AVOID		= TagKey.of(RegistryKeys.BLOCK, prefix("trap_avoid"));
+	public static final TagKey<Block> TRAP_SENSOR		= TagKey.of(RegistryKeys.BLOCK, prefix("trap_sensor"));
+	public static final TagKey<Block> TRAP_ACTOR		= TagKey.of(RegistryKeys.BLOCK, prefix("trap_actor"));
+	public static final TagKey<Block> TRAP_HATCHES		= TagKey.of(RegistryKeys.BLOCK, prefix("trap_hatch"));
 }

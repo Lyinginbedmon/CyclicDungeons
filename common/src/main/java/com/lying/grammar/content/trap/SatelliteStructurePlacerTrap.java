@@ -111,17 +111,5 @@ public class SatelliteStructurePlacerTrap extends StructurePlacerTrap
 			.map(pos::offset)
 			.filter(p -> adjacentCheck.applyTo(p, world))
 			.forEach(p -> StructurePlacerTrap.placeStructure(p, poolOpt.get(), adjacentOffset, world, rand));
-		
-//		world.setBlockState(pos, Blocks.TRAPPED_CHEST.getDefaultState().with(ChestBlock.FACING, Direction.fromHorizontalQuarterTurns(rand.nextInt(4))));
-//		final BlockPos sensorPos = pos.down();
-//		world.setBlockState(sensorPos, CDBlocks.SENSOR_REDSTONE.get().getDefaultState());
-//		
-//		Direction.Type.HORIZONTAL.stream()
-//			.map(pos::offset)
-//			.filter(p -> adjacentCheck.test(p, world))
-//			.map(p -> tryPlaceJet(p, world))
-//			.filter(Optional::isPresent)
-//			.map(Optional::get)
-//			.forEach(p -> p.processWireConnection(sensorPos, WireMode.GLOBAL, WireRecipient.SENSOR));
 	}
 }

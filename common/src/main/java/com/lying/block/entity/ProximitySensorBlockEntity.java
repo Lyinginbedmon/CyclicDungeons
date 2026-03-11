@@ -110,7 +110,7 @@ public class ProximitySensorBlockEntity extends TrapSensorBlockEntity<ProximityS
 		markDirty();
 	}
 	
-	public double getSearchRange() { return searchRange; }
+	public double getSearchRadius() { return searchRange; }
 	
 	public boolean shouldBeActive(ProximitySensorBlockEntity tile)
 	{

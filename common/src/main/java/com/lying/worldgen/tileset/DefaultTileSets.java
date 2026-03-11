@@ -23,9 +23,10 @@ public class DefaultTileSets
 		ID_BOSS				= prefix("boss"),
 		ID_BATTLE			= prefix("battle"),
 		ID_PUZZLE			= prefix("puzzle"),
-		ID_TRAP				= prefix("trap");
+		ID_TRAP				= prefix("trap"),
+		ID_PITFALL_TRAP		= prefix("pitfall_trap");
 	
-	private static final List<TileSet> DEFAULTS	= Lists.newArrayList(
+	private static final List<TileSet> ROOM_TILESETS	= Lists.newArrayList(
 			new TileSet(ID_DEFAULT)
 				.addPlaceableFlooring()
 				.addAll(Map.of(
@@ -77,13 +78,24 @@ public class DefaultTileSets
 			new TileSet(ID_PUZZLE)
 				.addPlaceableFlooring(),
 			new TileSet(ID_TRAP)
-				.addPlaceableFlooring()
+				.addPlaceableFlooring());
+	
+	private static final List<TileSet> TRAP_TILESETS = Lists.newArrayList(
+			new TileSet(ID_PITFALL_TRAP)
+			.addAll(Map.of(
+				DefaultTiles.ID_PITFALL, 30F
+					))
 			);
+	
+	private static final List<TileSet> DEFAULTS = Lists.newArrayList();
 	
 	static
 	{
-		// Adds a low-weight air entry to all default tile sets, to prevent overcrowding
-		DEFAULTS.forEach(set -> set.add(CDTiles.ID_AIR, 10F));
+		// Adds a low-weight air entry to all default room tile sets, to prevent overcrowding
+		ROOM_TILESETS.forEach(set -> set.add(CDTiles.ID_AIR, 10F));
+		
+		DEFAULTS.addAll(ROOM_TILESETS);
+		DEFAULTS.addAll(TRAP_TILESETS);
 	}
 	
 	public static List<TileSet> getDefaults()

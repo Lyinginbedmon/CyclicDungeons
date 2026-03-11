@@ -21,6 +21,7 @@ import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
@@ -54,6 +55,12 @@ public class SwingingBladeBlock extends AbstractTrapActorBlock
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
 		builder.add(FACING, AXIS, POWERED);
+	}
+	
+	public Vec3d wireRenderOffset(BlockState state)
+	{
+		Direction face = state.get(FACING);
+		return new Vec3d(face.getOffsetX(), face.getOffsetY(), face.getOffsetZ()).multiply(0.3).negate();
 	}
 	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)

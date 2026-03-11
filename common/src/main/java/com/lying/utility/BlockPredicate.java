@@ -5,9 +5,12 @@ import static com.lying.utility.CDUtils.orEmpty;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -82,6 +85,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	protected final Optional<List<PropertyMap>> blockValues;
 	protected final Optional<List<BlockFlags>> flags;
 	protected Optional<List<SubPredicate>> children;
+	protected Optional<ChildLogic> childrenLogic;
 	protected final boolean inverted;
 	
 	@SuppressWarnings("deprecation")
@@ -130,7 +134,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 			result = false;
 		
 		// Child predicates
-		if(children.isPresent() && !children.get().stream().allMatch(c -> c.apply(pos, world)))
+		if(children.isPresent() && !childrenLogic.orElse(ChildLogic.AND).apply(children.get().stream(), pos, world))
 			result = false;
 		
 		return result != inverted;
@@ -139,7 +143,11 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	public JsonElement toJson()
 	{
 		JsonObject main = CODEC.encodeStart(JsonOps.INSTANCE, this).getOrThrow().getAsJsonObject();
-		children.ifPresent(set -> main.add("children", SubPredicate.CODEC.listOf().encodeStart(JsonOps.INSTANCE, set).getOrThrow()));
+		children.ifPresent(set -> 
+		{
+			childrenLogic.ifPresent(l -> main.addProperty("children_logic", l.asString()));
+			main.add("children", SubPredicate.CODEC.listOf().encodeStart(JsonOps.INSTANCE, set).getOrThrow());
+		});
 		return main;
 	}
 	
@@ -147,7 +155,10 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	{
 		BlockPredicate main = CODEC.parse(JsonOps.INSTANCE, obj).getOrThrow();
 		if(obj.has("children"))
+		{
 			main.children = Optional.of(SubPredicate.CODEC.listOf().parse(JsonOps.INSTANCE, obj.get("children")).getOrThrow());
+			main.childrenLogic = obj.has("children_logic") ? Optional.of(ChildLogic.fromString(obj.get("children_logic").getAsString())) : Optional.empty();
+		}
 		return main;
 	}
 	
@@ -218,6 +229,35 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 		}
 	}
 	
+	public static enum ChildLogic implements StringIdentifiable
+	{
+		AND(Stream<SubPredicate>::allMatch),
+		NAND(Stream<SubPredicate>::noneMatch),
+		OR(Stream<SubPredicate>::anyMatch);
+		
+		private final BiFunction<Stream<SubPredicate>, Predicate<SubPredicate>, Boolean> validator;
+		
+		private ChildLogic(BiFunction<Stream<SubPredicate>, Predicate<SubPredicate>, Boolean> validatorIn)
+		{
+			validator = validatorIn;
+		}
+		
+		public String asString() { return name().toLowerCase(); }
+		
+		public static ChildLogic fromString(String val)
+		{
+			for(ChildLogic logic : values())
+				if(logic.asString().equalsIgnoreCase(val))
+					return logic;
+			return AND;
+		}
+		
+		public boolean apply(Stream<SubPredicate> children, BlockPos pos, ServerWorld world)
+		{
+			return validator.apply(children, p -> p.apply(pos, world));
+		}
+	}
+	
 	public static class Builder
 	{
 		boolean inverted = false;
@@ -230,6 +270,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 		List<PropertyMap> blockValues = Lists.newArrayList();
 		List<BlockFlags> flags = Lists.newArrayList();
 		List<SubPredicate> children = Lists.newArrayList();
+		Optional<ChildLogic> childLogic = Optional.empty();
 		
 		protected Builder() { }
 		
@@ -332,6 +373,12 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 			return this;
 		}
 		
+		public Builder childLogic(ChildLogic logic)
+		{
+			childLogic = Optional.of(logic);
+			return this;
+		}
+		
 		public BlockPredicate build()
 		{
 			BlockPredicate main = new BlockPredicate(
@@ -345,6 +392,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 					orEmpty(blockValues),
 					orEmpty(flags));
 			main.children = orEmpty(children);
+			main.childrenLogic = childLogic;
 			return main;
 		}
 	}

@@ -34,6 +34,7 @@ public abstract class Trap
 	public static final Codec<Trap> CODEC = Codec.of(Trap::encode, Trap::decode);
 	
 	private final Identifier registryName;
+	protected boolean allowDeadEnds = true;
 	
 	protected Trap(Identifier nameIn)
 	{
@@ -79,7 +80,7 @@ public abstract class Trap
 	}
 	
 	/** Returns true if this entry can be applied to the given room */
-	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return true; }
+	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return allowDeadEnds || room.hasChildren(); }
 	
 	/** Applied when the entry is selected, before the room goes through tile generation */
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world) { }
@@ -87,7 +88,7 @@ public abstract class Trap
 	/** Applied after tile generation */
 	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta);
 	
-	public JsonElement toJson(JsonOps ops) { return new JsonPrimitive(registryName().toString()); }
+	public JsonElement toJson(JsonOps ops){ return new JsonPrimitive(registryName().toString()); }
 	
 	/** Loads all configured values from the given element into this trap */
 	protected Trap fromJson(JsonOps ops, JsonElement ele) { return this; }

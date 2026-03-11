@@ -17,6 +17,8 @@ public interface RoomNumberProvider
 		return Math.max(0, apply(random, roomSize));
 	}
 	
+	public default boolean isUnlimited() { return type() == RoomNumberProviderType.UNLIMITED; }
+	
 	public int apply(Random random, Vector2i roomSize);
 	
 	public RoomNumberProviderType type();
@@ -42,7 +44,8 @@ public interface RoomNumberProvider
 	{
 		ABSOLUTE(() -> new Absolute(1)),
 		RAND_BETWEEN(() -> new RandBetween(1,2,0)),
-		SIZE_RATIO(() -> new SizeRatio(1, 1, 1/8));
+		SIZE_RATIO(() -> new SizeRatio(1, 1, 1/8)),
+		UNLIMITED(() -> new Unlimited());
 		
 		private final Supplier<RoomNumberProvider> supplier;
 		
@@ -137,11 +140,21 @@ public interface RoomNumberProvider
 		public RoomNumberProvider fromJson(JsonElement ele)
 		{
 			JsonObject obj = ele.getAsJsonObject();
-			return new RandBetween(
+			return new SizeRatio(
 					obj.has("width") ? obj.get("width").getAsInt() : 0, 
 					obj.has("length") ? obj.get("length").getAsInt() : 0, 
 					obj.has("scalar") ? obj.get("scalar").getAsInt() : 0);
 		}
+	}
+	
+	public static record Unlimited() implements RoomNumberProvider
+	{
+		public int apply(Random random, Vector2i roomSize) { return -1; }
 		
+		public RoomNumberProviderType type() { return RoomNumberProviderType.UNLIMITED; }
+		
+		public JsonElement toJson() { return toObj(); }
+		
+		public RoomNumberProvider fromJson(JsonElement ele) { return new Unlimited(); }
 	}
 }

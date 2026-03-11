@@ -1,0 +1,11 @@
+{
+  "values": [
+    "cydun:redstone_actor",
+    "cydun:dart_trap",
+    "cydun:flame_jet",
+    "cydun:spike_trap",
+    "cydun:spawner",
+    "cydun:swinging_blade",
+    "#cydun:trap_hatch"
+  ]
+}

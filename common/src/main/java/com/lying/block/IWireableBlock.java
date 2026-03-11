@@ -6,6 +6,7 @@ import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.Codec;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
@@ -13,6 +14,7 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public interface IWireableBlock
@@ -41,6 +43,8 @@ public interface IWireableBlock
 	public default int wireCount(BlockPos pos, World world) { return 0; }
 	
 	public default void clearWires(BlockPos pos, World world) { }
+	
+	public default Vec3d wireRenderOffset(BlockState state) { return Vec3d.ZERO; }
 	
 	public default boolean isActive(BlockPos pos, World world) { return activity(pos, world) > 0; }
 	

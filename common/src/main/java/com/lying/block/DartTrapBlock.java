@@ -68,6 +68,12 @@ public class DartTrapBlock extends AbstractTrapActorBlock
 		return new DartTrapBlockEntity(pos, state);
 	}
 	
+	public Vec3d wireRenderOffset(BlockState state)
+	{
+		Direction face = state.get(FACING);
+		return new Vec3d(face.getOffsetX(), face.getOffsetY(), face.getOffsetZ()).multiply(0.5).negate();
+	}
+	
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
 	{
 		return OUTLINE_BY_FACE.get(state.get(FACING));

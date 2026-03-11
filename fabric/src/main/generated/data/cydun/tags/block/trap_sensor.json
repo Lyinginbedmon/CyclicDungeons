@@ -1,0 +1,9 @@
+{
+  "values": [
+    "cydun:collision_sensor",
+    "cydun:proximity_sensor",
+    "cydun:redstone_sensor",
+    "cydun:sight_sensor",
+    "cydun:sound_sensor"
+  ]
+}
