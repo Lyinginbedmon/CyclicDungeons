@@ -61,7 +61,7 @@ public class SatelliteStructurePlacerTrap extends StructurePlacerTrap
 	{
 		JsonObject obj = super.toJson(ops).getAsJsonObject();
 		obj.addProperty("Structure2", adjacentKey.getValue().toString());
-		obj.add("Predicate2", adjacentCheck.toJson());
+		obj.add("Predicate2", adjacentCheck.toJson(ops));
 		
 		JsonArray off = new JsonArray();
 		off.add(adjacentOffset.getX());
@@ -77,7 +77,7 @@ public class SatelliteStructurePlacerTrap extends StructurePlacerTrap
 		super.fromJson(ops, ele);
 		JsonObject obj = ele.getAsJsonObject();
 		adjacentKey = StructurePools.of(Identifier.of(obj.get("Structure2").getAsString()));
-		adjacentCheck = BlockPredicate.fromJson(obj.getAsJsonObject("Predicate2"));
+		adjacentCheck = BlockPredicate.fromJson(ops, obj.getAsJsonObject("Predicate2"));
 		
 		JsonArray off = obj.getAsJsonArray("Offset2");
 		adjacentOffset = new BlockPos(off.get(0).getAsInt(), off.get(1).getAsInt(), off.get(2).getAsInt());

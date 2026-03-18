@@ -46,7 +46,7 @@ public abstract class AbstractPlacerTrap extends Trap
 	public JsonObject asJsonObject()
 	{
 		JsonObject obj = super.asJsonObject();
-		obj.add("Predicate", viabilityCheck.toJson());
+		obj.add("Predicate", viabilityCheck.toJson(JsonOps.INSTANCE));
 		obj.add("Count", trapCounter.toJson());
 		obj.addProperty("Spacing", spacing);
 		obj.addProperty("Avoidance", avoiderDistance);
@@ -55,7 +55,7 @@ public abstract class AbstractPlacerTrap extends Trap
 	
 	protected Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		viabilityCheck = BlockPredicate.fromJson(obj.getAsJsonObject("Predicate"));
+		viabilityCheck = BlockPredicate.fromJson(ops, obj.getAsJsonObject("Predicate"));
 		trapCounter = RoomNumberProvider.get(obj.get("Count"));
 		spacing = obj.get("Spacing").getAsInt();
 		avoiderDistance = obj.get("Avoidance").getAsInt();

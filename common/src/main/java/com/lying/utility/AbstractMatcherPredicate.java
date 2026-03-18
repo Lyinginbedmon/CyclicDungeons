@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.google.common.base.Predicate;
 import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 
 public abstract class AbstractMatcherPredicate<T> implements Predicate<T>
 {
@@ -15,7 +16,7 @@ public abstract class AbstractMatcherPredicate<T> implements Predicate<T>
 		matchers = List.copyOf(matchersIn);
 	}
 	
-	public abstract JsonElement toJson();
+	public abstract JsonElement toJson(JsonOps ops);
 	
 	public final boolean isEmpty()
 	{

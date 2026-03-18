@@ -14,7 +14,10 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -33,7 +36,7 @@ import net.minecraft.world.BlockView;
 /** Utility class for defining a predicate for BlockStates */
 public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 {
-	private static final Codec<BlockPredicate> BASE_CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+	private static final Codec<BlockPredicate> SOLO_CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Registries.BLOCK.getCodec().listOf().optionalFieldOf("blocks").forGetter(p -> listOrSolo(p.blocks).getLeft()),
 			Registries.BLOCK.getCodec().optionalFieldOf("block").forGetter(p -> listOrSolo(p.blocks).getRight()),
 			Registries.FLUID.getCodec().listOf().optionalFieldOf("fluids").forGetter(p -> listOrSolo(p.fluids).getLeft()),
@@ -75,7 +78,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 					values.ifPresent(builder::addBlockValues);
 					return builder.build();
 				}));
-	// FIXME Implement general codec for BlockPredicates
+	public static final Codec<BlockPredicate> CODEC = Codec.of(BlockPredicate::encode, BlockPredicate::decode);
 	
 	protected final Optional<List<Block>> blocks;
 	protected final Optional<List<Fluid>> fluids;
@@ -121,6 +124,17 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 		flags = flagsIn;
 	}
 	
+	@SuppressWarnings("unchecked")
+	private static <T> DataResult<T> encode(final BlockPredicate func, final DynamicOps<T> ops, final T prefix)
+	{
+		return ops == JsonOps.INSTANCE ? (DataResult<T>)DataResult.success(func.toJson(JsonOps.INSTANCE)) : DataResult.error(() -> "Storing battle entry as NBT is not supported");
+	}
+	
+	private static <T> DataResult<Pair<BlockPredicate, T>> decode(final DynamicOps<T> ops, final T input)
+	{
+		return ops == JsonOps.INSTANCE ? DataResult.success(Pair.of(fromJson(JsonOps.INSTANCE, (JsonObject)input), input)) : DataResult.error(() -> "Loading battle entry from NBT is not supported");
+	}
+	
 	public boolean applyTo(BlockPos pos, ServerWorld world)
 	{
 		boolean result = true;
@@ -141,23 +155,23 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 		return result != inverted;
 	}
 	
-	public JsonElement toJson()
+	public JsonElement toJson(JsonOps ops)
 	{
-		JsonObject main = BASE_CODEC.encodeStart(JsonOps.INSTANCE, this).getOrThrow().getAsJsonObject();
+		JsonObject main = SOLO_CODEC.encodeStart(ops, this).getOrThrow().getAsJsonObject();
 		children.ifPresent(set -> 
 		{
 			childrenLogic.ifPresent(l -> main.addProperty("children_logic", l.asString()));
-			main.add("children", SubPredicate.CODEC.listOf().encodeStart(JsonOps.INSTANCE, set).getOrThrow());
+			main.add("children", SubPredicate.CODEC.listOf().encodeStart(ops, set).getOrThrow());
 		});
 		return main;
 	}
 	
-	public static BlockPredicate fromJson(JsonObject obj)
+	public static BlockPredicate fromJson(JsonOps ops, JsonObject obj)
 	{
-		BlockPredicate main = BASE_CODEC.parse(JsonOps.INSTANCE, obj).getOrThrow();
+		BlockPredicate main = SOLO_CODEC.parse(ops, obj).getOrThrow();
 		if(obj.has("children"))
 		{
-			main.children = Optional.of(SubPredicate.CODEC.listOf().parse(JsonOps.INSTANCE, obj.get("children")).getOrThrow());
+			main.children = Optional.of(SubPredicate.CODEC.listOf().parse(ops, obj.get("children")).getOrThrow());
 			main.childrenLogic = obj.has("children_logic") ? Optional.of(ChildLogic.fromString(obj.get("children_logic").getAsString())) : Optional.empty();
 		}
 		return main;
@@ -167,7 +181,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	{
 		public static final Codec<SubPredicate> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				BlockPos.CODEC.fieldOf("offset").forGetter(SubPredicate::offset),
-				BlockPredicate.BASE_CODEC.fieldOf("condition").forGetter(SubPredicate::predicate)
+				BlockPredicate.SOLO_CODEC.fieldOf("condition").forGetter(SubPredicate::predicate)
 				).apply(instance, SubPredicate::new));
 		
 		public boolean apply(BlockPos pos, ServerWorld world)

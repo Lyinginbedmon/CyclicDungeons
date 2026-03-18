@@ -68,7 +68,7 @@ public class TileToBlockTrap extends LogicControlledTrap
 		
 		obj.addProperty("Structure", structureKey.toString());
 		obj.add("StructureCount", structureCount.toJson());
-		obj.add("Predicate", viabilityCheck.toJson());
+		obj.add("Predicate", viabilityCheck.toJson(ops));
 		
 		JsonArray off = new JsonArray();
 		off.add(placementOffset.getX());
@@ -85,7 +85,7 @@ public class TileToBlockTrap extends LogicControlledTrap
 		tileCount = RoomNumberProvider.get(obj.get("TileCount"));
 		
 		structureKey = Identifier.of(obj.get("Structure").getAsString());
-		viabilityCheck = BlockPredicate.fromJson(obj.getAsJsonObject("Predicate"));
+		viabilityCheck = BlockPredicate.fromJson(ops, obj.getAsJsonObject("Predicate"));
 		structureCount = RoomNumberProvider.get(obj.get("StructureCount"));
 		JsonArray off = obj.getAsJsonArray("Offset");
 		placementOffset = new BlockPos(off.get(0).getAsInt(), off.get(1).getAsInt(), off.get(2).getAsInt());
