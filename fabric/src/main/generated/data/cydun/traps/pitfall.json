@@ -1,0 +1,7 @@
+{
+  "Name": "cydun:pitfall",
+  "Type": {
+    "TileSet": "cydun:pitfall_trap",
+    "Type": "cydun:tileset"
+  }
+}

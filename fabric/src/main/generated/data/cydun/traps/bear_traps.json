@@ -1,0 +1,50 @@
+{
+  "Name": "cydun:bear_traps",
+  "Type": {
+    "Avoidance": 3,
+    "Count": {
+      "type": "size_ratio",
+      "length": 1.0,
+      "width": 1.0
+    },
+    "Offset": [
+      0,
+      -2,
+      0
+    ],
+    "Predicate": {
+      "children": [
+        {
+          "condition": {
+            "flags": [
+              "solid"
+            ]
+          },
+          "offset": [
+            0,
+            -1,
+            0
+          ]
+        },
+        {
+          "condition": {
+            "flags": [
+              "air"
+            ]
+          },
+          "offset": [
+            0,
+            -2,
+            0
+          ]
+        }
+      ],
+      "flags": [
+        "air"
+      ]
+    },
+    "Spacing": 4,
+    "Structure": "cydun:trap/bear_trap",
+    "Type": "cydun:structure_placer"
+  }
+}

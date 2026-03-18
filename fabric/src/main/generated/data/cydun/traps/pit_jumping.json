@@ -1,0 +1,7 @@
+{
+  "Name": "cydun:pit_jumping",
+  "Type": {
+    "Hazard": "cydun:pit",
+    "Type": "cydun:simple_jumping"
+  }
+}

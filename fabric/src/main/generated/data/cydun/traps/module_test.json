@@ -1,0 +1,96 @@
+{
+  "Name": "cydun:module_test",
+  "Type": {
+    "Modules": [
+      {
+        "blockstate": {
+          "Name": "minecraft:trapped_chest",
+          "Properties": {
+            "type": "single",
+            "facing": "north",
+            "waterlogged": "false"
+          }
+        },
+        "condition": {
+          "children": [
+            {
+              "condition": {
+                "flags": [
+                  "solid"
+                ]
+              },
+              "offset": [
+                0,
+                -1,
+                0
+              ]
+            }
+          ],
+          "flags": [
+            "air"
+          ]
+        },
+        "count": 1,
+        "id": "cydun:chest",
+        "vital": true
+      },
+      {
+        "blockstate": {
+          "Name": "cydun:redstone_sensor",
+          "Properties": {
+            "powered": "false"
+          }
+        },
+        "condition": {
+          "flags": [
+            "solid"
+          ]
+        },
+        "count": 1,
+        "id": "cydun:sensor",
+        "relations": [
+          {
+            "name": "cydun:chest",
+            "offset": [
+              0,
+              1,
+              0
+            ]
+          }
+        ],
+        "vital": true
+      },
+      {
+        "blockstate": {
+          "Name": "cydun:flame_jet",
+          "Properties": {
+            "facing": "up",
+            "powered": "false"
+          }
+        },
+        "condition": {
+          "flags": [
+            "solid"
+          ]
+        },
+        "connections": [
+          "cydun:sensor"
+        ],
+        "count": 1,
+        "id": "cydun:jet",
+        "relations": [
+          {
+            "name": "cydun:sensor",
+            "offset": [
+              0,
+              1,
+              0
+            ]
+          }
+        ],
+        "vital": true
+      }
+    ],
+    "Type": "cydun:modular"
+  }
+}

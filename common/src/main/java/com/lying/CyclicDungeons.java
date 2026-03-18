@@ -21,6 +21,7 @@ import com.lying.init.CDTileSets;
 import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapLogicHandlers;
+import com.lying.init.CDTrapTypes;
 import com.lying.init.CDTraps;
 import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
@@ -63,6 +64,7 @@ public final class CyclicDungeons
 		CDBlocks.init();
 		CDBlockEntityTypes.init();
 		CDTrapLogicHandlers.init();
+		CDTrapTypes.init();
 		CDTraps.init();
 		CDEntityTypes.init();
 		CDThemes.init();

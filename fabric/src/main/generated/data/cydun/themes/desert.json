@@ -59,5 +59,8 @@
     }
   ],
   "tilesets": [],
-  "traps": []
+  "traps": [
+    "cydun:lava_jumping",
+    "cydun:lava_river"
+  ]
 }

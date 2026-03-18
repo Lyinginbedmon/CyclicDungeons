@@ -1,0 +1,52 @@
+{
+  "Name": "cydun:hatch_pitfall",
+  "Type": {
+    "Offset": [
+      0,
+      0,
+      0
+    ],
+    "Predicate": {
+      "children": [
+        {
+          "condition": {
+            "flags": [
+              "solid"
+            ]
+          },
+          "offset": [
+            0,
+            -1,
+            0
+          ]
+        },
+        {
+          "condition": {},
+          "offset": [
+            0,
+            -1,
+            0
+          ]
+        }
+      ],
+      "flags": [
+        "air"
+      ]
+    },
+    "Structure": "cydun:trap/pressure_plate",
+    "StructureCount": {
+      "type": "rand_between",
+      "max": 5,
+      "min": 1,
+      "offset": 2
+    },
+    "Tile": "cydun:pitfall_hatch",
+    "TileCount": {
+      "type": "size_ratio",
+      "length": 1.0,
+      "scalar": 0.3,
+      "width": 1.0
+    },
+    "Type": "cydun:tile_to_block"
+  }
+}

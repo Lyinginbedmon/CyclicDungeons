@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
-import com.lying.block.FlameJetBlock;
 import com.lying.grammar.DefaultTerms;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent;
@@ -17,14 +16,11 @@ import com.lying.grammar.content.BattleRoomContent.BattleEntry;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grammar.content.battle.SquadBattleEntry.SquadEntry;
-import com.lying.grammar.content.trap.ModularTrap;
-import com.lying.init.CDBlocks;
+import com.lying.grammar.content.trap.DefaultTraps;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTileSets;
-import com.lying.utility.BlockPredicate;
-import com.lying.utility.BlockPredicate.BlockFlags;
-import com.lying.utility.BlockPredicate.SubPredicate;
+import com.lying.init.CDTraps;
 import com.lying.worldgen.tile.Tile;
 import com.lying.worldgen.tileset.DefaultTileSets;
 import com.lying.worldgen.tileset.TileSet;
@@ -32,22 +28,19 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.structure.pool.StructurePools;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 
-public record Theme(Identifier registryName, EncounterSet combatEncounters, List<TrapEntry> trapEncounters, Map<Identifier,Identifier> tileSets, Optional<Identifier> passageTiles)
+public record Theme(Identifier registryName, EncounterSet combatEncounters, List<Identifier> trapEncounters, Map<Identifier,Identifier> tileSets, Optional<Identifier> passageTiles)
 {
 	// TODO Incorporate term sets and initial grammar phrases into themes
 	public static final Codec<Theme> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Theme::registryName),
 			EncounterSet.CODEC.fieldOf("monsters").forGetter(Theme::combatEncounters),
-			TrapEntry.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
+			Identifier.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
 			TileEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
 			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles)
 			).apply(instance, (id,mobs,traps,tiles,passage)-> 
@@ -71,80 +64,16 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 			.addEntry(Theme.ENCOUNTER_PILLAGER_SQUAD)
 			.addEntry(Theme.ENCOUNTER_WOLF_PACK);
 	
-	public static final List<TrapEntry> DEFAULT_TRAPS	= Lists.newArrayList(
-//			new TrapEntry(prefix("pitfall"), TileSetTrap.of(DefaultTileSets.ID_PITFALL_TRAP)),
-////			new TrapEntry(prefix("greed"), CDTraps.GREED.get()),
-//			new TrapEntry(prefix("lava_river"), TileTrap.of(DefaultTiles.ID_LAVA_RIVER, new RoomNumberProvider.Unlimited(), false)),
-//			new TrapEntry(prefix("pit_jumping"), SimpleJumpingTrap.of(DefaultTiles.ID_PIT)),
-//			new TrapEntry(prefix("lava_jumping"), SimpleJumpingTrap.of(DefaultTiles.ID_LAVA)),
-//			new TrapEntry(prefix("minefield"), StructurePlacerTrap.of(
-//					prefix("trap/landmine"), 
-//					new BlockPos(0, -2, 0), 
-//					4, 
-//					3, 
-//					new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
-//					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
-//						.build())),
-//			new TrapEntry(prefix("beartraps"), StructurePlacerTrap.of(
-//					prefix("trap/beartrap"), 
-//					new BlockPos(0, -2, 0), 
-//					4, 
-//					3, 
-//					new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
-//					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
-//						.build())),
-//			new TrapEntry(prefix("bear_traps"), StructurePlacerTrap.of(
-//					prefix("trap/bear_trap"), 
-//					new BlockPos(0, -2, 0), 
-//					4, 
-//					3, 
-//					new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
-//					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
-//						.build())),
-//			new TrapEntry(prefix("hatch_pitfall"), TileToBlockTrap.of(
-//					DefaultTiles.ID_HATCH, 
-//					new RoomNumberProvider.SizeRatio(1, 1, 0.3),
-//					prefix("trap/pressure_plate"), 
-//					new RoomNumberProvider.RandBetween(1, 5, 2),
-//					BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
-//						.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create()
-//								.childLogic(ChildLogic.OR)
-//								.child(new SubPredicate(BlockPos.ORIGIN.north(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
-//								.child(new SubPredicate(BlockPos.ORIGIN.east(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
-//								.child(new SubPredicate(BlockPos.ORIGIN.south(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
-//								.child(new SubPredicate(BlockPos.ORIGIN.west(), BlockPredicate.Builder.create().addBlockTag(CDTags.TRAP_HATCHES).build()))
-//							.build()))
-//					.build(), BlockPos.ORIGIN))
-			new TrapEntry(prefix("module_test"), ModularTrap.create()
-					.module(ModularTrap.Module.Builder
-							.of(prefix("chest"))
-							.positioned(BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).child(new SubPredicate(BlockPos.ORIGIN.down(), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build())).build())
-							.blockState(Blocks.TRAPPED_CHEST.getDefaultState())
-							.markVital()
-							.build())
-					.module(ModularTrap.Module.Builder
-							.of(prefix("sensor"))
-							.positioned(BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build())
-							.relation(prefix("chest"), BlockPos.ORIGIN.up())
-							.blockState(CDBlocks.SENSOR_REDSTONE.get().getDefaultState())
-							.markVital()
-							.build())
-					.module(ModularTrap.Module.Builder
-							.of(prefix("jet"))
-							.positioned(BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build())
-							.blockState(CDBlocks.FLAME_JET.get().getDefaultState().with(FlameJetBlock.FACING, Direction.UP))
-							.relation(prefix("sensor"), BlockPos.ORIGIN.up())
-							.connection(prefix("sensor"))
-							.markVital()
-							.build())
-					)
+	public static final List<Identifier> DEFAULT_TRAPS	= Lists.newArrayList(
+			DefaultTraps.ID_PITFALL,
+			DefaultTraps.ID_LAVA_RIVER,
+			DefaultTraps.ID_PIT_JUMPING,
+			DefaultTraps.ID_LAVA_JUMPING,
+			DefaultTraps.ID_MINEFIELD,
+			DefaultTraps.ID_BEARTRAPS,
+			DefaultTraps.ID_BEAR_TRAPS,
+			DefaultTraps.ID_HATCH_PITFALL,
+			DefaultTraps.ID_MODULE_TEST
 			);
 	public static final Map<Identifier, Identifier> DEFAULT_TILE_SETS = Map.of(
 			CDTerms.ID_START, DefaultTileSets.ID_START,
@@ -184,7 +113,14 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 	
 	public List<TrapEntry> traps()
 	{
-		return trapEncounters.isEmpty() ? BLANK.trapEncounters() : trapEncounters;
+		if(trapEncounters.isEmpty())
+			return List.of();
+		else
+			return trapEncounters.stream()
+					.map(CDTraps.instance()::get)
+					.filter(Optional::isPresent)
+					.map(Optional::get)
+					.toList();
 	}
 	
 	public TileSet getTileSet(GrammarTerm termIn)

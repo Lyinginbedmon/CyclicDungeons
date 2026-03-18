@@ -10,7 +10,7 @@ import com.google.gson.JsonPrimitive;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
-import com.lying.init.CDTraps;
+import com.lying.init.CDTrapTypes;
 import com.lying.worldgen.theme.Theme;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
@@ -60,13 +60,13 @@ public abstract class Trap
 		JsonElement ele = (JsonElement)input;
 		if(ele.isJsonPrimitive())
 		{
-			Optional<Trap> trap = CDTraps.get(Identifier.of(ele.getAsString())); 
+			Optional<Trap> trap = CDTrapTypes.get(Identifier.of(ele.getAsString())); 
 			return trap.isPresent() ? DataResult.success(Pair.of(trap.get(), input)) : DataResult.error(() -> "Error loading trap from data, type unrecognised");
 		}
 		else
 		{
 			JsonObject obj = ele.getAsJsonObject();
-			Optional<Trap> trapOpt = CDTraps.get(Identifier.of(obj.get("Type").getAsString()));
+			Optional<Trap> trapOpt = CDTrapTypes.get(Identifier.of(obj.get("Type").getAsString()));
 			if(trapOpt.isEmpty())
 				return DataResult.error(() -> "Error loading trap from data, type unrecognised");
 			

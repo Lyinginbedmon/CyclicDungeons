@@ -1,64 +1,91 @@
 package com.lying.init;
 
+import static com.lying.reference.Reference.ModInfo.prefix;
+
+import java.io.Reader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
-import com.lying.grammar.content.trap.ModularTrap;
-import com.lying.grammar.content.trap.SatelliteStructurePlacerTrap;
-import com.lying.grammar.content.trap.SimpleJumpingTrap;
-import com.lying.grammar.content.trap.StructurePlacerTrap;
-import com.lying.grammar.content.trap.TileSetTrap;
-import com.lying.grammar.content.trap.TileToBlockTrap;
-import com.lying.grammar.content.trap.TileTrap;
-import com.lying.grammar.content.trap.Trap;
+import com.lying.data.ReloadListener;
+import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.mojang.serialization.JsonOps;
 
+import dev.architectury.registry.ReloadListenerRegistry;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 
-public class CDTraps
+public class CDTraps implements ReloadListener<List<JsonObject>>
 {
-	private static final Map<Identifier, Supplier<Trap>> TRAPS	= new HashMap<>();
+	private static CDTraps INSTANCE;
+	private final Map<Identifier, TrapEntry> REGISTRY	= new HashMap<>();
 	
-	/*
-	 * Chaser corridor trap - As corridor but traps fired regularly in overt sequence
-	 * Warden trap - Spawners of thematic mobs triggered by sight sensor
-	 * Corridor trap - Long room lined with darts/spikes and pressure plates
-	 * Dart hail trap - Abundance of dart traps triggered by collision sensors on floor
-	 * Spear corridor - Spike traps triggered in sequence by a clock
-	 * Spear parkour - Spike traps on walls triggered in sequence by a clock, above pits
-	 * Ceiling blade pendulums - Array of blade traps triggered in sequence by a clock
-	 * Fusillade trap - Abundance of dart trips triggered in sequence by a clock
-	 */
+	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
+	public static final String FILE_PATH = "traps";
 	
-	// Non-configurable
-//	public static final Supplier<Trap> GREED			= register(GreedTrap.ID, GreedTrap::new);
-	
-	// Configurable
-	public static final Supplier<Trap> STRUCTURE_PLACER		= register(StructurePlacerTrap.ID, StructurePlacerTrap::new);
-	public static final Supplier<Trap> ADJACENT_PLACER		= register(SatelliteStructurePlacerTrap.ID, SatelliteStructurePlacerTrap::new);
-	public static final Supplier<Trap> SIMPLE_JUMPER		= register(SimpleJumpingTrap.ID, SimpleJumpingTrap::new);
-	public static final Supplier<Trap> TILE_PREGEN			= register(TileTrap.ID, TileTrap::new);
-	public static final Supplier<Trap> TILE_SET_PREGEN		= register(TileSetTrap.ID, TileSetTrap::new);
-	public static final Supplier<Trap> TILE_TO_BLOCK		= register(TileToBlockTrap.ID, TileToBlockTrap::new);
-	public static final Supplier<Trap> MODULAR				= register(ModularTrap.ID, ModularTrap::new);
-	
-	public static Supplier<Trap> register(Identifier name, Function<Identifier, Trap> func)
-	{
-		Supplier<Trap> supplier = () -> func.apply(name);
-		TRAPS.put(name, supplier);
-		return supplier;
-	}
-	
-	public static Optional<Trap> get(Identifier name)
-	{
-		return TRAPS.containsKey(name) ? Optional.of(TRAPS.get(name).get()) : Optional.empty();
-	}
+	public static CDTraps instance() { return INSTANCE; }
 	
 	public static void init()
 	{
-		CyclicDungeons.LOGGER.info(" # Initialised {} traps", TRAPS.size());
+		INSTANCE = new CDTraps();
+		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INSTANCE, INSTANCE.getId());
+		CyclicDungeons.LOGGER.info(" # Initialised trap entry registry");
+	}
+	
+	public Identifier getId()
+	{
+		return prefix(FILE_PATH);
+	}
+	
+	public Optional<TrapEntry> get(Identifier id)
+	{
+		return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id)) : Optional.empty();
+	}
+	
+	public void register(TrapEntry tileSet)
+	{
+		REGISTRY.put(tileSet.registryName(), tileSet);
+		CyclicDungeons.LOGGER.info(" ## Loaded {}", tileSet.registryName().toString());
+	}
+	
+	public CompletableFuture<List<JsonObject>> load(ResourceManager manager)
+	{
+		return CompletableFuture.supplyAsync(() -> 
+		{
+			List<JsonObject> objects = Lists.newArrayList();
+			manager.findAllResources(FILE_PATH, Predicates.alwaysTrue()).forEach((fileName,fileSet) -> 
+			{
+				Resource file = fileSet.getFirst();
+				try
+				{
+					objects.add(JsonHelper.deserialize(GSON, (Reader)file.getReader(), JsonObject.class));
+				}
+				catch(Exception e) { CyclicDungeons.LOGGER.error("Error while loading trap entry "+fileName.toString()); }
+			});
+			return objects;
+		});
+	}
+	
+	public CompletableFuture<Void> apply(List<JsonObject> data, ResourceManager manager, Executor executor)
+	{
+		return CompletableFuture.runAsync(() -> 
+		{
+			CyclicDungeons.LOGGER.info(" # Loading trap entries from datapack", REGISTRY.size());
+			REGISTRY.clear();
+			data.forEach(prep -> register(TrapEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
+			CyclicDungeons.LOGGER.info(" # {} trap entries loaded", REGISTRY.size());
+		});
 	}
 }

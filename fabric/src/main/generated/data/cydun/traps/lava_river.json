@@ -1,0 +1,8 @@
+{
+  "Name": "cydun:lava_river",
+  "Type": {
+    "AllowDeadEnds": false,
+    "Tile": "cydun:lava_river",
+    "Type": "cydun:tile"
+  }
+}

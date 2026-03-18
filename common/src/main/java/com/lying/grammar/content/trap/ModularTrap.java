@@ -8,16 +8,20 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
-import com.lying.init.CDTraps;
+import com.lying.init.CDTrapTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;
 import com.lying.utility.BlockPredicate;
 import com.lying.worldgen.theme.Theme;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.block.BlockState;
@@ -39,7 +43,7 @@ public class ModularTrap extends Trap
 		super(name);
 	}
 	
-	public static ModularTrap create() { return (ModularTrap)CDTraps.get(ID).get(); }
+	public static ModularTrap create() { return (ModularTrap)CDTrapTypes.get(ID).get(); }
 	
 	public ModularTrap module(Module moduleIn)
 	{
@@ -48,9 +52,27 @@ public class ModularTrap extends Trap
 		return this;
 	}
 	
+	public JsonElement toJson(JsonOps ops)
+	{
+		JsonObject obj = asJsonObject();
+		JsonArray set = new JsonArray();
+		modules.forEach(module -> set.add(Module.CODEC.encodeStart(ops, module).getOrThrow()));
+		obj.add("Modules", set);
+		return obj;
+	}
+	
+	public Trap fromJson(JsonOps ops, JsonElement ele)
+	{
+		JsonObject obj = ele.getAsJsonObject();
+		JsonArray set = obj.getAsJsonArray("Modules");
+		for(int i=0; i<set.size(); i++)
+			module(Module.CODEC.parse(ops, set.get(i)).getOrThrow());
+		return this;
+	}
+	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme)
 	{
-		return super.isApplicableTo(room, meta, theme) && modules.stream().map(Module::name).distinct().count() == modules.size();
+		return super.isApplicableTo(room, meta, theme) && !modules.isEmpty() && modules.stream().map(Module::name).distinct().count() == modules.size();
 	}
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)

@@ -10,8 +10,8 @@ import java.util.function.Supplier;
 import com.google.common.collect.Lists;
 import com.lying.grammar.content.BattleRoomContent;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grammar.content.battle.SquadBattleEntry.SquadEntry;
+import com.lying.grammar.content.trap.DefaultTraps;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.Identifier;
@@ -39,7 +39,10 @@ public class DefaultThemes
 					.add(SquadEntry.Builder.of(EntityType.BLAZE).count(2, 3).build()))
 				.addEntry(Theme.ENCOUNTER_PILLAGER_SQUAD)
 				.addEntry(Theme.ENCOUNTER_WOLF_PACK), 
-			List.of(),
+			List.of(
+				DefaultTraps.ID_LAVA_JUMPING,
+				DefaultTraps.ID_LAVA_RIVER
+					),
 			Map.of());
 	public static final Supplier<Theme> UNDEAD	= register(ID_UNDEAD, 
 			new EncounterSet()
@@ -57,15 +60,18 @@ public class DefaultThemes
 				.addCrowd(prefix("coven"), EntityType.WITCH, 2, 3)
 				.addEntry(Theme.ENCOUNTER_ZOMBIE_CROWD)
 				.addEntry(Theme.ENCOUNTER_PILLAGER_SQUAD), 
-			List.of(),
+			List.of(
+				DefaultTraps.ID_BEARTRAPS,
+				DefaultTraps.ID_MINEFIELD
+					),
 			Map.of());
 	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<TrapEntry> traps, Map<Identifier, Identifier> tileSets)
+	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
 	{
 		return register(id, combat, traps, tileSets, Optional.empty());
 	}
 	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<TrapEntry> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)
+	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)
 	{
 		final Supplier<Theme> entry = () -> new Theme(id, combat, traps, tileSets, passageTileSet);
 		THEMES.add(entry);
