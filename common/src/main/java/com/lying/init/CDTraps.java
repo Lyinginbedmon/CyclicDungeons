@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
+import com.lying.grammar.content.trap.ModularTrap;
 import com.lying.grammar.content.trap.SatelliteStructurePlacerTrap;
 import com.lying.grammar.content.trap.SimpleJumpingTrap;
 import com.lying.grammar.content.trap.StructurePlacerTrap;
@@ -42,6 +43,7 @@ public class CDTraps
 	public static final Supplier<Trap> TILE_PREGEN			= register(TileTrap.ID, TileTrap::new);
 	public static final Supplier<Trap> TILE_SET_PREGEN		= register(TileSetTrap.ID, TileSetTrap::new);
 	public static final Supplier<Trap> TILE_TO_BLOCK		= register(TileToBlockTrap.ID, TileToBlockTrap::new);
+	public static final Supplier<Trap> MODULAR				= register(ModularTrap.ID, ModularTrap::new);
 	
 	public static Supplier<Trap> register(Identifier name, Function<Identifier, Trap> func)
 	{

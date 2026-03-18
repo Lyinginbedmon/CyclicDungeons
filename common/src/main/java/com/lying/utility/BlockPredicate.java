@@ -33,7 +33,7 @@ import net.minecraft.world.BlockView;
 /** Utility class for defining a predicate for BlockStates */
 public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 {
-	private static final Codec<BlockPredicate> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+	private static final Codec<BlockPredicate> BASE_CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Registries.BLOCK.getCodec().listOf().optionalFieldOf("blocks").forGetter(p -> listOrSolo(p.blocks).getLeft()),
 			Registries.BLOCK.getCodec().optionalFieldOf("block").forGetter(p -> listOrSolo(p.blocks).getRight()),
 			Registries.FLUID.getCodec().listOf().optionalFieldOf("fluids").forGetter(p -> listOrSolo(p.fluids).getLeft()),
@@ -75,6 +75,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 					values.ifPresent(builder::addBlockValues);
 					return builder.build();
 				}));
+	// FIXME Implement general codec for BlockPredicates
 	
 	protected final Optional<List<Block>> blocks;
 	protected final Optional<List<Fluid>> fluids;
@@ -142,7 +143,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	
 	public JsonElement toJson()
 	{
-		JsonObject main = CODEC.encodeStart(JsonOps.INSTANCE, this).getOrThrow().getAsJsonObject();
+		JsonObject main = BASE_CODEC.encodeStart(JsonOps.INSTANCE, this).getOrThrow().getAsJsonObject();
 		children.ifPresent(set -> 
 		{
 			childrenLogic.ifPresent(l -> main.addProperty("children_logic", l.asString()));
@@ -153,7 +154,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	
 	public static BlockPredicate fromJson(JsonObject obj)
 	{
-		BlockPredicate main = CODEC.parse(JsonOps.INSTANCE, obj).getOrThrow();
+		BlockPredicate main = BASE_CODEC.parse(JsonOps.INSTANCE, obj).getOrThrow();
 		if(obj.has("children"))
 		{
 			main.children = Optional.of(SubPredicate.CODEC.listOf().parse(JsonOps.INSTANCE, obj.get("children")).getOrThrow());
@@ -166,7 +167,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	{
 		public static final Codec<SubPredicate> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				BlockPos.CODEC.fieldOf("offset").forGetter(SubPredicate::offset),
-				BlockPredicate.CODEC.fieldOf("condition").forGetter(SubPredicate::predicate)
+				BlockPredicate.BASE_CODEC.fieldOf("condition").forGetter(SubPredicate::predicate)
 				).apply(instance, SubPredicate::new));
 		
 		public boolean apply(BlockPos pos, ServerWorld world)
