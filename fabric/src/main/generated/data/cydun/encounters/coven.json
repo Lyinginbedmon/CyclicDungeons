@@ -1,0 +1,9 @@
+{
+  "Encounter": {
+    "type": "minecraft:witch",
+    "battle_type": "cydun:crowd",
+    "max": 3,
+    "min": 2
+  },
+  "Name": "cydun:coven"
+}

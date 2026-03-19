@@ -1,6 +1,57 @@
 {
+  "encounters": [
+    "cydun:pillager_squad",
+    "cydun:wolf_pack",
+    "cydun:zombie_crowd",
+    "cydun:skeletons"
+  ],
   "id": "cydun:generic",
-  "monsters": [],
-  "tilesets": [],
-  "traps": []
+  "tilesets": [
+    {
+      "room": "cydun:big_puzzle",
+      "tileset": "cydun:puzzle"
+    },
+    {
+      "room": "cydun:battle",
+      "tileset": "cydun:battle"
+    },
+    {
+      "room": "cydun:end",
+      "tileset": "cydun:end"
+    },
+    {
+      "room": "cydun:boss",
+      "tileset": "cydun:boss"
+    },
+    {
+      "room": "cydun:trap",
+      "tileset": "cydun:trap"
+    },
+    {
+      "room": "cydun:empty",
+      "tileset": "cydun:empty"
+    },
+    {
+      "room": "cydun:start",
+      "tileset": "cydun:start"
+    },
+    {
+      "room": "cydun:small_puzzle",
+      "tileset": "cydun:puzzle"
+    },
+    {
+      "room": "cydun:treasure",
+      "tileset": "cydun:treasure"
+    }
+  ],
+  "traps": [
+    "cydun:pitfall",
+    "cydun:lava_river",
+    "cydun:pit_jumping",
+    "cydun:lava_jumping",
+    "cydun:minefield",
+    "cydun:beartraps",
+    "cydun:bear_traps",
+    "cydun:hatch_pitfall"
+  ]
 }

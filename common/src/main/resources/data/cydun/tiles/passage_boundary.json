@@ -1,8 +1,0 @@
-{
-  "conditions": [
-    "cydun:always"
-  ],
-  "generation": "structure",
-  "id": "cydun:passage_boundary",
-  "rotation": "cydun:random"
-}

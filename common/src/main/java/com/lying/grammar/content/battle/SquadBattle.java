@@ -15,7 +15,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grammar.RoomMetadata;
-import com.lying.grammar.content.BattleRoomContent.BattleEntry;
 import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
@@ -35,24 +34,27 @@ import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.random.Random;
 
 /** Spawns a predefined set of mobs */
-public class SquadBattleEntry extends BattleEntry
+public class SquadBattle extends Battle
 {
-	private final List<SquadBattleEntry.SquadEntry> squad = Lists.newArrayList();
-	private Consumer<SquadBattleEntry.Roster> setup = Consumers.nop();
+	public static final Identifier ID	= Reference.ModInfo.prefix("basic_squad");
+	private final List<SquadBattle.SquadEntry> squad = Lists.newArrayList();
+	private Consumer<SquadBattle.Roster> setup = Consumers.nop();
 	
-	public SquadBattleEntry(Identifier name)
+	public SquadBattle(Identifier name)
 	{
 		super(name);
 	}
 	
-	public SquadBattleEntry add(@Nullable SquadBattleEntry.SquadEntry entry)
+	public static SquadBattle create() { return new SquadBattle(ID); }
+	
+	public SquadBattle add(@Nullable SquadBattle.SquadEntry entry)
 	{
 		if(entry != null)
 			squad.add(entry);
 		return this;
 	}
 	
-	public SquadBattleEntry setup(Consumer<SquadBattleEntry.Roster> setupIn)
+	public SquadBattle setup(Consumer<SquadBattle.Roster> setupIn)
 	{
 		setup = setupIn;
 		return this;
@@ -61,8 +63,8 @@ public class SquadBattleEntry extends BattleEntry
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
 	{
 		Random rand = world.random;
-		SquadBattleEntry.Roster roster = new Roster();
-		for(SquadBattleEntry.SquadEntry entry : squad)
+		SquadBattle.Roster roster = new Roster();
+		for(SquadBattle.SquadEntry entry : squad)
 		{
 			List<Entity> list = roster.getOrDefault(entry.name(), Lists.newArrayList());
 			int count = 
@@ -93,9 +95,9 @@ public class SquadBattleEntry extends BattleEntry
 		obj.add("squads", set);
 	}
 	
-	protected BattleEntry readFromJson(JsonOps ops, JsonObject obj)
+	protected Battle readFromJson(JsonOps ops, JsonObject obj)
 	{
-		SquadBattleEntry entry = new SquadBattleEntry(name());
+		SquadBattle entry = new SquadBattle(ID);
 		
 		JsonArray set = obj.getAsJsonArray("squads");
 		set.forEach(ele -> 
@@ -230,7 +232,7 @@ public class SquadBattleEntry extends BattleEntry
 				return this;
 			}
 			
-			public SquadBattleEntry.SquadEntry build()
+			public SquadBattle.SquadEntry build()
 			{
 				return new SquadEntry(type, data, min, max, name);
 			}

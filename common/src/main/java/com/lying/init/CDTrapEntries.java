@@ -10,8 +10,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import org.jetbrains.annotations.Nullable;
-
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -19,7 +17,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
 import com.lying.data.ReloadListener;
-import com.lying.worldgen.tileset.TileSet;
+import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.mojang.serialization.JsonOps;
 
 import dev.architectury.registry.ReloadListenerRegistry;
@@ -29,25 +27,21 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 
-public class CDTileSets implements ReloadListener<List<JsonObject>>
+public class CDTrapEntries implements ReloadListener<List<JsonObject>>
 {
-	private static CDTileSets INSTANCE;
-	private final Map<Identifier, TileSet> REGISTRY	= new HashMap<>();
+	private static CDTrapEntries INSTANCE;
+	private final Map<Identifier, TrapEntry> REGISTRY	= new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
-	public static final String FILE_PATH = "tile_sets";
+	public static final String FILE_PATH = "traps";
 	
-	public static final TileSet DEFAULT	= new TileSet(prefix("default_if_unrecognised"))
-			.add(CDTiles.ID_AIR, 10F)
-			.add(CDTiles.ID_STONE, 1000F);
-	
-	public static CDTileSets instance() { return INSTANCE; }
+	public static CDTrapEntries instance() { return INSTANCE; }
 	
 	public static void init()
 	{
-		INSTANCE = new CDTileSets();
+		INSTANCE = new CDTrapEntries();
 		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INSTANCE, INSTANCE.getId());
-		CyclicDungeons.LOGGER.info(" # Initialised tile set registry");
+		CyclicDungeons.LOGGER.info(" # Initialised trap entry registry");
 	}
 	
 	public Identifier getId()
@@ -55,15 +49,15 @@ public class CDTileSets implements ReloadListener<List<JsonObject>>
 		return prefix(FILE_PATH);
 	}
 	
-	public Optional<TileSet> get(@Nullable Identifier id)
+	public Optional<TrapEntry> get(Identifier id)
 	{
-		return id != null && REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id)) : Optional.empty();
+		return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id)) : Optional.empty();
 	}
 	
-	public void register(TileSet tileSet)
+	public void register(TrapEntry trap)
 	{
-		REGISTRY.put(tileSet.registryName(), tileSet);
-		CyclicDungeons.LOGGER.info(" ## Loaded {}", tileSet.registryName().toString());
+		REGISTRY.put(trap.registryName(), trap);
+		CyclicDungeons.LOGGER.info(" ## Loaded {}", trap.registryName().toString());
 	}
 	
 	public CompletableFuture<List<JsonObject>> load(ResourceManager manager)
@@ -78,7 +72,7 @@ public class CDTileSets implements ReloadListener<List<JsonObject>>
 				{
 					objects.add(JsonHelper.deserialize(GSON, (Reader)file.getReader(), JsonObject.class));
 				}
-				catch(Exception e) { CyclicDungeons.LOGGER.error("Error while loading tile set "+fileName.toString()); }
+				catch(Exception e) { CyclicDungeons.LOGGER.error("Error while loading trap entry "+fileName.toString()); }
 			});
 			return objects;
 		});
@@ -88,10 +82,10 @@ public class CDTileSets implements ReloadListener<List<JsonObject>>
 	{
 		return CompletableFuture.runAsync(() -> 
 		{
-			CyclicDungeons.LOGGER.info(" # Loading tile sets from datapack", REGISTRY.size());
+			CyclicDungeons.LOGGER.info(" # Loading trap entries from datapack", REGISTRY.size());
 			REGISTRY.clear();
-			data.forEach(prep -> register(TileSet.decode(JsonOps.INSTANCE, prep)));
-			CyclicDungeons.LOGGER.info(" # {} tile sets loaded", REGISTRY.size());
+			data.forEach(prep -> register(TrapEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
+			CyclicDungeons.LOGGER.info(" # {} trap entries loaded", REGISTRY.size());
 		});
 	}
 }

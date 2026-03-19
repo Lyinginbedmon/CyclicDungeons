@@ -1,0 +1,9 @@
+{
+  "Encounter": {
+    "type": "minecraft:skeleton",
+    "battle_type": "cydun:crowd",
+    "max": 5,
+    "min": 3
+  },
+  "Name": "cydun:skeletons"
+}

@@ -91,7 +91,7 @@ public class RoomMetadata
 	
 	public RoomMetadata setThemeId(Identifier themeIn) { themeId = themeIn; return this; }
 	public Identifier themeId() { return themeId; }
-	public Theme theme() { return CDThemes.instance().get(themeId).orElse(Theme.BLANK); }
+	public Theme theme() { return CDThemes.instance().get(themeId).orElse(CDThemes.instance().get(CDThemes.ID_GENERIC).get()); }
 	
 	public RoomMetadata setDepth(int d) { depth = d; return this; }
 	public int depth() { return depth; }

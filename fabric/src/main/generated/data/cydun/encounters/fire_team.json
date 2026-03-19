@@ -1,0 +1,20 @@
+{
+  "Encounter": {
+    "battle_type": "cydun:basic_squad",
+    "squads": [
+      {
+        "type": "minecraft:wither_skeleton",
+        "max": 1,
+        "min": 1,
+        "name": "cydun:mob"
+      },
+      {
+        "type": "minecraft:blaze",
+        "max": 3,
+        "min": 2,
+        "name": "cydun:mob"
+      }
+    ]
+  },
+  "Name": "cydun:fire_team"
+}

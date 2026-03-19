@@ -29,6 +29,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
 
 public class GrammarTerm
@@ -144,7 +145,7 @@ public class GrammarTerm
 		{
 			Box box = node.worldBox().offset(position);
 			BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
-			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ);
+			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
 			contentBuilder.applyPostProcessing(min, max, world, node, meta);
 			return true;
 		}

@@ -17,7 +17,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
 import com.lying.data.ReloadListener;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.lying.grammar.content.battle.BattleEntry;
 import com.mojang.serialization.JsonOps;
 
 import dev.architectury.registry.ReloadListenerRegistry;
@@ -27,21 +27,21 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 
-public class CDTraps implements ReloadListener<List<JsonObject>>
+public class CDBattleEntries implements ReloadListener<List<JsonObject>>
 {
-	private static CDTraps INSTANCE;
-	private final Map<Identifier, TrapEntry> REGISTRY	= new HashMap<>();
+	private static CDBattleEntries INSTANCE;
+	private final Map<Identifier, BattleEntry> REGISTRY	= new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
-	public static final String FILE_PATH = "traps";
+	public static final String FILE_PATH = "encounters";
 	
-	public static CDTraps instance() { return INSTANCE; }
+	public static CDBattleEntries instance() { return INSTANCE; }
 	
 	public static void init()
 	{
-		INSTANCE = new CDTraps();
+		INSTANCE = new CDBattleEntries();
 		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INSTANCE, INSTANCE.getId());
-		CyclicDungeons.LOGGER.info(" # Initialised trap entry registry");
+		CyclicDungeons.LOGGER.info(" # Initialised encounter entry registry");
 	}
 	
 	public Identifier getId()
@@ -49,15 +49,18 @@ public class CDTraps implements ReloadListener<List<JsonObject>>
 		return prefix(FILE_PATH);
 	}
 	
-	public Optional<TrapEntry> get(Identifier id)
+	public Optional<BattleEntry> get(Identifier id)
 	{
-		return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id)) : Optional.empty();
+		BattleEntry entry;
+		return REGISTRY.containsKey(id) && (entry = REGISTRY.get(id)) != null ? Optional.of(entry) : Optional.empty();
 	}
 	
-	public void register(TrapEntry tileSet)
+	public void register(BattleEntry entry)
 	{
-		REGISTRY.put(tileSet.registryName(), tileSet);
-		CyclicDungeons.LOGGER.info(" ## Loaded {}", tileSet.registryName().toString());
+		if(entry == null)
+			return;
+		REGISTRY.put(entry.registryName(), entry);
+		CyclicDungeons.LOGGER.info(" ## Loaded {}", entry.registryName().toString());
 	}
 	
 	public CompletableFuture<List<JsonObject>> load(ResourceManager manager)
@@ -72,7 +75,7 @@ public class CDTraps implements ReloadListener<List<JsonObject>>
 				{
 					objects.add(JsonHelper.deserialize(GSON, (Reader)file.getReader(), JsonObject.class));
 				}
-				catch(Exception e) { CyclicDungeons.LOGGER.error("Error while loading trap entry "+fileName.toString()); }
+				catch(Exception e) { CyclicDungeons.LOGGER.error("Error while loading encounter entry "+fileName.toString()); }
 			});
 			return objects;
 		});
@@ -82,10 +85,10 @@ public class CDTraps implements ReloadListener<List<JsonObject>>
 	{
 		return CompletableFuture.runAsync(() -> 
 		{
-			CyclicDungeons.LOGGER.info(" # Loading trap entries from datapack", REGISTRY.size());
+			CyclicDungeons.LOGGER.info(" # Loading encounter entries from datapack", REGISTRY.size());
 			REGISTRY.clear();
-			data.forEach(prep -> register(TrapEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
-			CyclicDungeons.LOGGER.info(" # {} trap entries loaded", REGISTRY.size());
+			data.forEach(prep -> register(BattleEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
+			CyclicDungeons.LOGGER.info(" # {} encounter entries loaded", REGISTRY.size());
 		});
 	}
 }

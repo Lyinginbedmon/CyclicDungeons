@@ -35,7 +35,8 @@ public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomC
 	
 	protected final void register(Identifier id, T entry)
 	{
-		registry.put(id, entry);
+		if(id != null)
+			registry.put(id, entry);
 	}
 	
 	public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world)

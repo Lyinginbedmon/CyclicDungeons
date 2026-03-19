@@ -2,7 +2,7 @@ package com.lying.grammar.content.battle;
 
 import com.google.gson.JsonObject;
 import com.lying.grammar.RoomMetadata;
-import com.lying.grammar.content.BattleRoomContent.BattleEntry;
+import com.lying.reference.Reference;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.entity.Entity;
@@ -14,37 +14,38 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 
 /** Spawns a group of all the same mob */
-public class CrowdBattleEntry<T extends Entity> extends BattleEntry
+public class CrowdBattle<T extends Entity> extends Battle
 {
+	public static final Identifier ID	= Reference.ModInfo.prefix("crowd");
 	private final EntityType<T> type;
 	private final int maxCount, minCount;
 	
-	protected CrowdBattleEntry(Identifier registryNameIn, EntityType<T> typeIn, int min, int max)
+	public CrowdBattle(Identifier registryNameIn)
 	{
-		super(registryNameIn);
+		this(registryNameIn, null, 1, 1);
+	}
+	
+	protected CrowdBattle(Identifier nameIn, EntityType<T> typeIn, int min, int max)
+	{
+		super(nameIn);
 		type = typeIn;
 		minCount = min;
 		maxCount = max;
 	}
 	
-	public CrowdBattleEntry(Identifier registryNameIn)
-	{
-		this(registryNameIn, null, 1, 1);
-	}
-	
-	public <J extends Entity> CrowdBattleEntry<J> of(EntityType<J> typeIn)
+	public static <J extends Entity> CrowdBattle<J> of(EntityType<J> typeIn)
 	{
 		return of(typeIn, 1);
 	}
 	
-	public <J extends Entity> CrowdBattleEntry<J> of(EntityType<J> typeIn, int count)
+	public static <J extends Entity> CrowdBattle<J> of(EntityType<J> typeIn, int count)
 	{
 		return of(typeIn, count, count);
 	}
 	
-	public <J extends Entity> CrowdBattleEntry<J> of(EntityType<J> typeIn, int min, int max)
+	public static <J extends Entity> CrowdBattle<J> of(EntityType<J> typeIn, int min, int max)
 	{
-		return new CrowdBattleEntry<>(registryName(), typeIn, min, max);
+		return new CrowdBattle<>(ID, typeIn, min, max);
 	}
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
@@ -72,7 +73,7 @@ public class CrowdBattleEntry<T extends Entity> extends BattleEntry
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected BattleEntry readFromJson(JsonOps ops, JsonObject obj)
+	protected Battle readFromJson(JsonOps ops, JsonObject obj)
 	{
 		if(!obj.has("type"))
 			return null;
@@ -92,6 +93,6 @@ public class CrowdBattleEntry<T extends Entity> extends BattleEntry
 		else
 			min = max = 1;
 		
-		return new CrowdBattleEntry(name(), type, min, max);
+		return new CrowdBattle(ID, type, min, max);
 	}
 }
