@@ -15,6 +15,7 @@ import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grammar.content.battle.BattleEntry;
 import com.lying.init.CDBattleEntries;
+import com.lying.init.CDPhrases;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTileSets;
 import com.lying.init.CDTrapEntries;
@@ -42,7 +43,7 @@ public record Theme(
 	public static final Codec<Theme> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Theme::registryName),
 			Identifier.CODEC.listOf().fieldOf("dictionary").forGetter(t -> t.dictionary.stream().map(GrammarTerm::registryName).toList()),
-			InitialPhrase.CODEC.listOf().fieldOf("phrases").forGetter(Theme::phrases),
+			Identifier.CODEC.listOf().fieldOf("phrases").forGetter(t -> t.phrases.stream().map(InitialPhrase::registryName).toList()),
 			EncounterSet.CODEC.fieldOf("encounters").forGetter(Theme::combatEncounters),
 			Identifier.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
 			TileSetEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
@@ -54,7 +55,7 @@ public record Theme(
 				return new Theme(
 						id, 
 						terms.stream().map(CDTerms.instance()::get).filter(Optional::isPresent).map(Optional::get).toList(), 
-						phrases,
+						phrases.stream().map(CDPhrases.instance()::get).filter(Optional::isPresent).map(Optional::get).toList(),
 						mobs, 
 						traps, 
 						tileSets, 
@@ -171,8 +172,8 @@ public record Theme(
 	private static record TileSetEntry(Identifier roomId, Identifier tilesetId)
 	{
 		public static final Codec<Theme.TileSetEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-				Identifier.CODEC.fieldOf("room").forGetter(TileSetEntry::roomId), 
-				Identifier.CODEC.fieldOf("tileset").forGetter(TileSetEntry::tilesetId)
+				Identifier.CODEC.fieldOf("term").forGetter(TileSetEntry::roomId), 
+				Identifier.CODEC.fieldOf("tile_set").forGetter(TileSetEntry::tilesetId)
 				).apply(instance, Theme.TileSetEntry::new));
 	}
 }

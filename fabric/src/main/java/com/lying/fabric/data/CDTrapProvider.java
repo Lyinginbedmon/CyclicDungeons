@@ -23,7 +23,7 @@ public class CDTrapProvider implements DataProvider
 	
 	public CDTrapProvider(FabricDataOutput generator, CompletableFuture<WrapperLookup> managerIn)
 	{
-		this.path = generator.getResolver(OutputType.DATA_PACK, "traps/");
+		this.path = generator.getResolver(OutputType.DATA_PACK, "content/traps/");
 		this.wrapperLookup = managerIn;
 	}
 	

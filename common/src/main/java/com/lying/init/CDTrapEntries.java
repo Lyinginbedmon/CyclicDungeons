@@ -33,7 +33,7 @@ public class CDTrapEntries implements ReloadListener<List<JsonObject>>
 	private final Map<Identifier, TrapEntry> REGISTRY	= new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
-	public static final String FILE_PATH = "traps";
+	public static final String FILE_PATH = "content/traps";
 	
 	public static CDTrapEntries instance() { return INSTANCE; }
 	

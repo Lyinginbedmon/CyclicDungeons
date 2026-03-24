@@ -14,7 +14,6 @@ import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.battle.DefaultBattles;
 import com.lying.grammar.content.trap.DefaultTraps;
 import com.lying.init.CDTerms;
-import com.lying.worldgen.theme.InitialPhrase.PhraseTerm;
 import com.lying.worldgen.tileset.DefaultTileSets;
 
 import net.minecraft.util.Identifier;
@@ -29,26 +28,6 @@ public class DefaultThemes
 		ID_UNDEAD	= prefix("undead"),
 		ID_JUNGLE	= prefix("jungle"),
 		ID_SWAMP	= prefix("swamp");
-	
-	protected static final InitialPhrase LAYOUT_0	= new InitialPhrase()
-			.add(new PhraseTerm("start", Optional.of(CDTerms.ID_START), Optional.of(List.of("r0", "r1"))))
-			.add(PhraseTerm.of("r0"))
-			.add(new PhraseTerm("r1", Optional.empty(), Optional.of(List.of("r2", "r3", "r4"))))
-			.add(PhraseTerm.of("r2"))
-			.add(new PhraseTerm("r3", Optional.empty(), Optional.of(List.of("r5", "r6"))))
-			.add(PhraseTerm.of("r4"))
-			.add(new PhraseTerm("r5", Optional.empty(), Optional.of(List.of("r7", "r8", "r9"))))
-			.add(PhraseTerm.of("r6"))
-			.add(PhraseTerm.of("r7"))
-			.add(new PhraseTerm("r8", Optional.empty(), Optional.of(List.of("r10"))))
-			.add(PhraseTerm.of("r9"))
-			.add(new PhraseTerm("r10", Optional.empty(), Optional.of(List.of("r11", "r12", "r13"))))
-			.add(PhraseTerm.of("r11"))
-			.add(new PhraseTerm("r12", Optional.empty(), Optional.of(List.of("r14", "r15", "r16"))))
-			.add(PhraseTerm.of("r13"))
-			.add(new PhraseTerm("r14", Optional.of(CDTerms.ID_END), Optional.empty()))
-			.add(PhraseTerm.of("r15"))
-			.add(PhraseTerm.of("r16"));
 	
 	public static final Supplier<Theme> GENERIC	= register(ID_GENERIC,
 			List.of(
@@ -164,7 +143,7 @@ public class DefaultThemes
 	
 	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
 	{
-		return register(id, dictionary, List.of(LAYOUT_0), combat, traps, tileSets, Optional.empty());
+		return register(id, dictionary, List.of(DefaultPhrases.LINEAR.get()), combat, traps, tileSets, Optional.empty());
 	}
 	
 	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, List<InitialPhrase> phrases, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)

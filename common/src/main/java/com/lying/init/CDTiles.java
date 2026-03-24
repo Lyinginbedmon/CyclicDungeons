@@ -39,7 +39,7 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 	private final Map<Identifier, Supplier<Tile>> REGISTRY = new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
-	public static final String FILE_PATH = "tiles";
+	public static final String FILE_PATH = "generation/tiles";
 	
 	public static final Identifier 
 		ID_BLANK			= prefix("blank"), 

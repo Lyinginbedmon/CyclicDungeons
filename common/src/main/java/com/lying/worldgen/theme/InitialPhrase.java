@@ -16,14 +16,22 @@ import net.minecraft.util.Identifier;
 
 public class InitialPhrase
 {
-	public static final Codec<InitialPhrase> CODEC	= PhraseTerm.CODEC.listOf().xmap(InitialPhrase::of, InitialPhrase::contents);
+	public static final Codec<InitialPhrase> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+			Identifier.CODEC.fieldOf("Name").forGetter(InitialPhrase::registryName),
+			PhraseTerm.CODEC.listOf().fieldOf("Rooms").forGetter(InitialPhrase::contents)
+			).apply(instance, InitialPhrase::new));
+	protected final Identifier registryName;
 	protected final List<PhraseTerm> entries = Lists.newArrayList();
 	
-	public static InitialPhrase of(List<PhraseTerm> terms)
+	public InitialPhrase(Identifier name)
 	{
-		InitialPhrase phrase = new InitialPhrase();
-		terms.forEach(phrase::add);
-		return phrase;
+		registryName = name;
+	}
+	
+	public InitialPhrase(Identifier name, List<PhraseTerm> terms)
+	{
+		this(name);
+		terms.forEach(this::add);
 	}
 	
 	public InitialPhrase add(PhraseTerm term)
@@ -33,7 +41,9 @@ public class InitialPhrase
 		return this;
 	}
 	
-	protected List<PhraseTerm> contents() { return entries; }
+	public Identifier registryName() { return registryName; }
+	
+	protected List<PhraseTerm> contents() { return entries.stream().filter(PhraseTerm::needsRecordingInJSON).toList(); }
 	
 	public int size() { return entries.size(); }
 	
@@ -48,8 +58,16 @@ public class InitialPhrase
 		{
 			GrammarRoom room = stock.get(term.name());
 			term.connections().stream()
-				.filter(stock::containsKey)
-				.map(stock::get)
+				.map(s -> 
+				{
+					if(!stock.containsKey(s))
+					{
+						PhraseTerm t = PhraseTerm.of(s);
+						stock.put(s, t.asRoom());
+						
+					}
+					return stock.get(s);
+				})
 				.forEach(room::linkTo);
 		}
 		
@@ -83,5 +101,7 @@ public class InitialPhrase
 		}
 		
 		public List<String> connections() { return doors.orElse(List.of()); }
+		
+		public boolean needsRecordingInJSON() { return content.isPresent() || doors.isPresent(); }
 	}
 }

@@ -17,7 +17,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
 import com.lying.data.ReloadListener;
-import com.lying.grammar.content.battle.BattleEntry;
+import com.lying.worldgen.theme.InitialPhrase;
 import com.mojang.serialization.JsonOps;
 
 import dev.architectury.registry.ReloadListenerRegistry;
@@ -27,21 +27,21 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 
-public class CDBattleEntries implements ReloadListener<List<JsonObject>>
+public class CDPhrases implements ReloadListener<List<JsonObject>>
 {
-	private static CDBattleEntries INSTANCE;
-	private final Map<Identifier, BattleEntry> REGISTRY	= new HashMap<>();
+	private static CDPhrases INSTANCE;
+	private final Map<Identifier, InitialPhrase> REGISTRY	= new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
-	public static final String FILE_PATH = "content/encounters";
+	public static final String FILE_PATH = "grammar/phrases";
 	
-	public static CDBattleEntries instance() { return INSTANCE; }
+	public static CDPhrases instance() { return INSTANCE; }
 	
 	public static void init()
 	{
-		INSTANCE = new CDBattleEntries();
+		INSTANCE = new CDPhrases();
 		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INSTANCE, INSTANCE.getId());
-		CyclicDungeons.LOGGER.info(" # Initialised encounter entry registry");
+		CyclicDungeons.LOGGER.info(" # Initialised phrase registry");
 	}
 	
 	public Identifier getId()
@@ -49,13 +49,13 @@ public class CDBattleEntries implements ReloadListener<List<JsonObject>>
 		return prefix(FILE_PATH);
 	}
 	
-	public Optional<BattleEntry> get(Identifier id)
+	public Optional<InitialPhrase> get(Identifier id)
 	{
-		BattleEntry entry;
+		InitialPhrase entry;
 		return REGISTRY.containsKey(id) && (entry = REGISTRY.get(id)) != null ? Optional.of(entry) : Optional.empty();
 	}
 	
-	public void register(BattleEntry entry)
+	public void register(InitialPhrase entry)
 	{
 		if(entry == null)
 			return;
@@ -85,10 +85,10 @@ public class CDBattleEntries implements ReloadListener<List<JsonObject>>
 	{
 		return CompletableFuture.runAsync(() -> 
 		{
-			CyclicDungeons.LOGGER.info(" # Loading encounter entries from datapack", REGISTRY.size());
+			CyclicDungeons.LOGGER.info(" # Loading phrases from datapack", REGISTRY.size());
 			REGISTRY.clear();
-			data.forEach(prep -> register(BattleEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
-			CyclicDungeons.LOGGER.info(" # {} encounter entries loaded", REGISTRY.size());
+			data.forEach(prep -> register(InitialPhrase.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
+			CyclicDungeons.LOGGER.info(" # {} initial phrases loaded", REGISTRY.size());
 		});
 	}
 }

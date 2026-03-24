@@ -22,7 +22,7 @@ public class CDTileSetProvider implements DataProvider
 	
 	public CDTileSetProvider(FabricDataOutput generator, CompletableFuture<WrapperLookup> managerIn)
 	{
-		this.path = generator.getResolver(OutputType.DATA_PACK, "tile_sets/");
+		this.path = generator.getResolver(OutputType.DATA_PACK, "generation/tile_sets/");
 		this.wrapperLookup = managerIn;
 	}
 	

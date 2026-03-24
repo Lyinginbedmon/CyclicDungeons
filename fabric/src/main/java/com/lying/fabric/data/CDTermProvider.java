@@ -22,7 +22,7 @@ public class CDTermProvider implements DataProvider
 	
 	public CDTermProvider(FabricDataOutput generator, CompletableFuture<WrapperLookup> managerIn)
 	{
-		this.path = generator.getResolver(OutputType.DATA_PACK, "terms/");
+		this.path = generator.getResolver(OutputType.DATA_PACK, "grammar/terms/");
 		this.wrapperLookup = managerIn;
 	}
 	

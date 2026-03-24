@@ -18,132 +18,44 @@
   ],
   "id": "cydun:generic",
   "phrases": [
-    [
-      {
-        "Connections": [
-          "r0",
-          "r1"
-        ],
-        "Content": "cydun:start",
-        "Name": "start"
-      },
-      {
-        "Name": "r0"
-      },
-      {
-        "Connections": [
-          "r2",
-          "r3",
-          "r4"
-        ],
-        "Name": "r1"
-      },
-      {
-        "Name": "r2"
-      },
-      {
-        "Connections": [
-          "r5",
-          "r6"
-        ],
-        "Name": "r3"
-      },
-      {
-        "Name": "r4"
-      },
-      {
-        "Connections": [
-          "r7",
-          "r8",
-          "r9"
-        ],
-        "Name": "r5"
-      },
-      {
-        "Name": "r6"
-      },
-      {
-        "Name": "r7"
-      },
-      {
-        "Connections": [
-          "r10"
-        ],
-        "Name": "r8"
-      },
-      {
-        "Name": "r9"
-      },
-      {
-        "Connections": [
-          "r11",
-          "r12",
-          "r13"
-        ],
-        "Name": "r10"
-      },
-      {
-        "Name": "r11"
-      },
-      {
-        "Connections": [
-          "r14",
-          "r15",
-          "r16"
-        ],
-        "Name": "r12"
-      },
-      {
-        "Name": "r13"
-      },
-      {
-        "Content": "cydun:end",
-        "Name": "r14"
-      },
-      {
-        "Name": "r15"
-      },
-      {
-        "Name": "r16"
-      }
-    ]
+    "cydun:linear"
   ],
   "tilesets": [
     {
-      "room": "cydun:big_puzzle",
-      "tileset": "cydun:puzzle"
+      "term": "cydun:boss",
+      "tile_set": "cydun:boss"
     },
     {
-      "room": "cydun:battle",
-      "tileset": "cydun:battle"
+      "term": "cydun:trap",
+      "tile_set": "cydun:trap"
     },
     {
-      "room": "cydun:end",
-      "tileset": "cydun:end"
+      "term": "cydun:empty",
+      "tile_set": "cydun:empty"
     },
     {
-      "room": "cydun:boss",
-      "tileset": "cydun:boss"
+      "term": "cydun:start",
+      "tile_set": "cydun:start"
     },
     {
-      "room": "cydun:trap",
-      "tileset": "cydun:trap"
+      "term": "cydun:small_puzzle",
+      "tile_set": "cydun:puzzle"
     },
     {
-      "room": "cydun:empty",
-      "tileset": "cydun:empty"
+      "term": "cydun:treasure",
+      "tile_set": "cydun:treasure"
     },
     {
-      "room": "cydun:start",
-      "tileset": "cydun:start"
+      "term": "cydun:big_puzzle",
+      "tile_set": "cydun:puzzle"
     },
     {
-      "room": "cydun:small_puzzle",
-      "tileset": "cydun:puzzle"
+      "term": "cydun:battle",
+      "tile_set": "cydun:battle"
     },
     {
-      "room": "cydun:treasure",
-      "tileset": "cydun:treasure"
+      "term": "cydun:end",
+      "tile_set": "cydun:end"
     }
   ],
   "traps": [

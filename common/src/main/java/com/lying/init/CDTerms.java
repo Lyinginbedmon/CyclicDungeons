@@ -35,7 +35,7 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 	private final Map<Identifier, GrammarTerm> REGISTRY = new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
-	public static final String FILE_PATH = "terms";
+	public static final String FILE_PATH = "grammar/terms";
 	
 	private static CDTerms INSTANCE;
 	
