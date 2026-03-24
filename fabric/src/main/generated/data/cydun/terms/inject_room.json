@@ -1,0 +1,20 @@
+{
+  "colour": 12171705,
+  "conditions": {
+    "before_dungeon_size": 6,
+    "consecutive": true,
+    "dead_ends": true
+  },
+  "content": "cydun:none",
+  "id": "cydun:inject_room",
+  "is_placeable": true,
+  "is_replaceable": true,
+  "phrase_modifier": "cydun:inject_room",
+  "size": {
+    "x_max": 6,
+    "x_min": 3,
+    "y_max": 6,
+    "y_min": 3
+  },
+  "weight": 4
+}

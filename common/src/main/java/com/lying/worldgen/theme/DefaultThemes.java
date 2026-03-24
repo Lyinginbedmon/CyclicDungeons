@@ -9,10 +9,12 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import com.lying.grammar.DefaultTerms;
+import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.battle.DefaultBattles;
 import com.lying.grammar.content.trap.DefaultTraps;
 import com.lying.init.CDTerms;
+import com.lying.worldgen.theme.InitialPhrase.PhraseTerm;
 import com.lying.worldgen.tileset.DefaultTileSets;
 
 import net.minecraft.util.Identifier;
@@ -28,7 +30,38 @@ public class DefaultThemes
 		ID_JUNGLE	= prefix("jungle"),
 		ID_SWAMP	= prefix("swamp");
 	
-	public static final Supplier<Theme> GENERIC	= register(ID_GENERIC, 
+	protected static final InitialPhrase LAYOUT_0	= new InitialPhrase()
+			.add(new PhraseTerm("start", Optional.of(CDTerms.ID_START), Optional.of(List.of("r0", "r1"))))
+			.add(PhraseTerm.of("r0"))
+			.add(new PhraseTerm("r1", Optional.empty(), Optional.of(List.of("r2", "r3", "r4"))))
+			.add(PhraseTerm.of("r2"))
+			.add(new PhraseTerm("r3", Optional.empty(), Optional.of(List.of("r5", "r6"))))
+			.add(PhraseTerm.of("r4"))
+			.add(new PhraseTerm("r5", Optional.empty(), Optional.of(List.of("r7", "r8", "r9"))))
+			.add(PhraseTerm.of("r6"))
+			.add(PhraseTerm.of("r7"))
+			.add(new PhraseTerm("r8", Optional.empty(), Optional.of(List.of("r10"))))
+			.add(PhraseTerm.of("r9"))
+			.add(new PhraseTerm("r10", Optional.empty(), Optional.of(List.of("r11", "r12", "r13"))))
+			.add(PhraseTerm.of("r11"))
+			.add(new PhraseTerm("r12", Optional.empty(), Optional.of(List.of("r14", "r15", "r16"))))
+			.add(PhraseTerm.of("r13"))
+			.add(new PhraseTerm("r14", Optional.of(CDTerms.ID_END), Optional.empty()))
+			.add(PhraseTerm.of("r15"))
+			.add(PhraseTerm.of("r16"));
+	
+	public static final Supplier<Theme> GENERIC	= register(ID_GENERIC,
+			List.of(
+					DefaultTerms.INJECT_ROOM,
+					DefaultTerms.INJECT_BRANCH,
+					DefaultTerms.EMPTY,
+					DefaultTerms.BATTLE,
+					DefaultTerms.TRAP,
+					DefaultTerms.TREASURE,
+					DefaultTerms.SML_PUZZLE,
+					DefaultTerms.BIG_PUZZLE,
+					DefaultTerms.BOSS
+					),
 			new EncounterSet(List.of(
 					DefaultBattles.ID_PILLAGER_SQUAD,
 					DefaultBattles.ID_WOLF_PACK,
@@ -55,9 +88,19 @@ public class DefaultThemes
 					DefaultTerms.ID_BIG_PUZZLE, DefaultTileSets.ID_PUZZLE,
 					DefaultTerms.ID_SML_PUZZLE, DefaultTileSets.ID_PUZZLE,
 					DefaultTerms.ID_BOSS, DefaultTileSets.ID_BOSS,
-					CDTerms.ID_TREASURE, DefaultTileSets.ID_TREASURE
+					DefaultTerms.ID_TREASURE, DefaultTileSets.ID_TREASURE
 					));
 	public static final Supplier<Theme> DESERT	= register(ID_DESERT, 
+			List.of(
+					DefaultTerms.INJECT_ROOM,
+					DefaultTerms.INJECT_BRANCH,
+					DefaultTerms.EMPTY,
+					DefaultTerms.BATTLE,
+					DefaultTerms.TRAP,
+					DefaultTerms.TREASURE,
+					DefaultTerms.SML_PUZZLE,
+					DefaultTerms.BIG_PUZZLE
+					),
 			new EncounterSet(List.of(
 				DefaultBattles.ID_HUSK_CROWD, 
 				DefaultBattles.ID_FIRE_TEAM, 
@@ -69,16 +112,45 @@ public class DefaultThemes
 					),
 			Map.of());
 	public static final Supplier<Theme> UNDEAD	= register(ID_UNDEAD, 
+			List.of(
+					DefaultTerms.INJECT_ROOM,
+					DefaultTerms.INJECT_BRANCH,
+					DefaultTerms.EMPTY,
+					DefaultTerms.BATTLE,
+					DefaultTerms.TRAP,
+					DefaultTerms.TREASURE,
+					DefaultTerms.BOSS
+					),
 			new EncounterSet(List.of(
 				DefaultBattles.ID_SKELETONS, 
 				DefaultBattles.ID_ZOMBIE_CROWD)), 
 			List.of(),
 			Map.of());
 	public static final Supplier<Theme> JUNGLE	= register(ID_JUNGLE, 
+			List.of(
+					DefaultTerms.INJECT_ROOM,
+					DefaultTerms.INJECT_BRANCH,
+					DefaultTerms.EMPTY,
+					DefaultTerms.BATTLE,
+					DefaultTerms.TRAP,
+					DefaultTerms.TREASURE,
+					DefaultTerms.SML_PUZZLE,
+					DefaultTerms.BIG_PUZZLE,
+					DefaultTerms.BOSS
+					),
 			new EncounterSet(), 
 			List.of(),
 			Map.of());
 	public static final Supplier<Theme> SWAMP	= register(ID_SWAMP, 
+			List.of(
+					DefaultTerms.INJECT_ROOM,
+					DefaultTerms.INJECT_BRANCH,
+					DefaultTerms.EMPTY,
+					DefaultTerms.BATTLE,
+					DefaultTerms.TRAP,
+					DefaultTerms.TREASURE,
+					DefaultTerms.SML_PUZZLE
+					),
 			new EncounterSet(List.of(
 				DefaultBattles.ID_BOGGED, 
 				DefaultBattles.ID_COVEN, 
@@ -90,14 +162,14 @@ public class DefaultThemes
 					),
 			Map.of());
 	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
+	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
 	{
-		return register(id, combat, traps, tileSets, Optional.empty());
+		return register(id, dictionary, List.of(LAYOUT_0), combat, traps, tileSets, Optional.empty());
 	}
 	
-	private static Supplier<Theme> register(Identifier id, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)
+	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, List<InitialPhrase> phrases, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)
 	{
-		final Supplier<Theme> entry = () -> new Theme(id, combat, traps, tileSets, passageTileSet);
+		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, tileSets, passageTileSet);
 		THEMES.add(entry);
 		return entry;
 	}

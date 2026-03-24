@@ -20,6 +20,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
 import com.lying.data.ReloadListener;
+import com.lying.worldgen.theme.DefaultThemes;
 import com.lying.worldgen.theme.Theme;
 import com.mojang.serialization.JsonOps;
 
@@ -68,6 +69,12 @@ public class CDThemes implements ReloadListener<List<JsonObject>>
 		return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id).get()) : Optional.empty();
 	}
 	
+	protected void reset()
+	{
+		REGISTRY.clear();
+		register(DefaultThemes.GENERIC.get());
+	}
+	
 	public CompletableFuture<List<JsonObject>> load(ResourceManager manager)
 	{
 		return CompletableFuture.supplyAsync(() -> 
@@ -90,8 +97,8 @@ public class CDThemes implements ReloadListener<List<JsonObject>>
 	{
 		return CompletableFuture.runAsync(() -> 
 		{
-			CyclicDungeons.LOGGER.info(" # Loading themes from datapack", REGISTRY.size());
-			REGISTRY.clear();
+			CyclicDungeons.LOGGER.info(" # Loading themes from datapack");
+			reset();
 			data.forEach(prep -> register(Theme.fromJson(JsonOps.INSTANCE, prep)));
 			CyclicDungeons.LOGGER.info(" # {} themes loaded", REGISTRY.size());
 		});

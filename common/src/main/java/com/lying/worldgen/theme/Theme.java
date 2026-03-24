@@ -5,12 +5,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jetbrains.annotations.Nullable;
+
+import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
+import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grammar.content.battle.BattleEntry;
 import com.lying.init.CDBattleEntries;
+import com.lying.init.CDTerms;
 import com.lying.init.CDTileSets;
 import com.lying.init.CDTrapEntries;
 import com.lying.worldgen.tile.Tile;
@@ -23,21 +28,37 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.structure.pool.StructurePools;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.random.Random;
 
-public record Theme(Identifier registryName, EncounterSet combatEncounters, List<Identifier> trapEncounters, Map<Identifier,Identifier> tileSets, Optional<Identifier> passageTiles)
+public record Theme(
+		Identifier registryName, 
+		List<GrammarTerm> dictionary, 
+		List<InitialPhrase> phrases,
+		EncounterSet combatEncounters, 
+		List<Identifier> trapEncounters, 
+		Map<Identifier,Identifier> tileSets, 
+		Optional<Identifier> passageTiles)
 {
-	// TODO Incorporate term sets and initial grammar phrases into themes
 	public static final Codec<Theme> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Theme::registryName),
+			Identifier.CODEC.listOf().fieldOf("dictionary").forGetter(t -> t.dictionary.stream().map(GrammarTerm::registryName).toList()),
+			InitialPhrase.CODEC.listOf().fieldOf("phrases").forGetter(Theme::phrases),
 			EncounterSet.CODEC.fieldOf("encounters").forGetter(Theme::combatEncounters),
 			Identifier.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
 			TileSetEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
 			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles)
-			).apply(instance, (id,mobs,traps,tiles,passage)-> 
+			).apply(instance, (id,terms,phrases,mobs,traps,tiles,passage)-> 
 			{
 				Map<Identifier, Identifier> tileSets = new HashMap<>();
 				tiles.forEach(t -> tileSets.put(t.roomId(), t.tilesetId()));
-				return new Theme(id, mobs, traps, tileSets, passage);
+				return new Theme(
+						id, 
+						terms.stream().map(CDTerms.instance()::get).filter(Optional::isPresent).map(Optional::get).toList(), 
+						phrases,
+						mobs, 
+						traps, 
+						tileSets, 
+						passage);
 			}));
 	
 	public static Theme fromJson(JsonOps ops, JsonElement ele)
@@ -51,6 +72,35 @@ public record Theme(Identifier registryName, EncounterSet combatEncounters, List
 	}
 	
 	public boolean is(Theme b) { return b.registryName().equals(registryName); }
+	
+	public List<GrammarTerm> getPlaceableTerms()
+	{
+		return dictionary.stream().filter(GrammarTerm::isPlaceable).toList();
+	}
+	
+	@Nullable
+	public GrammarPhrase chooseInitialPhrase(Random rand)
+	{
+		List<GrammarPhrase> phraseSet = Lists.newArrayList();
+		for(InitialPhrase phrase : phrases)
+		{
+			GrammarPhrase result = null;
+			try
+			{
+				result = phrase.toPhrase();
+			}
+			catch(Exception e) { }
+			if(result != null)
+				phraseSet.add(result);
+		}
+		
+		switch(phraseSet.size())
+		{
+			case 0:	return null;
+			case 1: return phraseSet.get(0);
+			default: return phraseSet.get(rand.nextInt(phraseSet.size()));
+		}
+	}
 	
 	public List<BattleEntry> encounters()
 	{

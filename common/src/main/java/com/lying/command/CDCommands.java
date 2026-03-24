@@ -7,6 +7,8 @@ import static net.minecraft.server.command.CommandManager.literal;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import com.llamalad7.mixinextras.lib.apache.commons.StringUtils;
+import com.lying.CyclicDungeons;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintOrganiser;
 import com.lying.blueprint.BlueprintRoom;
@@ -17,6 +19,7 @@ import com.lying.grammar.GrammarRoom;
 import com.lying.init.CDThemes;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
+import com.lying.worldgen.theme.DefaultThemes;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -119,6 +122,8 @@ public class CDCommands
 		Random rand = Random.create(position.getX() * position.getX() + position.getZ() * position.getZ());
 		GrammarPhrase graph = CDGrammar.initialPhrase(size, rand);
 		CDGrammar.generate(graph, rand);
+		if(graph == null || graph.isEmpty())
+			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
 		
 		Blueprint blueprint = Blueprint.fromGraph(graph);
 		blueprint.stream().map(BlueprintRoom::metadata).forEach(meta -> meta.type().prepare(meta, rand));

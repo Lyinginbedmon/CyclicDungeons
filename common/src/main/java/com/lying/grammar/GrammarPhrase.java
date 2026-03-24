@@ -119,7 +119,32 @@ public class GrammarPhrase
 	
 	public int size() { return rooms.size(); }
 	
-	public Optional<GrammarRoom> getStart() { return isEmpty() ? Optional.empty() : Optional.of(rooms.get(0)); }
+	/**
+	 * Returns the shallowest START room with no parent room(s), if any exists.<br>
+	 * Under normal conditions, no phrase should have multiple START rooms.
+	 */
+	public Optional<GrammarRoom> getStart()
+	{
+		if(isEmpty())
+			return Optional.empty();
+		
+		List<GrammarRoom> starts = rooms.stream()
+				.filter(r -> r.getParentLinks().isEmpty())
+				.filter(r -> r.metadata().type().registryName().equals(CDTerms.ID_START))
+				.toList();
+		
+		switch(starts.size())
+		{
+			case 0: return Optional.empty();
+			case 1: return Optional.of(starts.get(0));
+			default:
+				GrammarRoom shallowest = starts.get(0);
+				for(GrammarRoom room : starts)
+					if(room.metadata().depth() < shallowest.metadata().depth())
+						shallowest = room;
+				return Optional.of(shallowest);
+		}
+	}
 	
 	public boolean hasBlanks()
 	{
@@ -198,7 +223,7 @@ public class GrammarPhrase
 	
 	public Text describe()
 	{
-		if(isEmpty())
+		if(isEmpty() || getStart().isEmpty())
 			return Text.literal("NULL");
 		
 		GrammarRoom room = getStart().get();

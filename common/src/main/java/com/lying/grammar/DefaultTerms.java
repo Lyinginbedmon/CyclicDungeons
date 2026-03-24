@@ -20,19 +20,34 @@ public class DefaultTerms
 	private static final Map<Identifier, GrammarTerm> TERMS = new HashMap<>();
 	
 	public static final Identifier
-		ID_BATTLE	= prefix("battle"),
-		ID_BOSS		= prefix("boss"),
-		ID_TRAP		= prefix("trap"),
-		ID_BIG_PUZZLE	= prefix("big_puzzle"),
-		ID_SML_PUZZLE	= prefix("small_puzzle");
+		ID_INJECT_ROOM		= prefix("inject_room"),
+		ID_INJECT_BRANCH	= prefix("inject_branch"),
+		ID_BATTLE			= prefix("battle"),
+		ID_BOSS				= prefix("boss"),
+		ID_TRAP				= prefix("trap"),
+		ID_BIG_PUZZLE		= prefix("big_puzzle"),
+		ID_SML_PUZZLE		= prefix("small_puzzle"),
+		ID_TREASURE			= prefix("treasure");
 	
 	// Initial building blocks
 	public static final GrammarTerm START		= register(CDTerms.ID_START, () -> GrammarTerm.Builder.create(0xFFFFFF)
 			.size(6, 8, 6, 8)
 			.unplaceable());
-	public static final GrammarTerm END		= register(CDTerms.ID_END, () -> GrammarTerm.Builder.create(0xFFFFFF)
+	public static final GrammarTerm END			= register(CDTerms.ID_END, () -> GrammarTerm.Builder.create(0xFFFFFF)
 			.size(6, 8, 6, 8)
 			.unplaceable());
+	public static final GrammarTerm INJECT_ROOM	= register(ID_INJECT_ROOM, () -> GrammarTerm.Builder.create(0xB9B9B9)
+			.withCondition(TermConditions.create()
+				.sizeCap(6))
+			.replaceable()
+			.weight(4)
+			.onApply(PhraseModifier.INJECT_ROOM.get()));
+	public static final GrammarTerm INJECT_BRANCH	= register(ID_INJECT_BRANCH, () -> GrammarTerm.Builder.create(0xB9B9B9)
+			.withCondition(TermConditions.create()
+				.sizeCap(6))
+			.replaceable()
+			.weight(4)
+			.onApply(PhraseModifier.INJECT_BRANCH.get()));
 	
 	// Functional rooms
 	public static final GrammarTerm EMPTY			= register(CDTerms.ID_EMPTY, () -> GrammarTerm.Builder.create(0xA6A6A6)
@@ -73,7 +88,7 @@ public class DefaultTerms
 			.size(new Vector2i(16, 16))
 			.weight(10)
 			.onApply(PhraseModifier.INJECT_TREASURE.get()));
-	public static final GrammarTerm TREASURE		= register(CDTerms.ID_TREASURE, () -> GrammarTerm.Builder.create(0xFFDC40)
+	public static final GrammarTerm TREASURE		= register(ID_TREASURE, () -> GrammarTerm.Builder.create(0xFFDC40)
 			.withCondition(TermConditions.create()
 				.popCap(3)
 				.onlyAfter(List.of(DefaultTerms.ID_BATTLE, DefaultTerms.ID_SML_PUZZLE, CDTerms.ID_EMPTY)))

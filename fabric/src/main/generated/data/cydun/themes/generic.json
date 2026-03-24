@@ -1,4 +1,15 @@
 {
+  "dictionary": [
+    "cydun:inject_room",
+    "cydun:inject_branch",
+    "cydun:empty",
+    "cydun:battle",
+    "cydun:trap",
+    "cydun:treasure",
+    "cydun:small_puzzle",
+    "cydun:big_puzzle",
+    "cydun:boss"
+  ],
   "encounters": [
     "cydun:pillager_squad",
     "cydun:wolf_pack",
@@ -6,6 +17,97 @@
     "cydun:skeletons"
   ],
   "id": "cydun:generic",
+  "phrases": [
+    [
+      {
+        "Connections": [
+          "r0",
+          "r1"
+        ],
+        "Content": "cydun:start",
+        "Name": "start"
+      },
+      {
+        "Name": "r0"
+      },
+      {
+        "Connections": [
+          "r2",
+          "r3",
+          "r4"
+        ],
+        "Name": "r1"
+      },
+      {
+        "Name": "r2"
+      },
+      {
+        "Connections": [
+          "r5",
+          "r6"
+        ],
+        "Name": "r3"
+      },
+      {
+        "Name": "r4"
+      },
+      {
+        "Connections": [
+          "r7",
+          "r8",
+          "r9"
+        ],
+        "Name": "r5"
+      },
+      {
+        "Name": "r6"
+      },
+      {
+        "Name": "r7"
+      },
+      {
+        "Connections": [
+          "r10"
+        ],
+        "Name": "r8"
+      },
+      {
+        "Name": "r9"
+      },
+      {
+        "Connections": [
+          "r11",
+          "r12",
+          "r13"
+        ],
+        "Name": "r10"
+      },
+      {
+        "Name": "r11"
+      },
+      {
+        "Connections": [
+          "r14",
+          "r15",
+          "r16"
+        ],
+        "Name": "r12"
+      },
+      {
+        "Name": "r13"
+      },
+      {
+        "Content": "cydun:end",
+        "Name": "r14"
+      },
+      {
+        "Name": "r15"
+      },
+      {
+        "Name": "r16"
+      }
+    ]
+  ],
   "tilesets": [
     {
       "room": "cydun:big_puzzle",
@@ -52,6 +154,7 @@
     "cydun:minefield",
     "cydun:beartraps",
     "cydun:bear_traps",
-    "cydun:hatch_pitfall"
+    "cydun:hatch_pitfall",
+    "cydun:module_test"
   ]
 }

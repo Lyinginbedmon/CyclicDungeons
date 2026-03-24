@@ -14,6 +14,7 @@ import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
@@ -58,10 +59,11 @@ public class HatchBlock extends AbstractTrapActorBlock
 	
 	public BlockState getPlacementState(ItemPlacementContext ctx)
 	{
-		// TODO Revise to attached face
-		return getDefaultState()
-				.with(FACING, ctx.getHorizontalPlayerFacing())
-				.with(INTERSTITIAL, isInterstitial(ctx.getHorizontalPlayerFacing(), ctx.getWorld(), ctx.getBlockPos()));
+		Direction facing = ctx.getSide();
+		return facing.getAxis() == Axis.Y ? null :
+				getDefaultState()
+				.with(FACING, facing)
+				.with(INTERSTITIAL, isInterstitial(facing, ctx.getWorld(), ctx.getBlockPos()));
 	}
 	
 	public BlockState getStateForNeighborUpdate(

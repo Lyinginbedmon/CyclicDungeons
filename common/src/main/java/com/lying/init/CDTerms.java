@@ -21,7 +21,6 @@ import com.lying.CyclicDungeons;
 import com.lying.data.ReloadListener;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.TermConditions;
-import com.lying.grammar.modifier.PhraseModifier;
 import com.mojang.serialization.JsonOps;
 
 import dev.architectury.registry.ReloadListenerRegistry;
@@ -44,11 +43,8 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 		ID_START			= prefix("start"),
 		ID_END				= prefix("end"),
 		ID_VOID				= prefix("void"),
-		ID_INJECT_ROOM		= prefix("inject_room"),
-		ID_INJECT_BRANCH	= prefix("inject_branch"),
 		ID_EMPTY			= prefix("empty"),
-		ID_BLANK			= prefix("blank"),
-		ID_TREASURE			= prefix("treasure");
+		ID_BLANK			= prefix("blank");
 	
 	public CDTerms()
 	{
@@ -82,8 +78,6 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 	public Optional<GrammarTerm> parse(String name) { return get(name.contains(":") ? Identifier.of(name) : prefix(name)); }
 	
 	public Optional<GrammarTerm> get(Identifier id) { return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id)) : Optional.empty(); }
-	
-	public List<GrammarTerm> placeables() { return REGISTRY.values().stream().filter(GrammarTerm::isPlaceable).toList(); }
 	
 	public static void init()
 	{
@@ -133,18 +127,6 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 		registerSilent(ID_BLANK, GrammarTerm.Builder.create(0x080808)
 				.unplaceable()
 				.replaceable());
-		registerSilent(ID_INJECT_ROOM, GrammarTerm.Builder.create(0xD2D2D2)
-				.withCondition(TermConditions.create()
-					.sizeCap(6))
-				.replaceable()
-				.weight(3)
-				.onApply(PhraseModifier.INJECT_ROOM.get()));
-		registerSilent(ID_INJECT_BRANCH, GrammarTerm.Builder.create(0xB9B9B9)
-				.withCondition(TermConditions.create()
-					.sizeCap(6))
-				.replaceable()
-				.weight(4)
-				.onApply(PhraseModifier.INJECT_BRANCH.get()));
 		
 		// Functional rooms
 		registerSilent(ID_EMPTY, GrammarTerm.Builder.create(0xA6A6A6)
@@ -181,7 +163,7 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 			CyclicDungeons.LOGGER.info(" # Loading grammar terms from datapack", REGISTRY.size());
 			reset();
 			data.forEach(prep -> register(GrammarTerm.readFromJson(JsonOps.INSTANCE, prep)));
-			CyclicDungeons.LOGGER.info(" # {} grammar terms loaded ({} placeable)", REGISTRY.size(), placeables().size());
+			CyclicDungeons.LOGGER.info(" # {} grammar terms loaded ({} placeable)", REGISTRY.size(), REGISTRY.values().stream().filter(GrammarTerm::isPlaceable).count());
 		});
 	}
 }

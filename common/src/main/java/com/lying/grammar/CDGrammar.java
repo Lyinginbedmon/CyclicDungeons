@@ -7,6 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
+import com.lying.init.CDThemes;
 import com.lying.utility.CDUtils;
 import com.lying.utility.DebugLogger;
 
@@ -15,7 +16,6 @@ import net.minecraft.util.math.random.Random;
 public class CDGrammar
 {
 	private static final DebugLogger LOGGER = CDLoggers.GRAMMAR;
-	
 	private static List<GrammarTerm> PLACEABLES = List.of();
 	
 	/** Generates a relatively linear initial starting graph */
@@ -61,11 +61,13 @@ public class CDGrammar
 	/** Populates the given graph */
 	public static GrammarPhrase generate(GrammarPhrase graph, Random rand)
 	{
-		PLACEABLES = CDTerms.instance().placeables();
+		if(graph == null)
+			return null;
+		
+		PLACEABLES = CDThemes.instance().get(graph.theme()).get().getPlaceableTerms();
 		int iterationCap = 5;
 		while(!graph.isEmpty() && graph.hasBlanks() && --iterationCap > 0)
 			recursiveGenerate(graph.get(0).get(), graph, rand);
-		LOGGER.info(" # Generated {}:{} graph", graph.size(), graph.depth());
 		return graph;
 	}
 	
