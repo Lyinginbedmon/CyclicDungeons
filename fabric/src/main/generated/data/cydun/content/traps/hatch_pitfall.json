@@ -1,6 +1,6 @@
 {
   "Name": "cydun:hatch_pitfall",
-  "Type": {
+  "Settings": {
     "Offset": [
       0,
       0,
@@ -91,6 +91,9 @@
       "scalar": 0.5,
       "width": 1.0
     },
-    "Type": "cydun:tile_to_block"
-  }
+    "Wiring": {
+      "Logic": "cydun:relay"
+    }
+  },
+  "Type": "cydun:tile_to_block"
 }

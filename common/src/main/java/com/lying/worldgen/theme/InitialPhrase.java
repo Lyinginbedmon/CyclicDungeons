@@ -81,8 +81,15 @@ public class InitialPhrase
 		public static final Codec<PhraseTerm> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.fieldOf("Name").forGetter(PhraseTerm::name),
 				Identifier.CODEC.optionalFieldOf("Content").forGetter(PhraseTerm::content),
-				Codec.STRING.listOf().optionalFieldOf("Connections").forGetter(PhraseTerm::doors)
-				).apply(instance, PhraseTerm::new));
+				Codec.STRING.listOf().optionalFieldOf("Connections").forGetter(t -> t.doorCount() > 1 ? t.doors() : Optional.empty()),
+				Codec.STRING.optionalFieldOf("Connection").forGetter(t -> t.doorCount() == 1 ? Optional.of(t.doors().get().getFirst()) : Optional.empty())
+				).apply(instance, (name,content,doorList,door) -> 
+				{
+					List<String> doors = Lists.newArrayList();
+					doorList.ifPresent(doors::addAll);
+					door.ifPresent(doors::add);
+					return new PhraseTerm(name,content,Optional.of(doors));
+				}));
 		
 		public static PhraseTerm of(String name)
 		{
@@ -101,6 +108,8 @@ public class InitialPhrase
 		}
 		
 		public List<String> connections() { return doors.orElse(List.of()); }
+		
+		protected int doorCount() { return doors.orElse(List.of()).size(); }
 		
 		public boolean needsRecordingInJSON() { return content.isPresent() || doors.isPresent(); }
 	}

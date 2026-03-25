@@ -17,6 +17,8 @@
   ],
   "id": "cydun:desert",
   "phrases": [
+    "cydun:mild_branching",
+    "cydun:simple",
     "cydun:linear"
   ],
   "tilesets": [],

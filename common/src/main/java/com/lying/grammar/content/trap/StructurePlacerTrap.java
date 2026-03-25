@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.init.CDLoggers;
@@ -54,9 +53,9 @@ public class StructurePlacerTrap extends AbstractPlacerTrap
 		return new StructurePlacerTrap(ID, countFunc, viability, spacing, avoidance, keyIn, offsetIn);
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = asJsonObject();
+		super.toJson(obj, ops);
 		obj.addProperty("Structure", structureKey.getValue().toString());
 		
 		JsonArray off = new JsonArray();
@@ -68,10 +67,9 @@ public class StructurePlacerTrap extends AbstractPlacerTrap
 		return obj;
 	}
 	
-	protected Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		super.fromJson(ops, ele);
-		final JsonObject obj = ele.getAsJsonObject();
+		super.fromJson(ops, obj);
 		structureKey = StructurePools.of(Identifier.of(obj.get("Structure").getAsString()));
 		
 		JsonArray off = obj.getAsJsonArray("Offset");

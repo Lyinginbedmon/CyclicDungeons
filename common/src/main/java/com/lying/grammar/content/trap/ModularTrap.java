@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
@@ -52,18 +51,16 @@ public class ModularTrap extends Trap
 		return this;
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = asJsonObject();
 		JsonArray set = new JsonArray();
 		modules.forEach(module -> set.add(Module.CODEC.encodeStart(ops, module).getOrThrow()));
 		obj.add("Modules", set);
 		return obj;
 	}
 	
-	public Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		JsonObject obj = ele.getAsJsonObject();
 		JsonArray set = obj.getAsJsonArray("Modules");
 		for(int i=0; i<set.size(); i++)
 			module(Module.CODEC.parse(ops, set.get(i)).getOrThrow());

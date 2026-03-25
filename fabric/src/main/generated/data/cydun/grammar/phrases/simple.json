@@ -1,0 +1,34 @@
+{
+  "Name": "cydun:simple",
+  "Rooms": [
+    {
+      "Connection": "atrium",
+      "Content": "cydun:start",
+      "Name": "entrance"
+    },
+    {
+      "Connections": [
+        "armory",
+        "barracks",
+        "kitchen"
+      ],
+      "Name": "atrium"
+    },
+    {
+      "Connection": "pantry",
+      "Name": "kitchen"
+    },
+    {
+      "Connection": "vault",
+      "Name": "armory"
+    },
+    {
+      "Content": "cydun:treasure",
+      "Name": "vault"
+    },
+    {
+      "Content": "cydun:end",
+      "Name": "barracks"
+    }
+  ]
+}

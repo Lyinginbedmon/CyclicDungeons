@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
@@ -55,16 +54,14 @@ public class SimpleJumpingTrap extends Trap
 		return new SimpleJumpingTrap(ID, tileId);
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = asJsonObject();
 		obj.addProperty("Hazard", fillTile.toString());
 		return obj;
 	}
 	
-	public Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		JsonObject obj = ele.getAsJsonObject();
 		fillTile = Identifier.of(obj.get("Hazard").getAsString());
 		return this;
 	}

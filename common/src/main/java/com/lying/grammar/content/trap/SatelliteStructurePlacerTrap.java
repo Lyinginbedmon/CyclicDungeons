@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.reference.Reference;
@@ -57,9 +56,9 @@ public class SatelliteStructurePlacerTrap extends StructurePlacerTrap
 		return new SatelliteStructurePlacerTrap(ID, countFunc, coreViability, spacing, avoidance, coreKey, coreOffset, adjacentViability, adjacentKey, adjacentOffset);
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = super.toJson(ops).getAsJsonObject();
+		super.toJson(obj, ops);
 		obj.addProperty("Structure2", adjacentKey.getValue().toString());
 		obj.add("Predicate2", adjacentCheck.toJson(ops));
 		
@@ -72,10 +71,9 @@ public class SatelliteStructurePlacerTrap extends StructurePlacerTrap
 		return obj;
 	}
 	
-	protected Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		super.fromJson(ops, ele);
-		JsonObject obj = ele.getAsJsonObject();
+		super.fromJson(ops, obj);
 		adjacentKey = StructurePools.of(Identifier.of(obj.get("Structure2").getAsString()));
 		adjacentCheck = BlockPredicate.fromJson(ops, obj.getAsJsonObject("Predicate2"));
 		

@@ -18,9 +18,19 @@
   ],
   "id": "cydun:generic",
   "phrases": [
+    "cydun:mild_branching",
+    "cydun:simple",
     "cydun:linear"
   ],
   "tilesets": [
+    {
+      "term": "cydun:start",
+      "tile_set": "cydun:start"
+    },
+    {
+      "term": "cydun:empty",
+      "tile_set": "cydun:empty"
+    },
     {
       "term": "cydun:trap",
       "tile_set": "cydun:trap"
@@ -48,14 +58,6 @@
     {
       "term": "cydun:small_puzzle",
       "tile_set": "cydun:puzzle"
-    },
-    {
-      "term": "cydun:start",
-      "tile_set": "cydun:start"
-    },
-    {
-      "term": "cydun:empty",
-      "tile_set": "cydun:empty"
     }
   ],
   "traps": [

@@ -1,6 +1,6 @@
 {
   "Name": "cydun:beartraps",
-  "Type": {
+  "Settings": {
     "Avoidance": 3,
     "Count": {
       "type": "size_ratio",
@@ -46,7 +46,7 @@
       ]
     },
     "Spacing": 4,
-    "Structure": "cydun:trap/beartrap",
-    "Type": "cydun:structure_placer"
-  }
+    "Structure": "cydun:trap/beartrap"
+  },
+  "Type": "cydun:structure_placer"
 }

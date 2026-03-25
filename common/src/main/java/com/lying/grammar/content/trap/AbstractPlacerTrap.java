@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.data.CDTags;
 import com.lying.grammar.RoomMetadata;
@@ -44,9 +43,8 @@ public abstract class AbstractPlacerTrap extends Trap
 		avoiderDistance = avoidanceIn;
 	}
 	
-	public JsonObject asJsonObject()
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = super.asJsonObject();
 		obj.add("Predicate", viabilityCheck.toJson(JsonOps.INSTANCE));
 		obj.add("Count", trapCounter.toJson());
 		obj.addProperty("Spacing", spacing);
@@ -54,9 +52,8 @@ public abstract class AbstractPlacerTrap extends Trap
 		return obj;
 	}
 	
-	protected Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		final JsonObject obj = ele.getAsJsonObject();
 		viabilityCheck = BlockPredicate.fromJson(ops, obj.getAsJsonObject("Predicate"));
 		trapCounter = RoomNumberProvider.get(obj.get("Count"));
 		

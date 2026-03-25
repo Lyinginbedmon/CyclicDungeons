@@ -32,16 +32,14 @@ public abstract class LogicControlledTrap extends Trap
 		super(nameIn);
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = asJsonObject();
 		obj.add("Wiring", logicManifest.toJson());
 		return obj;
 	}
 	
-	public Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		JsonObject obj = ele.getAsJsonObject();
 		logicManifest = LogicManifest.fromJson(obj.get("Wiring"));
 		return this;
 	}

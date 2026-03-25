@@ -33,9 +33,6 @@ public class CDTrapTypes
 	 * Fusillade trap - Abundance of dart trips triggered in sequence by a clock
 	 */
 	
-	// Non-configurable
-//	public static final Supplier<Trap> GREED			= register(GreedTrap.ID, GreedTrap::new);
-	
 	// Configurable
 	public static final Supplier<Trap> STRUCTURE_PLACER		= register(StructurePlacerTrap.ID, StructurePlacerTrap::new);
 	public static final Supplier<Trap> ADJACENT_PLACER		= register(SatelliteStructurePlacerTrap.ID, SatelliteStructurePlacerTrap::new);

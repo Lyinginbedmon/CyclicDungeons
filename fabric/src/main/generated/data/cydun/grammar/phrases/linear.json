@@ -2,61 +2,38 @@
   "Name": "cydun:linear",
   "Rooms": [
     {
-      "Connections": [
-        "r0",
-        "r1"
-      ],
+      "Connection": "a",
       "Content": "cydun:start",
       "Name": "start"
     },
     {
-      "Connections": [
-        "r2",
-        "r3",
-        "r4"
-      ],
-      "Name": "r1"
+      "Connection": "b",
+      "Content": "cydun:start",
+      "Name": "a"
     },
     {
-      "Connections": [
-        "r5",
-        "r6"
-      ],
-      "Name": "r3"
+      "Connection": "c",
+      "Content": "cydun:start",
+      "Name": "b"
     },
     {
-      "Connections": [
-        "r7",
-        "r8",
-        "r9"
-      ],
-      "Name": "r5"
+      "Connection": "d",
+      "Content": "cydun:start",
+      "Name": "c"
     },
     {
-      "Connections": [
-        "r10"
-      ],
-      "Name": "r8"
+      "Connection": "e",
+      "Content": "cydun:start",
+      "Name": "d"
     },
     {
-      "Connections": [
-        "r11",
-        "r12",
-        "r13"
-      ],
-      "Name": "r10"
-    },
-    {
-      "Connections": [
-        "r14",
-        "r15",
-        "r16"
-      ],
-      "Name": "r12"
+      "Connection": "terminus",
+      "Content": "cydun:start",
+      "Name": "e"
     },
     {
       "Content": "cydun:end",
-      "Name": "r14"
+      "Name": "terminus"
     }
   ]
 }

@@ -2,7 +2,6 @@ package com.lying.grammar.content.trap;
 
 import java.util.Optional;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
@@ -45,16 +44,14 @@ public class TileSetTrap extends Trap
 		return new TileSetTrap(ID, set);
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = asJsonObject();
 		obj.addProperty("TileSet", tileSetID.toString());
 		return obj;
 	}
 	
-	public Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		JsonObject obj = ele.getAsJsonObject();
 		tileSetID = Identifier.of(obj.get("TileSet").getAsString());
 		return this;
 	}

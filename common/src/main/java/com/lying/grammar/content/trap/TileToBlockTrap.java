@@ -3,7 +3,6 @@ package com.lying.grammar.content.trap;
 import java.util.Optional;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
@@ -60,9 +59,9 @@ public class TileToBlockTrap extends LogicControlledTrap
 		return new TileToBlockTrap(ID, tileIn, tileCountIn, structureIn, count2In, predicate, offset);
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = asJsonObject();
+		super.toJson(obj, ops);
 		obj.addProperty("Tile", tileID.toString());
 		obj.add("TileCount", tileCount.toJson());
 		
@@ -78,9 +77,9 @@ public class TileToBlockTrap extends LogicControlledTrap
 		return obj;
 	}
 	
-	public Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		JsonObject obj = ele.getAsJsonObject();
+		super.fromJson(ops, obj);
 		tileID = Identifier.of(obj.get("Tile").getAsString());
 		tileCount = RoomNumberProvider.get(obj.get("TileCount"));
 		

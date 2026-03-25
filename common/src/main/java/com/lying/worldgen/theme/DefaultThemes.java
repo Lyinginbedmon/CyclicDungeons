@@ -143,7 +143,7 @@ public class DefaultThemes
 	
 	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
 	{
-		return register(id, dictionary, List.of(DefaultPhrases.LINEAR.get()), combat, traps, tileSets, Optional.empty());
+		return register(id, dictionary, List.of(DefaultPhrases.MILD_BRANCHING.get(), DefaultPhrases.SIMPLE.get(), DefaultPhrases.LINEAR.get()), combat, traps, tileSets, Optional.empty());
 	}
 	
 	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, List<InitialPhrase> phrases, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)

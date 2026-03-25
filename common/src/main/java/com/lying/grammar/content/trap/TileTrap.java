@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
@@ -47,17 +46,15 @@ public class TileTrap extends Trap
 		return new TileTrap(ID, hazardIn, hazardCountIn, allowDeadEndsIn);
 	}
 	
-	public JsonElement toJson(JsonOps ops)
+	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
-		JsonObject obj = asJsonObject();
 		obj.addProperty("Tile", hazardID.toString());
 		obj.addProperty("AllowDeadEnds", allowDeadEnds);
 		return obj;
 	}
 	
-	public Trap fromJson(JsonOps ops, JsonElement ele)
+	public Trap fromJson(JsonOps ops, JsonObject obj)
 	{
-		JsonObject obj = ele.getAsJsonObject();
 		hazardID = Identifier.of(obj.get("Tile").getAsString());
 		allowDeadEnds = obj.get("AllowDeadEnds").getAsBoolean();
 		return this;

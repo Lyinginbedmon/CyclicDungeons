@@ -16,6 +16,8 @@
   ],
   "id": "cydun:swamp",
   "phrases": [
+    "cydun:mild_branching",
+    "cydun:simple",
     "cydun:linear"
   ],
   "tilesets": [],

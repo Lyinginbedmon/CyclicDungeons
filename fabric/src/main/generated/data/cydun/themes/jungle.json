@@ -13,6 +13,8 @@
   "encounters": [],
   "id": "cydun:jungle",
   "phrases": [
+    "cydun:mild_branching",
+    "cydun:simple",
     "cydun:linear"
   ],
   "tilesets": [],

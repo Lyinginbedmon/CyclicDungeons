@@ -1,6 +1,6 @@
 {
   "Name": "cydun:module_test",
-  "Type": {
+  "Settings": {
     "Modules": [
       {
         "blockstate": {
@@ -90,7 +90,7 @@
         ],
         "vital": true
       }
-    ],
-    "Type": "cydun:modular"
-  }
+    ]
+  },
+  "Type": "cydun:modular"
 }
