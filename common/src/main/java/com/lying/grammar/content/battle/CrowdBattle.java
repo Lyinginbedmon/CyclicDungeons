@@ -1,5 +1,8 @@
 package com.lying.grammar.content.battle;
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.lying.grammar.RoomMetadata;
 import com.lying.reference.Reference;
@@ -52,12 +55,24 @@ public class CrowdBattle<T extends Entity> extends Battle
 	{
 		Random rand = world.random;
 		final int mobs = rand.nextBetween(minCount, maxCount);
-		for(int i=mobs; i>0; --i)
+		if(mobs <= 0)
+			return;
+		
+		List<BlockPos> positions = Lists.newArrayList();
+		BlockPos.Mutable.iterate(min, max).forEach(p -> 
 		{
-			BlockPos pos = findSpawnablePosition(type, min, max, world, rand, SEARCH_ATTEMPTS);
-			if(pos != null)
-				trySpawn(type, pos, world);
-		}
+			if(canPlaceAt(p, world, type))
+				positions.add(p.toImmutable());
+		});
+		
+		BlockPos pos;
+		if(!positions.isEmpty())
+			for(int i=mobs; i>0; --i)
+				do
+				{
+					pos = positions.size() == 1 ? positions.remove(0) : positions.remove(rand.nextInt(positions.size()));
+				}
+				while(!trySpawn(type, pos, world) && !positions.isEmpty());
 	}
 	
 	protected void writeToJson(JsonOps ops, JsonObject obj)

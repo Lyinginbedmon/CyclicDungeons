@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
+import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDSoundEvents;
@@ -25,7 +26,6 @@ import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtHelper;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.Registries;
@@ -36,6 +36,7 @@ import net.minecraft.util.collection.Weighted;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction.Axis;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.World;
@@ -195,51 +196,69 @@ public class TrapSpawnerLogic
 	{
 		final Random random = world.getRandom();
 		SpawnerEntry entry = this.getSpawnEntry(world, random, spawnerPos);
-		
-		for(int i = 0; i < entry.countToSpawn(world.getRandom()); i++)
-			trySpawnEntry(entry, world, spawnerPos, spawnArea, random);
-		
+		processEntry(entry, world, spawnerPos, this.forcePos, this.fallbackOffset, spawnArea, random);
 		this.updateSpawns(world, spawnerPos, random);
 	}
 	
-	protected void trySpawnEntry(
+	private static void processEntry(SpawnerEntry entry, ServerWorld world, BlockPos spawnerPos, Optional<BlockPos> forcePos, BlockPos fallbackOffset, Box spawnArea, Random random)
+	{
+		Optional<EntityType<?>> type = EntityType.fromNbt(entry.entityNBT());
+		if(type == null || type.isEmpty())
+			return;
+		else if(world.getDifficulty() == Difficulty.PEACEFUL && !type.get().getSpawnGroup().isPeaceful())
+			return;
+		
+		// Build map of spawnable positions within spawn area
+		List<BlockPos> positions = Lists.newArrayList();
+		forcePos.ifPresentOrElse(p -> positions.add(spawnerPos.add(p)), () -> 
+		{
+			// Scan spawn area for useable positions
+			BlockPos.Mutable.iterate(
+					spawnerPos.add((int)spawnArea.minX, (int)spawnArea.minY, (int)spawnArea.minZ), 
+					spawnerPos.add((int)spawnArea.maxX, (int)spawnArea.maxY, (int)spawnArea.maxZ).subtract(new Vec3i(1,1,1)))
+			.forEach(p -> 
+			{
+				if(isPositionSpawnable(p, world, type.get(), entry))
+					positions.add(p.toImmutable());
+			});
+		});
+		if(positions.isEmpty() && fallbackOffset.getManhattanDistance(BlockPos.ORIGIN) > 0)
+		{
+			BlockPos fallback = spawnerPos.add(fallbackOffset);
+			if(isPositionSpawnable(fallback, world, type.get(), entry))
+				positions.add(fallback);
+		}
+		
+		// If map is not empty, do spawns
+		if(!positions.isEmpty())
+			for(int i = 0; i < entry.countToSpawn(world.getRandom()); i++)
+				trySpawnEntry(entry, world, positions, random).ifPresent(positions::remove);
+	}
+	
+	protected static Optional<BlockPos> trySpawnEntry(
 			SpawnerEntry mobSpawnerEntry, 
 			ServerWorld world, 
-			BlockPos spawnerPos, 
-			Box spawnArea, 
+			List<BlockPos> viablePoints, 
 			Random random)
 	{
 		NbtCompound entryNBT = mobSpawnerEntry.entityNBT();
 		Optional<EntityType<?>> entityType = EntityType.fromNbt(entryNBT);
 		if(entityType.isEmpty())
-			return;
+			return Optional.empty();
 		
 		// Prevent non-Peaceful mobs from spawning in Peaceful difficulty
 		if(world.getDifficulty() == Difficulty.PEACEFUL && !entityType.get().getSpawnGroup().isPeaceful())
-			return;
-		
-		// Attempt to find a spawnable position
-		BlockPos spawnPos = spawnerPos;
-		if(this.forcePos.isPresent())
-			spawnPos = spawnerPos.add(this.forcePos.get());
-		else
-		{
-			Optional<BlockPos> posOpt = findSpawnablePosition(mobSpawnerEntry, entityType.get(), spawnerPos, spawnArea, this.fallbackOffset, world, random);
-			if(posOpt.isEmpty())
-				return;
-			else
-				spawnPos = posOpt.get();
-		}
+			return Optional.empty();
 		
 		// Generate the entity to spawn
-		final BlockPos blockPos = spawnPos;
+		final BlockPos spawnPos = viablePoints.size() == 1 ? viablePoints.get(0) : viablePoints.get(random.nextInt(viablePoints.size()));
 		Entity entity = EntityType.loadEntityWithPassengers(entryNBT, world, SpawnReason.SPAWNER, e -> 
 		{
-			e.refreshPositionAndAngles(blockPos.getX() + 0.5D, blockPos.getY(), blockPos.getZ() + 0.5D, e.getYaw(), e.getPitch());
+			e.refreshPositionAndAngles(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, e.getYaw(), e.getPitch());
 			return e;
 		});
 		if(entity == null)
-			return;
+			return Optional.empty();
 		
 		entity.refreshPositionAndAngles(entity.getX(), entity.getY(), entity.getZ(), random.nextFloat() * 360.0F, 0.0F);
 		
@@ -248,7 +267,7 @@ public class TrapSpawnerLogic
 		{
 			// Check if we're going to cause entity overcrowding and avoid
 			if(!mobEntity.canSpawn(world))
-				return;
+				return Optional.of(spawnPos);
 			
 			// If no complex entity data present, equip according to local difficulty
 			if(mobSpawnerEntry.entityNBT().getSize() == 1 && mobSpawnerEntry.entityNBT().contains("id", 8))
@@ -259,69 +278,22 @@ public class TrapSpawnerLogic
 		
 		// Actually spawn the entity
 		if(!world.spawnNewEntityAndPassengers(entity))
-			return;
+			return Optional.empty();
 		
-		world.emitGameEvent(entity, GameEvent.ENTITY_PLACE, blockPos);
+		world.emitGameEvent(entity, GameEvent.ENTITY_PLACE, spawnPos);
 		if(entity instanceof MobEntity)
 			((MobEntity)entity).playSpawnEffects();
 		
-		entity.playSound(CDSoundEvents.SPAWNER_SPAWN.get(), 0.5F, random.nextFloat() * 0.5F + 0.5F);;
+		entity.playSound(CDSoundEvents.SPAWNER_SPAWN.get(), 0.5F, random.nextFloat() * 0.5F + 0.5F);
+		return Optional.of(spawnPos);
 	}
 	
-	protected static Optional<BlockPos> findSpawnablePosition(
-			SpawnerEntry mobSpawnerEntry, 
-			EntityType<?> entityType, 
-			BlockPos spawnerPos, 
-			Box spawnArea, 
-			BlockPos fallbackOffset,
-			ServerWorld world, 
-			Random random)
+	protected static boolean isPositionSpawnable(BlockPos pos, ServerWorld world, EntityType<?> entityType, SpawnerEntry mobSpawnerEntry)
 	{
-		/** Set of any predefined coordinates */
-		final NbtList coordinates = mobSpawnerEntry.entityNBT().getList("Pos", NbtElement.DOUBLE_TYPE);
-		
 		final Optional<MobSpawnerEntry.CustomSpawnRules> customSpawnRules = mobSpawnerEntry.customSpawnRules();
 		/** Predicate defining any spawn rules for this entry */
 		final Predicate<BlockPos> spawnRules = getSpawnConditions(customSpawnRules, entityType, world);
-		
-		int attempts = 10;
-		do
-		{
-			// Retrieve or calculate positions within range of the spawner
-			int posX = getOrMakeCoordinate(Axis.X, coordinates, spawnerPos, spawnArea, random);
-			int posY = getOrMakeCoordinate(Axis.Y, coordinates, spawnerPos, spawnArea, random);
-			int posZ = getOrMakeCoordinate(Axis.Z, coordinates, spawnerPos, spawnArea, random);
-			
-			// Check if we could spawn the mob at this position
-			final BlockPos pos = new BlockPos(posX, posY, posZ);
-			if(world.isSpaceEmpty(entityType.getSpawnBox(posX + 0.5D, posY, posZ + 0.5D)) && spawnRules.test(pos))
-				return Optional.of(pos);
-		}
-		while(attempts-- > 0);
-		
-		// If we failed to find a spawn position, try to use the fallback position 
-		BlockPos fallback = spawnerPos.add(fallbackOffset);
-		return spawnRules.test(fallback) ? Optional.of(fallback) : Optional.empty();
-	}
-	
-	protected static int getOrMakeCoordinate(Axis axis, NbtList coordinates, BlockPos spawnerPos, Box spawnArea, Random random)
-	{
-		// If this coordinate has been predefined, retrieve it 
-		if(axis.ordinal() < coordinates.size())
-			return (int)Math.floor(coordinates.getDouble(axis.ordinal()));
-		
-		// The "origin" value of this axis based on the spawner's position
-		int origin = axis.choose(spawnerPos.getX(), spawnerPos.getY(), spawnerPos.getZ());
-		
-		// How far we can move on this axis
-		int min = (int)axis.choose(spawnArea.minX, spawnArea.minY, spawnArea.minZ);
-		int max = (int)axis.choose(spawnArea.maxX, spawnArea.maxY, spawnArea.maxZ);
-		
-		// Calculate the position along this axis within our range
-		int local = min + (int)((max - min) * random.nextDouble());
-		
-		// Combine the local position with the origin
-		return origin + local;
+		return world.isSpaceEmpty(entityType.getSpawnBox(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D)) && spawnRules.test(pos);
 	}
 	
 	/**

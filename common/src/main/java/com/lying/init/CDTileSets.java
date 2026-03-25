@@ -35,7 +35,7 @@ public class CDTileSets implements ReloadListener<List<JsonObject>>
 	private final Map<Identifier, TileSet> REGISTRY	= new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
-	public static final String FILE_PATH = "tile_sets";
+	public static final String FILE_PATH = "generation/tile_sets";
 	
 	public static final TileSet DEFAULT	= new TileSet(prefix("default_if_unrecognised"))
 			.add(CDTiles.ID_AIR, 10F)

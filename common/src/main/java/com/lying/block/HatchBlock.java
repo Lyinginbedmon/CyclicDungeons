@@ -1,6 +1,7 @@
 package com.lying.block;
 
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDBlocks;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -35,9 +36,10 @@ public class HatchBlock extends AbstractTrapActorBlock
 	public static final VoxelShape SHAPE_CLOSED	= Block.createCuboidShape(0, 14, 0, 16, 16, 16);
 	public static final VoxelShape SHAPE_OPEN	= VoxelShapes.empty();
 	
+	@SuppressWarnings("deprecation")
 	public HatchBlock(Settings settingsIn)
 	{
-		super(settingsIn);
+		super(settingsIn.solidBlock(CDBlocks::never).notSolid());
 		setDefaultState(getDefaultState().with(POWERED, false).with(FACING, Direction.NORTH).with(INTERSTITIAL, false));
 	}
 	
@@ -49,6 +51,11 @@ public class HatchBlock extends AbstractTrapActorBlock
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
 		builder.add(POWERED, FACING, INTERSTITIAL);
+	}
+	
+	protected float getAmbientOcclusionLightLevel(BlockState state, BlockView world, BlockPos pos)
+	{
+		return state.get(POWERED) ? 1F : 0F;
 	}
 	
 	public Vec3d wireRenderOffset(BlockState state)

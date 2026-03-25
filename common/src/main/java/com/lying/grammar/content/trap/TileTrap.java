@@ -81,9 +81,10 @@ public class TileTrap extends Trap
 					})
 				.toList());
 		int count = counter.getCount(world.getRandom(), room.metadata().tileSize());
-		while(!blanks.isEmpty() && count-- > 0)
+		while(!blanks.isEmpty() && (counter.isUnlimited() || count-- > 0))
 		{
-			tileMap.put(blanks.remove(world.random.nextInt(blanks.size())), tile);
+			BlockPos pos = blanks.remove(blanks.size() == 1 ? 0 : world.random.nextInt(blanks.size()));
+			tileMap.put(pos, tile);
 			blanks.removeIf(canExistAt.negate());
 		}
 	}

@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.data.CDTags;
 import com.lying.grammar.RoomMetadata;
@@ -53,10 +54,12 @@ public abstract class AbstractPlacerTrap extends Trap
 		return obj;
 	}
 	
-	protected Trap fromJson(JsonOps ops, JsonObject obj)
+	protected Trap fromJson(JsonOps ops, JsonElement ele)
 	{
+		final JsonObject obj = ele.getAsJsonObject();
 		viabilityCheck = BlockPredicate.fromJson(ops, obj.getAsJsonObject("Predicate"));
 		trapCounter = RoomNumberProvider.get(obj.get("Count"));
+		
 		spacing = obj.get("Spacing").getAsInt();
 		avoiderDistance = obj.get("Avoidance").getAsInt();
 		return this;
@@ -64,7 +67,6 @@ public abstract class AbstractPlacerTrap extends Trap
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
 	{
-		min = min.add(1, 0, 1);
 		int floorY = min.getY() + Tile.TILE_SIZE;
 		
 		// Find all doors
@@ -88,8 +90,6 @@ public abstract class AbstractPlacerTrap extends Trap
 		});
 		if(viablePoints.isEmpty())
 			CDLoggers.WORLDGEN.warn("Failed to find any place for trap");
-		
-		// FIXME Ensure unlimited placement when count for room is < 0
 		
 		Random rand = world.getRandom();
 		if(trapCounter.isUnlimited())

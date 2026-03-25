@@ -21,7 +21,51 @@
           ]
         },
         {
-          "condition": {},
+          "condition": {
+            "children": [
+              {
+                "condition": {
+                  "block_tag": "#cydun:trap_hatch"
+                },
+                "offset": [
+                  0,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "condition": {
+                  "block_tag": "#cydun:trap_hatch"
+                },
+                "offset": [
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "condition": {
+                  "block_tag": "#cydun:trap_hatch"
+                },
+                "offset": [
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "condition": {
+                  "block_tag": "#cydun:trap_hatch"
+                },
+                "offset": [
+                  -1,
+                  0,
+                  0
+                ]
+              }
+            ],
+            "children_logic": "or"
+          },
           "offset": [
             0,
             -1,
@@ -44,7 +88,7 @@
     "TileCount": {
       "type": "size_ratio",
       "length": 1.0,
-      "scalar": 0.3,
+      "scalar": 0.5,
       "width": 1.0
     },
     "Type": "cydun:tile_to_block"

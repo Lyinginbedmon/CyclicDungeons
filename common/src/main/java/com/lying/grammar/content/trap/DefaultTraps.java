@@ -48,10 +48,9 @@ public class DefaultTraps
 			new BlockPos(0, -2, 0), 
 			4, 
 			3, 
-			new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
+			new RoomNumberProvider.SizeRatio(1, 1, 1D/8D), 
 			BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
 				.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
-				.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
 				.build()
 				));
 	public static final Supplier<TrapEntry> BEARTRAPS		= register(ID_BEARTRAPS, () -> StructurePlacerTrap.of(
@@ -59,7 +58,7 @@ public class DefaultTraps
 			new BlockPos(0, -2, 0), 
 			4, 
 			3, 
-			new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
+			new RoomNumberProvider.SizeRatio(1, 1, 1D/8D), 
 			BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
 				.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
 				.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
@@ -70,7 +69,7 @@ public class DefaultTraps
 			new BlockPos(0, -2, 0), 
 			4, 
 			3, 
-			new RoomNumberProvider.SizeRatio(1, 1, 1/8), 
+			new RoomNumberProvider.SizeRatio(1, 1, 1D/8D), 
 			BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)
 				.child(new SubPredicate(BlockPos.ORIGIN.down(1), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
 				.child(new SubPredicate(BlockPos.ORIGIN.down(2), BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).invert().build()))
@@ -78,7 +77,7 @@ public class DefaultTraps
 				));
 	public static final Supplier<TrapEntry> HATCH_PITFALL	= register(ID_HATCH_PITFALL, () -> TileToBlockTrap.of(
 			DefaultTiles.ID_HATCH, 
-			new RoomNumberProvider.SizeRatio(1, 1, 0.3),
+			new RoomNumberProvider.SizeRatio(1, 1, 0.5),
 			prefix("trap/pressure_plate"), 
 			new RoomNumberProvider.RandBetween(1, 5, 2),
 			BlockPredicate.Builder.create().addFlag(BlockFlags.AIR)

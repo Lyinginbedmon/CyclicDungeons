@@ -71,7 +71,7 @@ public class StructurePlacerTrap extends AbstractPlacerTrap
 	protected Trap fromJson(JsonOps ops, JsonElement ele)
 	{
 		super.fromJson(ops, ele);
-		JsonObject obj = ele.getAsJsonObject();
+		final JsonObject obj = ele.getAsJsonObject();
 		structureKey = StructurePools.of(Identifier.of(obj.get("Structure").getAsString()));
 		
 		JsonArray off = obj.getAsJsonArray("Offset");

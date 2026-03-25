@@ -5,6 +5,7 @@
     "Count": {
       "type": "size_ratio",
       "length": 1.0,
+      "scalar": 0.125,
       "width": 1.0
     },
     "Offset": [
@@ -30,7 +31,8 @@
           "condition": {
             "flags": [
               "air"
-            ]
+            ],
+            "inverted": true
           },
           "offset": [
             0,

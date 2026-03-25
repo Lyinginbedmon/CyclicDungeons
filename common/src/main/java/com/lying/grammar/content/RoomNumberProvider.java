@@ -6,6 +6,7 @@ import org.joml.Vector2i;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.random.Random;
@@ -25,19 +26,29 @@ public interface RoomNumberProvider
 	
 	public JsonElement toJson();
 	
+	public default JsonElement toPrimitive()
+	{
+		return new JsonPrimitive(type().asString());
+	}
+	
 	public default JsonObject toObj()
 	{
 		JsonObject obj = new JsonObject();
-		obj.addProperty("type", type().asString());
+		obj.add("type", toPrimitive());
 		return obj;
 	}
 	
-	public RoomNumberProvider fromJson(JsonElement ele);
+	public RoomNumberProvider fromJson(JsonObject ele);
 	
 	public static RoomNumberProvider get(JsonElement ele)
 	{
-		RoomNumberProviderType type = RoomNumberProviderType.fromString(ele.isJsonPrimitive() ? ele.getAsString() : ele.getAsJsonObject().get("type").getAsString());
-		return ele.isJsonObject() ? type.archetype().fromJson(ele) : type.archetype();
+		if(ele.isJsonPrimitive())
+			return RoomNumberProviderType.fromString(ele.getAsString()).archetype();
+		
+		JsonObject obj = ele.getAsJsonObject();
+		RoomNumberProviderType type = RoomNumberProviderType.fromString(obj.get("type").getAsString());
+		obj.remove("type");
+		return type.archetype().fromJson(obj);
 	}
 	
 	public static enum RoomNumberProviderType implements StringIdentifiable
@@ -80,9 +91,9 @@ public interface RoomNumberProvider
 			return obj;
 		}
 		
-		public RoomNumberProvider fromJson(JsonElement ele)
+		public RoomNumberProvider fromJson(JsonObject obj)
 		{
-			return new Absolute(ele.getAsJsonObject().get("value").getAsInt());
+			return new Absolute(obj.get("value").getAsInt());
 		}
 	}
 	
@@ -102,9 +113,8 @@ public interface RoomNumberProvider
 			return obj;
 		}
 		
-		public RoomNumberProvider fromJson(JsonElement ele)
+		public RoomNumberProvider fromJson(JsonObject obj)
 		{
-			JsonObject obj = ele.getAsJsonObject();
 			return new RandBetween(
 					obj.get("min").getAsInt(), 
 					obj.get("max").getAsInt(), 
@@ -137,13 +147,12 @@ public interface RoomNumberProvider
 			return obj;
 		}
 		
-		public RoomNumberProvider fromJson(JsonElement ele)
+		public RoomNumberProvider fromJson(JsonObject obj)
 		{
-			JsonObject obj = ele.getAsJsonObject();
 			return new SizeRatio(
-					obj.has("width") ? obj.get("width").getAsInt() : 0, 
-					obj.has("length") ? obj.get("length").getAsInt() : 0, 
-					obj.has("scalar") ? obj.get("scalar").getAsInt() : 0);
+					obj.has("width") ? obj.get("width").getAsDouble() : 0, 
+					obj.has("length") ? obj.get("length").getAsDouble() : 0, 
+					obj.has("scalar") ? obj.get("scalar").getAsDouble() : 0);
 		}
 	}
 	
@@ -153,8 +162,8 @@ public interface RoomNumberProvider
 		
 		public RoomNumberProviderType type() { return RoomNumberProviderType.UNLIMITED; }
 		
-		public JsonElement toJson() { return toObj(); }
+		public JsonElement toJson() { return toPrimitive(); }
 		
-		public RoomNumberProvider fromJson(JsonElement ele) { return new Unlimited(); }
+		public RoomNumberProvider fromJson(JsonObject ele) { return this; }
 	}
 }

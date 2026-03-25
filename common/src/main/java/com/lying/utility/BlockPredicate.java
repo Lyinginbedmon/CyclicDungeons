@@ -37,6 +37,7 @@ import net.minecraft.world.BlockView;
 public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 {
 	private static final Codec<BlockPredicate> SOLO_CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+			Codec.BOOL.optionalFieldOf("inverted").forGetter(p -> p.inverted ? Optional.of(p.inverted) : Optional.empty()),
 			Registries.BLOCK.getCodec().listOf().optionalFieldOf("blocks").forGetter(p -> listOrSolo(p.blocks).getLeft()),
 			Registries.BLOCK.getCodec().optionalFieldOf("block").forGetter(p -> listOrSolo(p.blocks).getRight()),
 			Registries.FLUID.getCodec().listOf().optionalFieldOf("fluids").forGetter(p -> listOrSolo(p.fluids).getLeft()),
@@ -53,9 +54,11 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 			PropertyMap.CODEC.optionalFieldOf("value").forGetter(p -> listOrSolo(p.blockValues).getRight()),
 			BlockFlags.CODEC.listOf().optionalFieldOf("flags").forGetter(p -> p.flags)
 			)
-				.apply(instance, (blockList, block, fluidList, fluid, stateList, state, blockTagList, blockTag, fluidTagList, fluidTag, propertyList, property, valueList, values, flags) -> 
+				.apply(instance, (inverted, blockList, block, fluidList, fluid, stateList, state, blockTagList, blockTag, fluidTagList, fluidTag, propertyList, property, valueList, values, flags) -> 
 				{
 					Builder builder = Builder.create();
+					inverted.ifPresent(b -> builder.invert());
+					
 					blockList.ifPresent(l -> builder.addBlock(l.toArray(new Block[0])));
 					block.ifPresent(builder::addBlock);
 					
@@ -76,6 +79,8 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 					
 					valueList.ifPresent(l -> builder.addBlockValues(l.toArray(new PropertyMap[0])));
 					values.ifPresent(builder::addBlockValues);
+					
+					flags.ifPresent(s -> s.forEach(builder::addFlag));
 					return builder.build();
 				}));
 	public static final Codec<BlockPredicate> CODEC = Codec.of(BlockPredicate::encode, BlockPredicate::decode);
@@ -181,7 +186,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	{
 		public static final Codec<SubPredicate> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				BlockPos.CODEC.fieldOf("offset").forGetter(SubPredicate::offset),
-				BlockPredicate.SOLO_CODEC.fieldOf("condition").forGetter(SubPredicate::predicate)
+				BlockPredicate.CODEC.fieldOf("condition").forGetter(SubPredicate::predicate)
 				).apply(instance, SubPredicate::new));
 		
 		public boolean apply(BlockPos pos, ServerWorld world)
