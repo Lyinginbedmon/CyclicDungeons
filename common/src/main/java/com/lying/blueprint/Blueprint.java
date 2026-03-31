@@ -21,6 +21,7 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
+import com.lying.init.CDBlocks;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
@@ -32,7 +33,6 @@ import com.lying.worldgen.tile.Tile;
 import com.lying.worldgen.tileset.TileSet;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -46,13 +46,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public static final DebugLogger LOGGER = CDLoggers.WORLDGEN;
 	public static final int ROOM_TILE_HEIGHT	= 4;
 	public static final int ROOM_HEIGHT			= ROOM_TILE_HEIGHT * Tile.TILE_SIZE;
-	public static final BlockState[] SHELL_PALETTES = new BlockState[] 
-			{
-				Blocks.DEEPSLATE_BRICKS.getDefaultState(),
-				Blocks.CRACKED_DEEPSLATE_BRICKS.getDefaultState(),
-				Blocks.DEEPSLATE_TILES.getDefaultState(),
-				Blocks.CRACKED_DEEPSLATE_TILES.getDefaultState()
-			};
+	public static final BlockState SHELL		= CDBlocks.CYLICIUM_BLOCK.get().getDefaultState();
 	
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
@@ -186,7 +180,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 				{
 					// Place walling at any position outside the original boundaries
 					if(isExterior.test(p))
-						Tile.tryPlace(SHELL_PALETTES[world.random.nextInt(SHELL_PALETTES.length)], p, world);
+						Tile.tryPlace(SHELL, p, world);
 				}));
 		
 		LOGGER.info(" ## Exterior shell completed in {}ms", System.currentTimeMillis() - timeMillis);

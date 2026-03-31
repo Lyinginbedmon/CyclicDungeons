@@ -66,6 +66,7 @@ public class CDModelProvider extends FabricModelProvider
 		blockStateModelGenerator.registerParented(CDBlocks.TRAP_LOGIC.get(), CDBlocks.TRAP_LOGIC_DECOY.get());
 		
 		registerTrapBlockStates(blockStateModelGenerator);
+		registerCyclicium(blockStateModelGenerator);
 	}
 	
 	public void generateItemModels(ItemModelGenerator itemModelGenerator)
@@ -78,6 +79,19 @@ public class CDModelProvider extends FabricModelProvider
 				CDItems.RABID_POLAR_BEAR_SPAWN_EGG.get(), 
 				CDItems.RABID_WOLF_SPAWN_EGG.get());
 		registerBlockModel((BlockItem)CDItems.SWINGING_BLADE.get(), "_horizontal", itemModelGenerator);
+	}
+	
+	private void registerCyclicium(BlockStateModelGenerator generator)
+	{
+		Block cyclicium = CDBlocks.CYLICIUM_BLOCK.get();
+		BlockStateVariant[] variants = new BlockStateVariant[] 
+				{
+					BlockStateVariant.create().put(VariantSettings.MODEL, TextureMap.getId(Blocks.DEEPSLATE_TILES)),
+					BlockStateVariant.create().put(VariantSettings.MODEL, TextureMap.getId(Blocks.CRACKED_DEEPSLATE_TILES)),
+					BlockStateVariant.create().put(VariantSettings.MODEL, TextureMap.getId(Blocks.DEEPSLATE_BRICKS)),
+					BlockStateVariant.create().put(VariantSettings.MODEL, TextureMap.getId(Blocks.CRACKED_DEEPSLATE_BRICKS))
+				};
+		generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(cyclicium, variants));
 	}
 	
 	private void registerTrapBlockStates(BlockStateModelGenerator generator)

@@ -15,12 +15,15 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 public interface IContentEntry
 {	
 	public Identifier registryName();
+	
+	public Text describe();
 	
 	/** Returns true if this entry can be applied to the given room */
 	public default boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return true; }

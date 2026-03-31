@@ -1,26 +1,28 @@
 {
   "Encounter": {
     "battle_type": "cydun:basic_squad",
-    "squads": [
-      {
-        "type": "minecraft:evoker",
-        "max": 1,
-        "min": 0,
-        "name": "cydun:leader"
-      },
-      {
-        "type": "minecraft:vindicator",
-        "max": 2,
-        "min": 1,
-        "name": "cydun:elite"
-      },
-      {
-        "type": "minecraft:pillager",
-        "max": 3,
-        "min": 2,
-        "name": "cydun:mob"
-      }
-    ]
+    "settings": {
+      "squads": [
+        {
+          "type": "minecraft:evoker",
+          "max": 1,
+          "min": 0,
+          "name": "cydun:leader"
+        },
+        {
+          "type": "minecraft:vindicator",
+          "max": 2,
+          "min": 1,
+          "name": "cydun:elite"
+        },
+        {
+          "type": "minecraft:pillager",
+          "max": 3,
+          "min": 2,
+          "name": "cydun:mob"
+        }
+      ]
+    }
   },
   "Name": "cydun:pillager_squad"
 }

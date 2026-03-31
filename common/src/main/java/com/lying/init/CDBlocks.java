@@ -9,6 +9,7 @@ import com.lying.block.BladeBlock;
 import com.lying.block.CollisionSensorBlock;
 import com.lying.block.CrumblingBlock;
 import com.lying.block.DartTrapBlock;
+import com.lying.block.EncounterSpawnerBlock;
 import com.lying.block.FlameJetBlock;
 import com.lying.block.HatchBlock;
 import com.lying.block.PitBlock;
@@ -17,11 +18,11 @@ import com.lying.block.RedstoneActorBlock;
 import com.lying.block.RedstoneSensorBlock;
 import com.lying.block.SightSensorBlock;
 import com.lying.block.SoundSensorBlock;
-import com.lying.block.TrapSpawnerBlock;
 import com.lying.block.SpikeTrapBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SwingingBladeBlock;
 import com.lying.block.TrapLogicBlock;
+import com.lying.block.TrapSpawnerBlock;
 import com.lying.reference.Reference;
 
 import dev.architectury.registry.registries.DeferredRegister;
@@ -86,6 +87,7 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> DART_TRAP			= register("dart_trap", DartTrapBlock::new);
 	public static final RegistrySupplier<Block> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlock::new);
 	public static final RegistrySupplier<Block> SPAWNER				= register("spawner", s -> new TrapSpawnerBlock(s.noCollision().allowsSpawning(CDBlocks::always)));
+	public static final RegistrySupplier<Block> ENCOUNTER			= register("encounter", EncounterSpawnerBlock::new);
 	
 	// Hazards
 	private static final Function<Settings, Settings> stoneSettings				= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);
@@ -108,6 +110,14 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> CRUMBLING_STONE_BRICKS					= register("crumbling_stone_bricks", settings -> new CrumblingBlock(() -> Blocks.STONE_BRICKS, stoneBricksSettings.apply(settings)));
 	public static final RegistrySupplier<Block> RESETTING_CRUMBLING_STONE_BRICKS		= register("resetting_crumbling_stone_bricks", settings -> new CrumblingBlock.Resetting(() -> Blocks.STONE_BRICKS, stoneBricksSettings.apply(settings)));
 	public static final RegistrySupplier<Block> SPIKES									= register("spikes", settings -> new SpikesBlock(settings.mapColor(MapColor.PALE_YELLOW).breakInstantly().strength(1F).sounds(BlockSoundGroup.BAMBOO).pistonBehavior(PistonBehavior.DESTROY)));
+	
+	public static final RegistrySupplier<Block> CYLICIUM_BLOCK		= register("cyclicium_block", settings -> new Block(settings
+			.mapColor(MapColor.DEEPSLATE_GRAY)
+			.instrument(NoteBlockInstrument.BASEDRUM)
+			.requiresTool()
+			.strength(3.0F, 6.0F)
+			.sounds(BlockSoundGroup.DEEPSLATE)
+			.strength(3.5F, 6.0F)));
 	
 	private static RegistrySupplier<Block> registerSolidCube(String nameIn, Function<AbstractBlock.Settings, Block> supplierIn)
 	{

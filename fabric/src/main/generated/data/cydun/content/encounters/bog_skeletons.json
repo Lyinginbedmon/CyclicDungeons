@@ -1,9 +1,11 @@
 {
   "Encounter": {
-    "type": "minecraft:bogged",
     "battle_type": "cydun:crowd",
-    "max": 5,
-    "min": 3
+    "settings": {
+      "type": "minecraft:bogged",
+      "max": 5,
+      "min": 3
+    }
   },
   "Name": "cydun:bog_skeletons"
 }

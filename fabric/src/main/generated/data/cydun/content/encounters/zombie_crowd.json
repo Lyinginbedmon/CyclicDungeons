@@ -1,9 +1,11 @@
 {
   "Encounter": {
-    "type": "minecraft:zombie",
     "battle_type": "cydun:crowd",
-    "max": 8,
-    "min": 4
+    "settings": {
+      "type": "minecraft:zombie",
+      "max": 8,
+      "min": 4
+    }
   },
   "Name": "cydun:zombie_crowd"
 }

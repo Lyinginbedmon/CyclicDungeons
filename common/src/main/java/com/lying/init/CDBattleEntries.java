@@ -60,7 +60,7 @@ public class CDBattleEntries implements ReloadListener<List<JsonObject>>
 		if(entry == null)
 			return;
 		REGISTRY.put(entry.registryName(), entry);
-		CyclicDungeons.LOGGER.info(" ## Loaded {}", entry.registryName().toString());
+		CyclicDungeons.LOGGER.info(" ## Loaded {}: {}", entry.registryName().toString(), entry.describe().getString());
 	}
 	
 	public CompletableFuture<List<JsonObject>> load(ResourceManager manager)

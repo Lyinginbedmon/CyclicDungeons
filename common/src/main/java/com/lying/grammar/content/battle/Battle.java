@@ -1,16 +1,14 @@
 package com.lying.grammar.content.battle;
 
+import java.util.Optional;
+
 import org.jetbrains.annotations.Nullable;
 
-import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
 import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDBattleTypes;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -18,7 +16,9 @@ import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -27,7 +27,26 @@ import net.minecraft.world.Heightmap;
 
 public abstract class Battle
 {
-	public static final Codec<Battle> CODEC = Codec.of(Battle::encode, Battle::decode);
+	public static final Codec<Battle> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+			Identifier.CODEC.fieldOf("battle_type").forGetter(Battle::registryName),
+			NbtCompound.CODEC.optionalFieldOf("settings").forGetter(Battle::getConfig)
+			).apply(instance, (id,nbt) -> 
+			{
+				Battle type = CDBattleTypes.get(id).orElse(null);
+				if(type == null)
+				{
+					CyclicDungeons.LOGGER.error(" # Unrecognised battle entry type {}", id.toString());
+					return null;
+				}
+				
+				if(nbt.isPresent())
+				{
+					type = type.readConfig(nbt.get());
+					if(type == null)
+						CyclicDungeons.LOGGER.error(" # Error whilst reading battle of type {}", id.toString());
+				}
+				return type;
+			}));
 	protected static final int SEARCH_ATTEMPTS = 20;
 	protected final Identifier typeName;
 	
@@ -37,6 +56,8 @@ public abstract class Battle
 	}
 	
 	public Identifier registryName() { return typeName; }
+	
+	public abstract Text describe();
 	
 	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta);
 	
@@ -104,48 +125,15 @@ public abstract class Battle
 		return false;
 	}
 	
-	public JsonObject toJson(JsonOps ops)
+	public Optional<NbtCompound> getConfig()
 	{
-		JsonObject obj = new JsonObject();
-		obj.addProperty("battle_type", typeName.toString());
-		writeToJson(ops, obj);
-		return obj;
+		NbtCompound nbt = writeConfig(new NbtCompound());
+		return nbt.isEmpty() ? Optional.empty() : Optional.of(nbt);
 	}
 	
-	protected abstract void writeToJson(JsonOps ops, JsonObject obj);
+	/** Stores all configurable variables on the given NBT object */
+	public abstract NbtCompound writeConfig(NbtCompound nbt);
 	
-	@Nullable
-	public static Battle fromJson(JsonOps ops, JsonObject obj)
-	{
-		Identifier id = Identifier.of(obj.get("battle_type").getAsString());
-		Battle type = CDBattleTypes.get(id).orElse(null);
-		if(type == null)
-		{
-			CyclicDungeons.LOGGER.error(" # Unrecognised battle entry type {}", id.toString());
-			return null;
-		}
-		
-		Battle result = type.readFromJson(ops, obj);
-		if(result == null)
-		{
-			CyclicDungeons.LOGGER.error(" # Error whilst reading battle of type {}", id.toString());
-			return null;
-		}
-		else
-			return result;
-	}
-	
-	@Nullable
-	protected abstract Battle readFromJson(JsonOps ops, JsonObject obj);
-	
-	@SuppressWarnings("unchecked")
-	private static <T> DataResult<T> encode(final Battle func, final DynamicOps<T> ops, final T prefix)
-	{
-		return ops == JsonOps.INSTANCE ? (DataResult<T>)DataResult.success(func.toJson(JsonOps.INSTANCE)) : DataResult.error(() -> "Storing battle as NBT is not supported");
-	}
-	
-	private static <T> DataResult<Pair<Battle, T>> decode(final DynamicOps<T> ops, final T input)
-	{
-		return ops == JsonOps.INSTANCE ? DataResult.success(Pair.of(fromJson(JsonOps.INSTANCE, (JsonObject)input), input)) : DataResult.error(() -> "Loading battle from NBT is not supported");
-	}
+	/** Loads all configurable variables from the given NBT object */
+	public abstract Battle readConfig(NbtCompound nbt);
 }

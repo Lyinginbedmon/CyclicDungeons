@@ -21,6 +21,7 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -41,6 +42,8 @@ public class TrapRoomContent extends RegistryRoomContent<TrapEntry>
 	public static record TrapEntry(Identifier registryName, Trap type) implements IContentEntry
 	{
 		public static final Codec<TrapEntry> CODEC	= Codec.of(TrapEntry::encode, TrapEntry::decode);
+		
+		public Text describe() { return Text.empty(); }
 		
 		@SuppressWarnings("unchecked")
 		private static <T> DataResult<T> encode(final TrapEntry trap, final DynamicOps<T> ops, final T prefix)

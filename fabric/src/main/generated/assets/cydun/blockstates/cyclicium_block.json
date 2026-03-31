@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "minecraft:block/deepslate_tiles"
+      },
+      {
+        "model": "minecraft:block/cracked_deepslate_tiles"
+      },
+      {
+        "model": "minecraft:block/deepslate_bricks"
+      },
+      {
+        "model": "minecraft:block/cracked_deepslate_bricks"
+      }
+    ]
+  }
+}

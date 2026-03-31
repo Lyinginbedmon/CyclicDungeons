@@ -95,6 +95,8 @@ public class CDItems
 	public static final RegistrySupplier<Item> SPIKE_TRAP				= registerRareBlock("spike_trap", CDBlocks.SPIKE_TRAP, Rarity.RARE);
 	public static final RegistrySupplier<Item> SPAWNER					= registerRareBlock("spawner", CDBlocks.SPAWNER, Rarity.RARE);
 	
+	public static final RegistrySupplier<Item> CYCLICIUM_BLOCK	= registerBlock("cyclicium_block", CDBlocks.CYLICIUM_BLOCK);
+	
 	private static RegistrySupplier<Item> registerBlock(String nameIn, RegistrySupplier<Block> blockIn)
 	{
 		return registerBlock(nameIn, blockIn, UnaryOperator.identity());

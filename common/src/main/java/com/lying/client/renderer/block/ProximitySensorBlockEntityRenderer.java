@@ -1,27 +1,38 @@
 package com.lying.client.renderer.block;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
+import com.lying.block.ProximitySensorBlock;
 import com.lying.block.entity.ProximitySensorBlockEntity;
 import com.lying.reference.Reference;
+import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.gl.ShaderProgramKeys;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory.Context;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.RotationAxis;
+import net.minecraft.util.math.Vec3i;
 
 public class ProximitySensorBlockEntityRenderer extends WireableBlockEntityRenderer<ProximitySensorBlockEntity>
 {
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
-	private static final Identifier RADIUS_TEXTURE = Reference.ModInfo.prefix("textures/proximity.png");
-	private static final RenderLayer LAYER	= RenderLayer.getEntityCutoutNoCull(RADIUS_TEXTURE);
+	@SuppressWarnings("deprecation")
+	public static final SpriteIdentifier SPRITE	= new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Reference.ModInfo.prefix("block/proximity_sensor_overlay"));
 	
 	public ProximitySensorBlockEntityRenderer(Context context)
 	{
@@ -30,48 +41,64 @@ public class ProximitySensorBlockEntityRenderer extends WireableBlockEntityRende
 	
 	public void render(ProximitySensorBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay)
 	{
-		super.render(entity, tickDelta, matrices, vertexConsumers, light, overlay);
-		
 		PlayerEntity player = mc.player;
-		if(player == null)// || !ProximitySensorBlockEntity.PREDICATE.test(player) || !entity.shouldRenderFor(player))
-			return;
+		if(player == null || !ProximitySensorBlockEntity.PREDICATE.test(player) || !entity.shouldRenderFor(player))
+			;
+		else
+		{
+			final Direction orientation = entity.getCachedState().get(ProximitySensorBlock.FACING);
+			Sprite sprite = SPRITE.getSprite();
+			matrices.push();
+				matrices.translate(0.5D, 0.5D, 0.5D);
+				matrices.translate(orientation.getOpposite().getDoubleVector().multiply(0.45D));
+				matrices.push();
+					switch(orientation.getAxis())
+					{
+						case X:
+							matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(90F));
+							break;
+						case Y:
+							matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90F));
+							break;
+						case Z:
+							break;
+					}
+					
+					drawSprite(matrices, sprite, 16F * (float)entity.getSearchRadius() * 2F, 1F, 1F, 1F, orientation.getVector());
+				matrices.pop();
+			matrices.pop();
+		}
 		
-		// FIXME Add activation range rendering
-//		Vec3d eyeVec = player.getEyePos();
-//		Vec3d blockVec = new Vec3d(entity.getPos().getX(), entity.getPos().getY(), entity.getPos().getZ()).add(0.5D);
-//		Direction normal = Direction.getFacing(eyeVec.subtract(blockVec));
-//		
-//		double radius = entity.getSearchRadius();
-//		Vec3d max = new Vec3d(
-//				normal.getAxis() == Axis.X ? 0 : 1, 
-//				normal.getAxis() == Axis.Y ? 0 : 1, 
-//				normal.getAxis() == Axis.Z ? 0 : 1).multiply(radius);
-//		Vec3d min = max.negate();
-//		
-//		Direction facing = entity.getCachedState().get(ProximitySensorBlock.FACING);
-//		Vec3d facingOffset = Vec3d.ZERO.add(0.5D).add(new Vec3d(facing.getOffsetX(), facing.getOffsetY(), facing.getOffsetZ()).multiply(0.5D).negate());
-//		max = max.add(facingOffset);
-//		min = min.add(facingOffset);
-//		
-//		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(LAYER);
-//		MatrixStack.Entry entry = matrices.peek();
-//		Matrix4f matrix = entry.getPositionMatrix();
-//		matrices.push();
-//			vertex(vertexConsumer, entry, matrix, (float)max.x, (float)max.y, (float)max.z, 0F, 0F, normal);
-//			vertex(vertexConsumer, entry, matrix, (float)max.x, (float)min.y, (float)max.z, 0F, 1F, normal);
-//			vertex(vertexConsumer, entry, matrix, (float)min.x, (float)min.y, (float)max.z, 1F, 1F, normal);
-//			vertex(vertexConsumer, entry, matrix, (float)min.x, (float)max.y, (float)max.z, 1F, 0F, normal);
-//		matrices.pop();
+		super.render(entity, tickDelta, matrices, vertexConsumers, light, overlay);
 	}
 	
-	private static void vertex(VertexConsumer consumer, MatrixStack.Entry entry, Matrix4f matrix, float x, float y, float z, float u, float v, Direction normal)
+	public static void drawSprite(MatrixStack matrixStack, Sprite sprite, float scale, float r, float g, float b, Vec3i normal)
 	{
-		consumer
-			.vertex(matrix, x, y, z)
-			.color(255, 255, 255, 255)
-			.texture(u, v)
-			.overlay(OverlayTexture.DEFAULT_UV)
-			.light(LightmapTextureManager.MAX_LIGHT_COORDINATE)
-			.normal(normal.getOffsetX(), normal.getOffsetY(), normal.getOffsetZ());
+		drawTexturedQuad(matrixStack, sprite.getAtlasId(), sprite.getMinU(), sprite.getMaxU(), sprite.getMinV(), sprite.getMaxV(), scale, r, g, b, normal);
+	}
+	
+	public static void drawTexturedQuad(MatrixStack matrixStack, Identifier texture, float u1, float u2, float v1, float v2, float scale, float r, float g, float b, Vec3i normal)
+	{
+		// FIXME Ensure effective rendering on all orientations
+		Vector3f[] vertices = new Vector3f[]{
+				new Vector3f(1F, 1F, 0F), 
+				new Vector3f(1F, -1F, 0F), 
+				new Vector3f(-1F, -1F, 0F), 
+				new Vector3f(-1F, 1F, 0F)};
+		for(int i=0; i<4; ++i)
+			vertices[i] = vertices[i].mul(0.5F).mul(scale / 16F);
+		
+		RenderLayer layer = RenderLayer.getCutoutMipped();
+		layer.startDrawing();
+		RenderSystem.setShaderTexture(0, texture);
+		RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR_TEX_LIGHTMAP);
+		Matrix4f model = matrixStack.peek().getPositionMatrix();
+		BufferBuilder vertexConsumer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+			vertexConsumer.vertex(model, vertices[0].x(), vertices[0].y(), vertices[0].z()).color(r, g, b, 1F).texture(u2, v2).light(15).normal(normal.getX(), normal.getY(), normal.getZ());
+			vertexConsumer.vertex(model, vertices[1].x(), vertices[1].y(), vertices[1].z()).color(r, g, b, 1F).texture(u2, v1).light(15).normal(normal.getX(), normal.getY(), normal.getZ());
+			vertexConsumer.vertex(model, vertices[2].x(), vertices[2].y(), vertices[2].z()).color(r, g, b, 1F).texture(u1, v1).light(15).normal(normal.getX(), normal.getY(), normal.getZ());
+			vertexConsumer.vertex(model, vertices[3].x(), vertices[3].y(), vertices[3].z()).color(r, g, b, 1F).texture(u1, v2).light(15).normal(normal.getX(), normal.getY(), normal.getZ());
+		BufferRenderer.drawWithGlobalProgram(vertexConsumer.end());
+		layer.endDrawing();
 	}
 }

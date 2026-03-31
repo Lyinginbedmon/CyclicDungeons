@@ -8,15 +8,16 @@ import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
 import com.lying.block.entity.DartTrapBlockEntity;
+import com.lying.block.entity.EncounterSpawnerBlockEntity;
 import com.lying.block.entity.FlameJetBlockEntity;
 import com.lying.block.entity.ProximitySensorBlockEntity;
 import com.lying.block.entity.SightSensorBlockEntity;
 import com.lying.block.entity.SoundSensorBlockEntity;
-import com.lying.block.entity.TrapSpawnerBlockEntity;
 import com.lying.block.entity.SpikeTrapBlockEntity;
 import com.lying.block.entity.SwingingBladeBlockEntity;
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
+import com.lying.block.entity.TrapSpawnerBlockEntity;
 import com.lying.reference.Reference;
 
 import dev.architectury.registry.registries.DeferredRegister;
@@ -52,6 +53,7 @@ public class CDBlockEntityTypes
 	public static final RegistrySupplier<BlockEntityType<DartTrapBlockEntity>> DART_TRAP			= register("dart_trap", DartTrapBlockEntity::new, CDBlocks.DART_TRAP);
 	public static final RegistrySupplier<BlockEntityType<SpikeTrapBlockEntity>> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlockEntity::new, CDBlocks.SPIKE_TRAP);
 	public static final RegistrySupplier<BlockEntityType<TrapSpawnerBlockEntity>> SPAWNER			= register("spawner", TrapSpawnerBlockEntity::new, CDBlocks.SPAWNER);
+	public static final RegistrySupplier<BlockEntityType<EncounterSpawnerBlockEntity>> ENCOUNTER	= register("encounter", EncounterSpawnerBlockEntity::new, CDBlocks.ENCOUNTER);
 	
 	@SafeVarargs
 	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, RegistrySupplier<Block>... blocksIn)

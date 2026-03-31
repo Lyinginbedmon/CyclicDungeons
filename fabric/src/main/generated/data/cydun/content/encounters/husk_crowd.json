@@ -1,9 +1,11 @@
 {
   "Encounter": {
-    "type": "minecraft:husk",
     "battle_type": "cydun:crowd",
-    "max": 8,
-    "min": 4
+    "settings": {
+      "type": "minecraft:husk",
+      "max": 8,
+      "min": 4
+    }
   },
   "Name": "cydun:husk_crowd"
 }

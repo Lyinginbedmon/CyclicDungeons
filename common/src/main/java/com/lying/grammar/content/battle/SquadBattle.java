@@ -11,9 +11,7 @@ import org.apache.commons.lang3.function.Consumers;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.lying.grammar.RoomMetadata;
 import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
@@ -26,8 +24,10 @@ import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -38,12 +38,15 @@ public class SquadBattle extends Battle
 {
 	public static final Identifier ID	= Reference.ModInfo.prefix("basic_squad");
 	private final List<SquadBattle.SquadEntry> squad = Lists.newArrayList();
+	// TODO Serialise roster handling
 	private Consumer<SquadBattle.Roster> setup = Consumers.nop();
 	
 	public SquadBattle(Identifier name)
 	{
 		super(name);
 	}
+	
+	public Text describe() { return Text.empty(); }
 	
 	public static SquadBattle create() { return new SquadBattle(ID); }
 	
@@ -88,26 +91,17 @@ public class SquadBattle extends Battle
 		setup.accept(roster);
 	}
 	
-	protected void writeToJson(JsonOps ops, JsonObject obj)
+	public NbtCompound writeConfig(NbtCompound nbt)
 	{
-		JsonArray set = new JsonArray();
-		squad.forEach(s -> set.add(s.toJson(ops)));
-		obj.add("squads", set);
+		nbt.put("squads", SquadEntry.LIST_CODEC.encodeStart(NbtOps.INSTANCE, squad).getOrThrow());
+		return nbt;
 	}
 	
-	protected Battle readFromJson(JsonOps ops, JsonObject obj)
+	public Battle readConfig(NbtCompound nbt)
 	{
-		SquadBattle entry = new SquadBattle(ID);
-		
-		JsonArray set = obj.getAsJsonArray("squads");
-		set.forEach(ele -> 
-		{
-			SquadEntry e = SquadEntry.fromJson(ops, ele);
-			if(e != null)
-				entry.add(e);
-		});
-		
-		return entry;
+		this.squad.clear();
+		SquadEntry.LIST_CODEC.parse(NbtOps.INSTANCE, nbt.get("squads")).getOrThrow().forEach(this::add);
+		return this;
 	}
 	
 	/** Delineated set of mobs representing different roles in the squad */
@@ -147,6 +141,7 @@ public class SquadBattle extends Battle
 					nbt.ifPresent(builder::nbt);
 					return builder.build();
 				}));
+		public static final Codec<List<SquadEntry>> LIST_CODEC	= CODEC.listOf();
 		
 		@Nullable
 		protected Entity trySpawn(BlockPos pos, ServerWorld world)

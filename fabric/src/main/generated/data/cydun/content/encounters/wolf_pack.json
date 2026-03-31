@@ -1,9 +1,11 @@
 {
   "Encounter": {
-    "type": "cydun:rabid_wolf",
     "battle_type": "cydun:crowd",
-    "max": 4,
-    "min": 3
+    "settings": {
+      "type": "cydun:rabid_wolf",
+      "max": 4,
+      "min": 3
+    }
   },
   "Name": "cydun:wolf_pack"
 }
