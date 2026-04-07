@@ -33,6 +33,16 @@ public class ProximitySensorBlockEntityRenderer extends WireableBlockEntityRende
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
 	@SuppressWarnings("deprecation")
 	public static final SpriteIdentifier SPRITE	= new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Reference.ModInfo.prefix("block/proximity_sensor_overlay"));
+	private static final Vector3f[] renderVertices = new Vector3f[]{
+			new Vector3f(1F, 1F, 0F), 
+			new Vector3f(1F, -1F, 0F), 
+			new Vector3f(-1F, -1F, 0F), 
+			new Vector3f(-1F, 1F, 0F)};
+	static
+	{
+		for(int i=0; i<4; ++i)
+			renderVertices[i] = renderVertices[i].mul(0.5F);
+	}
 	
 	public ProximitySensorBlockEntityRenderer(Context context)
 	{
@@ -79,15 +89,11 @@ public class ProximitySensorBlockEntityRenderer extends WireableBlockEntityRende
 	
 	public static void drawTexturedQuad(MatrixStack matrixStack, Identifier texture, float u1, float u2, float v1, float v2, float scale, float r, float g, float b, Vec3i normal)
 	{
-		// FIXME Ensure effective rendering on all orientations
-		Vector3f[] vertices = new Vector3f[]{
-				new Vector3f(1F, 1F, 0F), 
-				new Vector3f(1F, -1F, 0F), 
-				new Vector3f(-1F, -1F, 0F), 
-				new Vector3f(-1F, 1F, 0F)};
+		Vector3f[] vertices = new Vector3f[4];
 		for(int i=0; i<4; ++i)
-			vertices[i] = vertices[i].mul(0.5F).mul(scale / 16F);
+			vertices[i] = new Vector3f(renderVertices[i]).mul(scale / 16F);
 		
+		RenderSystem.disableCull();
 		RenderLayer layer = RenderLayer.getCutoutMipped();
 		layer.startDrawing();
 		RenderSystem.setShaderTexture(0, texture);
@@ -100,5 +106,6 @@ public class ProximitySensorBlockEntityRenderer extends WireableBlockEntityRende
 			vertexConsumer.vertex(model, vertices[3].x(), vertices[3].y(), vertices[3].z()).color(r, g, b, 1F).texture(u1, v2).light(15).normal(normal.getX(), normal.getY(), normal.getZ());
 		BufferRenderer.drawWithGlobalProgram(vertexConsumer.end());
 		layer.endDrawing();
+		RenderSystem.enableCull();
 	}
 }

@@ -42,6 +42,8 @@ public class ProximitySensorBlockEntity extends TrapSensorBlockEntity<ProximityS
 	protected void storeSettings(NbtCompound nbt)
 	{
 		super.storeSettings(nbt);
+		if(shouldRenderRange)
+			nbt.putBoolean("RenderRange", shouldRenderRange);
 		
 		if(searchRange > 0D)
 			nbt.putDouble("Range", Math.abs(searchRange));
@@ -63,6 +65,7 @@ public class ProximitySensorBlockEntity extends TrapSensorBlockEntity<ProximityS
 	protected void loadSettings(NbtCompound nbt)
 	{
 		super.loadSettings(nbt);
+		shouldRenderRange = nbt.getBoolean("RenderRange");
 		
 		if(nbt.contains("Range", NbtElement.DOUBLE_TYPE))
 		{
@@ -159,6 +162,6 @@ public class ProximitySensorBlockEntity extends TrapSensorBlockEntity<ProximityS
 			return false;
 		if(searchRange <= 0D)
 			return false;
-		return vecPos().subtract(player.getPos()).length() <= searchRange + 3D;
+		return vecPos().subtract(player.getPos()).length() <= searchRange + 8D;
 	}
 }

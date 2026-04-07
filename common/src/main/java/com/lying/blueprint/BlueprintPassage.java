@@ -121,7 +121,7 @@ public class BlueprintPassage
 			return;
 		}
 		
-		// FIXME Refine merge behaviour
+		// FIXME Refine line calculation to derive from tiles
 		List<GridTile> positions = Lists.newArrayList();
 		positions.add(parent.tilePosition());
 		children.stream().map(BlueprintRoom::tilePosition).forEach(positions::add);
@@ -150,9 +150,20 @@ public class BlueprintPassage
 	{
 		tilesCached.clear();
 		children.forEach(child -> 
-			TileUtils.trialTiles(parent, child).stream()
-				.filter(Predicates.not(tilesCached::contains))
-				.forEach(tilesCached::add));
+		TileUtils.trialTiles(parent, child).stream()
+			.filter(Predicates.not(tilesCached::contains))
+			.forEach(tilesCached::add));
+		
+		/**
+		 * FIXME Revise to properly account for multiple child rooms
+		 * * Identify closest exterior tile of parent to all children
+		 * * Build lines to child rooms from that median tile
+		 * * Bridge from extant tiles where possible
+		 */
+		
+		// Step 1: Identify median exterior tile of parent room
+		// Step 2: Select child room to build to from median
+		// Step 3: Connect all other children to nearest tiles in cache, avoiding other rooms
 	}
 	
 	public GraphTileGrid asTiles()
@@ -274,7 +285,14 @@ public class BlueprintPassage
 			return false;
 		
 		List<GridTile> myTiles = tiles();
-		return other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo));
+		// Return true if any of my tiles are adjacent to any of their tiles
+		if(other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo)))
+			return true;
+		
+		// Return true if any tiles immediately adjacent to my tiles are also adajcent to any of their tiles
+		List<GridTile> adjacents = Lists.newArrayList();
+		myTiles.forEach(t -> Direction.Type.HORIZONTAL.stream().map(t::offset).filter(Predicates.not(adjacents::contains)).forEach(adjacents::add));
+		return other.tiles().stream().anyMatch(p2 -> adjacents.stream().anyMatch(p2::isAdjacentTo));
 	}
 	
 	public BlueprintPassage mergeWith(BlueprintPassage b)

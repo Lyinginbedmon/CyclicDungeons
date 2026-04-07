@@ -48,6 +48,10 @@
 	// Item tags
 	// Status effects
 	// Commands
+	"command.cydun.phrase_parse_failed": "Dungeon phrase parsing failed",
+	"command.cydun.graph_failed": "Dungeon graph organisation process failed",
+	"command.cydun.scrunch_failed": "Dungeon passage minimisation failed",
+	"command.cydun.generation_failed": "Dungeon in-world generation failed",
 	// Gui
 	"gui.cydun.dungeon_data": "%s:%s, %s errors",
 	"gui.cydun.dungeon_data_long": "%s:%s, %s errors (%s c, %s i, %s t)",

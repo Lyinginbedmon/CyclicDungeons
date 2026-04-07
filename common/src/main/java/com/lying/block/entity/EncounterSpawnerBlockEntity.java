@@ -86,7 +86,7 @@ public class EncounterSpawnerBlockEntity extends BlockEntity
 	{
 		final BlockPos min = tile.min, max = tile.max;
 		Box bounds = Box.enclosing(min, max);
-		if(world.getEntitiesByClass(PlayerEntity.class, bounds, EntityPredicates.EXCEPT_SPECTATOR).isEmpty())
+		if(world.getEntitiesByClass(PlayerEntity.class, bounds, EntityPredicates.EXCEPT_CREATIVE_OR_SPECTATOR).isEmpty())
 			return;
 		
 		tile.encounter.ifPresent(battle -> battle.apply(min, max, (ServerWorld)world, new RoomMetadata()));

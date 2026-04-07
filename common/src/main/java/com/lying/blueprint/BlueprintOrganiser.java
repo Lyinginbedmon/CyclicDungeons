@@ -58,7 +58,7 @@ public abstract class BlueprintOrganiser
 	{
 		List<BlueprintPassage> passages = chart.passages();
 		// FIXME Re-enable after merging is finalised
-//		mergePassages(passages, getBounds(chart));
+		mergePassages(passages, getBounds(chart));
 		return passages;
 	}
 	
