@@ -6,9 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.grid.GridTile;
@@ -36,6 +38,25 @@ public abstract class BlueprintOrganiser
 		};
 	}
 	
+	public static final Comparator<BlueprintRoom> parentSort(List<BlueprintRoom> chart)
+	{
+		return (a,b) -> 
+		{
+			List<UUID> aParents = a.parentIDs();
+			List<UUID> bParents = b.parentIDs();
+			
+			// If any parents shared, don't move
+			if(aParents.stream().anyMatch(bParents::contains))
+				return 0;
+			else
+			{
+				int desA = a.descendantCount(chart);
+				int desB = b.descendantCount(chart);
+				return desA > desB ? -1 : desA < desB ? 1 : 0;
+			}
+		};
+	}
+	
 	public final void organise(Blueprint chart, Random rand)
 	{
 		LOGGER.info(" # Applying organiser to {}:{} planar graph", chart.size(), chart.maxDepth());
@@ -56,17 +77,17 @@ public abstract class BlueprintOrganiser
 	/** Returns a list of all paths between the given nodes, with post-processing applied */
 	public static List<BlueprintPassage> getFinalisedPassages(Blueprint chart)
 	{
-		List<BlueprintPassage> passages = chart.passages();
-		// FIXME Re-enable after merging is finalised
-		mergePassages(passages, getBounds(chart));
-		return passages;
+		return mergePassages(chart.passages(), getBounds(chart));
 	}
 	
 	/** Returns a list of all paths between the given nodes, without post-processing */
 	public static List<BlueprintPassage> getPassages(Collection<BlueprintRoom> chart)
 	{
 		List<BlueprintPassage> paths = Lists.newArrayList();
-		for(BlueprintRoom n : chart)
+		List<BlueprintRoom> rooms = Lists.newArrayList(chart);
+		rooms.sort((a,b) -> a.metadata().depth() < b.metadata().depth() ? -1 : a.metadata().depth() > b.metadata().depth() ? 1 : 0);
+		
+		for(BlueprintRoom n : rooms)
 			n.getChildren(chart).stream().map(c -> new BlueprintPassage(n, c)).forEach(paths::add);
 		return paths;
 	}
@@ -109,21 +130,64 @@ public abstract class BlueprintOrganiser
 		
 		public void applyLayout(Blueprint chart, Random rand)
 		{
-			final Comparator<BlueprintRoom> descSort = descendantSort(chart);
+			final Comparator<BlueprintRoom> descSort = parentSort(chart);
+			final Comparator<BlueprintRoom> childSort = (a,b) -> 
+			{
+				int aChild = a.childrenCount();
+				int bChild = b.childrenCount();
+				return aChild > bChild ? -1 : aChild < bChild ? 1 : 0;
+			};
+			
 			for(int depth=0; depth<=chart.maxDepth(); depth++)
 			{
 				List<BlueprintRoom> nodes = Lists.newArrayList();
 				nodes.addAll(chart.byDepth(depth));
 				nodes.sort(descSort);
 				
+				// Identify parents in previous tier and sort by number of children in this tier
+				List<BlueprintRoom> prevTierParents = Lists.newArrayList();
+				nodes.stream().map(r -> r.getParents(chart)).forEach(prevTierParents::addAll);
+				prevTierParents = prevTierParents.stream().distinct().sorted(childSort).toList();
+				
+				// Precalculate slot positions
 				int y = depth * GRID_SIZE;
 				int rowWidth = (nodes.size() - 1) * GRID_SIZE;
 				int x = -rowWidth / 2;
-				for(BlueprintRoom node : nodes)
+				List<Vector2i> slots = Lists.newArrayList();
+				for(int i=0; i<nodes.size(); i++)
 				{
-					node.setPosition(x, y);
+					slots.add(new Vector2i(x, y));
 					x += GRID_SIZE;
 				}
+				
+				// Place child rooms close to their parent in the previous tier
+				for(BlueprintRoom parent : prevTierParents)
+				{
+					Vector2i parentPos = parent.position();
+					for(BlueprintRoom child : nodes.stream().filter(parent::isChild).toList())
+					{
+						Vector2i pos = null;
+						double minDist = Double.MAX_VALUE;
+						for(Vector2i slot : slots)
+						{
+							double d = slot.distance(parentPos);
+							if(d < minDist)
+							{
+								minDist = d;
+								pos = slot;
+							}
+						}
+						
+						child.setPosition(pos);
+						slots.remove(pos);
+						nodes.remove(child);
+					}
+				}
+				
+				// If any nodes have no parent, assign remaining slot
+				if(!nodes.isEmpty())
+					for(BlueprintRoom node : nodes)
+						node.setPosition(slots.remove(0));
 			}
 		}
 	}

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
@@ -27,8 +28,12 @@ public class BlueprintRoom
 	private List<UUID> childLinks = Lists.newArrayList();
 	private List<UUID> parentLinks = Lists.newArrayList();
 	private GridTile tilePosition = GridTile.ZERO.copy();
+	private Optional<GridTile> entryTile = Optional.empty();
 	
 	private Optional<Blueprint> blueprint = Optional.empty();
+	
+	private Optional<List<GridTile>> tiles = Optional.empty();
+	private Optional<GraphTileGrid> tileGrid = Optional.empty();
 	
 	public BlueprintRoom(UUID idIn, RoomMetadata termIn, List<UUID> childLinksIn, List<UUID> parentLinksIn)
 	{
@@ -77,9 +82,21 @@ public class BlueprintRoom
 	public BlueprintRoom setTilePosition(GridTile tile)
 	{
 		tilePosition = tile;
+		tiles = Optional.empty();
+		tileGrid = Optional.empty();
+		
+		// TODO Check if full passageway recalculation is necessary?
 		blueprint.ifPresent(b -> b.clearPassageCache());
 		return this;
 	}
+	
+	public BlueprintRoom setEntryTile(@Nullable GridTile tile)
+	{
+		entryTile = tile == null ? Optional.empty() : Optional.of(tile);
+		return this;
+	}
+	
+	public GridTile getEntryTile() { return entryTile.orElse(null); }
 	
 	public BlueprintRoom offset(Vector2i vec)
 	{
@@ -90,7 +107,7 @@ public class BlueprintRoom
 	{
 		x = (int)Math.signum(x) * GRID_SIZE;
 		y = (int)Math.signum(y) * GRID_SIZE;
-		return setTilePosition(tilePosition.add(x, y));
+		return setTilePosition(tilePosition().add(x, y));
 	}
 	
 	public BlueprintRoom nudge(Vector2i vec)
@@ -110,14 +127,16 @@ public class BlueprintRoom
 	
 	public BlueprintRoom move(int x, int y)
 	{
-		return setTilePosition(tilePosition.add(x, y));
+		return setTilePosition(tilePosition().add(x, y));
 	}
 	
 	public boolean hasParents() { return !parentLinks.isEmpty(); }
 	
+	public List<UUID> parentIDs() { return this.parentLinks; }
+	
 	public GridTile getParentPosition(Blueprint chart)
 	{
-		GridTile defaultPos = tilePosition.add(0, 1);
+		GridTile defaultPos = tilePosition().add(0, 1);
 		if(!hasParents())
 			return defaultPos;
 		
@@ -180,24 +199,29 @@ public class BlueprintRoom
 	
 	public List<GridTile> tiles()
 	{
-		return metadata().tileFootprint(tilePosition);
+		if(tiles.isEmpty())
+			tiles = Optional.of(metadata().tileFootprint(tilePosition()));
+		return tiles.get();
 	}
 	
 	public GraphTileGrid tileGrid()
 	{
-		return (GraphTileGrid)new GraphTileGrid().addAllToVolume(tiles());
+		if(tileGrid.isEmpty())
+			tileGrid = Optional.of((GraphTileGrid)new GraphTileGrid().addAllToVolume(tiles()));
+		return tileGrid.get();
 	}
 	
 	/** Returns true if the given tile is occupied by this room */
 	public boolean occupies(GridTile tile)
 	{
-		return tiles().contains(tile);
+		GridTile min = tileMin(), max = tileMax();
+		return tile.x >= min.x && tile.x <= max.x && tile.y >= min.y && tile.y <= max.y;
 	}
 	
 	/** Returns true if the given tile is adjacent or equal to any tile in this room */
-	public boolean isAdjacent(GridTile tile)
+	public boolean occupiesOrIsAdjacent(GridTile tile)
 	{
-		return tiles().stream().anyMatch(tile::isAdjacentTo);
+		return occupies(tile) || tiles().stream().anyMatch(tile::isAdjacent);
 	}
 	
 	public boolean intersects(AbstractBox2f boundsB)
@@ -209,10 +233,12 @@ public class BlueprintRoom
 	public boolean intersects(BlueprintRoom other)
 	{
 		List<GridTile> myTiles = tiles();
-		return other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo));
+		return other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentOrSame));
 	}
 	
 	public boolean hasChildren() { return !childLinks.isEmpty(); }
+	
+	public boolean isChild(BlueprintRoom child) { return childLinks.contains(child.uuid()); }
 	
 	public int childrenCount() { return childLinks.size(); }
 	

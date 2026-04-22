@@ -1,6 +1,7 @@
 package com.lying.grid;
 
 import java.util.Comparator;
+import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Math;
@@ -97,10 +98,18 @@ public class GridTile
 	}
 	
 	/** If the manhattan distance between any two tiles is less than or equal to 1, they must be overlapping or immediately adjacent */
-	public boolean isAdjacentTo(GridTile tile)
+	public boolean isAdjacentOrSame(GridTile tile)
 	{
 		return manhattanDistance(tile) <= 1;
 	}
+	
+	public boolean isAdjacent(GridTile tile)
+	{
+		return manhattanDistance(tile) == 1;
+	}
+	
+	/** Returns true if this tile and the given tile are aligned on at least one 2D axis */
+	public boolean isParallel(GridTile tile) { return x == tile.x || y == tile.y; }
 	
 	public Box2f bounds()
 	{
@@ -133,4 +142,47 @@ public class GridTile
 	public BlockPos toPos(int yIn) { return new BlockPos(x, yIn, y); }
 	
 	public GridTile mul(int scalar) { return new GridTile(x * scalar, y * scalar); }
+	
+	@Nullable
+	public static GridTile findClosestTo(List<GridTile> tiles, @Nullable GridTile target)
+	{
+		if(target == null)
+			throw new NullPointerException("GridTile.findClosestTo received null target tile");
+		else if(tiles == null || tiles.isEmpty())
+			throw new UnsupportedOperationException("GridTile.findClosestTo received no tile list");
+		
+		GridTile closest = null;
+		double minDist = Double.MAX_VALUE;
+		for(GridTile tile : tiles)
+		{
+			double dist = tile.distance(target);
+			if(dist < minDist)
+			{
+				minDist = dist;
+				closest = tile;
+			}
+		}
+		return closest;
+	}
+	
+	@Nullable
+	public static GridTile findClosestToAll(List<GridTile> tiles, List<GridTile> targets)
+	{
+		GridTile closest = null;
+		double minDist = Double.MAX_VALUE;
+		for(GridTile tile : tiles)
+		{
+			double dist = 0D;
+			for(GridTile child : targets)
+				dist += tile.distance(child);
+			dist /= targets.size();
+			
+			if(dist < minDist)
+			{
+				minDist = dist;
+				closest = tile;
+			}
+		};
+		return closest;
+	}
 }

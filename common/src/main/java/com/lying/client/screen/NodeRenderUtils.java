@@ -204,7 +204,7 @@ public class NodeRenderUtils
 //		if(showBounds)
 			path.tiles().forEach(tile -> renderTile(tile, origin, renderScale, context, ColorHelper.withAlpha(75, colour)));
 		
-		path.asLines().stream().map(scaleFunc).forEach(l -> renderGradientStraightLine(l, context, colour, 0xFFFFFF));
+//		path.asLines().stream().map(scaleFunc).forEach(l -> renderGradientStraightLine(l, context, colour, 0xFFFFFF));
 	}
 	
 	public static void renderTile(GridTile tile, Vector2i origin, int renderScale, DrawContext context, int colour)

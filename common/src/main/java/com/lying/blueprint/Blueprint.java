@@ -112,7 +112,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	public void updateCriticalPath()
 	{
-		criticalPath = BlueprintPather.calculateCriticalPath(this);
+		criticalPath = BlueprintPathing.calculateCriticalPath(this);
 	}
 	
 	/** Returns a list of nodes representing the path from the start to the end of this dungeon */
@@ -191,7 +191,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating rooms");
 		
-		final List<BlueprintPassage> passages = BlueprintOrganiser.getFinalisedPassages(this);
+		final List<BlueprintPassage> passages = Lists.newArrayList(passages());
 		int tally = 0;
 		for(BlueprintRoom node : this)
 		{
@@ -212,8 +212,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior passages");
 		
-		BlueprintOrganiser.getFinalisedPassages(this)
-			.forEach(p -> p.generate(position, world));
+		passages().forEach(p -> p.generate(position, world));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
@@ -225,7 +224,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		for(int i=0; i<start.metadata().size().y; i++)
 		{
 			GridTile pos = tilePos.sub(0, i);
-			if(!start.isAdjacent(pos))
+			if(!start.occupiesOrIsAdjacent(pos))
 				break;
 			
 			tilePos = pos;
@@ -244,7 +243,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public List<BlueprintPassage> passages()
 	{
 		if(passageCache.isEmpty() && size() > 1)
-			passageCache.addAll(BlueprintOrganiser.getPassages(this));
+			passageCache = BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this), BlueprintOrganiser.getBounds(this));
 		
 		return passageCache;
 	}
@@ -290,7 +289,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 				if(passages.stream().anyMatch(p -> 
 				{
 					List<GridTile> pathTiles = p.tiles();
-					return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentTo));
+					return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentOrSame));
 				}))
 					if(++tally >= limit && limit > 0)
 						return tally;

@@ -1,9 +1,12 @@
 package com.lying.blueprint;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
@@ -12,19 +15,19 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
+import com.lying.grid.GridPathing;
 import com.lying.grid.GridTile;
-import com.lying.grid.TileUtils;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CompoundBox2f;
 import com.lying.utility.LineSegment2f;
 import com.lying.utility.LineUtils;
-import com.lying.utility.RotaryBox2f;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.RotationSupplier;
 import com.lying.worldgen.tile.Tile;
+import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;
@@ -121,7 +124,6 @@ public class BlueprintPassage
 			return;
 		}
 		
-		// FIXME Refine line calculation to derive from tiles
 		List<GridTile> positions = Lists.newArrayList();
 		positions.add(parent.tilePosition());
 		children.stream().map(BlueprintRoom::tilePosition).forEach(positions::add);
@@ -148,43 +150,155 @@ public class BlueprintPassage
 	
 	public void cacheTiles()
 	{
-		tilesCached.clear();
-		children.forEach(child -> 
-		TileUtils.trialTiles(parent, child).stream()
-			.filter(Predicates.not(tilesCached::contains))
-			.forEach(tilesCached::add));
-		
 		/**
-		 * FIXME Revise to properly account for multiple child rooms
 		 * * Identify closest exterior tile of parent to all children
 		 * * Build lines to child rooms from that median tile
 		 * * Bridge from extant tiles where possible
+		 * * Select resulting network with fewest tiles
 		 */
+		tilesCached.clear();
 		
 		// Step 1: Identify median exterior tile of parent room
-		// Step 2: Select child room to build to from median
-		// Step 3: Connect all other children to nearest tiles in cache, avoiding other rooms
+		final GridTile originExit = findExitDoorway(parent, children, parent.getEntryTile());
+		
+		final List<BlueprintRoom> roomsInvolved = Lists.newArrayList(parent);
+		roomsInvolved.addAll(children);
+		final Predicate<GridTile> validityCheck = t -> roomsInvolved.stream().noneMatch(r -> r.occupiesOrIsAdjacent(t));
+		
+		// Step 2: Build network of tiles from starting doorway to all child rooms
+		List<GridTile> shortestPassage = null;
+		int minLength = Integer.MAX_VALUE;
+		for(BlueprintRoom child : children)
+		{
+			List<GridTile> totalPassage = calculateFrom(originExit, child, children, validityCheck);
+			if(totalPassage.size() < minLength)
+			{
+				minLength = totalPassage.size();
+				shortestPassage = totalPassage;
+			}
+		}
+		
+		// Step 3: Cache resulting network with fewest tiles (ie. the shortest passage)
+		cacheAll(shortestPassage);
+		
+		// Step 4: Notify children of selected entryway tile
+		for(BlueprintRoom child : children)
+			child.tileGrid()
+				.getDoorwayTiles().stream()
+				.filter(shortestPassage::contains)
+				.findFirst()
+				.ifPresent(child::setEntryTile);
+	}
+	
+	/** Returns the doorway tile in the parent room's tile grid that is closest to all child rooms */
+	protected static GridTile findExitDoorway(BlueprintRoom parent, List<BlueprintRoom> children, @Nullable GridTile grandParentEntry)
+	{
+		List<GridTile> childPositions = children.stream().map(BlueprintRoom::tilePosition).toList();
+		final GraphTileGrid parentGrid = parent.tileGrid();
+		List<GridTile> parentDoorways = parentGrid.getDoorwayTiles();
+		
+		// Exclude the grandparent entryway tile and any tiles immediately adjacent to it
+		if(grandParentEntry != null)
+			parentDoorways = parentDoorways.stream().filter(t -> t.manhattanDistance(grandParentEntry) > 1).toList();
+		
+		return GridTile.findClosestToAll(parentDoorways, childPositions);
+	}
+	
+	/** Calculates the network of tiles using the given room as the first to be calculated */
+	protected static List<GridTile> calculateFrom(GridTile start, BlueprintRoom initial, List<BlueprintRoom> successive, Predicate<GridTile> validityCheck)
+	{
+		List<GridTile> tiles = Lists.newArrayList(start);
+		
+		List<BlueprintRoom> rooms = Lists.newArrayList(initial);
+		successive.stream().filter(r -> !r.uuid().equals(initial.uuid())).forEach(rooms::add);
+		
+		for(BlueprintRoom child : rooms)
+		{
+			Candidate closestPair = null;
+			
+			// Find pair of cached tile and local doorway tile that are closest together
+			final List<GridTile> doorTiles = child.tileGrid().getDoorwayTiles();
+			for(GridTile doorTile : doorTiles)
+			{
+				Candidate closest = null;
+				List<Candidate> candidates = tiles.stream().map(t -> new Candidate(doorTile, t)).sorted(Candidate.DIST_SORT).toList();
+				double minDist = candidates.get(0).distance();
+				
+				List<Candidate> closestCandidates = candidates.stream().filter(c -> c.distance() == minDist).toList();
+				closest = closestCandidates.getFirst();
+				
+				// If more than one closest option, find candidate with shortest resulting path
+				if(closestCandidates.size() > 1)
+					for(Candidate candidate : closestCandidates)
+						if(candidate.length(validityCheck) < closest.length(validityCheck))
+							closest = candidate;
+				
+				if(closestPair == null || closest.length(validityCheck) < closestPair.length(validityCheck))
+					closestPair = closest;
+			}
+			
+			tiles.addAll(closestPair.route(validityCheck));
+			tiles.add(closestPair.start());
+		}
+		return tiles;
+	}
+	
+	private static class Candidate
+	{
+		public static final Comparator<Candidate> DIST_SORT = (a,b) -> a.distance() < b.distance() ? -1 : a.distance() > b.distance() ? 1 : 0;
+		
+		private final GridTile start, end;
+		// Cached A* route between start and end, only calculated when necessary
+		private Optional<List<GridTile>> route = Optional.empty();
+		
+		public Candidate(GridTile startIn, GridTile endIn)
+		{
+			start = startIn;
+			end = endIn;
+		}
+		
+		public double distance() { return start.distance(end); }
+		
+		public int length(Predicate<GridTile> validityCheck)
+		{
+			return route(validityCheck).size();
+		}
+		
+		public List<GridTile> route(Predicate<GridTile> validityCheck)
+		{
+			if(route.isEmpty())
+				route = Optional.of(GridPathing.findRouteBetween(start, end, validityCheck));
+			return route.get();
+		}
+		
+		public GridTile start() { return start; }
+		public GridTile end() { return end; }
+	}
+	
+	protected void cacheTile(GridTile tile)
+	{
+		if(tilesCached.stream().noneMatch(tile::equals))
+			tilesCached.add(tile);
+	}
+	
+	protected void cacheAll(List<GridTile> tiles)
+	{
+		tiles.forEach(this::cacheTile);
+	}
+	
+	/** Finds the door tile outside of the given room closest to the target, returns that tile and its relative direction from the room */
+	protected static Pair<GridTile,Direction> findDoorPosition(BlueprintRoom room, GridTile target)
+	{
+		final GraphTileGrid childGrid = room.tileGrid();
+		List<GridTile> childBoundaries = childGrid.getDoorwayTiles();
+		GridTile childBoundary = GridTile.findClosestTo(childBoundaries, target);
+		Direction childStep = Direction.Type.HORIZONTAL.stream().filter(d -> !childGrid.contains(childBoundary.offset(d))).findFirst().get();
+		return Pair.of(childBoundary.offset(childStep), childStep);
 	}
 	
 	public GraphTileGrid asTiles()
 	{
 		return (GraphTileGrid)new GraphTileGrid().addAllToVolume(tiles());
-	}
-	
-	public static List<Vec2f> asPoints(List<LineSegment2f> lines)
-	{
-		List<Vec2f> points = Lists.newArrayList();
-		lines.stream().forEach(l -> 
-		{
-			Vec2f left = l.getLeft();
-			if(!points.contains(left))
-				points.add(left);
-			
-			Vec2f right = l.getRight();
-			if(!points.contains(right))
-				points.add(right);
-		});
-		return points;
 	}
 	
 	/** Subtracts the given bounding box from all lines in this passage */
@@ -209,16 +323,6 @@ public class BlueprintPassage
 		return this;
 	}
 	
-	public Vec2f getStart()
-	{
-		return asLines().getFirst().getLeft();
-	}
-	
-	public Vec2f getEnd()
-	{
-		return asLines().getLast().getRight();
-	}
-	
 	public AbstractBox2f tileBounds() { return box; }
 	
 	public List<Box> worldBox()
@@ -234,15 +338,6 @@ public class BlueprintPassage
 		box = new CompoundBox2f();
 		for(GridTile tile : tiles())
 			box.add(GridTile.BOUNDS.move(new Vec2f(tile.x, tile.y)));
-	}
-	
-	protected static CompoundBox2f lineToBox(List<LineSegment2f> segments, float width)
-	{
-		CompoundBox2f box = new CompoundBox2f();
-		for(LineSegment2f l : segments)
-			box.add(RotaryBox2f.fromLine(l, width));
-		
-		return box;
 	}
 	
 	/** Returns true if the given point is either end of this passage */
@@ -275,7 +370,7 @@ public class BlueprintPassage
 		return 
 				tiles().stream().anyMatch(l -> 
 					otherTiles.stream()
-						.anyMatch(l::isAdjacentTo));
+						.anyMatch(l::isAdjacentOrSame));
 	}
 	
 	/** Returns true if this passage can merge with the other passage */
@@ -286,13 +381,15 @@ public class BlueprintPassage
 		
 		List<GridTile> myTiles = tiles();
 		// Return true if any of my tiles are adjacent to any of their tiles
-		if(other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentTo)))
+		if(other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentOrSame)))
 			return true;
 		
 		// Return true if any tiles immediately adjacent to my tiles are also adajcent to any of their tiles
-		List<GridTile> adjacents = Lists.newArrayList();
-		myTiles.forEach(t -> Direction.Type.HORIZONTAL.stream().map(t::offset).filter(Predicates.not(adjacents::contains)).forEach(adjacents::add));
-		return other.tiles().stream().anyMatch(p2 -> adjacents.stream().anyMatch(p2::isAdjacentTo));
+//		List<GridTile> adjacents = Lists.newArrayList();
+//		myTiles.forEach(t -> Direction.Type.HORIZONTAL.stream().map(t::offset).filter(Predicates.not(adjacents::contains)).forEach(adjacents::add));
+//		return other.tiles().stream().anyMatch(p2 -> adjacents.stream().anyMatch(p2::isAdjacentTo));
+		
+		return false;
 	}
 	
 	public BlueprintPassage mergeWith(BlueprintPassage b)
@@ -336,7 +433,7 @@ public class BlueprintPassage
 					// This is avoided to keep passages navigable, given potential intrusion by the exterior shell
 					return r.tiles().stream()
 							.anyMatch(t -> myTiles.stream()
-								.anyMatch(t::isAdjacentTo));
+								.anyMatch(t::isAdjacentOrSame));
 				});
 	}
 	

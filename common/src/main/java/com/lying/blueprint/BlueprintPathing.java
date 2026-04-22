@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 
-public class BlueprintPather
+public class BlueprintPathing
 {
 	public static List<BlueprintRoom> calculateCriticalPath(Blueprint chart)
 	{

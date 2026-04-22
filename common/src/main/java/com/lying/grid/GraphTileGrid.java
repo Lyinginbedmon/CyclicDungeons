@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.joml.Math;
 
+import com.google.common.collect.Lists;
+
 import net.minecraft.util.math.Direction;
 
 public class GraphTileGrid extends AbstractTileGrid<GridTile>
@@ -49,4 +51,20 @@ public class GraphTileGrid extends AbstractTileGrid<GridTile>
 	public boolean isBoundary(GridTile pos) { return Direction.Type.HORIZONTAL.stream().anyMatch(d -> isBoundary(pos, d)); }
 	
 	public boolean isBoundary(GridTile pos, Direction side) { return !contains(pos.offset(side)); }
+	
+	/** Returns a list of all tiles adjacent to this grid that can be used as doorways */
+	public List<GridTile> getDoorwayTiles()
+	{
+		// List of boundary tiles, excluding corners
+		List<GridTile> childBoundaries = Lists.newArrayList(getBoundaries());
+		childBoundaries.removeIf(t -> Direction.Type.HORIZONTAL.stream().map(t::offset).filter(this::contains).count() < 3);
+		
+		// Calculate step direction outwards from each tile and offset
+		return childBoundaries.stream().map(tile -> 
+		{
+			// Direction from boundary tile that exits the local grid
+			Direction childStep = Direction.Type.HORIZONTAL.stream().filter(d -> !this.contains(tile.offset(d))).findFirst().get();
+			return tile.offset(childStep);
+		}).toList();
+	}
 }

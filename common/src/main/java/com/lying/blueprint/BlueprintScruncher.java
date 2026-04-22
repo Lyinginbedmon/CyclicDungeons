@@ -1,14 +1,15 @@
 package com.lying.blueprint;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.utility.DebugLogger;
-import com.lying.utility.LineSegment2f;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.Vec2f;
@@ -52,34 +53,58 @@ public class BlueprintScruncher
 	
 	public static boolean tryScrunchNode(BlueprintRoom node, Blueprint chart)
 	{
-		BlueprintRoom parent = node.getParents(chart).getFirst();
-		if(parent == null)
+		// If we have no parents, we can't know where to move
+		if(!node.hasParents())
 			return false;
 		
-		BlueprintPassage path = new BlueprintPassage(parent, node);
-		Vec2f direction;
-		List<LineSegment2f> lines = path.asLines();
-		switch(lines.size())
+		/**
+		 * Identify node entryway tile
+		 * Identify passage containing entryway tile
+		 * Find all tiles in passage adjacent to entryway tile
+		 * IF more than one tile, pick closest to parent position
+		 * Calculate direction from entryway to adjacent tile
+		 * Try move in that direction
+		 */
+		final GridTile entryWay = node.getEntryTile();
+		if(entryWay == null)
+			return false;
+		
+		Optional<BlueprintPassage> entryPassage = chart.passages().stream()
+				.filter(p -> p.asTiles().contains(entryWay))
+				.findFirst();
+		if(entryPassage.isEmpty())
+			return false;
+		
+		List<GridTile> steps = entryPassage.get().tiles().stream()
+				.filter(entryWay::isAdjacent)
+				.toList();
+		
+		GridTile nextStep = entryWay;
+		switch(steps.size())
 		{
-			// If there's only one segment, move against its direction to shrink it
-			case 1:
-				LineSegment2f line = lines.getFirst();
-				if(line.isStraightLine() && line.manhattanLength() <= Tile.TILE_SIZE)
-					return false;
-				
-				direction = line.direction().negate();
-				break;
-			// If there are two segments, move against the longest
-			case 2:
-				direction = (lines.getFirst().length() > lines.getLast().length() ? lines.getFirst() : lines.getLast()).direction().negate();
-				break;
 			default:
-				// If there's more than 2 segments, use the nearest non-terminal segment as the guide
-				direction = lines.get(lines.size() - 2).direction().negate();
+			case 0:
+				return false;
+			case 1:
+				nextStep = steps.getFirst();
+				break;
+			case 2:
+				GridTile parentPos = node.getParentPosition(chart);
+				int dist = Integer.MAX_VALUE;
+				for(GridTile step : steps)
+				{
+					int d = step.manhattanDistance(parentPos);
+					if(d < dist)
+					{
+						dist = d;
+						nextStep = step;
+					}
+				}
 				break;
 		}
 		
-		return direction.length() > Tile.TILE_SIZE && tryMoveNodeByWorld(node, chart, direction);
+		Vector2i direction = nextStep.toVec2i().sub(entryWay.toVec2i());
+		return tryMoveRelative(node, chart, direction);
 	}
 	
 	public static Vector2i vec2fToVec2i(Vec2f vec)
