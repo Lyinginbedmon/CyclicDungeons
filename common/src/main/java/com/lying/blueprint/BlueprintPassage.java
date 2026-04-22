@@ -1,9 +1,7 @@
 package com.lying.blueprint;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +14,7 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridPathing;
+import com.lying.grid.GridPathing.BoundTilePair;
 import com.lying.grid.GridTile;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
@@ -170,11 +169,11 @@ public class BlueprintPassage
 		int minLength = Integer.MAX_VALUE;
 		for(BlueprintRoom child : children)
 		{
-			List<GridTile> totalPassage = calculateFrom(originExit, child, children, validityCheck);
-			if(totalPassage.size() < minLength)
+			List<GridTile> passage = calculateFrom(originExit, child, children, validityCheck);
+			if(passage.size() < minLength)
 			{
-				minLength = totalPassage.size();
-				shortestPassage = totalPassage;
+				minLength = passage.size();
+				shortestPassage = passage;
 			}
 		}
 		
@@ -214,65 +213,18 @@ public class BlueprintPassage
 		
 		for(BlueprintRoom child : rooms)
 		{
-			Candidate closestPair = null;
+			// Ignore any door tiles that would be too close to a sibling room
+			final List<BlueprintRoom> exclusion = successive.stream().filter(r -> !r.uuid().equals(child.uuid())).toList();
+			final Predicate<GridTile> exclusionCheck = t -> exclusion.stream().noneMatch(r -> r.occupiesOrIsAdjacent(t));
 			
-			// Find pair of cached tile and local doorway tile that are closest together
-			final List<GridTile> doorTiles = child.tileGrid().getDoorwayTiles();
-			for(GridTile doorTile : doorTiles)
-			{
-				Candidate closest = null;
-				List<Candidate> candidates = tiles.stream().map(t -> new Candidate(doorTile, t)).sorted(Candidate.DIST_SORT).toList();
-				double minDist = candidates.get(0).distance();
-				
-				List<Candidate> closestCandidates = candidates.stream().filter(c -> c.distance() == minDist).toList();
-				closest = closestCandidates.getFirst();
-				
-				// If more than one closest option, find candidate with shortest resulting path
-				if(closestCandidates.size() > 1)
-					for(Candidate candidate : closestCandidates)
-						if(candidate.length(validityCheck) < closest.length(validityCheck))
-							closest = candidate;
-				
-				if(closestPair == null || closest.length(validityCheck) < closestPair.length(validityCheck))
-					closestPair = closest;
-			}
+			BoundTilePair fromPassageToDoor = GridPathing.findBestCandidatesToJoin(child.tileGrid().getDoorwayTiles().stream().filter(exclusionCheck).toList(), tiles, validityCheck);
+			if(fromPassageToDoor == null)
+				continue;
 			
-			tiles.addAll(closestPair.route(validityCheck));
-			tiles.add(closestPair.start());
+			tiles.addAll(fromPassageToDoor.route());
+			tiles.add(fromPassageToDoor.getRight());
 		}
 		return tiles;
-	}
-	
-	private static class Candidate
-	{
-		public static final Comparator<Candidate> DIST_SORT = (a,b) -> a.distance() < b.distance() ? -1 : a.distance() > b.distance() ? 1 : 0;
-		
-		private final GridTile start, end;
-		// Cached A* route between start and end, only calculated when necessary
-		private Optional<List<GridTile>> route = Optional.empty();
-		
-		public Candidate(GridTile startIn, GridTile endIn)
-		{
-			start = startIn;
-			end = endIn;
-		}
-		
-		public double distance() { return start.distance(end); }
-		
-		public int length(Predicate<GridTile> validityCheck)
-		{
-			return route(validityCheck).size();
-		}
-		
-		public List<GridTile> route(Predicate<GridTile> validityCheck)
-		{
-			if(route.isEmpty())
-				route = Optional.of(GridPathing.findRouteBetween(start, end, validityCheck));
-			return route.get();
-		}
-		
-		public GridTile start() { return start; }
-		public GridTile end() { return end; }
 	}
 	
 	protected void cacheTile(GridTile tile)

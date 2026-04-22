@@ -2,6 +2,7 @@ package com.lying.grid;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.joml.Vector2i;
@@ -12,9 +13,10 @@ import com.lying.utility.DebugLogger;
 import com.lying.utility.LineSegment2f;
 import com.lying.worldgen.tile.Tile;
 
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.Direction;
 
-/** Utility functions for generating paths on a 2D tile grid */
+/** Utility functions for generating paths between tiles on a 2D tile grid */
 public class GridPathing
 {
 	@SuppressWarnings("unused")
@@ -28,6 +30,50 @@ public class GridPathing
 			GridPathing::findDirectRoute,
 			GridPathing::findLinearRoute
 			);
+	
+	/** Returns the pair of tiles between sets that are best suited to be connected together */
+	public static BoundTilePair findBestCandidatesToJoin(List<GridTile> setA, List<GridTile> setB, Predicate<GridTile> validityCheck)
+	{
+		// Find pair of cached tile in passage and child's doorway tile that are closest together
+		BoundTilePair closestPair = null;
+		for(GridTile doorTile : setB)
+		{
+			List<BoundTilePair> candidates = Lists.newArrayList(setA.stream().map(t -> new BoundTilePair(t, doorTile, validityCheck)).toList());
+			if(closestPair != null)
+			{
+				// Exclude any potential candidates that are implicitly farther away than the best we've already found
+				final double maxDist = closestPair.distance();
+				candidates.removeIf(c -> c.distance() > maxDist);
+				if(candidates.isEmpty())
+					continue;
+			}
+			
+			// Find all candidate(s) that are as close together as possible
+			List<BoundTilePair> closestCandidates = Lists.newArrayList();
+			double minDist = Double.MAX_VALUE;
+			for(BoundTilePair c : candidates)
+				if(c.distance() > minDist)
+					continue;
+				else if(c.distance() < minDist)
+				{
+					minDist = c.distance();
+					closestCandidates = Lists.newArrayList(c);
+				}
+				else
+					closestCandidates.add(c);
+			
+			// If there is more than one closest option, find the candidate with the shortest resulting A* path
+			BoundTilePair closest = closestCandidates.getFirst();
+			if(closestCandidates.size() > 1)
+				for(BoundTilePair candidate : closestCandidates)
+					if(candidate.length() < closest.length())
+						closest = candidate;
+			
+			if(closestPair == null || closest.length() < closestPair.length())
+				closestPair = closest;
+		}
+		return closestPair;
+	}
 	
 	public static List<GridTile> findRouteBetween(GridTile start, GridTile end, Predicate<GridTile> validityCheck)
 	{
@@ -182,34 +228,7 @@ public class GridPathing
 		return candidates;
 	}
 	
-	public static List<GridTile> connectTiles(GridTile start, GridTile end, Direction step)
-	{
-		List<GridTile> tiles = Lists.newArrayList();
-		Vector2i offset = end.toVec2i().sub(start.toVec2i());
-		// Straight line march from start to finish
-		if(offset.x == 0 || offset.y == 0)
-		{
-			Direction dir = Direction.fromVector(offset.x, 0, offset.y, step.getOpposite());
-			GridTile pos = start;
-			do
-			{
-				pos = pos.offset(dir);
-				tiles.add(pos);
-			}
-			while(!pos.isAdjacentOrSame(end));
-		}
-		// Line traversal
-		else
-		{
-			GridTile childBind = end.offset(step);
-			tiles.addAll(TileUtils.lineToTiles(new LineSegment2f(start, childBind)));
-			tiles.add(childBind);
-		}
-		tiles.add(end);
-		return tiles;
-	}
-	
-	public record AStarNode(GridTile pos, GridTile parent, int step, GridTile target)
+	private record AStarNode(GridTile pos, GridTile parent, int step, GridTile target)
 	{
 		public static Comparator<AStarNode> STEP_SORT = (a,b) -> b.isParent(a) ? 1 : a.isParent(b) ? -1 : 0;
 		
@@ -226,6 +245,33 @@ public class GridPathing
 		public boolean isBetter(AStarNode node)
 		{
 			return pos.equals(node.pos) && node.step >= step;
+		}
+	}
+	
+	public static class BoundTilePair extends Pair<GridTile,GridTile>
+	{
+		private final double distance;
+		private final Predicate<GridTile> validityCheck;
+		
+		// Cached route between tiles, only calculated when necessary for performance reasons
+		private Optional<List<GridTile>> route = Optional.empty();
+		
+		public BoundTilePair(GridTile startIn, GridTile endIn, Predicate<GridTile> checkIn)
+		{
+			super(startIn, endIn);
+			distance = getLeft().distance(getRight());
+			validityCheck = checkIn;
+		}
+		
+		public double distance() { return distance; }
+		
+		public int length() { return route().size(); }
+		
+		public List<GridTile> route()
+		{
+			if(route.isEmpty())
+				route = Optional.of(findRouteBetween(getLeft(), getRight(), validityCheck));
+			return route.get();
 		}
 	}
 	

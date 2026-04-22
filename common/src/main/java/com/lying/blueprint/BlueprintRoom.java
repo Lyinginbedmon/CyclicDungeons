@@ -221,7 +221,24 @@ public class BlueprintRoom
 	/** Returns true if the given tile is adjacent or equal to any tile in this room */
 	public boolean occupiesOrIsAdjacent(GridTile tile)
 	{
-		return occupies(tile) || tiles().stream().anyMatch(tile::isAdjacent);
+		return occupies(tile) || isAdjacent(tile);
+	}
+	
+	/** Returns true if the given tile is adjacent to any tile within this room */
+	public boolean isAdjacent(GridTile tile)
+	{
+		// If any component is more than 1 tile from room boundaries, it cannot be adjacent
+		GridTile max = tileMax().add(1, 1), min = tileMin().sub(1, 1);
+		if(tile.x > max.x || tile.y > max.y || tile.x < min.x || tile.y < min.y)
+			return false;
+		
+		// If the tile is within the expanded bounds but is not a corner tile, it must be adjacent
+		if(tile.equals(max) || tile.equals(min))
+			return false;
+		else if(tile.equals(new GridTile(max.x, min.y))|| tile.equals(new GridTile(min.x, max.y)))
+			return false;
+		else
+			return true;
 	}
 	
 	public boolean intersects(AbstractBox2f boundsB)
