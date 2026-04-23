@@ -219,6 +219,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	public void buildEntrance(BlockPos position, ServerWorld world)
 	{
+		// FIXME Replace with doorway tile call instead of a loop
 		BlueprintRoom start = stream().filter(r -> r.metadata().is(CDTerms.instance().start())).findFirst().get();
 		GridTile tilePos = start.tilePosition();
 		for(int i=0; i<start.metadata().size().y; i++)
@@ -313,7 +314,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 						// Path intersects unrelated passages
 						path.intersectsOtherPassages(chart) ||
 						// Path has too many tiles directly adjacent to any room boundary tiles
-						path.tiles().stream().filter(t -> attached.stream().anyMatch(r -> r.tileGrid().containsOrAdjacentTo(t))).count() > attached.size())
+						path.tiles().stream().filter(t -> attached.stream().anyMatch(r -> r.occupiesOrIsAdjacent(t))).count() > attached.size())
 				{
 					if(++tally >= limit && limit > 0)
 						return tally;

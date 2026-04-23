@@ -1,5 +1,6 @@
 package com.lying.grid;
 
+import java.util.Comparator;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -58,29 +59,35 @@ public class TileUtils
 	{
 		List<GridTile> adjoin = Lists.newArrayList();
 		
-		Line2f line = new Line2f(start.toVec2i(), end.toVec2i());
 		int minX = Math.min(start.x, end.x), maxX = Math.max(start.x, end.x);
 		int minY = Math.min(start.y, end.y), maxY = Math.max(start.y, end.y);
-		// Vertical lines only need a linear scan along the Y axis
-		if(line.isVertical)
-			for(int y = minY; y <= maxY; y++)
-				adjoin.add(new GridTile(start.x, y));
-		// Horizontal lines only need a linear scan along the X axis
-		else if(line.isHorizontal)
-			for(int x = minX; x <= maxX; x++)
-				adjoin.add(new GridTile(x, start.y));
-		// Angled lines require a proper grid scan
-		else
-			for(int x = minX; x <= maxX; x++)
+		Line2f line = new Line2f(start.toVec2i(), end.toVec2i());
+		if(start.isParallel(end))
+		{
+			// Vertical lines only need a linear scan along the Y axis
+			if(start.y == end.y)
 				for(int y = minY; y <= maxY; y++)
-				{
-					GridTile tile = new GridTile(x, y);
-					double dist = Math.sqrt(tile.toVec2f().distanceSquared(line.atX(x)));
-					if(dist < 0.75F)
-						adjoin.add(tile);
-				}
+					adjoin.add(new GridTile(start.x, y));
+			// Horizontal lines only need a linear scan along the X axis
+			else if(start.x == end.x)
+				for(int x = minX; x <= maxX; x++)
+					adjoin.add(new GridTile(x, start.y));
+			
+			return adjoin;
+		}
 		
-		adjoin.sort(GridTile.distSort(start));
+		// Angled lines require a proper grid scan
+		for(int x = minX; x <= maxX; x++)
+			for(int y = minY; y <= maxY; y++)
+			{
+				GridTile tile = new GridTile(x, y);
+				double dist = Math.sqrt(tile.toVec2f().distanceSquared(line.atX(x)));
+				if(dist < 0.75F)
+					adjoin.add(tile);
+			}
+		
+		final Comparator<GridTile> distSort = GridTile.distSort(start);
+		adjoin.sort(distSort);
 		List<GridTile> bridging = Lists.newArrayList();
 		for(int i=1; i<adjoin.size(); i++)
 		{
@@ -90,7 +97,7 @@ public class TileUtils
 				bridging.addAll(walkBetween(a,b));
 		}
 		adjoin.addAll(bridging);
-		adjoin.sort(GridTile.distSort(start));
+		adjoin.sort(distSort);
 		
 		return adjoin;
 	}

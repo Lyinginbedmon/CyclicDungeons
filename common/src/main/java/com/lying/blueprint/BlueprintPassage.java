@@ -26,7 +26,6 @@ import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.RotationSupplier;
 import com.lying.worldgen.tile.Tile;
-import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;
@@ -236,16 +235,6 @@ public class BlueprintPassage
 	protected void cacheAll(List<GridTile> tiles)
 	{
 		tiles.forEach(this::cacheTile);
-	}
-	
-	/** Finds the door tile outside of the given room closest to the target, returns that tile and its relative direction from the room */
-	protected static Pair<GridTile,Direction> findDoorPosition(BlueprintRoom room, GridTile target)
-	{
-		final GraphTileGrid childGrid = room.tileGrid();
-		List<GridTile> childBoundaries = childGrid.getDoorwayTiles();
-		GridTile childBoundary = GridTile.findClosestTo(childBoundaries, target);
-		Direction childStep = Direction.Type.HORIZONTAL.stream().filter(d -> !childGrid.contains(childBoundary.offset(d))).findFirst().get();
-		return Pair.of(childBoundary.offset(childStep), childStep);
 	}
 	
 	public GraphTileGrid asTiles()

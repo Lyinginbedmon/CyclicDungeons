@@ -120,20 +120,16 @@ public class RoomMetadata
 		tileFootprint.clear();
 		GridTile min = tileMin(GridTile.ZERO);
 		GridTile max = tileMax(GridTile.ZERO);
-		
-		for(int tileX = min.x; tileX<max.x; tileX++)
-			for(int tileY = min.y; tileY<max.y; tileY++)
-			{
-				GridTile tile = new GridTile(tileX, tileY);
-				if(!tileFootprint.contains(tile))
-					tileFootprint.add(tile);
-			}
+		for(int tX = min.x; tX<max.x; tX++)
+			for(int tY = min.y; tY<max.y; tY++)
+				tileFootprint.add(new GridTile(tX, tY));
 		
 		return this;
 	}
 	public Vector2i tileSize() { return Vector2iUtils.copy(tileSize); }
 	public Vector2i size() { return Vector2iUtils.mul(tileSize, TILE_SIZE); }
 	
+	/** Returns the closest tile occupied by this room at the given position */
 	public GridTile tileMin(GridTile position)
 	{
 		Vector2i size = tileSize();
@@ -142,12 +138,14 @@ public class RoomMetadata
 		return new GridTile(position.x - tX, position.y - tY);
 	}
 	
+	/** Returns the farthest tile (exclusive) occupied by this room at the given position */
 	public GridTile tileMax(GridTile position)
 	{
 		Vector2i size = tileSize();
 		return tileMin(position).add(size.x, size.y);
 	}
 	
+	/** Returns a list of all tiles occupied by this room if it were at the given position */
 	public List<GridTile> tileFootprint(GridTile tilePosition)
 	{
 		return tileFootprint.stream().map(t -> t.add(tilePosition)).toList();

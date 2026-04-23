@@ -47,6 +47,12 @@ public class BlueprintRoom
 	
 	public boolean equals(Object obj) { return obj instanceof BlueprintRoom && ((BlueprintRoom)obj).id.equals(id); }
 	
+	public String toString()
+	{
+		Vector2i size = metadata.size().div(GRID_SIZE);
+		return "Room["+size.x+" by "+size.y+" at "+tilePosition.shortString()+"]";
+	}
+	
 	public UUID uuid() { return id; }
 	
 	public BlueprintRoom clone()
@@ -168,7 +174,7 @@ public class BlueprintRoom
 	
 	public GridTile tileMax()
 	{
-		return metadata().tileMax(tilePosition());
+		return metadata().tileMax(tilePosition()).sub(1, 1);
 	}
 	
 	public AbstractBox2f tileBounds()
@@ -218,27 +224,31 @@ public class BlueprintRoom
 		return tile.x >= min.x && tile.x <= max.x && tile.y >= min.y && tile.y <= max.y;
 	}
 	
+	/**
+	 * Returns true if the given tile is adjacent to any tile within this room.<br>
+	 * This also functionally includes {@link BlueprintRoom.occupies}, but is slower.
+	 */
+	public boolean isAdjacent(GridTile tile)
+	{
+		GridTile max = tileMax().add(1, 1);
+		GridTile min = tileMin().sub(1, 1);
+		
+		// If any component is more than 1 tile from room boundaries, it cannot be adjacent
+		if(tile.x > max.x || tile.y > max.y || tile.x < min.x || tile.y < min.y)
+			return false;
+		
+		// If the tile is a corner of the expanded bounds, it cannot be adjacent to any tile within the actual bounds
+		return !(
+				tile.equals(max) || 
+				tile.equals(min) || 
+				(tile.isParallel(max) && tile.isParallel(min))	// Any tile parallel to both corners has to be one of the opposing corners
+				);
+	}
+	
 	/** Returns true if the given tile is adjacent or equal to any tile in this room */
 	public boolean occupiesOrIsAdjacent(GridTile tile)
 	{
 		return occupies(tile) || isAdjacent(tile);
-	}
-	
-	/** Returns true if the given tile is adjacent to any tile within this room */
-	public boolean isAdjacent(GridTile tile)
-	{
-		// If any component is more than 1 tile from room boundaries, it cannot be adjacent
-		GridTile max = tileMax().add(1, 1), min = tileMin().sub(1, 1);
-		if(tile.x > max.x || tile.y > max.y || tile.x < min.x || tile.y < min.y)
-			return false;
-		
-		// If the tile is within the expanded bounds but is not a corner tile, it must be adjacent
-		if(tile.equals(max) || tile.equals(min))
-			return false;
-		else if(tile.equals(new GridTile(max.x, min.y))|| tile.equals(new GridTile(min.x, max.y)))
-			return false;
-		else
-			return true;
 	}
 	
 	public boolean intersects(AbstractBox2f boundsB)

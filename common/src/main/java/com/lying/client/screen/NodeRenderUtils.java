@@ -145,7 +145,7 @@ public class NodeRenderUtils
 		int borderColour = isColliding ? PALE_RED : DARK_GRAY;
 		
 		Vector2i boundsMin = node.tileMin().toVec2i().mul(TILE_SIZE);
-		Vector2i boundsMax = node.tileMax().toVec2i().mul(TILE_SIZE);
+		Vector2i boundsMax = node.tileMax().add(1, 1).toVec2i().mul(TILE_SIZE);
 		
 		// Exterior shell
 		Vector2i shellWidth = new Vector2i(1, 1);
@@ -160,7 +160,7 @@ public class NodeRenderUtils
 				ColorHelper.withAlpha(130, borderColour));
 		
 		// Tile grid
-		node.tileGrid().contents().forEach(tile -> renderTile(tile, origin, renderScale, context, ColorHelper.withAlpha(75, borderColour)));
+		node.tiles().forEach(tile -> renderTile(tile, origin, renderScale, context, ColorHelper.withAlpha(75, borderColour)));
 		
 		// Main bounds
 		boundsMin = boundsMin.mul(renderScale).add(origin);

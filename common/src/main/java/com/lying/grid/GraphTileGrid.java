@@ -52,19 +52,24 @@ public class GraphTileGrid extends AbstractTileGrid<GridTile>
 	
 	public boolean isBoundary(GridTile pos, Direction side) { return !contains(pos.offset(side)); }
 	
-	/** Returns a list of all tiles adjacent to this grid that can be used as doorways */
+	/**
+	 * Returns a list of all tiles adjacent to this grid that can be used as doorways<br>
+	 * Note that this is only used by rooms, which are always rectangular, and presumes such
+	 */
 	public List<GridTile> getDoorwayTiles()
 	{
-		// List of boundary tiles, excluding corners
-		List<GridTile> childBoundaries = Lists.newArrayList(getBoundaries());
-		childBoundaries.removeIf(t -> Direction.Type.HORIZONTAL.stream().map(t::offset).filter(this::contains).count() < 3);
-		
-		// Calculate step direction outwards from each tile and offset
-		return childBoundaries.stream().map(tile -> 
+		List<GridTile> doors = Lists.newArrayList();
+		for(GridTile tile : set.keySet())
 		{
-			// Direction from boundary tile that exits the local grid
-			Direction childStep = Direction.Type.HORIZONTAL.stream().filter(d -> !this.contains(tile.offset(d))).findFirst().get();
-			return tile.offset(childStep);
-		}).toList();
+			// Doorway tiles must have exactly 3 neighbours out of a possible 4
+			List<Direction> faces = Lists.newArrayList(Direction.Type.HORIZONTAL);
+			for(Direction face : Direction.Type.HORIZONTAL)
+				if(contains(tile.offset(face)))
+					faces.remove(face);
+			
+			if(faces.size() == 1)
+				doors.add(tile.offset(faces.get(0)));
+		}
+		return doors;
 	}
 }

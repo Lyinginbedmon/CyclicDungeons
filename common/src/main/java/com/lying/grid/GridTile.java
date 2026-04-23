@@ -30,7 +30,9 @@ public class GridTile
 		this.y = y;
 	}
 	
-	public String toString() { return "GridTile["+x+", "+y+"]"; }
+	public String toString() { return "GridTile"+shortString(); }
+	
+	public String shortString() { return "["+x+", "+y+"]"; }
 	
 	public boolean equals(Object obj) { return obj instanceof GridTile && manhattanDistance((GridTile)obj) == 0; }
 	
@@ -92,6 +94,7 @@ public class GridTile
 		return Math.sqrt(x * x + y * y);
 	}
 	
+	/** Returns the sum of the difference on the X and Y axis from this tile to the given tile */
 	public int manhattanDistance(GridTile tile)
 	{
 		return Math.abs(x - tile.x) + Math.abs(y - tile.y);
@@ -103,6 +106,7 @@ public class GridTile
 		return manhattanDistance(tile) <= 1;
 	}
 	
+	/** Returns true if the manhattan distance between this tile and the given tile is exactly 1 */
 	public boolean isAdjacent(GridTile tile)
 	{
 		return manhattanDistance(tile) == 1;
@@ -137,7 +141,7 @@ public class GridTile
 	
 	public GridTile sub(Vector2i vec) { return sub(vec.x, vec.y); }
 	
-	public GridTile sub(int xIn, int yIn) { return new GridTile(x - xIn, y - yIn); }
+	public GridTile sub(int xIn, int yIn) { return add(-xIn, -yIn); }
 	
 	public BlockPos toPos(int yIn) { return new BlockPos(x, yIn, y); }
 	
