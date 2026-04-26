@@ -105,7 +105,14 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		return result;
 	}
 	
-	public Optional<BlueprintRoom> getRoom(UUID id) { return stream().filter(r -> r.uuid().equals(id)).findFirst(); }
+	public Optional<BlueprintRoom> getRoom(UUID id)
+	{
+		for(BlueprintRoom room : this)
+			if(room.uuid().equals(id))
+				return Optional.of(room);
+		
+		return Optional.empty();
+	}
 	
 	/** Returns the deepest level of this dungeon */
 	public int maxDepth() { return maxDepth; }
@@ -219,23 +226,21 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	public void buildEntrance(BlockPos position, ServerWorld world)
 	{
-		// FIXME Replace with doorway tile call instead of a loop
+		// The initial room of the dungeon
 		BlueprintRoom start = stream().filter(r -> r.metadata().is(CDTerms.instance().start())).findFirst().get();
-		GridTile tilePos = start.tilePosition();
-		for(int i=0; i<start.metadata().size().y; i++)
-		{
-			GridTile pos = tilePos.sub(0, i);
-			if(!start.occupiesOrIsAdjacent(pos))
-				break;
-			
-			tilePos = pos;
-		}
 		
+		// Identify the doorway tile with the highest Y coordinate
+		GridTile entrywayTile = start.tilePosition();
+		for(GridTile pos : start.tileGrid().getDoorwayTiles().stream().filter(t -> t.x == start.tilePosition().x).toList())
+			if(pos.y > entrywayTile.y)
+				entrywayTile = pos;
+		
+		// Create a tile grid for generation with only the doorway tile
 		GraphTileGrid graph = new GraphTileGrid();
-		graph.addToVolume(tilePos);
-		
+		graph.addToVolume(entrywayTile);
 		BlueprintTileGrid grid = BlueprintTileGrid.fromGraphGrid(graph, 2);
 		
+		// Generate the entryway
 		TileGenerator.generate(grid, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), Random.create());
 		grid.finalise(start.metadata().theme());
 		grid.generate(position, world);
@@ -264,6 +269,14 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public static List<BlueprintPassage> getPassagesOf(BlueprintRoom room, Blueprint chart)
 	{
 		return chart.passages().stream().filter(p -> p.isTerminus(room)).toList();
+	}
+	
+	public static Optional<BlueprintPassage> getPassageInto(BlueprintRoom room, Blueprint chart)
+	{
+		for(BlueprintPassage passage : chart.passages())
+			if(passage.isEndOf(room))
+				return Optional.of(passage);
+		return Optional.empty();
 	}
 	
 	public static enum ErrorType

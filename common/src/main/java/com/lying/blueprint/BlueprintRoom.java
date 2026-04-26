@@ -293,4 +293,24 @@ public class BlueprintRoom
 		set.addAll(graph.stream().filter(n -> childLinks.contains(n.id)).toList());
 		return set;
 	}
+	
+	/** Collects all nodes down-stream of the given node */
+	public static List<BlueprintRoom> getDescendants(BlueprintRoom node, Blueprint graph)
+	{
+		List<BlueprintRoom> children = Lists.newArrayList();
+		node.getChildren(graph).forEach(child -> 
+		{
+			if(children.contains(child))
+				return;
+			
+			children.add(child);
+			if(child.hasChildren())
+				getDescendants(child, graph).forEach(child2 -> 
+				{
+					if(!children.contains(child2))
+						children.add(child2);
+				});
+		});
+		return children;
+	}
 }

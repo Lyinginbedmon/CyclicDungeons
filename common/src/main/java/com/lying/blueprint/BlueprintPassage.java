@@ -297,7 +297,13 @@ public class BlueprintPassage
 	/** Returns true if the given room is any intended end of this passage */
 	public boolean isTerminus(BlueprintRoom room)
 	{
-		return room.equals(parent) || children.stream().anyMatch(room::equals);
+		return room.equals(parent) || isEndOf(room);
+	}
+	
+	/** Returns true if the given is one of the descendant rooms connected to this passage */
+	public boolean isEndOf(BlueprintRoom room)
+	{
+		return children.stream().anyMatch(room::equals);
 	}
 	
 	/** Returns true if this passage shares a parent with the other passage and all end points share the same depth */

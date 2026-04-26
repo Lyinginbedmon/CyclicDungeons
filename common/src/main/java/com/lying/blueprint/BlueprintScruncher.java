@@ -69,9 +69,7 @@ public class BlueprintScruncher
 		if(entryWay == null)
 			return false;
 		
-		Optional<BlueprintPassage> entryPassage = chart.passages().stream()
-				.filter(p -> p.asTiles().contains(entryWay))
-				.findFirst();
+		Optional<BlueprintPassage> entryPassage = Blueprint.getPassageInto(node, chart);
 		if(entryPassage.isEmpty())
 			return false;
 		
@@ -176,36 +174,18 @@ public class BlueprintScruncher
 		Blueprint sim = chart.clone();
 		List<BlueprintRoom> simNodes = Lists.newArrayList();
 		simNodes.add(sim.getRoom(node.uuid()).get());
-		simNodes.addAll(gatherDescendantsOf(simNodes.getFirst(), sim));
+		simNodes.addAll(BlueprintRoom.getDescendants(simNodes.getFirst(), sim));
 		
-		simNodes.forEach(n -> n.move(move));
-		if(sim.hasErrors())
-			return false;
+		for(BlueprintRoom simNode : simNodes)
+		{
+			simNode.move(move);
+			if(sim.hasErrors())
+				return false;
+		}
 		
 		// If the simulation caused no errors, apply it to the live blueprint
 		node.move(move);
-		gatherDescendantsOf(node, chart).forEach(n -> n.move(move));
-		
+		BlueprintRoom.getDescendants(node, chart).forEach(n -> n.move(move));
 		return true;
-	}
-	
-	/** Collects all nodes down-stream of the given node */
-	public static List<BlueprintRoom> gatherDescendantsOf(BlueprintRoom node, Blueprint chart)
-	{
-		List<BlueprintRoom> children = Lists.newArrayList();
-		node.getChildren(chart).forEach(child -> 
-		{
-			if(children.contains(child))
-				return;
-			
-			children.add(child);
-			if(child.hasChildren())
-			{
-				List<BlueprintRoom> childRooms = gatherDescendantsOf(child, chart);
-				childRooms.removeIf(children::contains);
-				children.addAll(childRooms);
-			}
-		});
-		return children;
 	}
 }
