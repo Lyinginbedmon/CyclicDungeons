@@ -15,6 +15,7 @@ import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridPathing;
 import com.lying.grid.GridPathing.BoundTilePair;
+import com.lying.grid.GridPathing.PathingResult;
 import com.lying.grid.GridTile;
 import com.lying.init.CDTiles;
 import com.lying.utility.AbstractBox2f;
@@ -47,6 +48,8 @@ public class BlueprintPassage
 	
 	private List<LineSegment2f> linesCached = Lists.newArrayList();
 	private List<GridTile> tilesCached = Lists.newArrayList();
+	
+	private boolean hasFailures = false;
 	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b)
 	{
@@ -164,29 +167,32 @@ public class BlueprintPassage
 		final Predicate<GridTile> validityCheck = t -> roomsInvolved.stream().noneMatch(r -> r.occupiesOrIsAdjacent(t));
 		
 		// Step 2: Build network of tiles from starting doorway to all child rooms
-		List<GridTile> shortestPassage = null;
+		PathingResult shortestPassage = PathingResult.failure();
 		int minLength = Integer.MAX_VALUE;
+		PathingResult passage = PathingResult.failure();
 		for(BlueprintRoom child : children)
-		{
-			List<GridTile> passage = calculateFrom(originExit, child, children, validityCheck);
-			if(passage.size() < minLength)
-			{
-				minLength = passage.size();
-				shortestPassage = passage;
-			}
-		}
+			if((passage = calculateFrom(originExit, child, children, validityCheck)).isSuccess() && passage.result().size() < minLength)
+				minLength = (shortestPassage = passage).size();
 		
 		// Step 3: Cache resulting network with fewest tiles (ie. the shortest passage)
-		cacheAll(shortestPassage);
-		
-		// Step 4: Notify children of selected entryway tile
-		for(BlueprintRoom child : children)
-			child.tileGrid()
-				.getDoorwayTiles().stream()
-				.filter(shortestPassage::contains)
-				.findFirst()
-				.ifPresent(child::setEntryTile);
+		if(hasFailures = shortestPassage.isFailure())
+			return;
+		else
+		{
+			cacheAll(shortestPassage.result());
+			
+			// Step 4: Notify children of selected entryway tile
+			for(BlueprintRoom child : children)
+				child.tileGrid()
+					.getDoorwayTiles().stream()
+					.filter(tilesCached::contains)
+					.findFirst()
+					.ifPresent(child::setEntryTile);
+		}
 	}
+	
+	/** Returns true if one of more component passages in this passage failed to calculate */
+	public boolean containsFailures() { return hasFailures; }
 	
 	/** Returns the doorway tile in the parent room's tile grid that is closest to all child rooms */
 	protected static GridTile findExitDoorway(BlueprintRoom parent, List<BlueprintRoom> children, @Nullable GridTile grandParentEntry)
@@ -203,7 +209,7 @@ public class BlueprintPassage
 	}
 	
 	/** Calculates the network of tiles using the given room as the first to be calculated */
-	protected static List<GridTile> calculateFrom(GridTile start, BlueprintRoom initial, List<BlueprintRoom> successive, Predicate<GridTile> validityCheck)
+	protected static PathingResult calculateFrom(GridTile start, BlueprintRoom initial, List<BlueprintRoom> successive, Predicate<GridTile> validityCheck)
 	{
 		List<GridTile> tiles = Lists.newArrayList(start);
 		
@@ -217,13 +223,13 @@ public class BlueprintPassage
 			final Predicate<GridTile> exclusionCheck = t -> exclusion.stream().noneMatch(r -> r.occupiesOrIsAdjacent(t));
 			
 			BoundTilePair fromPassageToDoor = GridPathing.findBestCandidatesToJoin(child.tileGrid().getDoorwayTiles().stream().filter(exclusionCheck).toList(), tiles, validityCheck);
-			if(fromPassageToDoor == null)
-				continue;
+			if(fromPassageToDoor == null || fromPassageToDoor.route().isFailure())
+				return PathingResult.failure();
 			
-			tiles.addAll(fromPassageToDoor.route());
+			tiles.addAll(fromPassageToDoor.route().result());
 			tiles.add(fromPassageToDoor.getRight());
 		}
-		return tiles;
+		return PathingResult.success(tiles);
 	}
 	
 	protected void cacheTile(GridTile tile)
@@ -325,7 +331,7 @@ public class BlueprintPassage
 		if(other.tiles().stream().anyMatch(p2 -> myTiles.stream().anyMatch(p2::isAdjacentOrSame)))
 			return true;
 		
-		// Return true if any tiles immediately adjacent to my tiles are also adajcent to any of their tiles
+		// Return true if any tiles immediately adjacent to my tiles are also adjacent to any of their tiles
 //		List<GridTile> adjacents = Lists.newArrayList();
 //		myTiles.forEach(t -> Direction.Type.HORIZONTAL.stream().map(t::offset).filter(Predicates.not(adjacents::contains)).forEach(adjacents::add));
 //		return other.tiles().stream().anyMatch(p2 -> adjacents.stream().anyMatch(p2::isAdjacentTo));
@@ -353,8 +359,7 @@ public class BlueprintPassage
 	/** Returns true if this passage intersects with any other unrelated passages in the given chart */
 	public boolean intersectsOtherPassages(Blueprint chart)
 	{
-		List<BlueprintPassage> paths = chart.passages();
-		return paths.stream()
+		return chart.passages().stream()
 				// Allow intersection if both passages start from the same parent
 				// This promotes the generation of junctions and reduces overall doorway counts
 				.filter(Predicates.not(this::canShareSpaceWith))

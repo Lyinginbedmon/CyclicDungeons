@@ -1,6 +1,5 @@
 package com.lying.grid;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -8,6 +7,7 @@ import java.util.function.Predicate;
 
 import org.joml.Vector2i;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
 import com.lying.utility.DebugLogger;
@@ -17,6 +17,7 @@ import com.lying.worldgen.tile.Tile;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Type;
+import net.minecraft.util.math.Vec2f;
 
 /** Utility functions for generating paths between tiles on a 2D tile grid */
 public class GridPathing
@@ -26,10 +27,48 @@ public class GridPathing
 	protected static final Type MOVE_SET = Direction.Type.HORIZONTAL;
 	
 	/** Available grid path finding algorithms in ascending order of complexity */
-	private static final List<GridPathFinder> PATHERS = List.of(
-			GridPathing::findImmediateRoute,
-			GridPathing::findDirectRoute,
-			GridPathing::findLinearRoute
+	private static final List<GridPathFinder> PATHERS = List.of
+			(
+				// Direct pathing for tiles overlapping or adjacent
+				(start, end, qualifier) -> 
+				{
+					if(start.equals(end))
+						return PathingResult.success(List.of(start));
+					else if(start.isAdjacent(end))
+						return PathingResult.success(List.of(start, end));
+					else
+						return PathingResult.failure();
+				}
+				,
+				// Straight-line pathing for parallel tiles
+				(start, end, qualifier) ->
+				{
+					if(!start.isParallel(end))
+						return PathingResult.failure();
+					
+					Vector2i direction = end.toVec2i().sub(start.toVec2i());
+					Vector2i offset = new Vector2i(
+							(int)Math.signum(direction.x),
+							(int)Math.signum(direction.y)
+							);
+					List<GridTile> set = Lists.newArrayList(start);
+					GridTile tile = start;
+					for(int i=0; i<direction.length(); i++)
+						if(!qualifier.test(tile = tile.add(offset)))
+							return PathingResult.failure();
+						else
+							set.add(tile);
+					return PathingResult.success(set);
+				}
+				,
+				// Straight-line pathing for non-parallel tiles
+				(start, end, qualifier) -> 
+				{
+					List<GridTile> tiles = lineToTiles(start, end);
+					return tiles.stream().allMatch(qualifier) ? 
+							PathingResult.success(tiles) : 
+							PathingResult.failure();
+				}
 			);
 	
 	/** Returns the pair of tiles between sets that are best suited to be connected together */
@@ -67,100 +106,106 @@ public class GridPathing
 		return closestPair;
 	}
 	
-	public static List<GridTile> findRouteBetween(GridTile start, GridTile end, Predicate<GridTile> validityCheck)
+	public static PathingResult findRouteBetween(GridTile start, GridTile end, Predicate<GridTile> validityCheck)
 	{
 		LOGGER.info("Finding route between {} and {}, distance {}", start.toString(), end.toString(), start.distance(end));
-		List<GridTile> tiles = Lists.newArrayList();
 		
 		final Predicate<GridTile> terminusCheck = (t -> start.equals(t) || end.equals(t));
 		final Predicate<GridTile> qualifier = terminusCheck.or(validityCheck);
 		
 		// Trial the cheapest route generators
-		tiles.addAll(findCheapRoute(start, end, qualifier));
-		if(!tiles.isEmpty())
+		PathingResult cheap = findCheapRoute(start, end, qualifier);
+		if(cheap.isSuccess())
 		{
-			LOGGER.info(" + Cheap route found: {} tiles", tiles.size());
-			return tiles;
+			LOGGER.info(" + Cheap route found: {} tiles", cheap.size());
+			return cheap;
 		}
 		
 		// Generate an A* path and try to streamline it
-		List<GridTile> aStarPath = findAStarRoute(start, end, qualifier);
-		if(aStarPath.isEmpty())
+		PathingResult aStarPath = findAStarRoute(start, end, qualifier);
+		if(aStarPath.isFailure())
 		{
 			LOGGER.warn(" + Failed to find A* route");
-			return List.of();
+			return PathingResult.failure();
 		}
-		for(GridTile position : aStarPath)
+		
+		// Try to streamline the A* path by shortcutting where possible
+		List<GridTile> tiles = Lists.newArrayList();
+		for(GridTile position : aStarPath.result())
 		{
 			tiles.add(position);
 			
 			// Try finding a more direct or immediate route if available from the new position
-			List<GridTile> shortcut = findCheapRoute(position, end, qualifier);
-			if(!shortcut.isEmpty())
+			PathingResult shortcut = findCheapRoute(position, end, qualifier);
+			if(shortcut.isSuccess())
 			{
-				tiles.addAll(shortcut);
+				tiles.addAll(shortcut.result());
 				LOGGER.info(" + Complex route found: {} tiles", tiles.size());
-				return tiles;
+				return PathingResult.success(tiles);
 			}
 			
 			// Otherwise, continue moving along the A* path
 		}
 		
 		LOGGER.info(" + A* route found: {} tiles", tiles.size());
-		return tiles;
+		return aStarPath;
 	}
 	
-	public static List<GridTile> findCheapRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
+	public static PathingResult findCheapRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
 	{
-		List<GridTile> tiles = Lists.newArrayList();
+		PathingResult tiles;
 		for(GridPathFinder method : PATHERS)
-			if(!(tiles = method.findPath(start, end, qualifier)).isEmpty())
+			if((tiles = method.findPath(start, end, qualifier)).isSuccess())
 				return tiles;
-		return List.of();
+		return PathingResult.failure();
 	}
 	
-	/** Returns a route between two points only if those points are adjacent or identical */
-	public static List<GridTile> findImmediateRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
+	/** Generates a route between the given tiles by following a 2D line between them */
+	public static List<GridTile> lineToTiles(GridTile startTile, GridTile endTile)
 	{
-		if(start.equals(end))
-			return List.of(start);
-		else if(start.isAdjacent(end))
-			return List.of(start, end);
-		else
-			return List.of();
+		final LineSegment2f line = new LineSegment2f(startTile, endTile);
+		
+		// Generate points along the length of the interceding line
+		List<GridTile> initialSet = Lists.newArrayList(startTile);
+		final Vec2f dir = line.direction().normalize();
+		for(int i=0; i<Math.floor(line.length()); i++)
+		{
+			GridTile prev = initialSet.getLast();
+			GridTile next = startTile.add(GridTile.fromVec(dir.multiply(i)));
+			
+			// Add points to produce a cohesive route as necessary
+			List<GridTile> append = Lists.newArrayList();
+			append.addAll(adjoinTiles(prev, next));
+			append.add(next);
+			
+			append.forEach(t -> 
+			{
+				if(!initialSet.contains(t))
+					initialSet.add(t);
+			});
+		}
+		
+		if(!initialSet.contains(endTile))
+		{
+			initialSet.addAll(adjoinTiles(initialSet.getLast(), endTile));
+			initialSet.add(endTile);
+		}
+		
+		return initialSet;
 	}
 	
-	/** Returns a straight grid-aligned path between points, as long as they are parallel */
-	public static List<GridTile> findDirectRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
+	/** Returns a list of tiles adjoining the start and end points, excluding those points */
+	public static List<GridTile> adjoinTiles(GridTile start, GridTile end)
 	{
-		if(!start.isParallel(end))
+		if(start.isAdjacentOrSame(end))
 			return List.of();
 		
-		Vector2i direction = end.toVec2i().sub(start.toVec2i());
-		Vector2i offset = new Vector2i(
-				(int)Math.signum(end.x - start.x),
-				(int)Math.signum(end.y - start.y)
-				);
-		List<GridTile> set = Lists.newArrayList(start);
-		GridTile tile = start;
-		for(int i=1; i<direction.length(); i++)
-		{
-			tile = tile.add(offset);
-			if(!qualifier.test(tile))
-				return List.of();
-			
-			set.add(tile);
-		}
-		return set;
+		PathingResult result = GridPathing.findAStarRoute(start, end, Predicates.alwaysTrue());
+		return result.isSuccess() ? result.result().stream().filter(t -> !start.equals(t) && !end.equals(t)).toList() : List.of();
 	}
 	
-	public static List<GridTile> findLinearRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
-	{
-		List<GridTile> tiles = TileUtils.lineToTiles(new LineSegment2f(start, end));
-		return tiles.stream().allMatch(qualifier) ? tiles : List.of();
-	}
-	
-	public static List<GridTile> findAStarRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
+	/** Returns an A* path between points, avoiding unqualified geometry */
+	public static PathingResult findAStarRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
 	{
 		// Nodes we've already visited
 		List<AStarNode> closed = Lists.newArrayList();
@@ -184,14 +229,14 @@ public class GridPathing
 			LOGGER.info("  - Test {} {}, distance {}, {} options remaining", closed.size(), candidate.pos.toString(), candidate.distance(), open.size());
 			
 			if(candidate.isEnd())
-				return recomposeRoute(closed);
+				return PathingResult.success(recomposeRoute(closed));
 			else
 				for(AStarNode move : getAStarCandidates(candidate, qualifier, closedTiles))
 				{
 					if(move.isEnd())
 					{
 						closed.add(move);
-						return recomposeRoute(closed);
+						return PathingResult.success(recomposeRoute(closed));
 					}
 					
 					open.removeIf(move::isBetter);
@@ -200,7 +245,7 @@ public class GridPathing
 		}
 		
 		// If we get here it's because we didn't manage to find a route
-		return List.of();
+		return PathingResult.failure();
 	}
 	
 	public static List<AStarNode> getAStarCandidates(AStarNode node, Predicate<GridTile> qualifier, List<GridTile> ignore)
@@ -224,10 +269,14 @@ public class GridPathing
 	/** Builds a linked list of nodes from {@link AStarNode.isEnd} to an unparented node (ie. the start) then reverses the order */
 	private static List<GridTile> recomposeRoute(List<AStarNode> nodes)
 	{
+		if(nodes.stream().noneMatch(AStarNode::isEnd))
+			return List.of();
+		
 		AStarNode node = nodes.stream().filter(AStarNode::isEnd).findAny().get();
 		List<AStarNode> route = Lists.newArrayList(node);
-		while(node.parent() != null)
+		while(!node.isStart() && !nodes.isEmpty())
 		{
+			nodes.remove(node);
 			for(AStarNode node2 : nodes)
 				if(node2.isParent(node))
 				{
@@ -237,14 +286,11 @@ public class GridPathing
 			
 			route.add(node);
 		}
-		
-		return route.stream().sorted(AStarNode.STEP_SORT).map(AStarNode::pos).toList();
+		return route.reversed().stream().map(AStarNode::pos).toList();
 	}
 	
 	private static class AStarNode
 	{
-		public static Comparator<AStarNode> STEP_SORT = (a,b) -> b.isParent(a) ? 1 : a.isParent(b) ? -1 : 0;
-		
 		private final GridTile pos, parent, target;
 		private final int step;
 		private final double distance;
@@ -259,12 +305,14 @@ public class GridPathing
 		}
 		
 		public GridTile pos() { return pos; }
-		public GridTile parent() { return parent; }
+		
 		public GridTile target() { return target; }
 		
 		public int step() { return step; }
 		
 		public double distance() { return distance; }
+		
+		public boolean isStart() { return parent == null; }
 		
 		public boolean isEnd() { return isEnd(pos); }
 		
@@ -288,7 +336,7 @@ public class GridPathing
 		private final Predicate<GridTile> qualifier;
 		
 		// Cached route between tiles, only calculated when necessary for performance reasons
-		private Optional<List<GridTile>> route = Optional.empty();
+		private Optional<PathingResult> route = Optional.empty();
 		
 		public BoundTilePair(GridTile startIn, GridTile endIn, Predicate<GridTile> checkIn)
 		{
@@ -299,9 +347,9 @@ public class GridPathing
 		
 		public double distance() { return distance; }
 		
-		public int length() { return route().isEmpty() ? Integer.MAX_VALUE : route().size(); }
+		public int length() { return route().isFailure() ? Integer.MAX_VALUE : route().result().size(); }
 		
-		public List<GridTile> route()
+		public PathingResult route()
 		{
 			if(route.isEmpty())
 				route = Optional.of(findRouteBetween(getLeft(), getRight(), qualifier));
@@ -318,6 +366,37 @@ public class GridPathing
 		 * @param qualifier - A predicate validating if a position is permitted
 		 * @return
 		 */
-		public List<GridTile> findPath(GridTile start, GridTile end, Predicate<GridTile> qualifier);
+		public PathingResult findPath(GridTile start, GridTile end, Predicate<GridTile> qualifier);
+	}
+	
+	/** A result handler class, so we can readily distinguish between an empty path and a failed path */
+	public static class PathingResult
+	{
+		protected final List<GridTile> contents;
+		protected final boolean isSuccess;
+		
+		protected PathingResult(boolean success, List<GridTile> tiles)
+		{
+			contents = tiles;
+			isSuccess = success;
+		}
+		
+		public static PathingResult failure()
+		{
+			return new PathingResult(false, List.of());
+		}
+		
+		public static PathingResult success(List<GridTile> tiles)
+		{
+			return new PathingResult(true, tiles);
+		}
+		
+		public boolean isSuccess() { return isSuccess; }
+		
+		public boolean isFailure() { return !isSuccess; }
+		
+		public List<GridTile> result() { return contents; }
+		
+		public int size() { return contents.size(); }
 	}
 }

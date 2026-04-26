@@ -301,7 +301,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		TUNNEL((chart,limit) -> 
 		{
 			int tally = 0;
-			for(BlueprintPassage path : BlueprintOrganiser.getFinalisedPassages(chart))
+			for(BlueprintPassage path : chart.passages())
 			{
 				final BlueprintRoom parent = path.parent();
 				path.exclude(parent.tileBounds());
@@ -322,7 +322,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			}
 			
 			return tally;
-		});
+		}),
+		PASSAGE((chart,limit) -> chart.passages().stream().anyMatch(BlueprintPassage::containsFailures) ? 1 : 0);
 		
 		public static Stream<ErrorType> stream() { return List.of(values()).stream(); }
 		

@@ -14,7 +14,7 @@ public class LineSegment2f extends Line2f
 	
 	public LineSegment2f(GridTile tileA, GridTile tileB)
 	{
-		this(tileA.toVec2f().multiply(GridTile.GRID_SIZE), tileB.toVec2f().multiply(GridTile.GRID_SIZE));
+		this(tileA.toVec2f(), tileB.toVec2f());
 	}
 	
 	public LineSegment2f(Vector2i posA, Vector2i posB)
