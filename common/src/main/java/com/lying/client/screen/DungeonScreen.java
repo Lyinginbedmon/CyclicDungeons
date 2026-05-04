@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
-import com.lying.CyclicDungeons;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintOrganiser;
@@ -106,19 +105,14 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	private void scrunch()
 	{
-		final long time = System.currentTimeMillis();
-		BlueprintScruncher.scrunch(blueprint, false);
-		BlueprintScruncher.scrunch(blueprint, true);
-		
-		CyclicDungeons.LOGGER.info(" # Time to complete scrunch operation: {}ms", System.currentTimeMillis() - time);
+		BlueprintScruncher.scrunch(blueprint);
 		cacheErrors();
 		updatePathCaches();
 	}
 	
 	private void collapse()
 	{
-		BlueprintScruncher.collapse(blueprint, false);
-		BlueprintScruncher.collapse(blueprint, true);
+		BlueprintScruncher.collapse(blueprint);
 		cacheErrors();
 		updatePathCaches();
 	}

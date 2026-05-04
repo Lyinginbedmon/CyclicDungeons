@@ -63,6 +63,8 @@ public class GridTile
 		return fromVec(new Vec2f(x, y));
 	}
 	
+	public int length() { return ZERO.manhattanDistance(this); }
+	
 	public static GridTile worldVecToGrid(Vec2f vec)
 	{
 		return fromVec(vec.multiply(1 / GRID_SIZE));

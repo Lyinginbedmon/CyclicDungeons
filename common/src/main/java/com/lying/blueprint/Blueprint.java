@@ -48,6 +48,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public static final int ROOM_HEIGHT			= ROOM_TILE_HEIGHT * Tile.TILE_SIZE;
 	public static final BlockState SHELL		= CDBlocks.CYLICIUM_BLOCK.get().getDefaultState();
 	
+	protected boolean isOrganised = false;
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
 	protected List<BlueprintPassage> passageCache = Lists.newArrayList();
@@ -116,6 +117,11 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	/** Returns the deepest level of this dungeon */
 	public int maxDepth() { return maxDepth; }
+	
+	public void setOrganised(boolean var) { this.isOrganised = var; }
+	
+	/** Returns true if this blueprint has been fully organised */
+	public boolean isOrganised() { return isOrganised; }
 	
 	public void updateCriticalPath()
 	{
@@ -256,7 +262,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	public void clearPassageCache()
 	{
-		passageCache.clear();
+		if(isOrganised())
+			passageCache.clear();
 	}
 	
 	public static void tryPlaceAt(BlockState state, BlockPos pos, ServerWorld world)
@@ -266,9 +273,22 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			world.setBlockState(pos, state);
 	}
 	
+	/** Returns a list of all passages that connect to the given room */
 	public static List<BlueprintPassage> getPassagesOf(BlueprintRoom room, Blueprint chart)
 	{
-		return chart.passages().stream().filter(p -> p.isTerminus(room)).toList();
+		return getPassagesMatching(chart, p -> p.isTerminus(room));
+	}
+	
+	public static List<BlueprintPassage> getPassagesMatching(Blueprint chart, Predicate<BlueprintPassage> qualifier)
+	{
+		if(!chart.isOrganised())
+			return List.of();
+		
+		List<BlueprintPassage> set = Lists.newArrayList();
+		for(BlueprintPassage passage : chart.passages())
+			if(qualifier.test(passage))
+				set.add(passage);
+		return set;
 	}
 	
 	public static Optional<BlueprintPassage> getPassageInto(BlueprintRoom room, Blueprint chart)
@@ -336,6 +356,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			
 			return tally;
 		}),
+		/** Passages that were unable to be generated */
 		PASSAGE((chart,limit) -> chart.passages().stream().anyMatch(BlueprintPassage::containsFailures) ? 1 : 0);
 		
 		public static Stream<ErrorType> stream() { return List.of(values()).stream(); }

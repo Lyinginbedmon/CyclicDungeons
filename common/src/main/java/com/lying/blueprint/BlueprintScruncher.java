@@ -7,39 +7,45 @@ import java.util.function.Supplier;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.utility.DebugLogger;
-import com.lying.worldgen.tile.Tile;
-
-import net.minecraft.util.math.Vec2f;
 
 /** Utility class for reducing the footprint of a blueprint */
 public class BlueprintScruncher
 {
 	public static DebugLogger LOGGER = CDLoggers.PLANAR;
 	
-	/** Applies scrunch algorithm until failure */
-	public static void collapse(Blueprint chart, boolean reverse)
+	/**
+	 * Applies scrunch algorithm until failure
+	 * @param chart The blueprint to collapse
+	 * @param reverse True if the collapse should start at the deepest nodes instead of the shallowest
+	 */
+	public static void collapse(Blueprint chart)
 	{
-		int cap = 1000;
-		while(scrunch(chart, reverse) && --cap > 0) { }
+		int iterations = 1000;
+		final long time = System.currentTimeMillis();
+		while(scrunch(chart) && iterations-- > 0)
+			;
+		
+		CyclicDungeons.LOGGER.info(" # Time to complete collapse operation: {}ms over {} iterations", System.currentTimeMillis() - time, 1000 - iterations);
 	}
 	
-	/** Reduces the distance between nodes */
-	public static boolean scrunch(Blueprint chart, boolean reverse)
+	/**
+	 * Reduces the distance between nodes, reducing passageway length
+	 * @param chart The blueprint to scrunch
+	 * @return
+	 */
+	public static boolean scrunch(Blueprint chart)
 	{
-		int maxDepth = chart.maxDepth();
-		
+		final long time = System.currentTimeMillis();
 		boolean anyMoved = false;
-		int depth = reverse ? maxDepth : -maxDepth;
-		int inc = (int)Math.signum(depth) * -1;
-		while(depth != 0)
-		{
-			anyMoved = tryScrunch(chart.byDepth(Math.abs(depth)), chart) || anyMoved;
-			depth += inc;
-		}
+		for(int i=chart.maxDepth(); i>0; i--)
+			if(tryScrunch(chart.byDepth(Math.abs(i)), chart))
+				anyMoved = true;
 		
+		CyclicDungeons.LOGGER.info(" # Time to complete scrunch operation: {}ms", System.currentTimeMillis() - time);
 		return anyMoved;
 	}
 	
@@ -47,10 +53,12 @@ public class BlueprintScruncher
 	{
 		boolean anyMoved = false;
 		for(BlueprintRoom node : nodes)
-			anyMoved = tryScrunchNode(node, chart) || anyMoved;
+			if(tryScrunchNode(node, chart))
+				anyMoved = true;
 		return anyMoved;
 	}
 	
+	/** Attempts to reduce the distance between the node and its parents */
 	public static boolean tryScrunchNode(BlueprintRoom node, Blueprint chart)
 	{
 		// If we have no parents, we can't know where to move
@@ -60,9 +68,7 @@ public class BlueprintScruncher
 		/**
 		 * Identify node entryway tile
 		 * Identify passage containing entryway tile
-		 * Find all tiles in passage adjacent to entryway tile
-		 * IF more than one tile, pick closest to parent position
-		 * Calculate direction from entryway to adjacent tile
+		 * Calculate direction from entryway tile to passage start tile
 		 * Try move in that direction
 		 */
 		final GridTile entryWay = node.getEntryTile();
@@ -70,63 +76,25 @@ public class BlueprintScruncher
 			return false;
 		
 		Optional<BlueprintPassage> entryPassage = Blueprint.getPassageInto(node, chart);
-		if(entryPassage.isEmpty())
+		if(entryPassage.isEmpty() || entryPassage.get().containsFailures())
 			return false;
 		
-		List<GridTile> steps = entryPassage.get().tiles().stream()
-				.filter(entryWay::isAdjacent)
-				.toList();
-		
-		GridTile nextStep = entryWay;
-		switch(steps.size())
+		GridTile startTile = entryPassage.get().getInitialTile().orElse(null);
+		if(startTile != null && !startTile.equals(entryWay))
 		{
-			default:
-			case 0:
-				return false;
-			case 1:
-				nextStep = steps.getFirst();
-				break;
-			case 2:
-				GridTile parentPos = node.getParentPosition(chart);
-				int dist = Integer.MAX_VALUE;
-				for(GridTile step : steps)
-				{
-					int d = step.manhattanDistance(parentPos);
-					if(d < dist)
-					{
-						dist = d;
-						nextStep = step;
-					}
-				}
-				break;
+			Vector2i direction = startTile.toVec2i().sub(entryWay.toVec2i());
+			return tryMoveRelative(node, chart, new Vector2i((int)Math.signum(direction.x()), (int)Math.signum(direction.y)));
 		}
-		
-		Vector2i direction = nextStep.toVec2i().sub(entryWay.toVec2i());
-		return tryMoveRelative(node, chart, direction);
-	}
-	
-	public static Vector2i vec2fToVec2i(Vec2f vec)
-	{
-		return new Vector2i((int)vec.x, (int)vec.y);
-	}
-	
-	public static boolean tryMoveNodeByWorld(BlueprintRoom node, Blueprint chart, Vec2f direction)
-	{
-		Vec2f gridDirection = direction.normalize().multiply((float)Math.floor(direction.length() / Tile.TILE_SIZE));
-		for(float i=gridDirection.length(); i>0; i--)
-		{
-			Vec2f point = gridDirection.normalize().multiply(i);
-			
-			int x = Math.abs(point.x) >= 1 ? (int)point.x : (int)Math.signum(point.x);
-			int y = Math.abs(point.y) >= 1 ? (int)point.y : (int)Math.signum(point.y);
-			
-			if(tryMoveRelative(node, chart, new Vector2i(x, y)))
-				return true;
-		}
-		
 		return false;
 	}
 	
+	/**
+	 * Attempts to move the given room by the given vector
+	 * @param node The room to be moved
+	 * @param chart The blueprint the room exists within
+	 * @param move The local vector to apply to the room
+	 * @return True if the room was successfully moved at all
+	 */
 	public static boolean tryMoveRelative(BlueprintRoom node, Blueprint chart, Vector2i move)
 	{
 		if(move.length() == 0)
@@ -137,18 +105,16 @@ public class BlueprintScruncher
 			return true;
 		
 		// If both axises are non-zero, try to move on each individually
-		else if((Math.abs(move.x) + Math.abs(move.y)) != move.length())
+		else if(move.x != 0 && move.y != 0)
 		{
 			Vector2i onlyX = new Vector2i(move.x, 0);
 			Vector2i onlyY = new Vector2i(0, move.y);
-			double distX = Math.abs(move.x);
-			double distY = Math.abs(move.y);
 			
 			Supplier<Boolean> tryX = () -> tryMove(node, chart, onlyX);
 			Supplier<Boolean> tryY = () -> tryMove(node, chart, onlyY);
 			
 			// Prioritise moving in whichever direction results in the shortest distance to the point
-			if(distX < distY)
+			if(Math.abs(move.x) >= Math.abs(move.y))
 				return tryX.get() ? true : tryY.get();
 			else
 				return tryY.get() ? true : tryX.get();
@@ -158,11 +124,11 @@ public class BlueprintScruncher
 	}
 	
 	/**
-	 * Simulates the move, then applies it if it does not produce an error
-	 * @param node
-	 * @param chart
-	 * @param move
-	 * @return
+	 * Simulates the move, then applies it if it does not produce an error in the blueprint
+	 * @param node The room to be moved
+	 * @param chart The blueprint the room exists within
+	 * @param move The local vector to apply to the room
+	 * @return True if the move would not produce an error in the blueprint and was applied
 	 */
 	public static boolean tryMove(BlueprintRoom node, Blueprint chart, Vector2i move)
 	{
@@ -170,7 +136,7 @@ public class BlueprintScruncher
 			return false;
 		
 		// Clone blueprint and simulate movement
-		// Apply movement to all descendants as well to minimise processing time
+		// Apply movement to all descendants as well to minimise overall processing time
 		Blueprint sim = chart.clone();
 		List<BlueprintRoom> simNodes = Lists.newArrayList();
 		simNodes.add(sim.getRoom(node.uuid()).get());

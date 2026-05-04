@@ -40,7 +40,7 @@ public class GridPathing
 						return PathingResult.failure();
 				}
 				,
-				// Straight-line pathing for parallel tiles
+				// Straight-line linear pathing for parallel tiles
 				(start, end, qualifier) ->
 				{
 					if(!start.isParallel(end))
@@ -74,34 +74,26 @@ public class GridPathing
 	/** Returns the pair of tiles between sets that are best suited to be connected together */
 	public static BoundTilePair findBestCandidatesToJoin(List<GridTile> setA, List<GridTile> setB, Predicate<GridTile> qualifier)
 	{
+		if(setA.isEmpty())
+			throw new NullPointerException("Set A of tiles provided is blank");
+		if(setB.isEmpty())
+			throw new NullPointerException("Set B of tiles provided were blank");
+		
 		// Find pair of cached tile in passage and child's doorway tile that are closest together
-		BoundTilePair closestPair = null;
-		for(GridTile tileB : setB)
-			for(GridTile tileA : setA)
+		BoundTilePair closestPair = new BoundTilePair(setA.getFirst(), setB.getFirst(), qualifier);
+		for(GridTile tileA : setA)
+			for(GridTile tileB : setB)
 			{
 				BoundTilePair pair = new BoundTilePair(tileA, tileB, qualifier);
-				if(closestPair == null)
-				{
-					closestPair = pair;
+				// Exclude any potential candidates that are implicitly farther away than the best we've already found
+				if(pair.distance() > closestPair.distance())
 					continue;
-				}
-				
-				switch((int)Math.signum(closestPair.distance() - pair.distance()))
-				{
-					// Distance higher
-					// Exclude any potential candidates that are implicitly farther away than the best we've already found
-					case -1:
-						continue;
-					// Distance equal
-					// If distances are equal, pick the candidate with the shortest resulting path length
-					case 0:
-						if(closestPair.length() < pair.length())
-							continue;
-					// Distance lower
-					case 1:
-						closestPair = pair;
-						break;
-				}
+				// If distances are lower, pick the new candidate
+				// If distances are equal, pick the candidate with the shortest resulting path length
+				if(
+						pair.distance() < closestPair.distance() || 
+						pair.length() < closestPair.length())
+					closestPair = pair;
 			}
 		return closestPair;
 	}
@@ -124,12 +116,10 @@ public class GridPathing
 		// Generate an A* path and try to streamline it
 		PathingResult aStarPath = findAStarRoute(start, end, qualifier);
 		if(aStarPath.isFailure())
-		{
-			LOGGER.warn(" + Failed to find A* route");
 			return PathingResult.failure();
-		}
 		
 		// Try to streamline the A* path by shortcutting where possible
+		// TODO Replace with weighting to make the A* path less prone to zig-zagging
 		List<GridTile> tiles = Lists.newArrayList();
 		for(GridTile position : aStarPath.result())
 		{
@@ -214,7 +204,7 @@ public class GridPathing
 		// Nodes we've yet to investigate
 		List<AStarNode> open = Lists.newArrayList(new AStarNode(start, null, 0, end));
 		
-		final int maxSearch = (1 + Math.abs(start.x - end.x)) * (1 + Math.abs(start.y - end.y)); 
+		final int maxSearch = (1 + Math.abs(start.x - end.x)) * (1 + Math.abs(start.y - end.y));
 		while(!open.isEmpty() && closed.size() < maxSearch)
 		{
 			AStarNode option = open.getFirst();
@@ -341,12 +331,13 @@ public class GridPathing
 		public BoundTilePair(GridTile startIn, GridTile endIn, Predicate<GridTile> checkIn)
 		{
 			super(startIn, endIn);
-			distance = getLeft().distance(getRight());
+			distance = getLeft().manhattanDistance(getRight());
 			qualifier = checkIn;
 		}
 		
 		public double distance() { return distance; }
 		
+		/** Returns the number of tiles this path occupies */
 		public int length() { return route().isFailure() ? Integer.MAX_VALUE : route().result().size(); }
 		
 		public PathingResult route()

@@ -2,13 +2,16 @@ package com.lying.blueprint;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
+import org.slf4j.Logger;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
@@ -37,6 +40,8 @@ import net.minecraft.util.math.Vec2f;
 
 public class BlueprintPassage
 {
+	public static final Logger LOGGER	= CyclicDungeons.LOGGER;
+	
 	/** How many tiles high each passage is */
 	public static final int PASSAGE_HEIGHT = 4;
 	public static final int TILE_SIZE = Tile.TILE_SIZE;
@@ -48,6 +53,7 @@ public class BlueprintPassage
 	
 	private List<LineSegment2f> linesCached = Lists.newArrayList();
 	private List<GridTile> tilesCached = Lists.newArrayList();
+	private Optional<GridTile> startTile = Optional.empty();
 	
 	private boolean hasFailures = false;
 	
@@ -158,41 +164,47 @@ public class BlueprintPassage
 		 * * Select resulting network with fewest tiles
 		 */
 		tilesCached.clear();
+		startTile = Optional.empty();
 		
 		// Step 1: Identify median exterior tile of parent room
 		final GridTile originExit = findExitDoorway(parent, children, parent.getEntryTile());
 		
 		final List<BlueprintRoom> roomsInvolved = Lists.newArrayList(parent);
 		roomsInvolved.addAll(children);
-		final Predicate<GridTile> validityCheck = t -> roomsInvolved.stream().noneMatch(r -> r.occupiesOrIsAdjacent(t));
+		final Predicate<GridTile> validityCheck = parent.getExclusionCheck();
 		
 		// Step 2: Build network of tiles from starting doorway to all child rooms
-		PathingResult shortestPassage = PathingResult.failure();
+		PathingResult smallestNetwork = PathingResult.failure();
 		int minLength = Integer.MAX_VALUE;
 		PathingResult passage = PathingResult.failure();
 		for(BlueprintRoom child : children)
 			if((passage = calculateFrom(originExit, child, children, validityCheck)).isSuccess() && passage.result().size() < minLength)
-				minLength = (shortestPassage = passage).size();
+				minLength = (smallestNetwork = passage).size();
 		
 		// Step 3: Cache resulting network with fewest tiles (ie. the shortest passage)
-		if(hasFailures = shortestPassage.isFailure())
+		if(hasFailures = smallestNetwork.isFailure())
 			return;
 		else
 		{
-			cacheAll(shortestPassage.result());
+			startTile = Optional.of(originExit);
+			cacheAll(smallestNetwork.result());
 			
 			// Step 4: Notify children of selected entryway tile
 			for(BlueprintRoom child : children)
-				child.tileGrid()
-					.getDoorwayTiles().stream()
-					.filter(tilesCached::contains)
-					.findFirst()
-					.ifPresent(child::setEntryTile);
+				for(GridTile tile : tilesCached)
+					if(child.isAdjacent(tile))
+					{
+						child.setEntryTile(tile);
+						break;
+					}
 		}
 	}
 	
 	/** Returns true if one of more component passages in this passage failed to calculate */
 	public boolean containsFailures() { return hasFailures; }
+	
+	/** Returns the doorway tile of the parent room that this passage originates from */
+	public Optional<GridTile> getInitialTile() { return startTile; }
 	
 	/** Returns the doorway tile in the parent room's tile grid that is closest to all child rooms */
 	protected static GridTile findExitDoorway(BlueprintRoom parent, List<BlueprintRoom> children, @Nullable GridTile grandParentEntry)
@@ -208,21 +220,32 @@ public class BlueprintPassage
 		return GridTile.findClosestToAll(parentDoorways, childPositions);
 	}
 	
-	/** Calculates the network of tiles using the given room as the first to be calculated */
+	/**
+	 * Calculates the network of tiles using the given room as the first to be calculated
+	 * @param start	The doorway tile of the parent room
+	 * @param initial	The first child room to be calculated from
+	 * @param successive	All child rooms of the parent room
+	 * @param validityCheck
+	 * @return	A PathingResult containing the network of tiles linking all child rooms, if any
+	 */
 	protected static PathingResult calculateFrom(GridTile start, BlueprintRoom initial, List<BlueprintRoom> successive, Predicate<GridTile> validityCheck)
 	{
 		List<GridTile> tiles = Lists.newArrayList(start);
 		
 		List<BlueprintRoom> rooms = Lists.newArrayList(initial);
-		successive.stream().filter(r -> !r.uuid().equals(initial.uuid())).forEach(rooms::add);
+		for(BlueprintRoom room : successive)
+			if(!room.uuid().equals(initial.uuid()))
+				rooms.add(room);
 		
 		for(BlueprintRoom child : rooms)
 		{
 			// Ignore any door tiles that would be too close to a sibling room
-			final List<BlueprintRoom> exclusion = successive.stream().filter(r -> !r.uuid().equals(child.uuid())).toList();
-			final Predicate<GridTile> exclusionCheck = t -> exclusion.stream().noneMatch(r -> r.occupiesOrIsAdjacent(t));
+			final Predicate<GridTile> exclusionCheck = t -> 
+					successive.stream()
+					.filter(r -> !r.uuid().equals(child.uuid()))
+					.noneMatch(r -> r.occupiesOrIsAdjacent(t));
 			
-			BoundTilePair fromPassageToDoor = GridPathing.findBestCandidatesToJoin(child.tileGrid().getDoorwayTiles().stream().filter(exclusionCheck).toList(), tiles, validityCheck);
+			BoundTilePair fromPassageToDoor = GridPathing.findBestCandidatesToJoin(tiles, child.tileGrid().getDoorwayTiles().stream().filter(exclusionCheck).toList(), validityCheck);
 			if(fromPassageToDoor == null || fromPassageToDoor.route().isFailure())
 				return PathingResult.failure();
 			

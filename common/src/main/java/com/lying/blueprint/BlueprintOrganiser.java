@@ -60,11 +60,14 @@ public abstract class BlueprintOrganiser
 	public final void organise(Blueprint chart, Random rand)
 	{
 		LOGGER.info(" # Applying organiser to {}:{} planar graph", chart.size(), chart.maxDepth());
+		chart.setOrganised(false);
 		
 		// Clears all preceding structural information
 		chart.forEach(n -> n.setPosition(0, 0));
 		
 		applyLayout(chart, rand);
+		chart.setOrganised(true);
+		chart.clearPassageCache();
 	}
 	
 	public abstract void applyLayout(Blueprint chart, Random rand);

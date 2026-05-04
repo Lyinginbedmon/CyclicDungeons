@@ -4,10 +4,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.GraphTileGrid;
@@ -50,7 +52,8 @@ public class BlueprintRoom
 	public String toString()
 	{
 		Vector2i size = metadata.size().div(GRID_SIZE);
-		return "Room["+size.x+" by "+size.y+" at "+tilePosition.shortString()+"]";
+		String type = metadata.type().name().getString();
+		return type+"["+size.x+" by "+size.y+" at "+tilePosition.shortString()+"]";
 	}
 	
 	public UUID uuid() { return id; }
@@ -61,6 +64,11 @@ public class BlueprintRoom
 	}
 	
 	public void attachToBlueprint(Blueprint blueprint) { this.blueprint = Optional.of(blueprint); }
+	
+	public Predicate<GridTile> getExclusionCheck()
+	{
+		return blueprint.isPresent() ? t -> this.blueprint.get().stream().noneMatch(r -> r.occupiesOrIsAdjacent(t)) : Predicates.alwaysTrue();
+	}
 	
 	public RoomMetadata metadata() { return metadata; }
 	
@@ -91,8 +99,7 @@ public class BlueprintRoom
 		tiles = Optional.empty();
 		tileGrid = Optional.empty();
 		
-		// TODO Check if full passageway recalculation is necessary?
-		blueprint.ifPresent(b -> b.clearPassageCache());
+		blueprint.ifPresent(Blueprint::clearPassageCache);
 		return this;
 	}
 	
