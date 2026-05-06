@@ -2,9 +2,9 @@ package com.lying.grid;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
@@ -16,7 +16,6 @@ import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Direction.Type;
 import net.minecraft.util.math.Vec2f;
 
 /** Utility functions for generating paths between tiles on a 2D tile grid */
@@ -24,13 +23,13 @@ public class GridPathing
 {
 	private static final DebugLogger LOGGER = CDLoggers.PLANAR;
 	public static final int TILE_SIZE = Tile.TILE_SIZE;
-	protected static final Type MOVE_SET = Direction.Type.HORIZONTAL;
+	protected static final List<AStarMove> MOVE_SET = Direction.Type.HORIZONTAL.stream().map(d -> new AStarMove(new Vector2i(d.getOffsetX(), d.getOffsetZ()))).toList();
 	
 	/** Available grid path finding algorithms in ascending order of complexity */
 	private static final List<GridPathFinder> PATHERS = List.of
 			(
 				// Direct pathing for tiles overlapping or adjacent
-				(start, end, qualifier) -> 
+				(start, end, walkable) -> 
 				{
 					if(start.equals(end))
 						return PathingResult.success(List.of(start));
@@ -41,8 +40,9 @@ public class GridPathing
 				}
 				,
 				// Straight-line linear pathing for parallel tiles
-				(start, end, qualifier) ->
+				(start, end, walkable) ->
 				{
+					// If the tiles aren't parallel, we don't have a straight line to walk
 					if(!start.isParallel(end))
 						return PathingResult.failure();
 					
@@ -51,28 +51,42 @@ public class GridPathing
 							(int)Math.signum(direction.x),
 							(int)Math.signum(direction.y)
 							);
+					// If the offset length does not equal 1, we know it's not grid-aligned
+					if(offset.length() != 1)
+						return PathingResult.failure();
+					
 					List<GridTile> set = Lists.newArrayList(start);
 					GridTile tile = start;
 					for(int i=0; i<direction.length(); i++)
-						if(!qualifier.test(tile = tile.add(offset)))
+						if(!walkable.test(tile = tile.add(offset)))
 							return PathingResult.failure();
 						else
 							set.add(tile);
 					return PathingResult.success(set);
 				}
-				,
-				// Straight-line pathing for non-parallel tiles
-				(start, end, qualifier) -> 
-				{
-					List<GridTile> tiles = lineToTiles(start, end);
-					return tiles.stream().allMatch(qualifier) ? 
-							PathingResult.success(tiles) : 
-							PathingResult.failure();
-				}
 			);
 	
+	/** The predicate determining navigable grid tile positions */
+	private Predicate<GridTile> walkable;
+	
+	public GridPathing(Predicate<GridTile> walkableIn)
+	{
+		walkable = walkableIn;
+	}
+	
+	public GridPathing()
+	{
+		this(Predicates.alwaysTrue());
+	}
+	
+	protected GridPathing setWalkable(Predicate<GridTile> walkableIn)
+	{
+		this.walkable = walkableIn;
+		return this;
+	}
+	
 	/** Returns the pair of tiles between sets that are best suited to be connected together */
-	public static BoundTilePair findBestCandidatesToJoin(List<GridTile> setA, List<GridTile> setB, Predicate<GridTile> qualifier)
+	public static BoundTilePair findBestCandidatesToJoin(List<GridTile> setA, List<GridTile> setB, Predicate<GridTile> walkable)
 	{
 		if(setA.isEmpty())
 			throw new NullPointerException("Set A of tiles provided is blank");
@@ -80,11 +94,11 @@ public class GridPathing
 			throw new NullPointerException("Set B of tiles provided were blank");
 		
 		// Find pair of cached tile in passage and child's doorway tile that are closest together
-		BoundTilePair closestPair = new BoundTilePair(setA.getFirst(), setB.getFirst(), qualifier);
+		BoundTilePair closestPair = new BoundTilePair(setA.getFirst(), setB.getFirst(), walkable);
 		for(GridTile tileA : setA)
 			for(GridTile tileB : setB)
 			{
-				BoundTilePair pair = new BoundTilePair(tileA, tileB, qualifier);
+				BoundTilePair pair = new BoundTilePair(tileA, tileB, walkable);
 				// Exclude any potential candidates that are implicitly farther away than the best we've already found
 				if(pair.distance() > closestPair.distance())
 					continue;
@@ -98,60 +112,46 @@ public class GridPathing
 		return closestPair;
 	}
 	
-	public static PathingResult findRouteBetween(GridTile start, GridTile end, Predicate<GridTile> validityCheck)
+	public PathingResult findRouteBetween(GridTile start, GridTile end)
 	{
 		LOGGER.info("Finding route between {} and {}, distance {}", start.toString(), end.toString(), start.distance(end));
 		
+		final Predicate<GridTile> walkableLog = walkable;
 		final Predicate<GridTile> terminusCheck = (t -> start.equals(t) || end.equals(t));
-		final Predicate<GridTile> qualifier = terminusCheck.or(validityCheck);
+		setWalkable(terminusCheck.or(walkable));
 		
 		// Trial the cheapest route generators
-		PathingResult cheap = findCheapRoute(start, end, qualifier);
+		PathingResult cheap = findCheapRoute(start, end);
 		if(cheap.isSuccess())
 		{
 			LOGGER.info(" + Cheap route found: {} tiles", cheap.size());
+			setWalkable(walkableLog);
 			return cheap;
 		}
 		
-		// Generate an A* path and try to streamline it
-		PathingResult aStarPath = findAStarRoute(start, end, qualifier);
+		// Generate a streamlined A* path
+		PathingResult aStarPath = findAStarRoute(start, end);
 		if(aStarPath.isFailure())
-			return PathingResult.failure();
-		
-		// Try to streamline the A* path by shortcutting where possible
-		// TODO Replace with weighting to make the A* path less prone to zig-zagging
-		List<GridTile> tiles = Lists.newArrayList();
-		for(GridTile position : aStarPath.result())
 		{
-			tiles.add(position);
-			
-			// Try finding a more direct or immediate route if available from the new position
-			PathingResult shortcut = findCheapRoute(position, end, qualifier);
-			if(shortcut.isSuccess())
-			{
-				tiles.addAll(shortcut.result());
-				LOGGER.info(" + Complex route found: {} tiles", tiles.size());
-				return PathingResult.success(tiles);
-			}
-			
-			// Otherwise, continue moving along the A* path
+			setWalkable(walkableLog);
+			return PathingResult.failure();
 		}
 		
-		LOGGER.info(" + A* route found: {} tiles", tiles.size());
+		setWalkable(walkableLog);
 		return aStarPath;
 	}
 	
-	public static PathingResult findCheapRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
+	public PathingResult findCheapRoute(GridTile start, GridTile end)
 	{
 		PathingResult tiles;
 		for(GridPathFinder method : PATHERS)
-			if((tiles = method.findPath(start, end, qualifier)).isSuccess())
+			if((tiles = method.findPath(start, end, walkable)).isSuccess())
 				return tiles;
 		return PathingResult.failure();
 	}
 	
 	/** Generates a route between the given tiles by following a 2D line between them */
-	public static List<GridTile> lineToTiles(GridTile startTile, GridTile endTile)
+	public List<GridTile> lineToTiles(GridTile startTile, GridTile endTile)
 	{
 		final LineSegment2f line = new LineSegment2f(startTile, endTile);
 		
@@ -185,31 +185,31 @@ public class GridPathing
 	}
 	
 	/** Returns a list of tiles adjoining the start and end points, excluding those points */
-	public static List<GridTile> adjoinTiles(GridTile start, GridTile end)
+	public List<GridTile> adjoinTiles(GridTile start, GridTile end)
 	{
 		if(start.isAdjacentOrSame(end))
 			return List.of();
 		
-		PathingResult result = GridPathing.findAStarRoute(start, end, Predicates.alwaysTrue());
+		PathingResult result = findAStarRoute(start, end);
 		return result.isSuccess() ? result.result().stream().filter(t -> !start.equals(t) && !end.equals(t)).toList() : List.of();
 	}
 	
 	/** Returns an A* path between points, avoiding unqualified geometry */
-	public static PathingResult findAStarRoute(GridTile start, GridTile end, Predicate<GridTile> qualifier)
+	public PathingResult findAStarRoute(GridTile start, GridTile end)
 	{
 		// Nodes we've already visited
 		List<AStarNode> closed = Lists.newArrayList();
 		List<GridTile> closedTiles = Lists.newArrayList();
 		
 		// Nodes we've yet to investigate
-		List<AStarNode> open = Lists.newArrayList(new AStarNode(start, null, 0, end));
+		List<AStarNode> open = Lists.newArrayList(new AStarNode(start, end));
 		
 		final int maxSearch = (1 + Math.abs(start.x - end.x)) * (1 + Math.abs(start.y - end.y));
 		while(!open.isEmpty() && closed.size() < maxSearch)
 		{
 			AStarNode option = open.getFirst();
 			for(AStarNode c : open)
-				if(c.distance() < option.distance())
+				if(c.value() < option.value())
 					option = c;
 			
 			final AStarNode candidate = option;
@@ -219,15 +219,12 @@ public class GridPathing
 			LOGGER.info("  - Test {} {}, distance {}, {} options remaining", closed.size(), candidate.pos.toString(), candidate.distance(), open.size());
 			
 			if(candidate.isEnd())
-				return PathingResult.success(recomposeRoute(closed));
+				return PathingResult.success(candidate.route());
 			else
-				for(AStarNode move : getAStarCandidates(candidate, qualifier, closedTiles))
+				for(AStarNode move : getAStarCandidates(candidate, closedTiles))
 				{
 					if(move.isEnd())
-					{
-						closed.add(move);
-						return PathingResult.success(recomposeRoute(closed));
-					}
+						return PathingResult.success(move.route());
 					
 					open.removeIf(move::isBetter);
 					open.add(move);
@@ -238,101 +235,132 @@ public class GridPathing
 		return PathingResult.failure();
 	}
 	
-	public static List<AStarNode> getAStarCandidates(AStarNode node, Predicate<GridTile> qualifier, List<GridTile> ignore)
+	public List<AStarNode> getAStarCandidates(AStarNode node, List<GridTile> ignore)
 	{
-		final Function<GridTile, AStarNode> provider = t -> new AStarNode(t, node.pos(), node.step() + 1, node.target());
 		List<AStarNode> candidates = Lists.newArrayList();
-		for(Direction move : MOVE_SET)
+		for(AStarMove move : MOVE_SET)
 		{
-			GridTile option = node.pos().offset(move);
-			if(node.isEnd(option))
-			{
-				candidates.add(provider.apply(option));
-				return candidates;
-			}
-			else if(!ignore.contains(option) && qualifier.test(option))
-				candidates.add(provider.apply(option));
+			// Always prohibit moving back against the current direction of travel
+			if(move.isOpposite(node.moveTaken.orElse(null)))
+				continue;
+			
+			AStarNode option = node.apply(move);
+			if(option.isEnd())
+				return List.of(option);
+			else if(!ignore.contains(option.pos()) && walkable.test(option.pos()))
+				candidates.add(option);
 		}
 		return candidates;
 	}
 	
-	/** Builds a linked list of nodes from {@link AStarNode.isEnd} to an unparented node (ie. the start) then reverses the order */
-	private static List<GridTile> recomposeRoute(List<AStarNode> nodes)
-	{
-		if(nodes.stream().noneMatch(AStarNode::isEnd))
-			return List.of();
-		
-		AStarNode node = nodes.stream().filter(AStarNode::isEnd).findAny().get();
-		List<AStarNode> route = Lists.newArrayList(node);
-		while(!node.isStart() && !nodes.isEmpty())
-		{
-			nodes.remove(node);
-			for(AStarNode node2 : nodes)
-				if(node2.isParent(node))
-				{
-					node = node2;
-					break;
-				}
-			
-			route.add(node);
-		}
-		return route.reversed().stream().map(AStarNode::pos).toList();
-	}
-	
 	private static class AStarNode
 	{
-		private final GridTile pos, parent, target;
-		private final int step;
+		private final List<AStarNode> history = Lists.newArrayList();
+		private final Optional<AStarMove> moveTaken;
+		private final GridTile pos, destination;
+		private final float totalCost;
 		private final double distance;
 		
-		public AStarNode(GridTile posIn, GridTile parentIn, int stepIn, GridTile targetIn)
+		public AStarNode(GridTile posIn, GridTile targetIn)
+		{
+			this(posIn, Optional.empty(), 0F, targetIn);
+		}
+		
+		public AStarNode(GridTile posIn, Optional<AStarMove> lastMove, float cost, GridTile targetIn)
 		{
 			pos = posIn;
-			parent = parentIn;
-			target = targetIn;
-			step = stepIn;
-			distance = pos.distance(target);
+			destination = targetIn;
+			moveTaken = lastMove;
+			totalCost = cost;
+			distance = pos.distance(destination);
 		}
 		
 		public GridTile pos() { return pos; }
 		
-		public GridTile target() { return target; }
-		
-		public int step() { return step; }
-		
 		public double distance() { return distance; }
 		
-		public boolean isStart() { return parent == null; }
+		public double value() { return distance * totalCost; }
 		
-		public boolean isEnd() { return isEnd(pos); }
-		
-		public boolean isEnd(GridTile tile) { return tile.equals(target); }
+		public boolean isEnd() { return pos.equals(destination); }
 		
 		public String toString() { return pos.toString(); }
-		
-		/** Returns true if we are the parent of the given node */
-		public boolean isParent(AStarNode node) { return node.parent != null && node.parent.equals(pos) && node.step > step; }
 		
 		/** Returns true if we're the same position but faster */
 		public boolean isBetter(AStarNode node)
 		{
-			return pos.equals(node.pos) && node.step >= step;
+			return pos.equals(node.pos) && node.totalCost > totalCost;
+		}
+		
+		protected AStarNode setHistory(List<AStarNode> historyIn)
+		{
+			history.clear();
+			history.addAll(historyIn);
+			return this;
+		}
+		
+		public List<GridTile> route()
+		{
+			List<AStarNode> history = Lists.newArrayList(this.history);
+			history.add(this);
+			return history.stream().map(AStarNode::pos).toList();
+		}
+		
+		public AStarNode apply(AStarMove move)
+		{
+			List<AStarNode> history = Lists.newArrayList(this.history);
+			history.add(this);
+			return new AStarNode(
+					pos.add(move.offset), 
+					Optional.of(move),
+					totalCost + move.cost(this.moveTaken.orElse(null)), 
+					destination)
+					.setHistory(history);
+		}
+	}
+	
+	public static class AStarMove
+	{
+		public static final float COURSE_CHANGE_WEIGHT = 20F;
+		private final Vector2i offset;
+		
+		public AStarMove(Vector2i offsetIn)
+		{
+			offset = offsetIn;
+		}
+		
+		public boolean equals(Object obj) { return obj instanceof AStarMove && ((AStarMove)obj).offset.gridDistance(offset) == 0; }
+		
+		public boolean isOpposite(@Nullable AStarMove move) { return move != null && move.offset.equals(new Vector2i(-offset.x, -offset.y)); }
+		
+		public float cost(@Nullable AStarMove lastMove)
+		{
+			if(lastMove == null)
+				return 1F;
+			// Straight lines always permitted
+			else if(lastMove.equals(this))
+				return 1F;
+			// Reversing forbidden
+			else if(isOpposite(lastMove))
+				return Float.MAX_VALUE;
+			// Course changes inhibited
+			else
+				return COURSE_CHANGE_WEIGHT;
 		}
 	}
 	
 	public static class BoundTilePair extends Pair<GridTile,GridTile>
 	{
 		private final double distance;
-		private final Predicate<GridTile> qualifier;
+		private final GridPathing pather;
 		
 		// Cached route between tiles, only calculated when necessary for performance reasons
 		private Optional<PathingResult> route = Optional.empty();
 		
-		public BoundTilePair(GridTile startIn, GridTile endIn, Predicate<GridTile> checkIn)
+		public BoundTilePair(GridTile startIn, GridTile endIn, Predicate<GridTile> walkableIn)
 		{
 			super(startIn, endIn);
 			distance = getLeft().manhattanDistance(getRight());
-			qualifier = checkIn;
+			pather = new GridPathing(walkableIn);
 		}
 		
 		public double distance() { return distance; }
@@ -343,7 +371,7 @@ public class GridPathing
 		public PathingResult route()
 		{
 			if(route.isEmpty())
-				route = Optional.of(findRouteBetween(getLeft(), getRight(), qualifier));
+				route = Optional.of(pather.findRouteBetween(getLeft(), getRight()));
 			return route.get();
 		}
 	}
@@ -354,10 +382,10 @@ public class GridPathing
 		/**
 		 * @param start - The initial position
 		 * @param end - The target position
-		 * @param qualifier - A predicate validating if a position is permitted
+		 * @param walkable - A predicate validating if a position is permitted
 		 * @return
 		 */
-		public PathingResult findPath(GridTile start, GridTile end, Predicate<GridTile> qualifier);
+		public PathingResult findPath(GridTile start, GridTile end, Predicate<GridTile> walkable);
 	}
 	
 	/** A result handler class, so we can readily distinguish between an empty path and a failed path */

@@ -127,6 +127,124 @@ public abstract class BlueprintOrganiser
 		return mergedPaths;
 	}
 	
+	public static class Poisson extends BlueprintOrganiser
+	{
+		public static Poisson create() { return new Poisson(); }
+		
+		public void applyLayout(Blueprint chart, Random rand)
+		{
+			// Find largest radius within dungeon
+			int radius = 1;
+			for(BlueprintRoom room : chart)
+			{
+				Vector2i size = room.metadata().size();
+				if(size.x > radius)
+					radius = size.x;
+				if(size.y > radius)
+					radius = size.y;
+			}
+			
+			// Establish super-grid of points
+			PoissonGrid superGrid = new PoissonGrid();
+			for(int i=0; i<=chart.maxDepth(); i++)
+				for(BlueprintRoom room : chart.byDepth(i))
+				{
+					if(superGrid.isEmpty())
+						break;
+					
+					// Assign rooms to points within super-grid
+					GridTile pos = superGrid.open().getFirst();
+					if(room.hasParents())
+					{
+						GridTile parent = room.getParentPosition(chart);
+						
+						List<GridTile> candidates = Lists.newArrayList();
+						int minDist = Integer.MAX_VALUE;
+						for(GridTile opt : superGrid.open())
+						{
+							int dist = opt.manhattanDistance(parent);
+							if(dist < minDist)
+							{
+								candidates.clear();
+								candidates.add(opt);
+								minDist = dist;
+							}
+							else if(dist == minDist)
+								candidates.add(opt);
+						}
+						
+						pos = 
+								candidates.size() == 1 ? 
+									candidates.getFirst() : 
+									candidates.get(rand.nextInt(candidates.size()));
+					}
+					
+					room.setTilePosition(pos);
+					superGrid.close(pos);
+				}
+			
+			// Convert super-grid positions to tile grid positions
+			for(BlueprintRoom room : chart)
+			{
+				Vector2i pos = room.position();
+				room.setPosition(pos.x * radius, pos.y * radius);
+				// TODO Add random variation by [0f-1f] * radius for variety
+			}
+		}
+		
+		private static class PoissonGrid
+		{
+			private List<GridTile> 
+				closed = Lists.newArrayList(), 
+				open = Lists.newArrayList(GridTile.ZERO);
+			
+			public boolean isEmpty() { return open.isEmpty(); }
+			
+			public List<GridTile> open() { return open; }
+			
+			public void close(GridTile tile)
+			{
+				closed.add(tile);
+				
+				// Remove positions invalidated by this placement
+				open.removeIf(this::isInvalidated);
+				
+				// Append new viable positions
+				GridTile offset = new GridTile(-2, -2);
+				int offX = 1, offY = 0;
+				for(int i=0; i<4; i++)
+				{
+					for(int j=0; j<5; j++)
+					{
+						GridTile point = tile.add(offset);
+						if(
+								point.y < 0 ||
+								closed.contains(point) || 
+								open.contains(point) ||
+								isInvalidated(point))
+							;
+						else
+							open.add(point);
+						
+						offset = offset.add(offX, offY);
+					}
+					
+					int v = offX;
+					offX = -offY;
+					offY = v;
+				}
+			}
+			
+			protected boolean isInvalidated(GridTile tile)
+			{
+				return closed.stream().anyMatch(t -> 
+							t.manhattanDistance(tile) <= 2 && 
+							Math.abs(tile.x - t.x) < 2 && 
+							Math.abs(tile.y - t.y) < 2);
+			}
+		}
+	}
+	
 	public static class Tree extends BlueprintOrganiser
 	{
 		public static Tree create() { return new Tree(); }
