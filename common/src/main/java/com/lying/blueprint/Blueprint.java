@@ -238,7 +238,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		// Identify the doorway tile with the highest Y coordinate
 		GridTile entrywayTile = start.tilePosition();
 		for(GridTile pos : start.tileGrid().getDoorwayTiles().stream().filter(t -> t.x == start.tilePosition().x).toList())
-			if(pos.y > entrywayTile.y)
+			if(pos.y < entrywayTile.y)
 				entrywayTile = pos;
 		
 		// Create a tile grid for generation with only the doorway tile

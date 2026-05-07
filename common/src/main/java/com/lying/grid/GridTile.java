@@ -2,6 +2,7 @@ package com.lying.grid;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Math;
@@ -176,19 +177,22 @@ public class GridTile
 	{
 		GridTile closest = null;
 		double minDist = Double.MAX_VALUE;
-		for(GridTile tile : tiles)
+		final Function<GridTile, Double> distFunc = t -> 
 		{
 			double dist = 0D;
-			for(GridTile child : targets)
-				dist += tile.distance(child);
-			dist /= targets.size();
-			
-			if(dist < minDist)
+			for(GridTile target : targets)
+				dist += t.distance(target);
+			return dist / targets.size();
+		};
+		
+		double dist;
+		for(GridTile tile : tiles)
+			if((dist = distFunc.apply(tile)) < minDist)
 			{
 				minDist = dist;
 				closest = tile;
 			}
-		};
+		
 		return closest;
 	}
 }

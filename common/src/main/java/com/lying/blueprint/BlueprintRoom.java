@@ -109,6 +109,7 @@ public class BlueprintRoom
 		return this;
 	}
 	
+	@Nullable
 	public GridTile getEntryTile() { return entryTile.orElse(null); }
 	
 	public BlueprintRoom offset(Vector2i vec)

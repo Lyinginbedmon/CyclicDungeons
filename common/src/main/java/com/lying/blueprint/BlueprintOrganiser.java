@@ -186,9 +186,20 @@ public abstract class BlueprintOrganiser
 			// Convert super-grid positions to tile grid positions
 			for(BlueprintRoom room : chart)
 			{
-				Vector2i pos = room.position();
-				room.setPosition(pos.x * radius, pos.y * radius);
-				// TODO Add random variation by [0f-1f] * radius for variety
+				final Vector2i pos = room.position();
+				int x = pos.x;
+				int y = pos.y;
+				
+				// Convert to standard grid position
+				final int r = radius / 2;
+				x *= r;
+				y *= r;
+				
+				// Offset randomly to add variety
+				x += rand.nextInt(radius);
+				y += rand.nextInt(radius);
+				
+				room.setPosition(x, y);
 			}
 		}
 		
