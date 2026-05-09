@@ -13,7 +13,7 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.utility.CDUtils;
-import com.lying.utility.DebugLogger;
+import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.tile.Tile;
 import com.lying.worldgen.tileset.TileSet;
 

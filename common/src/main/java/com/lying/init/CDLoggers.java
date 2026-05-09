@@ -1,6 +1,6 @@
 package com.lying.init;
 
-import com.lying.utility.DebugLogger;
+import com.lying.utility.logging.DebugLogger;
 
 /** Centralised debug logger control class */
 public class CDLoggers

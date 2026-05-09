@@ -26,7 +26,7 @@ import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
 import com.lying.reference.Reference;
-import com.lying.utility.DebugLogger;
+import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
@@ -237,7 +237,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		// Identify the doorway tile with the highest Y coordinate
 		GridTile entrywayTile = start.tilePosition();
-		for(GridTile pos : start.tileGrid().getDoorwayTiles().stream().filter(t -> t.x == start.tilePosition().x).toList())
+		for(GridTile pos : start.getDoorwayTiles().stream().filter(t -> t.x == start.tilePosition().x).toList())
 			if(pos.y < entrywayTile.y)
 				entrywayTile = pos;
 		

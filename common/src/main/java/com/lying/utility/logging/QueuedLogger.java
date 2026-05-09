@@ -1,4 +1,4 @@
-package com.lying.utility;
+package com.lying.utility.logging;
 
 import java.util.List;
 import java.util.function.Consumer;

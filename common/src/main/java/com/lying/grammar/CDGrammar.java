@@ -9,7 +9,7 @@ import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
 import com.lying.utility.CDUtils;
-import com.lying.utility.DebugLogger;
+import com.lying.utility.logging.DebugLogger;
 
 import net.minecraft.util.math.random.Random;
 

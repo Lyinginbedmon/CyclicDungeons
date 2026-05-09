@@ -21,10 +21,11 @@ import com.lying.grid.GridPathing.BoundTilePair;
 import com.lying.grid.GridTile;
 import com.lying.grid.PathingResult;
 import com.lying.init.CDTiles;
-import com.lying.utility.AbstractBox2f;
-import com.lying.utility.CompoundBox2f;
-import com.lying.utility.LineSegment2f;
-import com.lying.utility.LineUtils;
+import com.lying.utility.geometry.AbstractBox2f;
+import com.lying.utility.geometry.CompoundBox2f;
+import com.lying.utility.geometry.LineSegment2f;
+import com.lying.utility.geometry.LineUtils;
+import com.lying.utility.logging.DataLog;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
@@ -56,7 +57,7 @@ public class BlueprintPassage
 	private Optional<GridTile> startTile = Optional.empty();
 	
 	private boolean hasFailures = false;
-	private List<PathingResult> errorLog = Lists.newArrayList();
+	private DataLog errorLog = new DataLog();
 	
 	public BlueprintPassage(BlueprintRoom a, BlueprintRoom b)
 	{
@@ -167,9 +168,11 @@ public class BlueprintPassage
 		tilesCached.clear();
 		startTile = Optional.empty();
 		errorLog.clear();
+		errorLog.info("Calculating passageway from {} with {} children", parent, children.size());
 		
 		// Step 1: Identify median exterior tile of parent room
 		final GridTile originExit = findExitDoorway(parent, children, parent.getEntryTile());
+		errorLog.info(" # Exit tile: {}", originExit.shortString());
 		
 		final List<BlueprintRoom> roomsInvolved = Lists.newArrayList(parent);
 		roomsInvolved.addAll(children);
@@ -183,12 +186,12 @@ public class BlueprintPassage
 			if((passage = calculateFrom(originExit, child, children, validityCheck)).isSuccess() && passage.result().size() < minLength)
 				minLength = (smallestNetwork = passage).size();
 			else
-				errorLog.add(passage);
+				errorLog.warn(passage.failureReason());
 		
 		// Step 3: Cache resulting network with fewest tiles (ie. the shortest passage)
 		if(hasFailures = smallestNetwork.isFailure())
 		{
-			errorLog.add(smallestNetwork);
+			errorLog.error(smallestNetwork.failureReason());
 			return;
 		}
 		else
@@ -210,14 +213,19 @@ public class BlueprintPassage
 	/** Returns true if one of more component passages in this passage failed to calculate */
 	public boolean containsFailures() { return hasFailures; }
 	
+	public void reportFailure(Logger logger)
+	{
+		logger.info("Reporting passage calculation failure");
+		this.errorLog.report(logger);
+	}
+	
 	/** Returns the doorway tile of the parent room that this passage originates from */
 	public Optional<GridTile> getInitialTile() { return startTile; }
 	
 	/** Returns the doorway tile in the parent room's tile grid that is closest to all child rooms */
 	protected static GridTile findExitDoorway(BlueprintRoom parent, List<BlueprintRoom> children, @Nullable GridTile grandParentEntry)
 	{
-		final GraphTileGrid parentGrid = parent.tileGrid();
-		List<GridTile> parentDoorways = Lists.newArrayList(parentGrid.getDoorwayTiles());
+		List<GridTile> parentDoorways = Lists.newArrayList(parent.getDoorwayTiles());
 		
 		// Exclude the grandparent entryway tile and any tiles immediately adjacent to it
 		if(grandParentEntry != null)
@@ -228,18 +236,18 @@ public class BlueprintPassage
 	
 	/**
 	 * Calculates the network of tiles using the given room as the first to be calculated
-	 * @param start	The doorway tile of the parent room
+	 * @param start	The exit doorway tile of the parent room
 	 * @param initial	The first child room to be calculated from
 	 * @param successive	All child rooms of the parent room
-	 * @param validityCheck
+	 * @param walkable	The predicate defining passable tiles in the tile grid
 	 * @return	A PathingResult containing the network of tiles linking all child rooms, if any
 	 */
-	protected static PathingResult calculateFrom(GridTile start, BlueprintRoom initial, List<BlueprintRoom> successive, Predicate<GridTile> validityCheck)
+	protected PathingResult calculateFrom(GridTile start, BlueprintRoom initial, List<BlueprintRoom> successive, Predicate<GridTile> walkable)
 	{
-		// Set of all tiles within this passageway
+		/** Set of all tiles within this passageway */
 		List<GridTile> tiles = Lists.newArrayList(start);
 		
-		// Set of all rooms accessed (not exited) from this passage, with the initial always at index 0
+		/** Set of all rooms accessed (not exited) from this passage, with the initial always at index 0 */
 		List<BlueprintRoom> rooms = Lists.newArrayList(initial);
 		for(BlueprintRoom room : successive)
 			if(!rooms.contains(room))
@@ -250,11 +258,18 @@ public class BlueprintPassage
 			// Ignore any door tiles that would conflict with a sibling
 			final Predicate<GridTile> exclusionCheck = t -> 
 					successive.stream()
-					.filter(r -> !r.uuid().equals(child.uuid()))
+					.filter(Predicates.not(child::equals))
 					.noneMatch(r -> r.occupiesOrIsAdjacent(t));
 			
-			BoundTilePair boundPair = GridPathing.findBestCandidatesToJoin(tiles, child.tileGrid().getDoorwayTiles().stream().filter(exclusionCheck).toList(), validityCheck);
-			if(boundPair.route().isFailure())
+			List<GridTile> doors = child.getDoorwayTiles().stream().filter(exclusionCheck).toList();
+			if(doors.isEmpty())
+				return PathingResult.failure("No viable doorways found");
+			
+			errorLog.info(" * {} doors available to join to {}", doors.size(), child);
+			BoundTilePair boundPair = GridPathing.findBestCandidatesToJoin(tiles, doors, walkable);
+			if(boundPair == null)
+				return PathingResult.failure("No viable pairings");
+			if(!boundPair.walkable() || boundPair.route().isFailure())
 				return boundPair.route();
 			
 			tiles.addAll(boundPair.route().result());

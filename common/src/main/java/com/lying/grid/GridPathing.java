@@ -4,14 +4,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
-import com.lying.init.CDLoggers;
-import com.lying.utility.DebugLogger;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.Pair;
@@ -20,7 +17,6 @@ import net.minecraft.util.math.Direction;
 /** Utility functions for generating paths between tiles on a 2D tile grid */
 public class GridPathing
 {
-	private static final DebugLogger LOGGER = CDLoggers.PLANAR;
 	public static final int TILE_SIZE = Tile.TILE_SIZE;
 	protected static final List<AStarMove> MOVE_SET = List.of(
 			Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST)
@@ -86,23 +82,33 @@ public class GridPathing
 	}
 	
 	/** Returns the pair of tiles between sets that are best suited to be connected together */
-	@NotNull
+	@Nullable
 	public static BoundTilePair findBestCandidatesToJoin(List<GridTile> setA, List<GridTile> setB, Predicate<GridTile> walkable)
 	{
 		if(setA.isEmpty())
-			throw new NullPointerException("Set A of tiles provided is blank");
+			throw new UnsupportedOperationException("Set A of tiles provided is blank");
 		if(setB.isEmpty())
-			throw new NullPointerException("Set B of tiles provided were blank");
+			throw new UnsupportedOperationException("Set B of tiles provided were blank");
 		
 		// Find pair of cached tile in passage and child's doorway tile that are closest together
-		BoundTilePair closestPair = new BoundTilePair(setA.getFirst(), setB.getFirst(), walkable);
+		BoundTilePair closestPair = null;
 		for(GridTile tileA : setA)
 			for(GridTile tileB : setB)
 			{
 				BoundTilePair pair = new BoundTilePair(tileA, tileB, walkable);
+				
+				if(closestPair == null)
+				{
+					// Exclude any pairings that we couldn't actually build a passage from
+					if(pair.walkable())
+						closestPair = pair;
+					continue;
+				}
+				
 				// Exclude any potential candidates that are implicitly farther away than the best we've already found
 				if(pair.distance() > closestPair.distance())
 					continue;
+				
 				// If distances are lower, pick the new candidate
 				// If distances are equal, pick the candidate with the shortest resulting path length
 				if(
@@ -113,10 +119,38 @@ public class GridPathing
 		return closestPair;
 	}
 	
+	public static class BoundTilePair extends Pair<GridTile,GridTile>
+	{
+		private final double distance;
+		private final GridPathing pather;
+		
+		// Cached route between tiles, only calculated when necessary for performance reasons
+		private Optional<PathingResult> route = Optional.empty();
+		
+		public BoundTilePair(GridTile startIn, GridTile endIn, Predicate<GridTile> walkableIn)
+		{
+			super(startIn, endIn);
+			distance = getLeft().manhattanDistance(getRight());
+			pather = new GridPathing(walkableIn);
+		}
+		
+		public boolean walkable() { return route().isSuccess(); }
+		
+		public double distance() { return distance; }
+		
+		/** Returns the number of tiles this path occupies */
+		public int length() { return route().isFailure() ? Integer.MAX_VALUE : route().result().size(); }
+		
+		public PathingResult route()
+		{
+			if(route.isEmpty())
+				route = Optional.of(pather.findPathBetween(getLeft(), getRight()));
+			return route.get();
+		}
+	}
+	
 	public PathingResult findPathBetween(GridTile start, GridTile end)
 	{
-		LOGGER.info("Finding path between {} and {}, distance {}", start.toString(), end.toString(), start.distance(end));
-		
 		// Start and end tiles are always treated as implicitly navigable
 		final Predicate<GridTile> terminusCheck = (t -> start.equals(t) || end.equals(t));
 		final Predicate<GridTile> walkable = terminusCheck.or(this.walkable);
@@ -140,7 +174,11 @@ public class GridPathing
 		// Nodes we've yet to investigate
 		List<AStarNode> open = Lists.newArrayList(new AStarNode(start, end));
 		
-		final int maxSearch = (1 + Math.abs(start.x - end.x)) * (1 + Math.abs(start.y - end.y));
+		// Calculate maximum search space limit so we don't run excessively long and waste CPU
+		final int xSpan = Math.max(5, Math.abs(start.x - end.x));
+		final int ySpan = Math.max(5, Math.abs(start.y - end.y));
+		final int maxSearch = xSpan * ySpan * 2;
+		
 		while(!open.isEmpty() && closed.size() < maxSearch)
 		{
 			AStarNode option = open.getFirst();
@@ -152,7 +190,6 @@ public class GridPathing
 			open.remove(candidate);
 			closed.add(candidate);
 			closedTiles.add(candidate.pos);
-			LOGGER.info("  - Test {} {}, distance {}, {} options remaining", closed.size(), candidate.pos.toString(), candidate.distance(), open.size());
 			
 			if(candidate.isEnd())
 				return PathingResult.success(candidate.route());
@@ -168,7 +205,7 @@ public class GridPathing
 		}
 		
 		// If we get here it's because we didn't manage to find a route
-		return PathingResult.failure("Failed to identify any viable A* route");
+		return PathingResult.failure(closed.size() >= maxSearch ? "A* pathfinder timed out" : "Failed to identify any viable A* route");
 	}
 	
 	public static List<AStarNode> getAStarCandidates(AStarNode node, List<GridTile> ignore, Predicate<GridTile> walkable)
@@ -212,8 +249,6 @@ public class GridPathing
 		}
 		
 		public GridTile pos() { return pos; }
-		
-		public double distance() { return distance; }
 		
 		public double value() { return distance * totalCost; }
 		
@@ -281,34 +316,6 @@ public class GridPathing
 			// Course changes inhibited
 			else
 				return COURSE_CHANGE_WEIGHT;
-		}
-	}
-	
-	public static class BoundTilePair extends Pair<GridTile,GridTile>
-	{
-		private final double distance;
-		private final GridPathing pather;
-		
-		// Cached route between tiles, only calculated when necessary for performance reasons
-		private Optional<PathingResult> route = Optional.empty();
-		
-		public BoundTilePair(GridTile startIn, GridTile endIn, Predicate<GridTile> walkableIn)
-		{
-			super(startIn, endIn);
-			distance = getLeft().manhattanDistance(getRight());
-			pather = new GridPathing(walkableIn);
-		}
-		
-		public double distance() { return distance; }
-		
-		/** Returns the number of tiles this path occupies */
-		public int length() { return route().isFailure() ? Integer.MAX_VALUE : route().result().size(); }
-		
-		public PathingResult route()
-		{
-			if(route.isEmpty())
-				route = Optional.of(pather.findPathBetween(getLeft(), getRight()));
-			return route.get();
 		}
 	}
 	

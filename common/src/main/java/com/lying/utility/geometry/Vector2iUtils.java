@@ -1,4 +1,4 @@
-package com.lying.utility;
+package com.lying.utility.geometry;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;

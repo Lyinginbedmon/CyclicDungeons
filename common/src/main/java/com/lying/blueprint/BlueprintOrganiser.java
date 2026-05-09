@@ -15,9 +15,9 @@ import org.joml.Vector2i;
 import com.google.common.collect.Lists;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
-import com.lying.utility.AbstractBox2f;
 import com.lying.utility.CDUtils;
-import com.lying.utility.DebugLogger;
+import com.lying.utility.geometry.AbstractBox2f;
+import com.lying.utility.logging.DebugLogger;
 
 import net.minecraft.util.math.random.Random;
 

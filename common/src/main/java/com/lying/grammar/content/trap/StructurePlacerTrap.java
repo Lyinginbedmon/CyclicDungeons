@@ -9,7 +9,7 @@ import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.init.CDLoggers;
 import com.lying.reference.Reference;
 import com.lying.utility.BlockPredicate;
-import com.lying.utility.DebugLogger;
+import com.lying.utility.logging.DebugLogger;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.registry.DynamicRegistryManager;

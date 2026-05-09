@@ -14,8 +14,8 @@ import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
-import com.lying.utility.AbstractBox2f;
-import com.lying.utility.Box2f;
+import com.lying.utility.geometry.AbstractBox2f;
+import com.lying.utility.geometry.Box2f;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.Box;
@@ -175,11 +175,13 @@ public class BlueprintRoom
 			return defaultPos;
 	}
 	
+	/** Returns the closest tile (inclusive) occupied by this room at the given position */
 	public GridTile tileMin()
 	{
 		return metadata().tileMin(tilePosition());
 	}
 	
+	/** Returns the farthest tile (exclusive) occupied by this room at the given position */
 	public GridTile tileMax()
 	{
 		return metadata().tileMax(tilePosition()).sub(1, 1);
@@ -257,6 +259,31 @@ public class BlueprintRoom
 	public boolean occupiesOrIsAdjacent(GridTile tile)
 	{
 		return occupies(tile) || isAdjacent(tile);
+	}
+	
+	/** Returns a list of all tiles adjacent to this grid that can be used as doorways */
+	public List<GridTile> getDoorwayTiles()
+	{
+		List<GridTile> doors = Lists.newArrayList();
+		
+		final GridTile min = tileMin();
+		final GridTile max = tileMax();
+		
+		// Horizontal sides
+		for(int x=min.x+1; x<max.x; x++)
+		{
+			doors.add(new GridTile(x, min.y - 1));
+			doors.add(new GridTile(x, max.y + 1));
+		}
+		
+		// Vertical sides
+		for(int y=min.y+1; y<max.y; y++)
+		{
+			doors.add(new GridTile(min.x - 1, y));
+			doors.add(new GridTile(max.x + 1, y));
+		}
+		
+		return doors;
 	}
 	
 	public boolean intersects(AbstractBox2f boundsB)

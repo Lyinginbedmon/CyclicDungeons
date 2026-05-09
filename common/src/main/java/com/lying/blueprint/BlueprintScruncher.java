@@ -10,7 +10,7 @@ import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
-import com.lying.utility.DebugLogger;
+import com.lying.utility.logging.DebugLogger;
 
 /** Utility class for reducing the footprint of a blueprint */
 public class BlueprintScruncher

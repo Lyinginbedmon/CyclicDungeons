@@ -16,8 +16,8 @@ import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.BlueprintScruncher;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
-import com.lying.utility.Box2f;
-import com.lying.utility.LineSegment2f;
+import com.lying.utility.geometry.Box2f;
+import com.lying.utility.geometry.LineSegment2f;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;

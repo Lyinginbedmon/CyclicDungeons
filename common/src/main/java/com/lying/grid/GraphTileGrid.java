@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.joml.Math;
 
-import com.google.common.collect.Lists;
-
 import net.minecraft.util.math.Direction;
 
 public class GraphTileGrid extends AbstractTileGrid<GridTile>
@@ -51,25 +49,4 @@ public class GraphTileGrid extends AbstractTileGrid<GridTile>
 	public boolean isBoundary(GridTile pos) { return Direction.Type.HORIZONTAL.stream().anyMatch(d -> isBoundary(pos, d)); }
 	
 	public boolean isBoundary(GridTile pos, Direction side) { return !contains(pos.offset(side)); }
-	
-	/**
-	 * Returns a list of all tiles adjacent to this grid that can be used as doorways<br>
-	 * Note that this is only used by rooms, which are always rectangular, and presumes such
-	 */
-	public List<GridTile> getDoorwayTiles()
-	{
-		List<GridTile> doors = Lists.newArrayList();
-		for(GridTile tile : set.keySet())
-		{
-			// Doorway tiles must have exactly 3 neighbours out of a possible 4
-			List<Direction> faces = Lists.newArrayList(Direction.Type.HORIZONTAL);
-			for(Direction face : Direction.Type.HORIZONTAL)
-				if(contains(tile.offset(face)))
-					faces.remove(face);
-			
-			if(faces.size() == 1)
-				doors.add(tile.offset(faces.get(0)));
-		}
-		return doors;
-	}
 }

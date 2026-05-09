@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Math;
 import org.joml.Vector2i;
 
-import com.lying.utility.AbstractBox2f;
-import com.lying.utility.Box2f;
+import com.lying.utility.geometry.AbstractBox2f;
+import com.lying.utility.geometry.Box2f;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.BlockPos;
@@ -175,6 +175,11 @@ public class GridTile
 	@Nullable
 	public static GridTile findClosestToAll(List<GridTile> tiles, List<GridTile> targets)
 	{
+		if(tiles.isEmpty())
+			throw new UnsupportedOperationException("Search tiles provided is blank");
+		if(targets.isEmpty())
+			throw new UnsupportedOperationException("Target tiles provided were blank");
+		
 		GridTile closest = null;
 		double minDist = Double.MAX_VALUE;
 		final Function<GridTile, Double> distFunc = t -> 

@@ -1,6 +1,8 @@
-package com.lying.utility;
+package com.lying.utility.geometry;
 
 import java.util.List;
+
+import com.lying.utility.CDUtils;
 
 import net.minecraft.util.math.Vec2f;
 

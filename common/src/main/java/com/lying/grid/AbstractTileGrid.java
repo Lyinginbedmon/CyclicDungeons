@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
-import com.lying.utility.DebugLogger;
+import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.Direction;

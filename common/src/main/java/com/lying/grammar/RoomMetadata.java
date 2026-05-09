@@ -11,7 +11,7 @@ import com.lying.grid.GridTile;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
 import com.lying.reference.Reference;
-import com.lying.utility.Vector2iUtils;
+import com.lying.utility.geometry.Vector2iUtils;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.Codec;

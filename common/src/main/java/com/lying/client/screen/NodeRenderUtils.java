@@ -15,12 +15,12 @@ import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.GridTile;
-import com.lying.utility.AbstractBox2f;
-import com.lying.utility.Box2f;
-import com.lying.utility.CompoundBox2f;
-import com.lying.utility.LineSegment2f;
-import com.lying.utility.RotaryBox2f;
-import com.lying.utility.Vector2iUtils;
+import com.lying.utility.geometry.AbstractBox2f;
+import com.lying.utility.geometry.Box2f;
+import com.lying.utility.geometry.CompoundBox2f;
+import com.lying.utility.geometry.LineSegment2f;
+import com.lying.utility.geometry.RotaryBox2f;
+import com.lying.utility.geometry.Vector2iUtils;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.client.MinecraftClient;
