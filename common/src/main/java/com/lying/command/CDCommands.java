@@ -127,7 +127,7 @@ public class CDCommands
 		
 		Blueprint blueprint = Blueprint.fromGraph(graph);
 		blueprint.stream().map(BlueprintRoom::metadata).forEach(meta -> meta.type().prepare(meta, rand));
-		BlueprintOrganiser.Circular.create().organise(blueprint, rand);
+		BlueprintOrganiser.Poisson.create().organise(blueprint, rand);
 		if(blueprint.hasErrors())
 			throw GRAPH_FAILED_EXCEPTION.create();
 		

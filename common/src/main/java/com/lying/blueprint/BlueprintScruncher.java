@@ -7,15 +7,17 @@ import java.util.function.Supplier;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
-import com.lying.CyclicDungeons;
+import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
+import com.lying.utility.logging.DataLog;
 import com.lying.utility.logging.DebugLogger;
 
 /** Utility class for reducing the footprint of a blueprint */
 public class BlueprintScruncher
 {
 	public static DebugLogger LOGGER = CDLoggers.PLANAR;
+	public static DataLog DATA_LOG = new DataLog();
 	
 	/**
 	 * Applies scrunch algorithm until failure
@@ -24,12 +26,13 @@ public class BlueprintScruncher
 	 */
 	public static void collapse(Blueprint chart)
 	{
+		DATA_LOG.info("Applying collapse to {} nodes", chart.size());
 		int iterations = 1000;
 		final long time = System.currentTimeMillis();
 		while(scrunch(chart) && iterations-- > 0)
 			;
 		
-		CyclicDungeons.LOGGER.info(" # Time to complete collapse operation: {}ms over {} iterations", System.currentTimeMillis() - time, 1000 - iterations);
+		DATA_LOG.info(" # Time to complete collapse operation: {}ms over {} iterations", System.currentTimeMillis() - time, 1000 - iterations);
 	}
 	
 	/**
@@ -39,13 +42,19 @@ public class BlueprintScruncher
 	 */
 	public static boolean scrunch(Blueprint chart)
 	{
+		DATA_LOG.clear();
+		DATA_LOG.info("Applying scrunch to {} nodes", chart.size());
 		final long time = System.currentTimeMillis();
 		boolean anyMoved = false;
 		for(int i=chart.maxDepth(); i>0; i--)
-			if(tryScrunch(chart.byDepth(Math.abs(i)), chart))
+		{
+			List<BlueprintRoom> nodes = chart.byDepth(i);
+			DATA_LOG.info(" - Scrunching {} nodes at depth {}", nodes.size(), i);
+			if(tryScrunch(nodes, chart))
 				anyMoved = true;
-		
-		CyclicDungeons.LOGGER.info(" # Time to complete scrunch operation: {}ms", System.currentTimeMillis() - time);
+		}
+		DATA_LOG.info("Scrunch operation completed");
+		DATA_LOG.info(" # Time to complete scrunch operation: {}ms", System.currentTimeMillis() - time);
 		return anyMoved;
 	}
 	
@@ -142,12 +151,13 @@ public class BlueprintScruncher
 		simNodes.add(sim.getRoom(node.uuid()).get());
 		simNodes.addAll(BlueprintRoom.getDescendants(simNodes.getFirst(), sim));
 		
-		for(BlueprintRoom simNode : simNodes)
-		{
-			simNode.move(move);
-			if(sim.hasErrors())
+		simNodes.forEach(n -> n.move(move));
+		for(ErrorType error : ErrorType.values())
+			if(error.anyExist(sim))
+			{
+				DATA_LOG.error(" ! {} error precluded movement of {} by {}", error.name(), node, move);
 				return false;
-		}
+			}
 		
 		// If the simulation caused no errors, apply it to the live blueprint
 		node.move(move);

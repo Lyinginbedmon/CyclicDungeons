@@ -167,6 +167,9 @@ public class GridPathing
 	/** Returns an A* path between points, avoiding unqualified geometry */
 	public static PathingResult findAStarRoute(GridTile start, GridTile end, Predicate<GridTile> walkable)
 	{
+		if(start.equals(end))
+			return PathingResult.success(List.of(start));
+		
 		// Nodes we've already visited
 		List<AStarNode> closed = Lists.newArrayList();
 		List<GridTile> closedTiles = Lists.newArrayList();
@@ -191,21 +194,18 @@ public class GridPathing
 			closed.add(candidate);
 			closedTiles.add(candidate.pos);
 			
-			if(candidate.isEnd())
-				return PathingResult.success(candidate.route());
-			else
-				for(AStarNode move : getAStarCandidates(candidate, closedTiles, walkable))
-				{
-					if(move.isEnd())
-						return PathingResult.success(move.route());
-					
-					open.removeIf(move::isBetter);
-					open.add(move);
-				}
+			for(AStarNode move : getAStarCandidates(candidate, closedTiles, walkable))
+			{
+				if(move.isEnd())
+					return PathingResult.success(move.route());
+				
+				open.removeIf(move::isBetter);
+				open.add(move);
+			}
 		}
 		
 		// If we get here it's because we didn't manage to find a route
-		return PathingResult.failure(closed.size() >= maxSearch ? "A* pathfinder timed out" : "Failed to identify any viable A* route");
+		return PathingResult.failure("A* pathfinder timed out without finding a viable route");
 	}
 	
 	public static List<AStarNode> getAStarCandidates(AStarNode node, List<GridTile> ignore, Predicate<GridTile> walkable)
