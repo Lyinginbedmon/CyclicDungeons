@@ -136,6 +136,13 @@ public class GridTile
 			return new GridTile(x + dir.getOffsetX() * distance, y + dir.getOffsetZ() * distance);
 	}
 	
+	@Nullable
+	public Direction directionTo(GridTile tile)
+	{
+		Vector2i vec = tile.toVec2i().sub(toVec2i());
+		return Direction.fromVector(vec.x, 0, vec.y, null);
+	}
+	
 	public GridTile add(Vector2i vec) { return add(vec.x, vec.y); }
 	
 	public GridTile add(int xIn, int yIn) { return new GridTile(x + xIn, y + yIn); }

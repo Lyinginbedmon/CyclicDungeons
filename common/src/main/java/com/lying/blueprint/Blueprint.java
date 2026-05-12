@@ -24,10 +24,12 @@ import com.lying.grid.GridTile;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
+import com.lying.init.CDThemes;
 import com.lying.init.CDTiles;
 import com.lying.reference.Reference;
 import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.TileGenerator;
+import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
 import com.lying.worldgen.tileset.TileSet;
@@ -35,6 +37,7 @@ import com.lying.worldgen.tileset.TileSet;
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -53,6 +56,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
 	protected List<BlueprintPassage> passageCache = Lists.newArrayList();
 	private List<BlueprintRoom> criticalPath = Lists.newArrayList();
+	private Optional<Identifier> themeId = Optional.empty();
 	
 	public static Blueprint fromGraph(GrammarPhrase graphIn)
 	{
@@ -63,11 +67,14 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	private static BlueprintRoom addNodeToBlueprint(GrammarRoom room, @Nullable BlueprintRoom parent, Blueprint graph, GrammarPhrase graphIn)
 	{
-		BlueprintRoom node = new BlueprintRoom(room.uuid(), room.metadata(), room.getChildLinks(), room.getParentLinks());
+		BlueprintRoom node = new BlueprintRoom(room.uuid(), room.metadata(), room.getChildLinks(), room.getParentId());
 		graph.add(node);
 		if(room.hasLinks())
 			room.getChildRooms(graphIn).forEach(r -> addNodeToBlueprint(r, parent, graph, graphIn));
 		graph.clearPassageCache();
+		
+		if(graph.themeId.isEmpty())
+			graph.themeId = Optional.of(room.metadata().themeId());
 		return node;
 	}
 	
@@ -81,6 +88,11 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public Optional<BlueprintRoom> start() { return stream().filter(n -> n.metadata().is(CDTerms.instance().start())).findFirst(); }
 	
 	public Optional<BlueprintRoom> end() { return stream().filter(n -> n.metadata().is(CDTerms.instance().end())).findFirst(); }
+	
+	public Theme theme()
+	{
+		return CDThemes.instance().get(themeId.orElse(CDThemes.ID_GENERIC)).get();
+	}
 	
 	public boolean add(BlueprintRoom node)
 	{
@@ -266,6 +278,15 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			passageCache.clear();
 	}
 	
+	/** Returns the total number of tiles in this dungeon occupied by passageways */
+	public int passageTiles()
+	{
+		int tally = 0;
+		for(BlueprintPassage passage : passages())
+			tally += passage.size();
+		return tally;
+	}
+	
 	public static void tryPlaceAt(BlockState state, BlockPos pos, ServerWorld world)
 	{
 		BlockState stateAt = world.getBlockState(pos);
@@ -311,53 +332,35 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 						return tally;
 			return tally;
 		}),
-		/** Passages that intersect other passages */
+		/** Passages that intersect other unrelated passages */
 		INTERSECTION((chart,limit) -> 
 		{
 			int tally = 0;
-			List<BlueprintPassage> paths = BlueprintOrganiser.getFinalisedPassages(chart);
-			for(BlueprintRoom room : chart)
+			final List<BlueprintPassage> passages = chart.passages();
+			for(int i=0; i<passages.size(); i++)
 			{
-				List<GridTile> roomTiles = room.tiles();
-				List<BlueprintPassage> passages = paths.stream().filter(p -> !p.isTerminus(room)).toList();
-				if(passages.stream().anyMatch(p -> 
-				{
-					List<GridTile> pathTiles = p.tiles();
-					return pathTiles.stream().anyMatch(t -> roomTiles.stream().anyMatch(t::isAdjacentOrSame));
-				}))
-					if(++tally >= limit && limit > 0)
-						return tally;
+				List<BlueprintPassage> others = Lists.newArrayList(passages.subList(i+1, passages.size()));
+				if(i > 0)
+					others.addAll(passages.subList(0, i));
+				
+				final BlueprintPassage passage = passages.get(i);
+				for(BlueprintPassage other : others)
+					if(!passage.canShareSpaceWith(other) && passage.intersects(other))
+						if(++tally >= limit && limit > 0)
+							return tally;
 			}
 			return tally;
 		}),
-		/** Passages that pass through unrelated rooms */
-		TUNNEL((chart,limit) -> 
+		/** Passages that were unable to be generated for whatever reason */
+		PASSAGE((chart,limit) -> 
 		{
 			int tally = 0;
-			for(BlueprintPassage path : chart.passages())
-			{
-				final BlueprintRoom parent = path.parent();
-				path.exclude(parent.tileBounds());
-				path.children().stream().map(BlueprintRoom::tileBounds).forEach(path::exclude);
-				
-				List<BlueprintRoom> attached = Lists.newArrayList();
-				attached.add(parent);
-				attached.addAll(path.children());
-				if(
-						// Path intersects unrelated passages
-						path.intersectsOtherPassages(chart) ||
-						// Path has too many tiles directly adjacent to any room boundary tiles
-						path.tiles().stream().filter(t -> attached.stream().anyMatch(r -> r.occupiesOrIsAdjacent(t))).count() > attached.size())
-				{
+			for(BlueprintPassage passage : chart.passages())
+				if(passage.containsFailures())
 					if(++tally >= limit && limit > 0)
 						return tally;
-				}
-			}
-			
 			return tally;
-		}),
-		/** Passages that were unable to be generated */
-		PASSAGE((chart,limit) -> chart.passages().stream().anyMatch(BlueprintPassage::containsFailures) ? 1 : 0);
+		});
 		
 		public static Stream<ErrorType> stream() { return List.of(values()).stream(); }
 		

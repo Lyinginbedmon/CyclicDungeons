@@ -10,6 +10,7 @@ import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
@@ -129,7 +130,7 @@ public class GrammarPhrase
 			return Optional.empty();
 		
 		List<GrammarRoom> starts = rooms.stream()
-				.filter(r -> r.getParentLinks().isEmpty())
+				.filter(Predicates.not(GrammarRoom::hasParent))
 				.filter(r -> r.metadata().type().registryName().equals(CDTerms.ID_START))
 				.toList();
 		

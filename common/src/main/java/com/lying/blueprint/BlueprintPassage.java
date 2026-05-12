@@ -1,7 +1,6 @@
 package com.lying.blueprint;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -90,29 +89,7 @@ public class BlueprintPassage
 		return this;
 	}
 	
-	public int size() { return 1 + children.size(); }
-	
-	public int lineSegments() { return asLines().size(); }
-	
-	public double length()
-	{
-		double len = 0D;
-		for(LineSegment2f line : asLines())
-			len += line.length();
-		return len;
-	}
-	
-	public double lengthManhattan()
-	{
-		double dX = 0D, dY = 0D;
-		for(LineSegment2f line : asLines())
-		{
-			Vec2f delta = line.direction();
-			dX += Math.abs(delta.x);
-			dY += Math.abs(delta.y);
-		}
-		return dX + dY;
-	}
+	public int size() { return tiles().size(); }
 	
 	/** Returns this passage as a set of one or more line segments */
 	public List<LineSegment2f> asLines()
@@ -201,12 +178,14 @@ public class BlueprintPassage
 			
 			// Step 4: Notify children of selected entryway tile
 			for(BlueprintRoom child : children)
+			{
 				for(GridTile tile : tilesCached)
 					if(child.isAdjacent(tile))
 					{
 						child.setEntryTile(tile);
 						break;
 					}
+			}
 		}
 	}
 	
@@ -220,7 +199,8 @@ public class BlueprintPassage
 	}
 	
 	/** Returns the doorway tile of the parent room that this passage originates from */
-	public Optional<GridTile> getInitialTile() { return startTile; }
+	@Nullable
+	public GridTile getInitialTile() { return startTile.orElse(null); }
 	
 	/** Returns the doorway tile in the parent room's tile grid that is closest to all child rooms */
 	protected static GridTile findExitDoorway(BlueprintRoom parent, List<BlueprintRoom> children, @Nullable GridTile grandParentEntry)
@@ -294,28 +274,6 @@ public class BlueprintPassage
 		return (GraphTileGrid)new GraphTileGrid().addAllToVolume(tiles());
 	}
 	
-	/** Subtracts the given bounding box from all lines in this passage */
-	public BlueprintPassage exclude(AbstractBox2f box)
-	{
-		if(linesCached.isEmpty())
-		{
-			asLines();
-			if(linesCached.isEmpty())
-				return this;
-		}
-		
-		// Remove any lines that exist wholly within the bounding box
-		linesCached.removeIf(box::contains);
-		
-		List<LineSegment2f> clipped = Lists.newArrayList();
-		linesCached.stream().map(l -> l.clip(box)).filter(Objects::nonNull).forEach(clipped::add);
-		
-		linesCached.clear();
-		linesCached.addAll(clipped);
-		
-		return this;
-	}
-	
 	public AbstractBox2f tileBounds() { return box; }
 	
 	public List<Box> worldBox()
@@ -362,10 +320,10 @@ public class BlueprintPassage
 				other.children.stream().map(BlueprintRoom::metadata).allMatch(depthMatch);
 	}
 	
-	/** Returns true if any line segment in this passage intersects any line segment in the other passage */
+	/** Returns true if any tile in this passage intersects or is adjacent to any tile in the other passage */
 	public boolean intersects(BlueprintPassage other)
 	{
-		List<GridTile> otherTiles = other.tiles();
+		final List<GridTile> otherTiles = other.tiles();
 		return 
 				tiles().stream().anyMatch(l -> 
 					otherTiles.stream()

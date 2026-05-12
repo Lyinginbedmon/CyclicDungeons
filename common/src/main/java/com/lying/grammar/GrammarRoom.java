@@ -26,13 +26,13 @@ public class GrammarRoom
 			Uuids.STRING_CODEC.fieldOf("Uuid").forGetter(GrammarRoom::uuid),
 			RoomMetadata.CODEC.fieldOf("Metadata").forGetter(GrammarRoom::metadata),
 			Uuids.STRING_CODEC.listOf().fieldOf("Children").forGetter(GrammarRoom::getChildLinks),
-			Uuids.STRING_CODEC.listOf().fieldOf("Parents").forGetter(GrammarRoom::getParentLinks)
+			Uuids.STRING_CODEC.optionalFieldOf("Parent").forGetter(r -> r.parentLinks)
 			).apply(instance, (id,meta,doors,entries) -> 
 			{
 				GrammarRoom room = new GrammarRoom(id);
 				room.metadata = meta;
 				doors.forEach(child -> room.childLinks.add(child));
-				entries.forEach(parent -> room.parentLinks.add(parent));
+				room.parentLinks = entries;
 				return room;
 			}));
 	
@@ -41,7 +41,8 @@ public class GrammarRoom
 	
 	private final UUID id;
 	private RoomMetadata metadata = new RoomMetadata();
-	private List<UUID> childLinks = Lists.newArrayList(), parentLinks = Lists.newArrayList();
+	private Optional<UUID> parentLinks = Optional.empty();
+	private List<UUID> childLinks = Lists.newArrayList();
 	
 	public GrammarRoom(UUID idIn)
 	{
@@ -95,9 +96,10 @@ public class GrammarRoom
 	}
 	
 	public List<UUID> getChildLinks() { return List.of(childLinks.toArray(new UUID[0])); }
-	public List<UUID> getParentLinks() { return List.of(parentLinks.toArray(new UUID[0])); }
+	public Optional<UUID> getParentId() { return parentLinks; }
+	public boolean hasParent() { return parentLinks.isPresent(); }
 	
-	public int getTotalLinks() { return childLinks.size() + parentLinks.size(); }
+	public int getTotalLinks() { return childLinks.size() + (hasParent() ? 1 : 0); }
 	public boolean canAddLink() { return getTotalLinks() < MAX_LINKS; }
 	
 	public int tallyDescendants(GrammarPhrase graph)
@@ -116,7 +118,7 @@ public class GrammarRoom
 	public GrammarRoom linkTo(GrammarRoom otherRoom)
 	{
 		childLinks.add(otherRoom.uuid());
-		otherRoom.parentLinks.add(id);
+		otherRoom.parentLinks = Optional.of(id);
 		return this;
 	}
 	
@@ -125,7 +127,7 @@ public class GrammarRoom
 		if(hasLinks() && hasLinkTo(otherRoom.uuid()))
 		{
 			childLinks.remove(otherRoom.uuid());
-			otherRoom.parentLinks.remove(id);
+			otherRoom.parentLinks = Optional.empty();
 		}
 		return this;
 	}

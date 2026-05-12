@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
+import com.lying.utility.CDUtils;
 import com.lying.utility.logging.DataLog;
 import com.lying.utility.logging.DebugLogger;
 
@@ -22,23 +23,23 @@ public class BlueprintScruncher
 	/**
 	 * Applies scrunch algorithm until failure
 	 * @param chart The blueprint to collapse
-	 * @param reverse True if the collapse should start at the deepest nodes instead of the shallowest
 	 */
 	public static void collapse(Blueprint chart)
 	{
 		DATA_LOG.info("Applying collapse to {} nodes", chart.size());
-		int iterations = 1000;
+		final int iterationCap = chart.theme().collapseIterationCap();
+		int iterations = iterationCap;
 		final long time = System.currentTimeMillis();
 		while(scrunch(chart) && iterations-- > 0)
 			;
 		
-		DATA_LOG.info(" # Time to complete collapse operation: {}ms over {} iterations", System.currentTimeMillis() - time, 1000 - iterations);
+		DATA_LOG.info(" # Time to complete collapse operation: {}ms over {} iterations", System.currentTimeMillis() - time, iterationCap - iterations);
 	}
 	
 	/**
 	 * Reduces the distance between nodes, reducing passageway length
 	 * @param chart The blueprint to scrunch
-	 * @return
+	 * @return True if any node was successfully moved
 	 */
 	public static boolean scrunch(Blueprint chart)
 	{
@@ -46,7 +47,7 @@ public class BlueprintScruncher
 		DATA_LOG.info("Applying scrunch to {} nodes", chart.size());
 		final long time = System.currentTimeMillis();
 		boolean anyMoved = false;
-		for(int i=chart.maxDepth(); i>0; i--)
+		for(int i=1; i <= chart.maxDepth(); i++)
 		{
 			List<BlueprintRoom> nodes = chart.byDepth(i);
 			DATA_LOG.info(" - Scrunching {} nodes at depth {}", nodes.size(), i);
@@ -70,31 +71,34 @@ public class BlueprintScruncher
 	/** Attempts to reduce the distance between the node and its parents */
 	public static boolean tryScrunchNode(BlueprintRoom node, Blueprint chart)
 	{
-		// If we have no parents, we can't know where to move
-		if(!node.hasParents())
-			return false;
+		DATA_LOG.info(" -- Processing {}", node);
 		
-		/**
-		 * Identify node entryway tile
-		 * Identify passage containing entryway tile
-		 * Calculate direction from entryway tile to passage start tile
-		 * Try move in that direction
-		 */
-		final GridTile entryWay = node.getEntryTile();
-		if(entryWay == null)
-			return false;
-		
+		// Find the passage that opens into this room
 		Optional<BlueprintPassage> entryPassage = Blueprint.getPassageInto(node, chart);
-		if(entryPassage.isEmpty() || entryPassage.get().containsFailures())
+		if(entryPassage.isEmpty())
+		{
+			DATA_LOG.warn(" ? Couldn't find passage leading to {}", node);
+			return false;
+		}
+		
+		final BlueprintPassage passage = entryPassage.get();
+		if(passage.containsFailures())
 			return false;
 		
-		GridTile startTile = entryPassage.get().getInitialTile().orElse(null);
-		if(startTile != null && !startTile.equals(entryWay))
+		// Identify the start of the passage and its end at this room
+		GridTile 
+			start = passage.getInitialTile(), 
+			end = node.getEntryTile();
+		if(start == null || end == null || start.equals(end))
 		{
-			Vector2i direction = startTile.toVec2i().sub(entryWay.toVec2i());
-			return tryMoveRelative(node, chart, new Vector2i((int)Math.signum(direction.x()), (int)Math.signum(direction.y)));
+			DATA_LOG.info(" = No movement needed");
+			return false;
 		}
-		return false;
+		
+		// Calculate direction towards start from end, then convert axial values to magnitude=1
+		Vector2i vec = start.toVec2i().sub(end.toVec2i());
+		vec = new Vector2i((int)Math.signum(vec.x), (int)Math.signum(vec.y));
+		return tryMoveRelative(node, chart, vec);
 	}
 	
 	/**
@@ -104,7 +108,7 @@ public class BlueprintScruncher
 	 * @param move The local vector to apply to the room
 	 * @return True if the room was successfully moved at all
 	 */
-	public static boolean tryMoveRelative(BlueprintRoom node, Blueprint chart, Vector2i move)
+	private static boolean tryMoveRelative(BlueprintRoom node, Blueprint chart, Vector2i move)
 	{
 		if(move.length() == 0)
 			return false;
@@ -141,9 +145,6 @@ public class BlueprintScruncher
 	 */
 	public static boolean tryMove(BlueprintRoom node, Blueprint chart, Vector2i move)
 	{
-		if(move.length() == 0)
-			return false;
-		
 		// Clone blueprint and simulate movement
 		// Apply movement to all descendants as well to minimise overall processing time
 		Blueprint sim = chart.clone();
@@ -155,9 +156,15 @@ public class BlueprintScruncher
 		for(ErrorType error : ErrorType.values())
 			if(error.anyExist(sim))
 			{
-				DATA_LOG.error(" ! {} error precluded movement of {} by {}", error.name(), node, move);
+				DATA_LOG.error(" ! {} error precluded movement of {} by {}", error.name(), node, CDUtils.formatVec2i(move));
 				return false;
 			}
+		
+		if(sim.passageTiles() > chart.passageTiles())
+		{
+			DATA_LOG.warn(" ? Movement of {} by {} increased overall passage footprint", node, CDUtils.formatVec2i(move));
+			return false;
+		}
 		
 		// If the simulation caused no errors, apply it to the live blueprint
 		node.move(move);

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 
@@ -118,4 +119,6 @@ public class CDUtils
 		}
 		return Optional.empty();
 	}
+	
+	public static String formatVec2i(Vector2i vec) { return "("+vec.x+", "+vec.y+")"; }
 }

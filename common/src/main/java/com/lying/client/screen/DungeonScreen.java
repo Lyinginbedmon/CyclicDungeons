@@ -70,12 +70,10 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	protected void init()
 	{
-		ButtonWidget tree, x4, x8, circle, poisson;
-		addDrawableChild(tree = ButtonWidget.builder(Text.literal("Tree"), b -> organise(BlueprintOrganiser.Tree::create)).dimensions(0, 0, 60, 20).build());
+		ButtonWidget tree, circle, poisson;
+		addDrawableChild(poisson = ButtonWidget.builder(Text.literal("Poisson"), b -> organise(BlueprintOrganiser.Poisson::create)).dimensions(0, 0, 60, 20).build());
 		addDrawableChild(circle = ButtonWidget.builder(Text.literal("Concentric"), b -> organise(BlueprintOrganiser.Circular::create)).dimensions(0, 20, 60, 20).build());
-		addDrawableChild(x4 = ButtonWidget.builder(Text.literal("4x Grid"), b -> organise(BlueprintOrganiser.Grid.Square::create)).dimensions(0, 40, 60, 20).build());
-		addDrawableChild(x8 = ButtonWidget.builder(Text.literal("8x Grid"), b -> organise(BlueprintOrganiser.Grid.Octagonal::create)).dimensions(0, 60, 60, 20).build());
-		addDrawableChild(poisson = ButtonWidget.builder(Text.literal("Poisson"), b -> organise(BlueprintOrganiser.Poisson::create)).dimensions(0, 80, 60, 20).build());
+		addDrawableChild(tree = ButtonWidget.builder(Text.literal("Tree"), b -> organise(BlueprintOrganiser.Tree::create)).dimensions(0, 40, 60, 20).build());
 		
 		addDrawableChild(scrunchButton = ButtonWidget.builder(Text.literal("Scrunch"), b -> scrunch()).dimensions(0, 110, 60, 20).build());
 		addDrawableChild(collapseButton = ButtonWidget.builder(Text.literal("Collapse"), b -> collapse()).dimensions(0, 130, 60, 20).build());
@@ -90,7 +88,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		
 		blueprintButtons = new ButtonWidget[] 
 				{
-					tree, x4, x8, circle, poisson, scrunchButton, collapseButton, goStart, criticalButton
+					tree, circle, poisson, scrunchButton, collapseButton, goStart, criticalButton
 				};
 		
 		addDrawableChild(ButtonWidget.builder(Text.literal("Mode"), b -> state = State.values()[(state.ordinal() + 1)%State.values().length]).dimensions(width - 60, height - 20, 60, 20).build());
@@ -163,7 +161,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 								totalErrors, 
 								errorCache.getOrDefault(ErrorType.COLLISION, 0), 
 								errorCache.getOrDefault(ErrorType.INTERSECTION, 0), 
-								errorCache.getOrDefault(ErrorType.TUNNEL, 0)) :
+								0) :
 							Text.translatable("gui.cydun.dungeon_data", 
 								blueprint.size(), 
 								blueprint.maxDepth(), 0);

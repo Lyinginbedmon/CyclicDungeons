@@ -31,6 +31,7 @@ public class PathingResult
 	
 	public List<GridTile> result() { return contents; }
 	
+	/** Returns the number of tiles this path uses */
 	public int size() { return contents.size(); }
 	
 	public String failureReason() { return reasonForFailure.orElse("NULL"); }

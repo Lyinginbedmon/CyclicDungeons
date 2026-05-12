@@ -38,7 +38,8 @@ public record Theme(
 		EncounterSet combatEncounters, 
 		List<Identifier> trapEncounters, 
 		Map<Identifier,Identifier> tileSets, 
-		Optional<Identifier> passageTiles)
+		Optional<Identifier> passageTiles,
+		Optional<Integer> collapseIterations)
 {
 	public static final Codec<Theme> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Theme::registryName),
@@ -47,8 +48,9 @@ public record Theme(
 			EncounterSet.CODEC.fieldOf("encounters").forGetter(Theme::combatEncounters),
 			Identifier.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
 			TileSetEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
-			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles)
-			).apply(instance, (id,terms,phrases,mobs,traps,tiles,passage)-> 
+			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles),
+			Codec.INT.optionalFieldOf("condense_iterations").forGetter(Theme::collapseIterations)
+			).apply(instance, (id,terms,phrases,mobs,traps,tiles,passage,iterations)-> 
 			{
 				Map<Identifier, Identifier> tileSets = new HashMap<>();
 				tiles.forEach(t -> tileSets.put(t.roomId(), t.tilesetId()));
@@ -59,7 +61,8 @@ public record Theme(
 						mobs, 
 						traps, 
 						tileSets, 
-						passage);
+						passage,
+						iterations);
 			}));
 	
 	public static Theme fromJson(JsonOps ops, JsonElement ele)
@@ -153,6 +156,8 @@ public record Theme(
 		Identifier passageTileSet = passageTiles.orElse(null);
 		return CDTileSets.instance().get(passageTileSet).orElse(CDTileSets.DEFAULT);
 	}
+	
+	public int collapseIterationCap() { return collapseIterations.orElse(1000); }
 	
 	public RegistryKey<StructurePool> getTilePool(Tile tileIn)
 	{

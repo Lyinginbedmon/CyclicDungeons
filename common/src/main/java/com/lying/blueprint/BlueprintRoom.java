@@ -28,7 +28,7 @@ public class BlueprintRoom
 	private final UUID id;
 	private final RoomMetadata metadata;
 	private List<UUID> childLinks = Lists.newArrayList();
-	private List<UUID> parentLinks = Lists.newArrayList();
+	private Optional<UUID> parentId = Optional.empty();
 	private GridTile tilePosition = GridTile.ZERO.copy();
 	private Optional<GridTile> entryTile = Optional.empty();
 	
@@ -37,15 +37,15 @@ public class BlueprintRoom
 	private Optional<List<GridTile>> tiles = Optional.empty();
 	private Optional<GraphTileGrid> tileGrid = Optional.empty();
 	
-	public BlueprintRoom(UUID idIn, RoomMetadata termIn, List<UUID> childLinksIn, List<UUID> parentLinksIn)
+	public BlueprintRoom(UUID idIn, RoomMetadata termIn, List<UUID> childLinksIn, Optional<UUID> parentLinksIn)
 	{
 		id = idIn;
 		metadata = termIn;
 		childLinks.addAll(childLinksIn);
-		parentLinks.addAll(parentLinksIn);
+		parentId = parentLinksIn;
 	}
 	
-	public static BlueprintRoom create(){ return new BlueprintRoom(UUID.randomUUID(), new RoomMetadata(), List.of(), List.of()); }
+	public static BlueprintRoom create(){ return new BlueprintRoom(UUID.randomUUID(), new RoomMetadata(), List.of(), Optional.empty()); }
 	
 	public boolean equals(Object obj) { return obj instanceof BlueprintRoom && ((BlueprintRoom)obj).id.equals(id); }
 	
@@ -60,7 +60,7 @@ public class BlueprintRoom
 	
 	public BlueprintRoom clone()
 	{
-		return new BlueprintRoom(id, metadata.clone(), childLinks, parentLinks).setTilePosition(tilePosition);
+		return new BlueprintRoom(id, metadata.clone(), childLinks, parentId).setTilePosition(tilePosition);
 	}
 	
 	public void attachToBlueprint(Blueprint blueprint) { this.blueprint = Optional.of(blueprint); }
@@ -109,6 +109,7 @@ public class BlueprintRoom
 		return this;
 	}
 	
+	/** Returns the doorway tile that this room is entered from */
 	@Nullable
 	public GridTile getEntryTile() { return entryTile.orElse(null); }
 	
@@ -144,31 +145,17 @@ public class BlueprintRoom
 		return setTilePosition(tilePosition().add(x, y));
 	}
 	
-	public boolean hasParents() { return !parentLinks.isEmpty(); }
+	public boolean hasParent() { return parentId.isPresent(); }
 	
-	public List<UUID> parentIDs() { return this.parentLinks; }
+	public Optional<UUID> parentID() { return this.parentId; }
 	
 	public GridTile getParentPosition(Blueprint chart)
 	{
 		GridTile defaultPos = tilePosition().add(0, 1);
-		if(!hasParents())
+		if(!hasParent())
 			return defaultPos;
 		
-		int x = 0, y = 0;
-		if(parentLinks.size() > 1)
-		{
-			for(BlueprintRoom parent : getParents(chart))
-			{
-				x += parent.position().x;
-				y += parent.position().y;
-			}
-			
-			x /= parentLinks.size();
-			y /= parentLinks.size();
-			return new GridTile(x, y);
-		}
-		
-		Optional<BlueprintRoom> parentOpt = chart.stream().filter(n->n.uuid().equals(parentLinks.get(0))).findAny();
+		Optional<BlueprintRoom> parentOpt = chart.stream().filter(n -> n.uuid().equals(parentId.get())).findAny();
 		if(parentOpt.isPresent())
 			return parentOpt.get().tilePosition();
 		else
@@ -318,7 +305,7 @@ public class BlueprintRoom
 	/** Returns a list of all nodes this node is parented to in the given selection */
 	public List<BlueprintRoom> getParents(Collection<BlueprintRoom> graph)
 	{
-		return graph.stream().filter(n -> parentLinks.contains(n.id)).toList();
+		return hasParent() ? graph.stream().filter(n -> n.uuid().equals(parentId.get())).toList() : List.of();
 	}
 	
 	/** Returns a list of all nodes parented to this node in the given selection */
@@ -326,6 +313,7 @@ public class BlueprintRoom
 	{
 		List<BlueprintRoom> set = Lists.newArrayList();
 		set.addAll(graph.stream().filter(n -> childLinks.contains(n.id)).toList());
+		set.forEach(c -> c.parentId = Optional.of(id));
 		return set;
 	}
 	

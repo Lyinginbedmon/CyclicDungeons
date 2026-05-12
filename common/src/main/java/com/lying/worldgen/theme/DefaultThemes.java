@@ -143,12 +143,28 @@ public class DefaultThemes
 	
 	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
 	{
-		return register(id, dictionary, List.of(DefaultPhrases.MILD_BRANCHING.get(), DefaultPhrases.SIMPLE.get(), DefaultPhrases.LINEAR.get()), combat, traps, tileSets, Optional.empty());
+		return register(
+				id, 
+				dictionary, 
+				List.of(DefaultPhrases.MILD_BRANCHING.get(), DefaultPhrases.SIMPLE.get(), DefaultPhrases.LINEAR.get()), 
+				combat, 
+				traps, 
+				tileSets, 
+				Optional.empty(), 
+				Optional.empty());
 	}
 	
-	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, List<InitialPhrase> phrases, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets, Optional<Identifier> passageTileSet)
+	private static Supplier<Theme> register(
+			Identifier id, 
+			List<GrammarTerm> dictionary, 
+			List<InitialPhrase> phrases, 
+			EncounterSet combat, 
+			List<Identifier> traps, 
+			Map<Identifier, Identifier> tileSets, 
+			Optional<Identifier> passageTileSet, 
+			Optional<Integer> iterationCap)
 	{
-		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, tileSets, passageTileSet);
+		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, tileSets, passageTileSet, iterationCap);
 		THEMES.add(entry);
 		return entry;
 	}
