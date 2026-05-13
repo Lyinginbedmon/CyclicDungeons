@@ -149,7 +149,7 @@ public abstract class BlueprintOrganiser
 				{
 					if(points.isEmpty())
 					{
-						CyclicDungeons.LOGGER.warn(" # Poisson organiser ran out of points to organise dungeon");
+						CyclicDungeons.LOGGER.warn(" ? Poisson organiser ran out of points to organise dungeon");
 						return;
 					}
 					

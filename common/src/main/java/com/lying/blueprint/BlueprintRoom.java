@@ -152,12 +152,9 @@ public class BlueprintRoom
 	public GridTile getParentPosition(Blueprint chart)
 	{
 		GridTile defaultPos = tilePosition().add(0, 1);
-		if(!hasParent())
-			return defaultPos;
-		
-		Optional<BlueprintRoom> parentOpt = chart.stream().filter(n -> n.uuid().equals(parentId.get())).findAny();
-		if(parentOpt.isPresent())
-			return parentOpt.get().tilePosition();
+		Optional<BlueprintRoom> parent = getParent(chart);
+		if(parent.isPresent())
+			return parent.get().tilePosition();
 		else
 			return defaultPos;
 	}
@@ -299,10 +296,24 @@ public class BlueprintRoom
 		return tally;
 	}
 	
-	/** Returns a list of all nodes this node is parented to in the given selection */
+	/** Returns the node that this room descends from within the given graph, if any */
 	public Optional<BlueprintRoom> getParent(Collection<BlueprintRoom> graph)
 	{
-		return hasParent() ? graph.stream().filter(n -> n.uuid().equals(parentId.get())).findFirst() : Optional.empty();
+		if(parentId.isPresent())
+		{
+			final UUID parentID = parentId.get();
+			for(BlueprintRoom room : graph)
+				if(room.uuid().equals(parentID))
+					return Optional.of(room);
+		}
+		else if(parentId.isEmpty())
+			for(BlueprintRoom room : graph)
+				if(room.isChild(this))
+				{
+					this.parentId = Optional.of(room.id);
+					return Optional.of(room);
+				}
+		return Optional.empty();
 	}
 	
 	/** Returns a list of all nodes parented to this node in the given selection */
@@ -311,8 +322,7 @@ public class BlueprintRoom
 		final int depth = metadata().depth();
 		List<BlueprintRoom> set = Lists.newArrayList(
 				graph.stream()
-				.filter(n -> childLinks.contains(n.id))
-				.filter(n -> n.metadata().depth() > depth)
+				.filter(n -> childLinks.contains(n.id) && n.metadata().depth() > depth)
 				.toList());
 		set.forEach(c -> c.parentId = Optional.of(id));
 		return set;

@@ -4,11 +4,10 @@ import static com.lying.reference.Reference.ModInfo.translate;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
-import java.util.List;
+import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
-import com.llamalad7.mixinextras.lib.apache.commons.StringUtils;
 import com.lying.CyclicDungeons;
+import com.lying.DungeonBuilder;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintOrganiser;
 import com.lying.blueprint.BlueprintRoom;
@@ -16,10 +15,8 @@ import com.lying.blueprint.BlueprintScruncher;
 import com.lying.grammar.CDGrammar;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
-import com.lying.init.CDThemes;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
-import com.lying.worldgen.theme.DefaultThemes;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -29,8 +26,6 @@ import dev.architectury.event.events.common.CommandRegistrationEvent;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.NbtCompoundArgumentType;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -121,29 +116,11 @@ public class CDCommands
 	{
 		Random rand = Random.create(position.getX() * position.getX() + position.getZ() * position.getZ());
 		GrammarPhrase graph = CDGrammar.initialPhrase(size, rand);
-		CDGrammar.generate(graph, rand);
-		if(graph == null || graph.isEmpty())
-			throw PHRASE_PARSE_FAILED_EXCEPTION.create();
+		DungeonBuilder.instance()
+			.setRandom(rand)
+			.setPhrase(size)
+			.generate(position, source.getWorld());
 		
-		Blueprint blueprint = Blueprint.fromGraph(graph);
-		blueprint.stream().map(BlueprintRoom::metadata).forEach(meta -> meta.type().prepare(meta, rand));
-		
-		do
-		{
-			BlueprintOrganiser.Poisson.create().organise(blueprint, rand);
-		}
-		while(blueprint.hasErrors());
-		if(blueprint.hasErrors())
-			throw GRAPH_FAILED_EXCEPTION.create();
-		
-		BlueprintScruncher.collapse(blueprint);
-		if(blueprint.hasErrors())
-			throw SCRUNCH_FAILED_EXCEPTION.create();
-		
-		ServerWorld world = source.getWorld();
-		if(!blueprint.build(position, world))
-			throw GENERATION_FAILED_EXCEPTION.create();
-		// FIXME Fix "No value found" exception
 		return 15;
 	}
 }
