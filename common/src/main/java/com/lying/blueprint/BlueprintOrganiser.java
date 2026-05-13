@@ -2,19 +2,26 @@ package com.lying.blueprint;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.utility.geometry.AbstractBox2f;
 import com.lying.utility.logging.DebugLogger;
+import com.mojang.datafixers.util.Pair;
 
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 
 /** Utilities for organising a blueprint, prior to scrunching */
@@ -122,45 +129,6 @@ public abstract class BlueprintOrganiser
 		
 		public void applyLayout(Blueprint chart, Random rand)
 		{
-			// Establish super-grid of points
-			PoissonGrid superGrid = new PoissonGrid();
-			for(int i=0; i<=chart.maxDepth(); i++)
-				for(BlueprintRoom room : chart.byDepth(i))
-				{
-					if(superGrid.isEmpty())
-						break;
-					
-					// Assign rooms to points within super-grid
-					GridTile pos = superGrid.open().getFirst();
-					if(room.hasParent())
-					{
-						GridTile parent = room.getParentPosition(chart);
-						
-						List<GridTile> candidates = Lists.newArrayList();
-						int minDist = Integer.MAX_VALUE;
-						for(GridTile opt : superGrid.open())
-						{
-							int dist = opt.manhattanDistance(parent);
-							if(dist < minDist)
-							{
-								candidates.clear();
-								candidates.add(opt);
-								minDist = dist;
-							}
-							else if(dist == minDist)
-								candidates.add(opt);
-						}
-						
-						pos = 
-								candidates.size() == 1 ? 
-									candidates.getFirst() : 
-									candidates.get(rand.nextInt(candidates.size()));
-					}
-					
-					room.setTilePosition(pos);
-					superGrid.close(pos);
-				}
-			
 			// Find largest radius within dungeon
 			int diameter = 1;
 			for(BlueprintRoom room : chart)
@@ -170,32 +138,63 @@ public abstract class BlueprintOrganiser
 				if(longestSide > diameter)
 					diameter = longestSide;
 			}
-			final int radius = Math.ceilDiv(diameter, 2);
+			final int radius = Math.ceilDiv(diameter, 2) + 1;
 			
-			// Convert super-grid positions to tile grid positions
-			for(BlueprintRoom room : chart)
-			{
-				final Vector2i pos = room.position();
-				int x = pos.x;
-				int y = pos.y;
-				
-				// Convert to standard grid position
-				x *= radius;
-				y *= radius;
-				
-				// Offset randomly to add variety
-				x += (int)((rand.nextFloat() - 0.5F) * radius);
-				y += (int)((rand.nextFloat() - 0.5F) * radius);
-				
-				room.setPosition(x, y);
-			}
+			PoissonGrid fish = new PoissonGrid(radius, 4);
+			fish.generateTo(chart.size() * chart.size(), rand);
+			
+			List<GridTile> points = Lists.newArrayList(fish.values());
+			for(int d=0; d<=chart.maxDepth(); d++)
+				for(BlueprintRoom room : chart.byDepth(d))
+				{
+					if(points.isEmpty())
+					{
+						CyclicDungeons.LOGGER.warn(" # Poisson organiser ran out of points to organise dungeon");
+						return;
+					}
+					
+					GridTile pos;
+					if(d > 0)
+					{
+						// Select point closest to parent position
+						GridTile parentPos = room.getParent(chart).get().tilePosition();
+						pos = points.getFirst();
+						int dist = pos.manhattanDistance(parentPos);
+						for(GridTile tile : points)
+							if(tile.manhattanDistance(parentPos) < dist)
+							{
+								dist = tile.manhattanDistance(parentPos);
+								pos = tile;
+							}
+					}
+					else
+					{
+						// Set point at 0,0
+						pos = GridTile.ZERO;
+					}
+					room.setTilePosition(pos);
+					points.remove(pos);
+				}
 		}
 		
-		private static class PoissonGrid
+		public static class PoissonGrid
 		{
-			// Precalculated offset positions
-			private static GridTile[] OFFSETS = new GridTile[] 
-					{
+			// Precalculated offset positions, for immediate-neighbourhood
+			private static List<GridTile> HARD_OFFSETS = Lists.newArrayList
+					(
+						new GridTile(0, 0),
+						new GridTile(-1, -1),
+						new GridTile(0, -1),
+						new GridTile(1, -1),
+						new GridTile(-1, 0),
+						new GridTile(1, 0),
+						new GridTile(-1, 1),
+						new GridTile(0, 1),
+						new GridTile(1, 1)
+					);
+			// Precalculated offset positions, for outer-neighbourhood
+			private static List<GridTile> SOFT_OFFSETS = Lists.newArrayList
+					(
 						new GridTile(-2, -2),
 						new GridTile(-1, -2),
 						new GridTile(0, -2),
@@ -212,43 +211,114 @@ public abstract class BlueprintOrganiser
 						new GridTile(-2, 1),
 						new GridTile(-2, 0),
 						new GridTile(-2, -1)
-					};
-			private List<GridTile> 
-				closed = Lists.newArrayList(), 
-				open = Lists.newArrayList(GridTile.ZERO);
+					);
+			private static final Point INITIAL = Point.of(GridTile.ZERO, GridTile.ZERO);
+			/** List of points that are still evaluable */
+			private final List<Point> activePoints = Lists.newArrayList(INITIAL);
+			/** Map of background grid tiles to foreground grid tiles */
+			private final Map<GridTile, GridTile> background = new HashMap<>();
 			
-			public boolean isEmpty() { return open.isEmpty(); }
+			final int radius;
+			final double cellLength, diameter;
+			final int samples;
 			
-			public List<GridTile> open() { return open; }
-			
-			public void close(GridTile tile)
+			public PoissonGrid(int radiusIn, int samplesIn)
 			{
-				closed.add(tile);
+				radius = radiusIn;
+				diameter = radius * 2;
+				cellLength = Math.sqrt(radiusIn);
+				samples = samplesIn;
 				
-				// Remove positions invalidated by this placement
-				open.removeIf(this::isInvalidated);
-				
-				// Append new viable positions
-				for(GridTile offset : OFFSETS)
-				{
-					GridTile point = tile.add(offset);
-					if(
-							point.y < 0 ||
-							closed.contains(point) || 
-							open.contains(point) ||
-							isInvalidated(point))
-						;
-					else
-						open.add(point);
-				}
+				log(INITIAL);
 			}
 			
-			protected boolean isInvalidated(GridTile tile)
+			/** Returns true if the given position in the background grid is occupied */
+			public boolean contains(GridTile vector) { return background.keySet().stream().anyMatch(vector::equals); }
+			
+			@Nullable
+			public GridTile get(GridTile key)
 			{
-				return closed.stream().anyMatch(t -> 
-							t.manhattanDistance(tile) <= 2 && 
-							Math.abs(tile.x - t.x) < 2 && 
-							Math.abs(tile.y - t.y) < 2);
+				for(Entry<GridTile, GridTile> entry : background.entrySet())
+					if(entry.getKey().manhattanDistance(key) == 0)
+						return entry.getValue();
+				return null;
+			}
+			
+			/** Returns all points within this foreground grid */
+			public List<GridTile> values() { return Lists.newArrayList(background.values()); }
+			
+			/** Converts the given vector to a corresponding position in the background grid */
+			public GridTile toBackground(GridTile vector)
+			{
+				int x = (int)Math.floor((double)vector.x / cellLength);
+				int y = (int)Math.floor((double)vector.y / cellLength);
+				return new GridTile(x, y);
+			}
+			
+			protected void log(Point pair) { background.put(pair.getFirst(), pair.getSecond()); }
+			
+			public void generateTo(int size, Random rand)
+			{
+				while(background.size() < size && !activePoints.isEmpty())
+					iterate(rand);
+			}
+			
+			public void iterate(Random rand)
+			{
+				if(activePoints.isEmpty())
+					return;
+				
+				Point point = activePoints.size() == 1 ? activePoints.getFirst() : activePoints.get(rand.nextInt(activePoints.size()));
+				
+				boolean shouldRemove = true;
+				GridTile xForeground = point.getSecond();
+				for(int i=0; i<samples; i++)
+				{
+					double dirX = (rand.nextDouble() - 0.5F) * 2;
+					double dirY = (rand.nextDouble() - 0.5F) * 2;
+					Vec3d dir = new Vec3d(dirX, 0, dirY).normalize().multiply(radius * (1 + rand.nextDouble()));
+					
+					final GridTile sampleForeground = new GridTile(xForeground.x + (int)dir.x, xForeground.y + (int)dir.z);
+					if(sampleForeground.y < 0)
+						continue;
+					
+					// Check occupancies around background tile
+					final GridTile sampleBackground = toBackground(sampleForeground);
+					
+					// Check if the immediate neighbourhood is occupied
+					if(HARD_OFFSETS.stream().anyMatch(o -> contains(sampleBackground.add(o))))
+						continue;
+					// Check if the wider neighbourhood has any points too close
+					else if(SOFT_OFFSETS.stream()
+							.anyMatch(o -> 
+							{
+								GridTile tile = sampleBackground.add(o);
+								return contains(tile) ? get(tile).distance(sampleForeground) < diameter : false;
+							}))
+							continue;
+					
+					Point pair = Point.of(sampleBackground, sampleForeground);
+					activePoints.add(pair);
+					log(pair);
+					
+					shouldRemove = false;
+				}
+				
+				if(shouldRemove)
+					activePoints.remove(point);
+			}
+			
+			private static class Point extends Pair<GridTile,GridTile>
+			{
+				protected Point(GridTile first, GridTile second)
+				{
+					super(first, second);
+				}
+				
+				public static Point of(GridTile background, GridTile foreground)
+				{
+					return new Point(background, foreground);
+				}
 			}
 		}
 	}
@@ -275,7 +345,7 @@ public abstract class BlueprintOrganiser
 				
 				// Identify parents in previous tier and sort by number of children in this tier
 				List<BlueprintRoom> prevTierParents = Lists.newArrayList();
-				nodes.stream().map(r -> r.getParents(chart)).forEach(prevTierParents::addAll);
+				nodes.stream().map(r -> r.getParent(chart)).filter(Optional::isPresent).map(Optional::get).forEach(prevTierParents::add);
 				prevTierParents = prevTierParents.stream().distinct().sorted(childSort).toList();
 				
 				// Precalculate slot positions

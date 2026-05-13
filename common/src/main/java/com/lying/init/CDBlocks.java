@@ -51,13 +51,19 @@ public class CDBlocks
 	public static final List<RegistrySupplier<Block>> ALL_BLOCKS = Lists.newArrayList(), SOLID_CUBES = Lists.newArrayList();
 	
 	/*
+	 * TODO Implement missing blocks
 	 * World Guard
+	 * 
+	 * Puzzle Door (to open when puzzle room is completed)
+	 * Locked Door (to open using specific key)
+	 * Puzzle Logic Handler (?)
 	 * 
 	 * Trap sensors
 	 * * Area
 	 * Trap actors
 	 * * Entity spawner (mobs, potion clouds, etc.)
 	 * * Toggled ceiling block
+	 * * Puzzle Door Trigger
 	 */
 	
 	// Primary logic block for managing complex trap functions

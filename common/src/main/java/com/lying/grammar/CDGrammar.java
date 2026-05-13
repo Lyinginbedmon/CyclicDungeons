@@ -83,7 +83,7 @@ public class CDGrammar
 			return;
 		
 		/** Rooms that connect to this one */
-		final List<GrammarRoom> previous = room.getParentRooms(graph);
+		final List<GrammarRoom> previous = room.getParentRoom(graph);
 		
 		/** Rooms immediately following this one */
 		final List<GrammarRoom> next = room.getChildRooms(graph);

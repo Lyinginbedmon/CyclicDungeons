@@ -29,6 +29,8 @@ import net.minecraft.util.JsonHelper;
 
 public class CDTrapEntries implements ReloadListener<List<JsonObject>>
 {
+	// TODO Implement puzzle entries
+	
 	private static CDTrapEntries INSTANCE;
 	private final Map<Identifier, TrapEntry> REGISTRY	= new HashMap<>();
 	

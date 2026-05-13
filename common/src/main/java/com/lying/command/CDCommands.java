@@ -127,7 +127,12 @@ public class CDCommands
 		
 		Blueprint blueprint = Blueprint.fromGraph(graph);
 		blueprint.stream().map(BlueprintRoom::metadata).forEach(meta -> meta.type().prepare(meta, rand));
-		BlueprintOrganiser.Poisson.create().organise(blueprint, rand);
+		
+		do
+		{
+			BlueprintOrganiser.Poisson.create().organise(blueprint, rand);
+		}
+		while(blueprint.hasErrors());
 		if(blueprint.hasErrors())
 			throw GRAPH_FAILED_EXCEPTION.create();
 		
@@ -138,7 +143,7 @@ public class CDCommands
 		ServerWorld world = source.getWorld();
 		if(!blueprint.build(position, world))
 			throw GENERATION_FAILED_EXCEPTION.create();
-		
+		// FIXME Fix "No value found" exception
 		return 15;
 	}
 }

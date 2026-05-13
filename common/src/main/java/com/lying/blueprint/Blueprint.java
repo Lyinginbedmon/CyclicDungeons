@@ -127,7 +127,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		return Optional.empty();
 	}
 	
-	/** Returns the deepest level of this dungeon */
+	/** Returns the deepest level of this dungeon (inclusive) */
 	public int maxDepth() { return maxDepth; }
 	
 	public void setOrganised(boolean var) { this.isOrganised = var; }

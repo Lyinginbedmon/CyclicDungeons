@@ -26,13 +26,13 @@ public class GrammarRoom
 			Uuids.STRING_CODEC.fieldOf("Uuid").forGetter(GrammarRoom::uuid),
 			RoomMetadata.CODEC.fieldOf("Metadata").forGetter(GrammarRoom::metadata),
 			Uuids.STRING_CODEC.listOf().fieldOf("Children").forGetter(GrammarRoom::getChildLinks),
-			Uuids.STRING_CODEC.optionalFieldOf("Parent").forGetter(r -> r.parentLinks)
+			Uuids.STRING_CODEC.optionalFieldOf("Parent").forGetter(r -> r.parentId)
 			).apply(instance, (id,meta,doors,entries) -> 
 			{
 				GrammarRoom room = new GrammarRoom(id);
 				room.metadata = meta;
 				doors.forEach(child -> room.childLinks.add(child));
-				room.parentLinks = entries;
+				room.parentId = entries;
 				return room;
 			}));
 	
@@ -41,7 +41,7 @@ public class GrammarRoom
 	
 	private final UUID id;
 	private RoomMetadata metadata = new RoomMetadata();
-	private Optional<UUID> parentLinks = Optional.empty();
+	private Optional<UUID> parentId = Optional.empty();
 	private List<UUID> childLinks = Lists.newArrayList();
 	
 	public GrammarRoom(UUID idIn)
@@ -96,19 +96,20 @@ public class GrammarRoom
 	}
 	
 	public List<UUID> getChildLinks() { return List.of(childLinks.toArray(new UUID[0])); }
-	public Optional<UUID> getParentId() { return parentLinks; }
-	public boolean hasParent() { return parentLinks.isPresent(); }
+	public Optional<UUID> getParentId() { return parentId; }
+	public boolean hasParent() { return parentId.isPresent(); }
 	
 	public int getTotalLinks() { return childLinks.size() + (hasParent() ? 1 : 0); }
 	public boolean canAddLink() { return getTotalLinks() < MAX_LINKS; }
 	
 	public int tallyDescendants(GrammarPhrase graph)
 	{
+		final int depth = metadata().depth();
 		int tally = childLinks.size();
-		for(UUID offshoot : childLinks)
+		for(UUID child : childLinks)
 		{
-			Optional<GrammarRoom> r = graph.get(offshoot);
-			if(r.isEmpty())
+			Optional<GrammarRoom> r = graph.get(child);
+			if(r.isEmpty() || r.get().metadata().depth() <= depth)
 				continue;
 			tally += r.get().tallyDescendants(graph);
 		}
@@ -118,7 +119,7 @@ public class GrammarRoom
 	public GrammarRoom linkTo(GrammarRoom otherRoom)
 	{
 		childLinks.add(otherRoom.uuid());
-		otherRoom.parentLinks = Optional.of(id);
+		otherRoom.parentId = Optional.of(id);
 		return this;
 	}
 	
@@ -127,7 +128,7 @@ public class GrammarRoom
 		if(hasLinks() && hasLinkTo(otherRoom.uuid()))
 		{
 			childLinks.remove(otherRoom.uuid());
-			otherRoom.parentLinks = Optional.empty();
+			otherRoom.parentId = Optional.empty();
 		}
 		return this;
 	}
@@ -136,26 +137,24 @@ public class GrammarRoom
 	@NotNull
 	public List<GrammarRoom> getChildRooms(GrammarPhrase graph)
 	{
-		List<GrammarRoom> links = Lists.newArrayList();
-		childLinks.stream()
-			.map(graph::get)
-			.filter(Optional::isPresent)
-			.map(Optional::get)
-			.forEach(links::add);
-		return links;
+		return Lists.newArrayList(
+				childLinks.stream()
+					.map(graph::get)
+					.filter(Optional::isPresent)
+					.map(Optional::get)
+					.toList());
 	}
 	
 	/** Collects all rooms within the given graph that link to this room */
 	@NotNull
-	public List<GrammarRoom> getParentRooms(GrammarPhrase graph)
+	public List<GrammarRoom> getParentRoom(GrammarPhrase graph)
 	{
-		List<GrammarRoom> links = Lists.newArrayList();
-		parentLinks.stream()
-			.map(graph::get)
-			.filter(Optional::isPresent)
-			.map(Optional::get)
-			.forEach(links::add);
-		return links;
+		return Lists.newArrayList(
+				parentId.stream()
+					.map(graph::get)
+					.filter(Optional::isPresent)
+					.map(Optional::get)
+					.toList());
 	}
 	
 	public GrammarRoom applyTerm(Identifier termIn, GrammarPhrase graph)

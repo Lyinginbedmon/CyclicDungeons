@@ -299,20 +299,21 @@ public class BlueprintRoom
 		return tally;
 	}
 	
-	/** Adds a child to this room. Rarely used, since structure is largely determined by graph phase */
-	public void addChild(BlueprintRoom child) { childLinks.add(child.id); }
-	
 	/** Returns a list of all nodes this node is parented to in the given selection */
-	public List<BlueprintRoom> getParents(Collection<BlueprintRoom> graph)
+	public Optional<BlueprintRoom> getParent(Collection<BlueprintRoom> graph)
 	{
-		return hasParent() ? graph.stream().filter(n -> n.uuid().equals(parentId.get())).toList() : List.of();
+		return hasParent() ? graph.stream().filter(n -> n.uuid().equals(parentId.get())).findFirst() : Optional.empty();
 	}
 	
 	/** Returns a list of all nodes parented to this node in the given selection */
 	public List<BlueprintRoom> getChildren(Collection<BlueprintRoom> graph)
 	{
-		List<BlueprintRoom> set = Lists.newArrayList();
-		set.addAll(graph.stream().filter(n -> childLinks.contains(n.id)).toList());
+		final int depth = metadata().depth();
+		List<BlueprintRoom> set = Lists.newArrayList(
+				graph.stream()
+				.filter(n -> childLinks.contains(n.id))
+				.filter(n -> n.metadata().depth() > depth)
+				.toList());
 		set.forEach(c -> c.parentId = Optional.of(id));
 		return set;
 	}

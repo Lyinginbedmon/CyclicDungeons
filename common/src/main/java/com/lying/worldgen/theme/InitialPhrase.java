@@ -61,11 +61,7 @@ public class InitialPhrase
 				.map(s -> 
 				{
 					if(!stock.containsKey(s))
-					{
-						PhraseTerm t = PhraseTerm.of(s);
-						stock.put(s, t.asRoom());
-						
-					}
+						stock.put(s, PhraseTerm.of(s).asRoom());
 					return stock.get(s);
 				})
 				.forEach(room::linkTo);
