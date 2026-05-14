@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDLoggers;
@@ -75,7 +76,9 @@ public class TileGenerator
 			return;
 		}
 		
-		final List<Tile> candidates = tiles.keys().stream().filter(t -> !t.isBlank()).toList();
+		final List<Tile> candidates = tiles.keys().stream()
+				.filter(Predicates.not(Tile::isBlank))
+				.toList();
 		/**
 		 * Sort open slots by number of available options
 		 * Pop slot with fewest options

@@ -339,15 +339,19 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			final List<BlueprintPassage> passages = chart.passages();
 			for(int i=0; i<passages.size(); i++)
 			{
+				final BlueprintPassage passage = passages.get(i);
 				List<BlueprintPassage> others = Lists.newArrayList(passages.subList(i+1, passages.size()));
 				if(i > 0)
 					others.addAll(passages.subList(0, i));
 				
-				final BlueprintPassage passage = passages.get(i);
 				for(BlueprintPassage other : others)
-					if(!passage.canShareSpaceWith(other) && passage.intersects(other))
-						if(++tally >= limit && limit > 0)
-							return tally;
+					if(
+						passage.tileBounds().intersects(other.tileBounds()) &&
+						!passage.canShareSpaceWith(other) && 
+						passage.intersects(other)
+						)
+							if(++tally >= limit && limit > 0)
+								return tally;
 			}
 			return tally;
 		}),

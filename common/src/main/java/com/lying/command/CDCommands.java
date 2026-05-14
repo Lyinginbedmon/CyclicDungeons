@@ -39,6 +39,7 @@ public class CDCommands
 	private static final SimpleCommandExceptionType GRAPH_FAILED_EXCEPTION = make("graph_failed");
 	private static final SimpleCommandExceptionType SCRUNCH_FAILED_EXCEPTION = make("scrunch_failed");
 	private static final SimpleCommandExceptionType GENERATION_FAILED_EXCEPTION = make("generation_failed");
+	private static final Logger LOGGER = CyclicDungeons.LOGGER;
 	
 	private static SimpleCommandExceptionType make(String name)
 	{
@@ -115,7 +116,6 @@ public class CDCommands
 	private static int generateInWorld(int size, BlockPos position, ServerCommandSource source) throws CommandSyntaxException
 	{
 		Random rand = Random.create(position.getX() * position.getX() + position.getZ() * position.getZ());
-		GrammarPhrase graph = CDGrammar.initialPhrase(size, rand);
 		DungeonBuilder.instance()
 			.setRandom(rand)
 			.setPhrase(size)

@@ -53,14 +53,15 @@ public class DungeonBuilder
 		}
 		
 		LOGGER.info("Starting dungeon generation at {} in {}", position, world);
-		long time = System.currentTimeMillis();
+		final long startTime = System.currentTimeMillis();
 		CDGrammar.generate(phrase, rand);
 		if(phrase == null || phrase.isEmpty())
 		{
 			LOGGER.error(" # Grammar generation failed");
 			return false;
 		}
-		LOGGER.info(" # Grammar generation complete, {} rooms across {} depths", phrase.size(), phrase.depth());
+		long time;
+		LOGGER.info(" # Grammar generation complete in {} ms, {} rooms across {} depths", (time = System.currentTimeMillis()) - startTime, phrase.size(), phrase.depth());
 		
 		Blueprint blueprint = Blueprint.fromGraph(phrase);
 		blueprint.stream()
@@ -78,22 +79,24 @@ public class DungeonBuilder
 			LOGGER.error(" # Graph organisation failed");
 			return false;
 		}
-		LOGGER.info(" # Graph organisation complete");
+		LOGGER.info(" # Graph organisation complete in {}ms", System.currentTimeMillis() - time);
 		
+		time = System.currentTimeMillis();
 		BlueprintScruncher.collapse(blueprint);
 		if(blueprint.hasErrors())
 		{
 			LOGGER.error(" # Passage optimisation failed");
 			return false;
 		}
-		LOGGER.info(" # Passage optimisation complete");
+		LOGGER.info(" # Passage optimisation complete in {}ms", System.currentTimeMillis() - time);
 		
+		time = System.currentTimeMillis();
 		if(!blueprint.build(position, world))
 		{
 			LOGGER.error(" # Dungeon generation failed");
 			return false;
 		}
-		LOGGER.info(" # Dungeon generation complete in {}ms", System.currentTimeMillis() - time);
+		LOGGER.info(" # Dungeon generation complete in {}ms, {}ms total", System.currentTimeMillis() - time, System.currentTimeMillis() - startTime);
 		return true;
 	}
 }
