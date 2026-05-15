@@ -17,6 +17,7 @@ import com.mojang.serialization.DataResult;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 public abstract class RoomContent
 {
@@ -26,9 +27,9 @@ public abstract class RoomContent
 	/** Default room content, does nothing */
 	public static final Supplier<RoomContent> NOOP = register(() -> new RoomContent(prefix("none")) 
 	{
-		public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world) { }
+		public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { }
 		
-		public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta) { }
+		public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand) { }
 	});
 	public static final Supplier<BattleRoomContent> BATTLE	= register(BattleRoomContent::new);
 	public static final Supplier<TrapRoomContent> TRAP		= register(TrapRoomContent::new);
@@ -55,8 +56,8 @@ public abstract class RoomContent
 	public final Identifier registryName() { return id; }
 	
 	/** Applied before room tile generation */
-	public abstract void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world);
+	public abstract void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand);
 	
 	/** Applied after all other room generation */
-	public abstract void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta);
+	public abstract void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand);
 }

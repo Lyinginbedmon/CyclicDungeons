@@ -89,7 +89,7 @@ public class EncounterSpawnerBlockEntity extends BlockEntity
 		if(world.getEntitiesByClass(PlayerEntity.class, bounds, EntityPredicates.EXCEPT_CREATIVE_OR_SPECTATOR).isEmpty())
 			return;
 		
-		tile.encounter.ifPresent(battle -> battle.apply(min, max, (ServerWorld)world, new RoomMetadata()));
+		tile.encounter.ifPresent(battle -> battle.apply(min, max, (ServerWorld)world, new RoomMetadata(), world.getRandom()));
 		world.breakBlock(pos, false);
 	}
 }

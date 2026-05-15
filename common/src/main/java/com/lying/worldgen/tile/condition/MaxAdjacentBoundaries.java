@@ -45,10 +45,12 @@ public class MaxAdjacentBoundaries extends Condition
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
-		return (int)faces.stream()
-				.filter(d -> set.contains(pos.offset(d)))
-				.filter(d -> set.isBoundary(pos.offset(d), d))
-				.count() < i;
+		int tally = 0;
+		for(Direction face : faces)
+			if(set.contains(pos.offset(face)) && set.isBoundary(pos.offset(face), face))
+				if(++tally >= i)
+					return false;
+		return true;
 	}
 	
 	public JsonElement toJson(JsonOps ops)
@@ -89,10 +91,12 @@ public class MaxAdjacentBoundaries extends Condition
 		
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 		{
-			return (int)faces.stream()
-					.filter(d -> set.contains(pos.offset(d)))
-					.filter(d -> set.isBoundary(pos.offset(d), d))
-					.count() >= i;
+			int tally = 0;
+			for(Direction face : faces)
+				if(set.contains(pos.offset(face)) && set.isBoundary(pos.offset(face), face))
+					if(++tally >= i)
+						return true;
+			return false;
 		}
 	}
 }

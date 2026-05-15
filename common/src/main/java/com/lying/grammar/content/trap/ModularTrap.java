@@ -72,10 +72,8 @@ public class ModularTrap extends Trap
 		return super.isApplicableTo(room, meta, theme) && !modules.isEmpty() && modules.stream().map(Module::name).distinct().count() == modules.size();
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
-		final Random random = world.getRandom();
-		
 		// Sort modules by necessary order of placement
 		modules.sort(Module.BUILD_ORDER);
 		
@@ -116,7 +114,7 @@ public class ModularTrap extends Trap
 				if(viable.isEmpty())
 					break;
 				
-				BlockPos pos = viable.size() == 1 ? viable.removeFirst() : viable.remove(random.nextInt(viable.size()));
+				BlockPos pos = viable.size() == 1 ? viable.removeFirst() : viable.remove(rand.nextInt(viable.size()));
 				set.add(pos);
 				allComponents.add(pos);
 			}

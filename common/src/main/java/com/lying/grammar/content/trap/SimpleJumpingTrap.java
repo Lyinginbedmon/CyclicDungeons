@@ -68,7 +68,7 @@ public class SimpleJumpingTrap extends Trap
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return CDTiles.instance().get(fillTile).isPresent() && FLOOR.isPresent(); }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
 	{
 		final Tile flooring = FLOOR.get();
 		
@@ -79,7 +79,6 @@ public class SimpleJumpingTrap extends Trap
 			.forEach(p -> tileMap.put(p, flooring));
 		
 		// Randomly place solid flooring at distance from other solid flooring
-		final Random rand = world.getRandom();
 		final Vector2i roomSize = room.metadata().tileSize();
 		final int minSepX = roomSize.x < 4 ? 1 : rand.nextBetween(1, 2);
 		final int minSepY = roomSize.y < 4 ? 1 : rand.nextBetween(1, 2);
@@ -129,5 +128,5 @@ public class SimpleJumpingTrap extends Trap
 				.build();
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta) { }
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { }
 }

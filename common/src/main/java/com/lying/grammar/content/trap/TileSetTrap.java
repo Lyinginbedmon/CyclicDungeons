@@ -58,9 +58,9 @@ public class TileSetTrap extends Trap
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return getTileSet().isPresent(); }
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta) { }
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
 	{
 		Random random = Random.create(room.position().x() ^ room.position().x + room.position().y() ^ room.position().y);
 		TileSet tileSet = getTileSet().get();

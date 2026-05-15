@@ -30,6 +30,7 @@ public class Near extends Condition
 
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
+		// FIXME Optimise
 		return !set.getMatchingTiles((p2,t2) -> 
 			p2.isWithinDistance(pos, d) && 
 			child.test(t2, p2, set)).isEmpty();

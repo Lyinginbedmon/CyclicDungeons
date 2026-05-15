@@ -33,6 +33,7 @@ import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 
 public class BlueprintPassage
 {
@@ -336,53 +337,46 @@ public class BlueprintPassage
 		return false;
 	}
 	
-	public void generate(BlockPos origin, ServerWorld world)
+	public void generate(BlockPos origin, ServerWorld world, Random rand)
 	{
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(asTiles(), PASSAGE_HEIGHT);
 		
 		// Pre-seed doorway from parent room before generating
 		final GraphTileGrid parent = parent().tileGrid();
-		BlockPos doorPos = null;
-		GridTile doorGrid = null;
-		for(BlockPos p : map.contents())
+		GridTile doorGrid = getInitialTile();
+		if(doorGrid == null)
+			return;
+		
+		BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
+		map.put(doorPos.down(), CDTiles.instance().getElse(DefaultTiles.ID_PRISTINE_FLOOR, CDTiles.STONE));
+		map.put(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
+		if(PASSAGE_HEIGHT > 2)
 		{
-			doorGrid = new GridTile(p.getX(), p.getZ());
-			if(!parent.containsAdjacent(doorGrid))
-				continue;
+			BlockPos pos = doorPos.up();
 			
-			doorPos = p.withY(1);
-			map.put(doorPos.down(), CDTiles.instance().getElse(DefaultTiles.ID_PRISTINE_FLOOR, CDTiles.STONE));
-			map.put(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
-			if(PASSAGE_HEIGHT > 2)
-			{
-				BlockPos pos = doorPos.up();
-				
-				// Place a lintel above the door
-				map.put(pos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
-				
-				// Fill remaining vertical space above the door with boundary
-				while(map.contains(pos.up()))
-					map.put((pos = pos.up()), CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
-			}
-			break;
+			// Place a lintel above the door
+			map.put(pos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
+			
+			// Fill remaining vertical space above the door with boundary
+			while(map.contains(pos.up()))
+				map.put((pos = pos.up()), CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
 		}
 		
 		final Theme theme = parent().metadata().theme();
-		TileGenerator.generate(map, theme.passageTileSet(), world.random);
-		map.finalise(theme);
+		TileGenerator.generate(map, theme.passageTileSet(), rand);
+		map.finalise(theme, rand);
 		
 		// Ensure doorway from parent room has correct orientation
-		if(doorPos != null)
-			for(Direction face : Direction.Type.HORIZONTAL)
-				if(parent.contains(doorGrid.offset(face)))
-				{
-					BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
-					map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY, CDTiles.AIR), theme, rotation));
-					
-					if(map.contains(doorPos.up()))
-						map.finalise(new TileInstance(doorPos.up(), CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE), theme, rotation));
-					break;
-				}
+		for(Direction face : Direction.Type.HORIZONTAL)
+			if(parent.contains(doorGrid.offset(face)))
+			{
+				BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
+				map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY, CDTiles.AIR), theme, rotation));
+				
+				if(map.contains(doorPos.up()))
+					map.finalise(new TileInstance(doorPos.up(), CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE), theme, rotation));
+				break;
+			}
 		
 		map.generate(origin, world);
 	}

@@ -18,6 +18,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 public interface IContentEntry
 {	
@@ -29,10 +30,10 @@ public interface IContentEntry
 	public default boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return true; }
 	
 	/** Applied when the entry is selected, before the room goes through tile generation */
-	public default void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world) { }
+	public default void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { }
 	
 	/** Applied after tile generation */
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta);
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
 	public static <T extends BlockEntity> List<T> getTileEntities(BlockPos min, BlockPos max, ServerWorld world, BlockEntityType<T> type)
 	{

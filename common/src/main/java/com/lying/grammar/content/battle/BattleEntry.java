@@ -20,6 +20,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 public record BattleEntry(Identifier registryName, Battle encounter) implements IContentEntry
 {
@@ -38,7 +39,7 @@ public record BattleEntry(Identifier registryName, Battle encounter) implements 
 				.child(new SubPredicate(BlockPos.ORIGIN.down(), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
 			.build();
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		List<BlockPos> positions = Lists.newArrayList();
 		BlockPos.Mutable.iterate(min, max).forEach(p -> 

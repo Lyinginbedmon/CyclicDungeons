@@ -21,6 +21,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 
 public class TileTrap extends Trap
 {
@@ -64,7 +65,7 @@ public class TileTrap extends Trap
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return super.isApplicableTo(room, meta, theme) && getTile().isPresent(); }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
 	{
 		final Tile tile = getTile().get();
 		final Predicate<BlockPos> canExistAt = p -> tile.canExistAt(p, tileMap);
@@ -86,5 +87,5 @@ public class TileTrap extends Trap
 		}
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta) { }
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { }
 }

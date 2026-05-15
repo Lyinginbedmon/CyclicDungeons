@@ -165,7 +165,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		return type.tally(chart, -1);
 	}
 	
-	public boolean build(BlockPos position, ServerWorld world)
+	public boolean build(BlockPos position, ServerWorld world, Random rand)
 	{
 		if(isEmpty() || hasErrors())
 			return false;
@@ -175,11 +175,11 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		buildExteriorShell(position, world);
 		
-		buildExteriorPaths(position, world);
+		buildExteriorPaths(position, world, rand);
 		
-		buildRooms(position, world);
+		buildRooms(position, world, rand);
 		
-		buildEntrance(position, world);
+		buildEntrance(position, world, rand);
 		
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);
 		return true;
@@ -211,7 +211,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		LOGGER.info(" ## Exterior shell completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
-	public void buildRooms(BlockPos position, ServerWorld world)
+	public void buildRooms(BlockPos position, ServerWorld world, Random rand)
 	{
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating rooms");
@@ -223,7 +223,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			RoomMetadata meta = node.metadata();
 			GrammarTerm type = meta.type();
 			LOGGER.info(" # Room {} of {}: {}x{} {}", ++tally, size(), meta.size().x(), meta.size().y(), type.registryName().getPath());
-			if(type.generate(position, world, node, passages))
+			if(type.generate(position, world, node, passages, rand))
 				LOGGER.info(" ## Finished");
 			else
 				LOGGER.error(" ## Error during room generation");
@@ -232,17 +232,17 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		LOGGER.info(" ## Rooms completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
-	public void buildExteriorPaths(BlockPos position, ServerWorld world)
+	public void buildExteriorPaths(BlockPos position, ServerWorld world, Random rand)
 	{
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior passages");
 		
-		passages().forEach(p -> p.generate(position, world));
+		passages().forEach(p -> p.generate(position, world, rand));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
-	public void buildEntrance(BlockPos position, ServerWorld world)
+	public void buildEntrance(BlockPos position, ServerWorld world, Random rand)
 	{
 		// The initial room of the dungeon
 		BlueprintRoom start = stream().filter(r -> r.metadata().is(CDTerms.instance().start())).findFirst().get();
@@ -259,8 +259,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		BlueprintTileGrid grid = BlueprintTileGrid.fromGraphGrid(graph, 2);
 		
 		// Generate the entryway
-		TileGenerator.generate(grid, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), Random.create());
-		grid.finalise(start.metadata().theme());
+		TileGenerator.generate(grid, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), rand);
+		grid.finalise(start.metadata().theme(), rand);
 		grid.generate(position, world);
 	}
 	

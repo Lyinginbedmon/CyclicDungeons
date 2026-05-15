@@ -59,7 +59,7 @@ public abstract class Battle
 	
 	public abstract Text describe();
 	
-	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta);
+	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
 	@Nullable
 	protected static BlockPos findSpawnablePosition(EntityType<? extends Entity> type, BlockPos min, BlockPos max, ServerWorld world, Random rand, int searchAttempts)

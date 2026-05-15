@@ -15,6 +15,7 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 public abstract class Trap
 {
@@ -38,10 +39,10 @@ public abstract class Trap
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return allowDeadEnds || room.hasChildren(); }
 	
 	/** Applied when the entry is selected, before the room goes through tile generation */
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world) { }
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { }
 	
 	/** Applied after tile generation */
-	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta);
+	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
 	public final Optional<JsonObject> getConfig()
 	{

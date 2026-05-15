@@ -62,7 +62,7 @@ public abstract class AbstractPlacerTrap extends Trap
 		return this;
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		int floorY = min.getY() + Tile.TILE_SIZE;
 		
@@ -88,7 +88,6 @@ public abstract class AbstractPlacerTrap extends Trap
 		if(viablePoints.isEmpty())
 			CDLoggers.WORLDGEN.warn("Failed to find any place for trap");
 		
-		Random rand = world.getRandom();
 		if(trapCounter.isUnlimited())
 			placeAllTraps(viablePoints, world, rand);
 		else

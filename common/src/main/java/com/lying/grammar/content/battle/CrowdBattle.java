@@ -57,7 +57,7 @@ public class CrowdBattle<T extends Entity> extends Battle
 	public Text describe() { return ((MutableText)data.range()).append(" ").append(data.type().getUntranslatedName()); }
 	
 	@SuppressWarnings("unchecked")
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		if(data == null)
 		{
@@ -71,7 +71,6 @@ public class CrowdBattle<T extends Entity> extends Battle
 			return;
 		}
 		
-		Random rand = world.random;
 		final int mobs = data.getCount(rand);
 		if(mobs <= 0)
 			return;

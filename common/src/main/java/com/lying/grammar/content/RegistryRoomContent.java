@@ -16,6 +16,7 @@ import com.lying.worldgen.theme.Theme;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 /** A room processor with a built-in typed registry that selects an entry at pre-processing and enacts it in post-processing */
 public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomContent
@@ -39,7 +40,7 @@ public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomC
 			registry.put(id, entry);
 	}
 	
-	public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world)
+	public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
 	{
 		registry.clear();
 		buildRegistry(meta.theme());
@@ -54,13 +55,13 @@ public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomC
 			Identifier id = ids.size() == 1 ? ids.getFirst() : ids.get(world.random.nextInt(ids.size()));
 			meta.setProcessorID(id);
 			CDLoggers.WORLDGEN.info("# Processor selected registry entry {}", id.toString());
-			getEntry(id).ifPresent(entry -> entry.prepare(room, tileMap, world));
+			getEntry(id).ifPresent(entry -> entry.prepare(room, tileMap, world, rand));
 		}
 	}
 	
-	public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta)
+	public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand)
 	{
 		meta.processorID().ifPresent(id -> 
-			registry.get(id).apply(min, max, world, meta));
+			registry.get(id).apply(min, max, world, meta, rand));
 	}
 }

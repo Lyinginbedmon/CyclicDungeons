@@ -34,6 +34,7 @@ public class Consecutive extends Condition
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
+		// FIXME Optimise
 		return faces.stream()
 				.map(pos::offset)
 				.filter(set::contains)
@@ -82,6 +83,7 @@ public class Consecutive extends Condition
 		
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 		{
+			// FIXME Optimise
 			return faces.stream()
 					.map(pos::offset)
 					.filter(set::contains)

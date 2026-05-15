@@ -22,8 +22,11 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 {
 	public static final DebugLogger LOGGER = CDLoggers.WFC;
 	public static final Tile BLANK	= CDTiles.BLANK.get();
-	public static final Random rand = Random.create();
 	private final List<TileInstance> finalised = Lists.newArrayList();
+	
+	private BlockPos 
+		min = null, 
+		max = null;
 	
 	public static BlueprintTileGrid ofSize(BlockPos size)
 	{
@@ -63,9 +66,61 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return this;
 	}
 	
+	public AbstractTileGrid<BlockPos> addToVolume(BlockPos pos)
+	{
+		final int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+		if(min == null)
+			min = pos;
+		else
+		{
+			if(x < min.getX())
+				min = new BlockPos(x, min.getY(), min.getZ());
+			if(y < min.getY())
+				min = min.withY(y);
+			if(z < min.getZ())
+				min = new BlockPos(min.getX(), min.getY(), z);
+		}
+		
+		if(max == null)
+			max = pos;
+		else
+		{
+			if(x > max.getX())
+				max = new BlockPos(x, max.getY(), max.getZ());
+			if(y > max.getY())
+				max = max.withY(y);
+			if(z > max.getZ())
+				max = new BlockPos(max.getX(), max.getY(), z);
+		}
+		
+		return super.addToVolume(pos);
+	}
+	
 	public boolean containsAdjacent(BlockPos pos)
 	{
+		// Any point more than 1 increment outside the bounds of this grid cannot have an adjacent point within it
+		final int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+		if(x < (min.getX() - 1) || x > (max.getX() + 1))
+			return false;
+		if(y < (min.getY() - 1) || y > (max.getY() + 1))
+			return false;
+		if(z < (min.getZ() - 1) || z > (max.getZ() + 1))
+			return false;
+		
 		return set.keySet().stream().anyMatch(p2 -> p2.getManhattanDistance(pos) == 1);
+	}
+	
+	public boolean contains(BlockPos pos)
+	{
+		final int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+		if(x < min.getX() || x > max.getX())
+			return false;
+		if(y < min.getY() || y > max.getY())
+			return false;
+		if(z < min.getZ() || z > max.getZ())
+			return false;
+		
+		return super.contains(pos);
 	}
 	
 	/** Expands the map in the given direction from all pre-existing positions */
@@ -127,7 +182,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	}
 	
 	/** Populates the finalised map with tile instances with appropriate orientations */
-	public void finalise(Theme theme)
+	public void finalise(Theme theme, Random rand)
 	{
 		LOGGER.info("Finalising tile set...");
 		finalised.clear();

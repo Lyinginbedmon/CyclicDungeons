@@ -21,6 +21,7 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 public class TileToBlockTrap extends LogicControlledTrap
 {
@@ -103,13 +104,13 @@ public class TileToBlockTrap extends LogicControlledTrap
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return tileApplier.isApplicableTo(room, meta, theme) && structureApplier.isApplicableTo(room, meta, theme); }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
 	{
-		tileApplier.prepare(room, tileMap, world);
+		tileApplier.prepare(room, tileMap, world, rand);
 	}
 	
-	protected void installSensors(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
+	protected void installSensors(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
-		structureApplier.apply(min, max, world, meta);
+		structureApplier.apply(min, max, world, meta, rand);
 	}
 }

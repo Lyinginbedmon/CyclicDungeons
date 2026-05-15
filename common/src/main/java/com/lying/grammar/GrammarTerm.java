@@ -122,7 +122,7 @@ public class GrammarTerm
 		return (!modifier.isBranchInjector() || inRoom.canAddLink()) && conditions.test(this, inRoom, previous, next, graph);
 	}
 	
-	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, List<BlueprintPassage> passages)
+	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, List<BlueprintPassage> passages, Random rand)
 	{
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT);
 		RoomMetadata meta = node.metadata();
@@ -132,21 +132,21 @@ public class GrammarTerm
 			// Pre-seed doorways to connecting rooms
 			preseedDoorways(node, map, passages);
 			
-			contentBuilder.applyPreProcessing(node, meta, map, world);
+			contentBuilder.applyPreProcessing(node, meta, map, world, rand);
 			
 			// Fill rest of tileset with WFC generation
-			TileGenerator.generate(map, node.metadata().theme().getTileSet(this), world.getRandom());
+			TileGenerator.generate(map, node.metadata().theme().getTileSet(this), rand);
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		
-		map.finalise(meta.theme());
+		map.finalise(meta.theme(), rand);
 		
 		if(map.generate(position, world))
 		{
 			Box box = node.worldBox().offset(position);
 			BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
 			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
-			contentBuilder.applyPostProcessing(min, max, world, node, meta);
+			contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
 			return true;
 		}
 		return false;

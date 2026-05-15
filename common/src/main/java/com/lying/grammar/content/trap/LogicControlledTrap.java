@@ -22,6 +22,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 public abstract class LogicControlledTrap extends Trap
 {
@@ -44,16 +45,16 @@ public abstract class LogicControlledTrap extends Trap
 		return this;
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		// Place any post-generation sensor blocks
-		installSensors(min, max, world, meta);
+		installSensors(min, max, world, meta, rand);
 		
 		// Place trap logic block
 		installLogic(min, max, world);
 	}
 	
-	protected abstract void installSensors(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta);
+	protected abstract void installSensors(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
 	protected void installLogic(BlockPos min, BlockPos max, ServerWorld world)
 	{

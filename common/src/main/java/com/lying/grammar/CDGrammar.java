@@ -19,12 +19,6 @@ public class CDGrammar
 	private static List<GrammarTerm> PLACEABLES = List.of();
 	
 	/** Generates a relatively linear initial starting graph */
-	public static GrammarPhrase initialGraph(int blanks)
-	{
-		return initialPhrase(blanks, Random.create());
-	}
-	
-	/** Generates a relatively linear initial starting graph */
 	public static GrammarPhrase initialPhrase(int blanks, Random rand)
 	{
 		GrammarPhrase graph = new GrammarPhrase();
@@ -50,12 +44,6 @@ public class CDGrammar
 		previous.linkTo(end);
 		graph.add(end);
 		return graph;
-	}
-	
-	/** Populates the given graph */
-	public static GrammarPhrase generate(GrammarPhrase graph)
-	{
-		return generate(graph, Random.create());
 	}
 	
 	/** Populates the given graph */

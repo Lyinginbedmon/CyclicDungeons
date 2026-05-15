@@ -43,6 +43,7 @@ public class MaxConsecutive extends Condition
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
+		// FIXME Optimise
 		return (int)faces.stream()
 				.map(f -> pos.offset(f))
 				.filter(set::contains)

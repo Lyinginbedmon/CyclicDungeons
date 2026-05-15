@@ -33,7 +33,7 @@ public abstract class AbstractTileGrid<T extends Object>
 	
 	public final boolean isEmpty() { return set.isEmpty(); }
 	
-	public final AbstractTileGrid<T> addToVolume(T pos)
+	public AbstractTileGrid<T> addToVolume(T pos)
 	{
 		setTile(pos, BLANK);
 		return this;
@@ -62,7 +62,7 @@ public abstract class AbstractTileGrid<T extends Object>
 	/** Expands the map in the given direction from all pre-existing positions */
 	public abstract void grow(Direction direction, int size);
 	
-	public final boolean contains(T pos)
+	public boolean contains(T pos)
 	{
 		return set.keySet().stream().anyMatch(pos::equals);
 	}

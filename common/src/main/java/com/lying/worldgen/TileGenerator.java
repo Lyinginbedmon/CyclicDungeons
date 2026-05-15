@@ -87,7 +87,6 @@ public class TileGenerator
 		 */
 		while(!slots.isEmpty())
 		{
-			map.clearOptionCache();
 			MapEntry entry = getMostConstrained(slots, map, candidates);
 			Tile tile;
 			switch(entry.options().size())

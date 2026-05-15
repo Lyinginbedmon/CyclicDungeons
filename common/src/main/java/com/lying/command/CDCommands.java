@@ -115,9 +115,8 @@ public class CDCommands
 	
 	private static int generateInWorld(int size, BlockPos position, ServerCommandSource source) throws CommandSyntaxException
 	{
-		Random rand = Random.create(position.getX() * position.getX() + position.getZ() * position.getZ());
 		DungeonBuilder.instance()
-			.setRandom(rand)
+			.setRandom(Random.create(position.getX() * position.getX() + position.getZ() * position.getZ()))
 			.setPhrase(size)
 			.generate(position, source.getWorld());
 		

@@ -91,7 +91,7 @@ public class DungeonBuilder
 		LOGGER.info(" # Passage optimisation complete in {}ms", System.currentTimeMillis() - time);
 		
 		time = System.currentTimeMillis();
-		if(!blueprint.build(position, world))
+		if(!blueprint.build(position, world, rand))
 		{
 			LOGGER.error(" # Dungeon generation failed");
 			return false;

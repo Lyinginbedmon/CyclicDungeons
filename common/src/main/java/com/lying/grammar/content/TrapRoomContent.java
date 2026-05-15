@@ -24,6 +24,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 
 public class TrapRoomContent extends RegistryRoomContent<TrapEntry>
 {
@@ -67,9 +68,9 @@ public class TrapRoomContent extends RegistryRoomContent<TrapEntry>
 		public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return type.isApplicableTo(room, meta, theme); }
 		
 		/** Applied when the entry is selected, before the room goes through tile generation */
-		public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world) { type.prepare(room, tileMap, world); }
+		public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { type.prepare(room, tileMap, world, rand); }
 		
-		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta) { type.apply(min, max, world, meta); }
+		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { type.apply(min, max, world, meta, rand); }
 		
 		public JsonObject toJson(JsonOps ops)
 		{

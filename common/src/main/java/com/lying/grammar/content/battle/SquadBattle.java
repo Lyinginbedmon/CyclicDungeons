@@ -63,9 +63,8 @@ public class SquadBattle extends Battle
 		return this;
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta)
+	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
-		Random rand = world.random;
 		SquadBattle.Roster roster = new Roster();
 		for(SquadBattle.SquadEntry entry : squad)
 		{
