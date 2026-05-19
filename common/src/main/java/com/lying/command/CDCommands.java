@@ -9,12 +9,12 @@ import org.slf4j.Logger;
 import com.lying.CyclicDungeons;
 import com.lying.DungeonBuilder;
 import com.lying.blueprint.Blueprint;
-import com.lying.blueprint.BlueprintOrganiser;
 import com.lying.blueprint.BlueprintRoom;
-import com.lying.blueprint.BlueprintScruncher;
 import com.lying.grammar.CDGrammar;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
+import com.lying.graph.GraphOrganiser;
+import com.lying.graph.GraphScruncher;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -115,11 +115,7 @@ public class CDCommands
 	
 	private static int generateInWorld(int size, BlockPos position, ServerCommandSource source) throws CommandSyntaxException
 	{
-		DungeonBuilder.instance()
-			.setRandom(Random.create(position.getX() * position.getX() + position.getZ() * position.getZ()))
-			.setPhrase(size)
-			.generate(position, source.getWorld());
-		
+		DungeonBuilder.instance().generate(position, source.getWorld(), Random.create((position.getX() * position.getX()) + (position.getZ() * position.getZ())));
 		return 15;
 	}
 }

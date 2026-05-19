@@ -15,9 +15,7 @@ import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.GridTile;
-import com.lying.utility.geometry.AbstractBox2f;
 import com.lying.utility.geometry.Box2f;
-import com.lying.utility.geometry.CompoundBox2f;
 import com.lying.utility.geometry.LineSegment2f;
 import com.lying.utility.geometry.RotaryBox2f;
 import com.lying.utility.geometry.Vector2iUtils;
@@ -91,21 +89,18 @@ public class NodeRenderUtils
 		final Vec2f mousePos = new Vec2f(mouseX, mouseY);
 		final Predicate<BlueprintPassage> showBounds = p -> 
 		{
-			CompoundBox2f box = (CompoundBox2f)p.tileBounds();
-			for(AbstractBox2f sub : box.asBoxes())
-			{
-				List<Vec2f> points = Lists.newArrayList();
-				points.addAll(sub.asPoints());
-				
-				Vec2f 
-					a = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y)),
-					b = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y)),
-					c = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y)),
-					d = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y));
-				
-				if(new RotaryBox2f(a, b, c, d).contains(mousePos))
-					return true;
-			}
+			Box2f box = (Box2f)p.tileBounds();
+			List<Vec2f> points = Lists.newArrayList();
+			points.addAll(box.asPoints());
+			
+			Vec2f 
+				a = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y)),
+				b = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y)),
+				c = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y)),
+				d = points.removeFirst().multiply(renderScale).add(new Vec2f(origin.x, origin.y));
+			
+			if(new RotaryBox2f(a, b, c, d).contains(mousePos))
+				return true;
 			return false;
 		};
 		DungeonScreen.totalPassages.stream()

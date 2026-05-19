@@ -18,6 +18,7 @@ import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.RoomMetadata;
+import com.lying.graph.GraphOrganiser;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
@@ -267,7 +268,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public List<BlueprintPassage> passages()
 	{
 		if(passageCache.isEmpty() && size() > 1)
-			passageCache = BlueprintOrganiser.mergePassages(BlueprintOrganiser.getPassages(this), BlueprintOrganiser.getBounds(this));
+			passageCache = GraphOrganiser.mergePassages(GraphOrganiser.getPassages(this), GraphOrganiser.getBounds(this));
 		
 		return passageCache;
 	}

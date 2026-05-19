@@ -1,4 +1,4 @@
-package com.lying.blueprint;
+package com.lying.graph;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,6 +7,9 @@ import java.util.function.Supplier;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.lying.blueprint.Blueprint;
+import com.lying.blueprint.BlueprintPassage;
+import com.lying.blueprint.BlueprintRoom;
 import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
@@ -15,7 +18,7 @@ import com.lying.utility.logging.DataLog;
 import com.lying.utility.logging.DebugLogger;
 
 /** Utility class for reducing the footprint of a blueprint */
-public class BlueprintScruncher
+public class GraphScruncher
 {
 	public static DebugLogger LOGGER = CDLoggers.PLANAR;
 	public static DataLog DATA_LOG = new DataLog();
@@ -26,8 +29,8 @@ public class BlueprintScruncher
 	 */
 	public static void collapse(Blueprint chart)
 	{
-		DATA_LOG.info("Applying collapse to {} nodes", chart.size());
 		final int iterationCap = chart.theme().collapseIterationCap();
+		DATA_LOG.info("Applying collapse to {} nodes, cap {}", chart.size(), iterationCap);
 		int iterations = iterationCap;
 		final long time = System.currentTimeMillis();
 		while(scrunch(chart) && iterations-- > 0)

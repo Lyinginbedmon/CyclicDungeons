@@ -32,11 +32,15 @@ public class NearBox extends Condition
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
-		// FIXME Optimise
-		final Box box = bounds.offset(pos);
-		return !set.getMatchingTiles((p2,t2) -> 
-			box.contains(new Vec3d(p2.getX() + 0.5D, p2.getY() + 0.5D, p2.getZ() + 0.5D)) && 
-			child.test(t2, p2, set)).isEmpty();
+		for(int x=(int)bounds.minX; x<bounds.maxX; x++)
+			for(int z=-(int)bounds.minZ; z<bounds.maxZ; z++)
+				for(int y=-(int)bounds.minY; y<bounds.maxY; y++)
+				{
+					BlockPos offset = pos.add(x, y, z);
+					if(set.contains(offset) && child.test(set.get(offset).get(), offset, set))
+						return true;
+				}
+		return false;
 	}
 	
 	public JsonElement toJson(JsonOps ops)

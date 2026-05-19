@@ -1,7 +1,6 @@
 package com.lying.worldgen.tile.condition;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
@@ -53,11 +52,11 @@ public class Adjacent extends Condition
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
-		// FIXME Optimise
-		return faces.stream()
-				.map(pos::offset)
-				.filter(set::contains)
-				.anyMatch(p -> child.test(set.get(p).get(), p, set));
+		BlockPos offset;
+		for(Direction face : faces)
+			if(set.contains(offset = pos.offset(face)) && child.test(set.get(offset).get(), offset, set))
+				return true;
+		return false;
 	}
 	
 	public JsonElement toJson(JsonOps ops)
@@ -110,11 +109,7 @@ public class Adjacent extends Condition
 		
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 		{
-			// FIXME Optimise
-			return faces.stream()
-					.map(pos::offset)
-					.filter(set::contains)
-					.noneMatch(p -> child.test(set.get(p).get(), p, set));
+			return !super.test(tileIn, pos, set);
 		}
 	}
 	
@@ -143,17 +138,14 @@ public class Adjacent extends Condition
 		
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 		{
-			// FIXME Optimise
-			return (int)faces.stream()
-					.map(f -> pos.offset(f))
-					.filter(set::contains)
-					.filter(p -> set.get(p).isPresent())
-					.filter(p -> 
-					{
-						Tile tile = set.get(p).get();
-						return !tile.isBlank() && child.test(tile, p, set);
-					})
-					.count() < i;
+			int tally = 0;
+			BlockPos offset;
+			Tile tileAt;
+			for(Direction face : faces)
+				if(set.contains(offset = pos.offset(face)) && !(tileAt = set.get(offset).get()).isBlank() && child.test(tileAt, offset, set))
+					if(++tally >= i)
+						return false;
+			return true;
 		}
 		
 		public JsonElement toJson(JsonOps ops)
@@ -214,14 +206,11 @@ public class Adjacent extends Condition
 		
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 		{
-			// FIXME Optimise
-			return faces.stream()
-					.map(pos::offset)
-					.filter(set::contains)
-					.map(set::get)
-					.map(Optional::get)
-					.map(Tile::registryName)
-					.anyMatch(CDTiles.ID_PASSAGE_FLAG::equals);
+			BlockPos offset;
+			for(Direction face : faces)
+				if(set.contains(offset = pos.offset(face)) && set.get(offset).get().registryName().equals(CDTiles.ID_PASSAGE_FLAG))
+					return true;
+			return false;
 		}
 		
 		public static class Inverse extends Passage
@@ -245,14 +234,7 @@ public class Adjacent extends Condition
 			
 			public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 			{
-				// FIXME Optimise
-				return faces.stream()
-						.map(pos::offset)
-						.filter(set::contains)
-						.map(set::get)
-						.map(Optional::get)
-						.map(Tile::registryName)
-						.noneMatch(CDTiles.ID_PASSAGE_FLAG::equals);
+				return !super.test(tileIn, pos, set);
 			}
 		}
 	}

@@ -30,10 +30,24 @@ public class Near extends Condition
 
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
-		// FIXME Optimise
-		return !set.getMatchingTiles((p2,t2) -> 
-			p2.isWithinDistance(pos, d) && 
-			child.test(t2, p2, set)).isEmpty();
+		for(int x=-(int)d; x<d; x++)
+			for(int z=-(int)d; z<d; z++)
+				for(int y=-(int)d; y<d; y++)
+				{
+					// Ignore the zero index, since that's where we are
+					if(x == y && y == z && x == 0)
+						continue;
+					
+					BlockPos offset = pos.add(x, y, z);
+					if(!set.contains(offset) || !offset.isWithinDistance(pos, d))
+						continue;
+					
+					Tile tileAt = set.get(offset).get();
+					if(child.test(tileAt, offset, set))
+						return true;
+				}
+		
+		return false;
 	}
 	
 	public JsonElement toJson(JsonOps ops)

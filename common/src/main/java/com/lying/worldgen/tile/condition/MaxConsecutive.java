@@ -2,7 +2,6 @@ package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 
-import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -43,14 +42,18 @@ public class MaxConsecutive extends Condition
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
-		// FIXME Optimise
-		return (int)faces.stream()
-				.map(f -> pos.offset(f))
-				.filter(set::contains)
-				.map(p -> set.get(p).get())
-				.filter(Predicates.not(Tile::isBlank))
-				.filter(tileIn::is)
-				.count() < i;
+		int tally = 0;
+		for(Direction face : faces)
+		{
+			BlockPos offset = pos.offset(face);
+			if(!set.contains(offset))
+				continue;
+			Tile tileAt = set.get(offset).get();
+			if(!tileAt.isBlank() && tileIn.is(tileAt))
+				if(++tally >= i)
+					return false;
+		}
+		return true;
 	}
 	
 	public JsonElement toJson(JsonOps ops)

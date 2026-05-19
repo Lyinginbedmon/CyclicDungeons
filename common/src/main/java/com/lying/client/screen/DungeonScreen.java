@@ -10,10 +10,10 @@ import org.joml.Vector2i;
 import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.Blueprint.ErrorType;
-import com.lying.blueprint.BlueprintOrganiser;
+import com.lying.graph.GraphOrganiser;
+import com.lying.graph.GraphScruncher;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
-import com.lying.blueprint.BlueprintScruncher;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
 import com.lying.utility.geometry.Box2f;
@@ -71,9 +71,9 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	protected void init()
 	{
 		ButtonWidget tree, circle, poisson;
-		addDrawableChild(poisson = ButtonWidget.builder(Text.literal("Poisson"), b -> organise(BlueprintOrganiser.Poisson::create)).dimensions(0, 0, 60, 20).build());
-		addDrawableChild(circle = ButtonWidget.builder(Text.literal("Concentric"), b -> organise(BlueprintOrganiser.Circular::create)).dimensions(0, 20, 60, 20).build());
-		addDrawableChild(tree = ButtonWidget.builder(Text.literal("Tree"), b -> organise(BlueprintOrganiser.Tree::create)).dimensions(0, 40, 60, 20).build());
+		addDrawableChild(poisson = ButtonWidget.builder(Text.literal("Poisson"), b -> organise(GraphOrganiser.Poisson::create)).dimensions(0, 0, 60, 20).build());
+		addDrawableChild(circle = ButtonWidget.builder(Text.literal("Concentric"), b -> organise(GraphOrganiser.Circular::create)).dimensions(0, 20, 60, 20).build());
+		addDrawableChild(tree = ButtonWidget.builder(Text.literal("Tree"), b -> organise(GraphOrganiser.Tree::create)).dimensions(0, 40, 60, 20).build());
 		
 		addDrawableChild(scrunchButton = ButtonWidget.builder(Text.literal("Scrunch"), b -> scrunch()).dimensions(0, 110, 60, 20).build());
 		addDrawableChild(collapseButton = ButtonWidget.builder(Text.literal("Collapse"), b -> collapse()).dimensions(0, 130, 60, 20).build());
@@ -94,7 +94,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		addDrawableChild(ButtonWidget.builder(Text.literal("Mode"), b -> state = State.values()[(state.ordinal() + 1)%State.values().length]).dimensions(width - 60, height - 20, 60, 20).build());
 	}
 	
-	private void organise(Supplier<BlueprintOrganiser> organiser)
+	private void organise(Supplier<GraphOrganiser> organiser)
 	{
 		organiser.get().organise(blueprint, Random.create(randSeed));
 		cacheErrors();
@@ -104,14 +104,14 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	private void scrunch()
 	{
-		BlueprintScruncher.scrunch(blueprint);
+		GraphScruncher.scrunch(blueprint);
 		cacheErrors();
 		updatePathCaches();
 	}
 	
 	private void collapse()
 	{
-		BlueprintScruncher.collapse(blueprint);
+		GraphScruncher.collapse(blueprint);
 		cacheErrors();
 		updatePathCaches();
 	}
@@ -129,7 +129,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	private void updatePathCaches()
 	{
-		totalPassages = BlueprintOrganiser.getFinalisedPassages(blueprint);
+		totalPassages = GraphOrganiser.getFinalisedPassages(blueprint);
 		
 		if(!errorCache.isEmpty())
 		{
@@ -137,7 +137,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 			return;
 		}
 		
-		criticalPath = BlueprintOrganiser.getPassages(blueprint.getCriticalPath());
+		criticalPath = GraphOrganiser.getPassages(blueprint.getCriticalPath());
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -264,7 +264,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 						blueprint.updateCriticalPath();
 						Random rand = Random.create(randSeed);
 						blueprint.stream().map(BlueprintRoom::metadata).forEach(meta -> meta.type().prepare(meta, rand));
-						BlueprintOrganiser.Tree.create().organise(blueprint, rand);
+						GraphOrganiser.Tree.create().organise(blueprint, rand);
 						cacheErrors();
 						updatePathCaches();
 					});

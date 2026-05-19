@@ -87,5 +87,6 @@ public final class CyclicDungeons
 	{
 		PitBlock.registerEvent();
 		TickEvent.SERVER_LEVEL_POST.register(w -> BlockResetUtility.getBlockResetUtility(w.getServer()).tickWorld(w));
+		TickEvent.SERVER_LEVEL_PRE.register(DungeonBuilder::onServerTick);
 	}
 }

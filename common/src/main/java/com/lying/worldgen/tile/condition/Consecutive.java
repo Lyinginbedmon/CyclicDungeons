@@ -1,7 +1,6 @@
 package com.lying.worldgen.tile.condition;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
@@ -34,14 +33,16 @@ public class Consecutive extends Condition
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 	{
-		// FIXME Optimise
-		return faces.stream()
-				.map(pos::offset)
-				.filter(set::contains)
-				.map(set::get)
-				.map(Optional::get)
-				.filter(t -> !t.isBlank())
-				.anyMatch(tileIn::is);
+		for(Direction face : faces)
+		{
+			BlockPos offset = pos.offset(face);
+			if(!set.contains(offset))
+				continue;
+			Tile tileAt = set.get(offset).get();
+			if(!tileAt.isBlank() && tileIn.is(tileAt))
+				return true;
+		}
+		return false;
 	}
 	
 	public JsonElement toJson(JsonOps ops)
@@ -83,14 +84,7 @@ public class Consecutive extends Condition
 		
 		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
 		{
-			// FIXME Optimise
-			return faces.stream()
-					.map(pos::offset)
-					.filter(set::contains)
-					.map(set::get)
-					.map(Optional::get)
-					.filter(t -> !t.isBlank())
-					.noneMatch(tileIn::is);
+			return !super.test(tileIn, pos, set);
 		}
 	}
 }

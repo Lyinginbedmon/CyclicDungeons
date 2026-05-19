@@ -1,4 +1,4 @@
-package com.lying.blueprint;
+package com.lying.graph;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -15,6 +15,9 @@ import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.blueprint.Blueprint;
+import com.lying.blueprint.BlueprintPassage;
+import com.lying.blueprint.BlueprintRoom;
 import com.lying.grid.GridTile;
 import com.lying.init.CDLoggers;
 import com.lying.utility.geometry.AbstractBox2f;
@@ -25,7 +28,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 
 /** Utilities for organising a blueprint, prior to scrunching */
-public abstract class BlueprintOrganiser
+public abstract class GraphOrganiser
 {
 	public static final DebugLogger LOGGER = CDLoggers.PLANAR;
 	private static final int GRID_SIZE = 30;
@@ -123,7 +126,7 @@ public abstract class BlueprintOrganiser
 		return mergedPaths;
 	}
 	
-	public static class Poisson extends BlueprintOrganiser
+	public static class Poisson extends GraphOrganiser
 	{
 		public static Poisson create() { return new Poisson(); }
 		
@@ -323,7 +326,7 @@ public abstract class BlueprintOrganiser
 		}
 	}
 	
-	public static class Tree extends BlueprintOrganiser
+	public static class Tree extends GraphOrganiser
 	{
 		public static Tree create() { return new Tree(); }
 		
@@ -391,7 +394,7 @@ public abstract class BlueprintOrganiser
 		}
 	}
 	
-	public static class Circular extends BlueprintOrganiser
+	public static class Circular extends GraphOrganiser
 	{
 		public static Circular create() { return new Circular(); }
 		
