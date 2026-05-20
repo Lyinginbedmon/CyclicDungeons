@@ -10,6 +10,7 @@ import com.lying.CyclicDungeons;
 import com.lying.block.entity.DartTrapBlockEntity;
 import com.lying.block.entity.EncounterSpawnerBlockEntity;
 import com.lying.block.entity.FlameJetBlockEntity;
+import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.ProximitySensorBlockEntity;
 import com.lying.block.entity.SightSensorBlockEntity;
 import com.lying.block.entity.SoundSensorBlockEntity;
@@ -35,6 +36,7 @@ public class CDBlockEntityTypes
 	private static int tally = 0;
 	
 	public static final RegistrySupplier<BlockEntityType<TrapLogicBlockEntity>> TRAP_LOGIC			= register("trap_logic", TrapLogicBlockEntity::new, CDBlocks.TRAP_LOGIC);
+	public static final RegistrySupplier<BlockEntityType<ModularLogicBlockEntity>> MODULAR_LOGIC	= register("modular_logic", ModularLogicBlockEntity::new, CDBlocks.MODULAR_LOGIC);
 	public static final RegistrySupplier<BlockEntityType<SoundSensorBlockEntity>> SOUND_SENSOR		= register("sound_sensor", SoundSensorBlockEntity::new, CDBlocks.SENSOR_SOUND);
 	public static final RegistrySupplier<BlockEntityType<SightSensorBlockEntity>> SIGHT_SENSOR		= register("sight_sensor", SightSensorBlockEntity::new, CDBlocks.SENSOR_SIGHT);
 	public static final RegistrySupplier<BlockEntityType<ProximitySensorBlockEntity>> PROXIMITY_SENSOR	= register("proximity_sensor", ProximitySensorBlockEntity::new, CDBlocks.SENSOR_PROXIMITY);

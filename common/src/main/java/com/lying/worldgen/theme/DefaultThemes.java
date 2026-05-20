@@ -13,6 +13,7 @@ import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.battle.DefaultBattles;
 import com.lying.grammar.content.trap.DefaultTraps;
+import com.lying.graph.GraphScruncher.ScrunchStyle;
 import com.lying.init.CDTerms;
 import com.lying.worldgen.tileset.DefaultTileSets;
 
@@ -151,6 +152,7 @@ public class DefaultThemes
 				traps, 
 				tileSets, 
 				Optional.empty(), 
+				Optional.empty(),
 				Optional.empty());
 	}
 	
@@ -162,9 +164,10 @@ public class DefaultThemes
 			List<Identifier> traps, 
 			Map<Identifier, Identifier> tileSets, 
 			Optional<Identifier> passageTileSet, 
-			Optional<Integer> iterationCap)
+			Optional<Integer> iterationCap,
+			Optional<ScrunchStyle> scrunchStyle)
 	{
-		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, tileSets, passageTileSet, iterationCap);
+		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, tileSets, passageTileSet, iterationCap, scrunchStyle);
 		THEMES.add(entry);
 		return entry;
 	}

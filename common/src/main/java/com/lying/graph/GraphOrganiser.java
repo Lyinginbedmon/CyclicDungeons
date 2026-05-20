@@ -143,7 +143,7 @@ public abstract class GraphOrganiser
 			}
 			final int radius = Math.ceilDiv(diameter, 2) + 1;
 			
-			PoissonGrid fish = new PoissonGrid(radius, 4);
+			PoissonGrid fish = new PoissonGrid(radius, 16);
 			fish.generateTo(chart.size() * chart.size(), rand);
 			
 			List<GridTile> points = Lists.newArrayList(fish.values());

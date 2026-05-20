@@ -30,6 +30,7 @@ import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
 import com.lying.utility.BlockResetUtility;
 
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.TickEvent;
 
 public final class CyclicDungeons
@@ -88,5 +89,6 @@ public final class CyclicDungeons
 		PitBlock.registerEvent();
 		TickEvent.SERVER_LEVEL_POST.register(w -> BlockResetUtility.getBlockResetUtility(w.getServer()).tickWorld(w));
 		TickEvent.SERVER_LEVEL_PRE.register(DungeonBuilder::onServerTick);
+		LifecycleEvent.SERVER_STARTED.register(DungeonBuilder::onServerStart);
 	}
 }

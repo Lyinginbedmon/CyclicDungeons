@@ -3,6 +3,10 @@ package com.lying.client.screen;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.joml.Vector2i;
@@ -60,6 +64,8 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	private Box2f originBox = null;
 	private List<LineSegment2f> originLines = Lists.newArrayList();
 	
+	private static final ExecutorService THREAD = new ThreadPoolExecutor(0, 16, 60L, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+	
 	public DungeonScreen(DungeonScreenHandler handler, PlayerInventory inventory, Text title)
 	{
 		super(handler, inventory, title);
@@ -104,16 +110,22 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	private void scrunch()
 	{
-		GraphScruncher.scrunch(blueprint);
-		cacheErrors();
-		updatePathCaches();
+		THREAD.submit(() -> 
+		{
+			GraphScruncher.scrunch(blueprint);
+			cacheErrors();
+			updatePathCaches();
+		});
 	}
 	
 	private void collapse()
 	{
-		GraphScruncher.collapse(blueprint);
-		cacheErrors();
-		updatePathCaches();
+		THREAD.submit(() -> 
+		{
+			GraphScruncher.collapse(blueprint);
+			cacheErrors();
+			updatePathCaches();
+		});
 	}
 	
 	private void cacheErrors()

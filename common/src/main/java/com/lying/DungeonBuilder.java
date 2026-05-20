@@ -22,6 +22,7 @@ import com.lying.init.CDLoggers;
 import com.lying.init.CDThemes;
 import com.lying.worldgen.theme.Theme;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
@@ -42,7 +43,7 @@ public class DungeonBuilder
 	{
 		final long startTime = System.currentTimeMillis();
 		final Theme theme = CDThemes.instance().get(CDThemes.ID_GENERIC).get();
-		final GrammarPhrase phrase = CDGrammar.initialPhrase(6, rand);	// FIXME Resolve stock grammar phrase passage issues
+		final GrammarPhrase phrase = CDGrammar.initialPhrase(15, rand);	// FIXME Resolve stock grammar phrase passage issues
 		if(phrase == null)
 		{
 			LOGGER.error(" ! Tried to generate a dungeon w/out providing an initial phrase");
@@ -95,6 +96,11 @@ public class DungeonBuilder
 		}), position, world, theme, rand, startTime));
 		
 		return true;
+	}
+	
+	public static void onServerStart(MinecraftServer server)
+	{
+		SPOOL.clear();
 	}
 	
 	public static void onServerTick(ServerWorld event)

@@ -14,6 +14,7 @@ import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
 import com.lying.grammar.content.battle.BattleEntry;
+import com.lying.graph.GraphScruncher.ScrunchStyle;
 import com.lying.init.CDBattleEntries;
 import com.lying.init.CDPhrases;
 import com.lying.init.CDTerms;
@@ -39,7 +40,8 @@ public record Theme(
 		List<Identifier> trapEncounters, 
 		Map<Identifier,Identifier> tileSets, 
 		Optional<Identifier> passageTiles,
-		Optional<Integer> collapseIterations)
+		Optional<Integer> collapseIterations,
+		Optional<ScrunchStyle> collapseStyle)
 {
 	public static final Codec<Theme> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Theme::registryName),
@@ -49,8 +51,9 @@ public record Theme(
 			Identifier.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
 			TileSetEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
 			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles),
-			Codec.INT.optionalFieldOf("condense_iterations").forGetter(Theme::collapseIterations)
-			).apply(instance, (id,terms,phrases,mobs,traps,tiles,passage,iterations)-> 
+			Codec.INT.optionalFieldOf("condense_iterations").forGetter(Theme::collapseIterations),
+			ScrunchStyle.CODEC.optionalFieldOf("condense_style").forGetter(Theme::collapseStyle)
+			).apply(instance, (id,terms,phrases,mobs,traps,tiles,passage,iterations,style)-> 
 			{
 				Map<Identifier, Identifier> tileSets = new HashMap<>();
 				tiles.forEach(t -> tileSets.put(t.roomId(), t.tilesetId()));
@@ -62,7 +65,8 @@ public record Theme(
 						traps, 
 						tileSets, 
 						passage,
-						iterations);
+						iterations,
+						style);
 			}));
 	
 	public static Theme fromJson(JsonOps ops, JsonElement ele)
@@ -158,6 +162,8 @@ public record Theme(
 	}
 	
 	public int collapseIterationCap() { return collapseIterations.orElse(1000); }
+	
+	public ScrunchStyle collapseApproach() { return collapseStyle.orElse(ScrunchStyle.LINEAR); }
 	
 	public RegistryKey<StructurePool> getTilePool(Tile tileIn)
 	{

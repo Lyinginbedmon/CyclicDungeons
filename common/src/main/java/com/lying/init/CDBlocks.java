@@ -12,6 +12,7 @@ import com.lying.block.DartTrapBlock;
 import com.lying.block.EncounterSpawnerBlock;
 import com.lying.block.FlameJetBlock;
 import com.lying.block.HatchBlock;
+import com.lying.block.ModularLogicBlock;
 import com.lying.block.PitBlock;
 import com.lying.block.ProximitySensorBlock;
 import com.lying.block.RedstoneActorBlock;
@@ -69,6 +70,7 @@ public class CDBlocks
 	// Primary logic block for managing complex trap functions
 	public static final RegistrySupplier<Block> TRAP_LOGIC			= register("trap_logic", s -> new TrapLogicBlock(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
 	public static final RegistrySupplier<Block> TRAP_LOGIC_DECOY	= register("trap_logic_decoy", s -> new Block(s.luminance(l->3).emissiveLighting(CDBlocks::always)));
+	public static final RegistrySupplier<Block> MODULAR_LOGIC		= register("modular_logic", s -> new ModularLogicBlock(s));
 	
 	// Trap Sensors
 	public static final RegistrySupplier<Block> SENSOR_COLLISION	= register("collision_sensor", CollisionSensorBlock::new);
