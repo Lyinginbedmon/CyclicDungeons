@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
+import com.lying.block.entity.logic.WireSet;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDLogicGates.LogicGate;
@@ -33,22 +34,22 @@ public class ModularLogicBlockEntity extends BlockEntity
 	private static final List<LogicModule> TEST_LOGIC	= Lists.newArrayList(
 		LogicModule.of(CDLogicGates.TRUE.get())
 			.name("input_a")
-			.setOutput("a"),
+			.addOutput("a"),
 		LogicModule.of(CDLogicGates.FALSE.get())
 			.name("input_b")
-			.setOutput("not_1"),
+			.addOutput("not_1"),
 		LogicModule.of(CDLogicGates.AND.get())
 			.name("result_gate")
 			.addInput(CDLogicGates.INPUT, "a", "b", "c"),
-		LogicModule.of(CDLogicGates.NOT.get())
+		LogicModule.of(CDLogicGates.NOR.get())
 			.addInput(CDLogicGates.INPUT, "not_1")
-			.setOutput("b"),
-		LogicModule.of(CDLogicGates.NOT.get())
+			.addOutput("b"),
+		LogicModule.of(CDLogicGates.NOR.get())
 			.addInput(CDLogicGates.INPUT, "not_2")
-			.setOutput("c"),
+			.addOutput("c"),
 		LogicModule.of(CDLogicGates.FALSE.get())
 			.name("input_c")
-			.setOutput("not_2")
+			.addOutput("not_2")
 		);
 	
 	private List<LogicModule> modules = Lists.newArrayList(TEST_LOGIC);
@@ -102,13 +103,16 @@ public class ModularLogicBlockEntity extends BlockEntity
 		List<LogicModule> calculateStack = Lists.newArrayList(modules);
 		while(!calculateStack.isEmpty())
 		{
+			// Cache the modules that can be calculated in this iteration step
+			// This prevents modules being calculated before others that might affect their own wires
 			List<LogicModule> calculated = calculateStack.stream()
 					.filter(m -> calculatedWires.containsAll(m.prerequisites()))
 					.toList();
 			for(LogicModule module : calculated)
 			{
 				module.process(wireMap);
-				module.outputWire.ifPresent(calculatedWires::add);
+				if(!module.outputWires.isEmpty())
+					calculatedWires.addAll(module.outputWires.wires());
 			}
 			calculateStack.removeAll(calculated);
 		}
@@ -121,21 +125,22 @@ public class ModularLogicBlockEntity extends BlockEntity
 		public static final Codec<LogicModule> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.optionalFieldOf("name").forGetter(m -> m.name),
 				LogicGate.CODEC.fieldOf("logic").forGetter(m -> m.handler),
-				InputList.CODEC.listOf().optionalFieldOf("input").forGetter(LogicModule::collectInputs),
-				Codec.STRING.optionalFieldOf("output").forGetter(m -> m.outputWire)
-				).apply(instance, (n,h,i,o) -> 
+				WireSet.CODEC.optionalFieldOf("input_wires").forGetter(m -> m.inputWires.isEmpty() ? Optional.empty() : Optional.of(m.inputWires)),
+				WireSet.CODEC.optionalFieldOf("output_wires").forGetter(m -> m.outputWires.isEmpty() ? Optional.empty() : Optional.of(m.outputWires))
+				).apply(instance, (name,handler,inputs,outputs) -> 
 				{
-					LogicModule module = new LogicModule(h);
-					n.ifPresent(module::name);
-					o.ifPresent(module::setOutput);
+					LogicModule module = new LogicModule(handler);
+					name.ifPresent(module::name);
+					inputs.ifPresent(module::addInput);
+					outputs.ifPresent(module::addOutput);
 					return module;
 				}));
 		public static final Codec<List<LogicModule>> LIST_CODEC	= CODEC.listOf();
 		
 		private Optional<String> name = Optional.empty();
 		private final LogicGate handler;
-		private final Map<String, List<String>> inputSet = new HashMap<>();
-		private Optional<String> outputWire = Optional.empty();
+		private final WireSet inputWires = new WireSet();
+		private final WireSet outputWires = new WireSet();
 		
 		protected LogicModule(LogicGate handlerIn)
 		{
@@ -155,60 +160,69 @@ public class ModularLogicBlockEntity extends BlockEntity
 		
 		public String displayName() { return name.orElse(handler.registryName()); }
 		
-		public LogicModule setOutput(String wire)
+		/** Attaches a wire to the default result port of this module */
+		public LogicModule addOutput(String wire)
 		{
-			outputWire = Optional.of(wire);
+			return addOutput(CDLogicGates.OUTPUT, wire);
+		}
+		
+		public LogicModule addOutput(WireSet wires)
+		{
+			for(String port : wires.ports())
+				addOutput(port, wires.get(port).toArray(new String[0]));
+			return this;
+		}
+		
+		public LogicModule addOutput(String input, String... wires)
+		{
+			outputWires.put(input, wires);
+			return this;
+		}
+		
+		public LogicModule addInput(WireSet wires)
+		{
+			for(String port : wires.ports())
+				addInput(port, wires.get(port).toArray(new String[0]));
 			return this;
 		}
 		
 		public LogicModule addInput(String input, String... wires)
 		{
-			List<String> set = inputSet.getOrDefault(input, Lists.newArrayList());
-			for(String wire : wires)
-				if(!set.contains(wire))
-					set.add(wire);
-			inputSet.put(input, set);
+			inputWires.put(input, wires);
 			return this;
 		}
 		
-		protected Optional<List<InputList>> collectInputs()
+		protected Optional<List<String>> collectInputs()
 		{
-			List<InputList> set = inputSet.entrySet().stream().map(e -> new InputList(e.getKey(), e.getValue())).toList();
+			List<String> set = inputWires.wires();
 			return set.isEmpty() ? Optional.empty() : Optional.of(set);
 		}
 		
 		/** Adds all wires used by this module to the wire map */
 		public void registerWires(Consumer<String> register)
 		{
-			outputWire.ifPresent(register::accept);
-			inputSet.values().forEach(l -> l.forEach(register::accept));
+			outputWires.wires().forEach(register::accept);
+			inputWires.wires().forEach(register::accept);
 		}
 		
 		/** Returns a list of all input wires that must be calculated before this module */
 		public List<String> prerequisites()
 		{
 			List<String> wires = Lists.newArrayList();
-			inputSet.values().forEach(wires::addAll);
+			inputWires.wires().forEach(wires::add);
 			return wires.stream().distinct().toList();
 		}
 		
 		/** Returns the result of this module, updating its output wire if necessary */
 		public boolean process(Map<String, Boolean> wireStates)
 		{
-			boolean result = handler.getOutput(inputSet, wireStates);
+			boolean result = handler.getOutput(inputWires, wireStates);
 			
-			if(outputWire.isPresent() && result)
-				wireStates.put(outputWire.get(), true);
+			if(!outputWires.isEmpty() && result)
+				for(String wire : outputWires.get(CDLogicGates.OUTPUT))
+					wireStates.put(wire, true);
 			
 			return result;
-		}
-		
-		private static record InputList(String name, List<String> values)
-		{
-			public static final Codec<InputList> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-					Codec.STRING.fieldOf("var").forGetter(InputList::name), 
-					Codec.STRING.listOf().fieldOf("wires").forGetter(InputList::values)
-					).apply(instance, InputList::new));
 		}
 	}
 	
