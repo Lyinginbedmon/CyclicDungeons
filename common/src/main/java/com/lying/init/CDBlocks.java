@@ -62,7 +62,6 @@ public class CDBlocks
 	 * Trap sensors
 	 * * Area
 	 * Trap actors
-	 * * Entity spawner (mobs, potion clouds, etc.)
 	 * * Toggled ceiling block
 	 * * Puzzle Door Trigger
 	 */

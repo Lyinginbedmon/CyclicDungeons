@@ -1,8 +1,6 @@
 package com.lying.block.entity;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -12,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
 import com.lying.block.entity.logic.WireSet;
+import com.lying.block.entity.logic.WireState;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDLogicGates.LogicGate;
@@ -94,7 +93,7 @@ public class ModularLogicBlockEntity extends BlockEntity
 	public boolean processLogic()
 	{
 		// Account for all input/output wires in this circuit
-		final Map<String, Boolean> wireMap = new HashMap<>();
+		final WireState wireMap = new WireState();
 		final Consumer<String> wireRegistry = w -> wireMap.put(w, false);
 		modules.forEach(m -> m.registerWires(wireRegistry));
 		
@@ -126,13 +125,17 @@ public class ModularLogicBlockEntity extends BlockEntity
 				Codec.STRING.optionalFieldOf("name").forGetter(m -> m.name),
 				LogicGate.CODEC.fieldOf("logic").forGetter(m -> m.handler),
 				WireSet.CODEC.optionalFieldOf("input_wires").forGetter(m -> m.inputWires.isEmpty() ? Optional.empty() : Optional.of(m.inputWires)),
-				WireSet.CODEC.optionalFieldOf("output_wires").forGetter(m -> m.outputWires.isEmpty() ? Optional.empty() : Optional.of(m.outputWires))
-				).apply(instance, (name,handler,inputs,outputs) -> 
+				WireSet.CODEC.optionalFieldOf("output_wires").forGetter(m -> m.outputWires.isEmpty() ? Optional.empty() : Optional.of(m.outputWires)),
+				WireState.CODEC.optionalFieldOf("prev_inputs").forGetter(m -> m.prevWires.isInert() ? Optional.of(m.prevWires) : Optional.empty()),
+				Codec.BOOL.optionalFieldOf("prev_output").forGetter(m -> m.prevResult ? Optional.of(true) : Optional.empty())
+				).apply(instance, (name,handler,inputs,outputs,prevWires,prevOut) -> 
 				{
 					LogicModule module = new LogicModule(handler);
 					name.ifPresent(module::name);
 					inputs.ifPresent(module::addInput);
 					outputs.ifPresent(module::addOutput);
+					prevWires.ifPresent(module.prevWires::copy);
+					module.prevResult = prevOut.orElse(false);
 					return module;
 				}));
 		public static final Codec<List<LogicModule>> LIST_CODEC	= CODEC.listOf();
@@ -141,6 +144,11 @@ public class ModularLogicBlockEntity extends BlockEntity
 		private final LogicGate handler;
 		private final WireSet inputWires = new WireSet();
 		private final WireSet outputWires = new WireSet();
+		
+		// State of input wires in previous frame
+		private WireState prevWires = new WireState();
+		// Module output in previous frame
+		private boolean prevResult = false;
 		
 		protected LogicModule(LogicGate handlerIn)
 		{
@@ -214,14 +222,21 @@ public class ModularLogicBlockEntity extends BlockEntity
 		}
 		
 		/** Returns the result of this module, updating its output wire if necessary */
-		public boolean process(Map<String, Boolean> wireStates)
+		public boolean process(WireState wireStates)
 		{
-			boolean result = handler.getOutput(inputWires, wireStates);
+			boolean result = handler.getResult(inputWires, wireStates, prevWires, prevResult);
 			
+			// Update record of input state
+			prevWires.clear();
+			for(String wire : inputWires.wires())
+				prevWires.put(wire, wireStates.get(wire));
+			
+			// Update output wire(s)
 			if(!outputWires.isEmpty() && result)
 				for(String wire : outputWires.get(CDLogicGates.OUTPUT))
 					wireStates.put(wire, true);
 			
+			prevResult = result;
 			return result;
 		}
 	}
