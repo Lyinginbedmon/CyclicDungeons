@@ -14,9 +14,10 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
-public class WireSet
+/** Map of ports to the named wires attached to them */
+public class PortSet
 {
-	public static final Codec<WireSet> CODEC	= Codec.of(WireSet::encode, WireSet::decode);
+	public static final Codec<PortSet> CODEC	= Codec.of(PortSet::encode, PortSet::decode);
 	private static final Codec<String> CODEC_STRING	= Codec.STRING;
 	private static final Codec<List<String>> CODEC_LIST	= CODEC_STRING.listOf();
 	
@@ -56,7 +57,7 @@ public class WireSet
 	
 	public void clear() { values.clear(); }
 	
-	private static <T extends Object> DataResult<T> encode(final WireSet wireSet, final DynamicOps<T> ops, final T prefix)
+	private static <T extends Object> DataResult<T> encode(final PortSet wireSet, final DynamicOps<T> ops, final T prefix)
 	{
 		RecordBuilder<T> map = ops.mapBuilder();
 		for(Entry<String, List<String>> entry : wireSet.values.entrySet())
@@ -73,9 +74,9 @@ public class WireSet
 		return map.build(prefix);
 	}
 	
-	private static <T> DataResult<Pair<WireSet, T>> decode(final DynamicOps<T> ops, final T input)
+	private static <T> DataResult<Pair<PortSet, T>> decode(final DynamicOps<T> ops, final T input)
 	{
-		WireSet wires = new WireSet();
+		PortSet wires = new PortSet();
 		MapLike<T> map = ops.getMap(input).result().get();
 		map.entries().forEach(entry -> 
 		{

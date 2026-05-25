@@ -1,6 +1,5 @@
 package com.lying.block.entity.logic;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -13,48 +12,42 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
-/** Map of wire names to their states */
-public class WireState
+public class LogicResult
 {
-	public static final Codec<WireState> CODEC	= Codec.of(WireState::encode, WireState::decode);
+	public static final Codec<LogicResult> CODEC	= Codec.of(LogicResult::encode, LogicResult::decode);
 	
 	private final Map<String, Boolean> values = new HashMap<>();
 	
-	public void copy(WireState state)
+	public void copy(LogicResult state)
 	{
 		values.clear();
 		for(Entry<String, Boolean> entry : state.values.entrySet())
 			values.put(entry.getKey(), entry.getValue());
 	}
 	
-	public void setLive(String key)
+	public static LogicResult create() { return new LogicResult(); }
+	
+	public LogicResult put(String port, boolean value)
 	{
-		put(key, true);
+		values.put(port, value);
+		return this;
 	}
 	
-	public void put(String key, boolean value)
+	/** Returns the status of the given port */
+	public boolean get(String port)
 	{
-		values.put(key, value);
-	}
-	
-	public boolean get(String key)
-	{
-		return values.getOrDefault(key, false);
+		return values.getOrDefault(port, false);
 	}
 	
 	public boolean isEmpty() { return values.isEmpty(); }
 	
-	/** Returns TRUE if all recorded values are FALSE */
+	/** Returns TRUE if all ports are FALSE */
 	public boolean isInert()
 	{
 		return values.values().stream().allMatch(v -> !v);
 	}
 	
 	public final boolean isWorthStoring() { return !isEmpty() && !isInert(); }
-	
-	public Collection<String> keys() { return values.keySet(); }
-	
-	public Collection<Boolean> values() { return values.values(); }
 	
 	public void clear() { values.clear(); }
 	
@@ -63,22 +56,24 @@ public class WireState
 		values.entrySet().forEach(e -> printFunc.accept(e.getKey()+": "+e.getValue()));
 	}
 	
-	private static <T extends Object> DataResult<T> encode(final WireState wireSet, final DynamicOps<T> ops, final T prefix)
+	private static <T extends Object> DataResult<T> encode(final LogicResult result, final DynamicOps<T> ops, final T prefix)
 	{
 		RecordBuilder<T> map = ops.mapBuilder();
-		for(Entry<String, Boolean> entry : wireSet.values.entrySet())
+		for(Entry<String, Boolean> entry : result.values.entrySet())
 		{
 			T key = ops.createString(entry.getKey());
 			boolean values = entry.getValue();
-			if(values)
+			if(!values)
+				continue;
+			else
 				map.add(key, Codec.BOOL.encodeStart(ops, values).getOrThrow());
 		}
 		return map.build(prefix);
 	}
 	
-	private static <T> DataResult<Pair<WireState, T>> decode(final DynamicOps<T> ops, final T input)
+	private static <T> DataResult<Pair<LogicResult, T>> decode(final DynamicOps<T> ops, final T input)
 	{
-		WireState wires = new WireState();
+		LogicResult wires = new LogicResult();
 		MapLike<T> map = ops.getMap(input).result().get();
 		map.entries().forEach(entry -> 
 		{
