@@ -1,11 +1,14 @@
 package com.lying.block;
 
+import java.util.List;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.Codec;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
@@ -26,19 +29,28 @@ public interface IWireableBlock
 		return expected == given ? (BlockEntityTicker<A>)ticker : null;
 	}
 	
+	@Nullable
 	public static IWireableBlock getWireable(BlockPos pos, World world)
 	{
-		return (IWireableBlock)world.getBlockState(pos).getBlock();
+		if(pos.getY() < world.getBottomY() || pos.getY() > 256)
+			return null;
+		
+		Block block = world.getBlockState(pos).getBlock();
+		return block instanceof IWireableBlock ? (IWireableBlock)block : null;
 	}
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world);
+	public List<String> inputPorts(BlockPos pos, World world);
+	public List<String> outputPorts(BlockPos pos, World world);
+	
+	public void respondToPorts(BlockPos pos, World world);
+	
+	/** Called when the block receives a port connection from the given block */
+	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, BlockPos pos, String output, World world);
+	
+	/** Called when the block delivers a port connection to the given block */
+	public boolean acceptWireTo(String output, BlockPos me, WireMode space, BlockPos pos, String input, World world);
 	
 	public WireRecipient type();
-	
-	public default void trigger(BlockPos pos, World world) { }
-	
-	public default void activate(BlockPos pos, World world) { if(!isActive(pos, world)) trigger(pos, world); }
-	public default void deactivate(BlockPos pos, World world) { if(isActive(pos, world)) trigger(pos, world); }
 	
 	public default int wireCount(BlockPos pos, World world) { return 0; }
 	
@@ -47,6 +59,9 @@ public interface IWireableBlock
 	public default Vec3d wireRenderOffset(BlockState state) { return Vec3d.ZERO; }
 	
 	public default boolean isActive(BlockPos pos, World world) { return activity(pos, world) > 0; }
+	
+	/** Returns true if the given output port of the block is active */
+	public default boolean isPortActive(String port, BlockPos pos, World world) { return false; }
 	
 	public default int activity(BlockPos pos, World world) { return 0; }
 	

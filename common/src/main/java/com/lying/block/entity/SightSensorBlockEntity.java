@@ -195,6 +195,11 @@ public class SightSensorBlockEntity extends TrapSensorBlockEntity<SightSensorBlo
 		}
 	}
 	
+	public void runInactive(SightSensorBlockEntity tile)
+	{
+		
+	}
+	
 	/** Called when the eye starts tracking a player */
 	protected void startTracking(PlayerEntity player)
 	{

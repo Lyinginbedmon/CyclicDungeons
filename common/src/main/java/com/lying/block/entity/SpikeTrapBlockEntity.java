@@ -29,7 +29,7 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
 
-public class SpikeTrapBlockEntity extends TrapActorBlockEntity
+public class SpikeTrapBlockEntity extends TrapActorBlockEntity<SpikeTrapBlock>
 {
 	/** How quickly the spikes extend from the trap */
 	public static final float EXTEND_RATE = 0.4F;

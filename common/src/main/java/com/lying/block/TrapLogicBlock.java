@@ -1,7 +1,10 @@
 package com.lying.block;
 
+import java.util.List;
+
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
@@ -39,10 +42,24 @@ public class TrapLogicBlock extends BlockWithEntity implements IWireableBlock
 	
 	public WireRecipient type() { return WireRecipient.LOGIC; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
+	public void respondToPorts(BlockPos pos, World world)
 	{
-		TrapLogicBlockEntity tile = world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_LOGIC.get()).get();
-		return type != WireRecipient.LOGIC && tile.processWireConnection(target, space, type);
+		world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_LOGIC.get()).ifPresent(t -> t.respondToPorts());
+	}
+	
+	public List<String> inputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.INPUT); }
+	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
+	
+	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world)
+	{
+		world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_LOGIC.get()).ifPresent(t -> t.processOutputConnection(output, pos, input, space));
+		return true;
+	}
+	
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
+	{
+		world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_LOGIC.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		return true;
 	}
 	
 	public void clearWires(BlockPos pos, World world)

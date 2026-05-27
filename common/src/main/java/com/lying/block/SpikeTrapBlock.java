@@ -78,9 +78,10 @@ public class SpikeTrapBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get()).get().wireCount(); }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
 	{
-		return world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get()).get().processWireConnection(target, space, type);
+		world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		return true;
 	}
 	
 	public void clearWires(BlockPos pos, World world)

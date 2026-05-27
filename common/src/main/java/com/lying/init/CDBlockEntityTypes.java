@@ -40,7 +40,7 @@ public class CDBlockEntityTypes
 	public static final RegistrySupplier<BlockEntityType<SoundSensorBlockEntity>> SOUND_SENSOR		= register("sound_sensor", SoundSensorBlockEntity::new, CDBlocks.SENSOR_SOUND);
 	public static final RegistrySupplier<BlockEntityType<SightSensorBlockEntity>> SIGHT_SENSOR		= register("sight_sensor", SightSensorBlockEntity::new, CDBlocks.SENSOR_SIGHT);
 	public static final RegistrySupplier<BlockEntityType<ProximitySensorBlockEntity>> PROXIMITY_SENSOR	= register("proximity_sensor", ProximitySensorBlockEntity::new, CDBlocks.SENSOR_PROXIMITY);
-	public static final RegistrySupplier<BlockEntityType<TrapActorBlockEntity>> TRAP_ACTOR			= register("trap_actor", TrapActorBlockEntity::new, 
+	public static final RegistrySupplier<BlockEntityType<TrapActorBlockEntity<?>>> TRAP_ACTOR			= register("trap_actor", TrapActorBlockEntity::new, 
 			CDBlocks.ACTOR_REDSTONE, 
 			CDBlocks.STONE_BRICK_HATCH,
 			CDBlocks.STONE_HATCH,

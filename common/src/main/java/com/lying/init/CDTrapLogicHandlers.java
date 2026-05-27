@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.google.common.base.Function;
 import com.lying.CyclicDungeons;
+import com.lying.block.ITrapActor;
 import com.lying.block.IWireableBlock;
 import com.lying.block.entity.logic.CycleLogicHandler;
 import com.lying.block.entity.logic.FalloffLogicHandler;
@@ -33,21 +34,22 @@ public class CDTrapLogicHandlers
 	/** Default behaviour, also used whenever the specified behaviour is unrecognised */
 	public static final Supplier<LogicHandler> LOGIC_RELAY = () -> new LogicHandler(CDTrapLogicHandlers.ID_RELAY) 
 	{
-		public void handleLogic(List<BlockPos> sensors, List<BlockPos> actors, ServerWorld world)
+		public void handleLogic(int inputState, List<BlockPos> actors, ServerWorld world)
 		{
-			if(sensors.isEmpty())
+			if(inputState < 0)
 			{
-				actors.forEach(p -> IWireableBlock.getWireable(p, world).deactivate(p, world));
+				actors.forEach(p -> ((ITrapActor)IWireableBlock.getWireable(p, world)).deactivate(p, world));
 				return;
 			}
 			
-			final boolean status = sensors.stream().anyMatch(p -> IWireableBlock.getWireable(p, world).isActive(p, world));
+			final boolean status = inputState > 0;
 			actors.forEach(p -> 
 			{
+				ITrapActor trActor = ((ITrapActor)IWireableBlock.getWireable(p, world));
 				if(status)
-					IWireableBlock.getWireable(p, world).activate(p, world);
+					trActor.activate(p, world);
 				else
-					IWireableBlock.getWireable(p, world).deactivate(p, world);
+					trActor.deactivate(p, world);
 			});
 		}
 	};
@@ -92,6 +94,6 @@ public class CDTrapLogicHandlers
 		
 		public Identifier registryName() { return id; }
 		
-		public abstract void handleLogic(List<BlockPos> sensors, List<BlockPos> actors, ServerWorld world);
+		public abstract void handleLogic(int inputState, List<BlockPos> actors, ServerWorld world);
 	}
 }

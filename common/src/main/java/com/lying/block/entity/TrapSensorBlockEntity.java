@@ -1,7 +1,7 @@
 package com.lying.block.entity;
 
-import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.WireRecipient;
+import java.util.List;
+
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
@@ -39,6 +39,8 @@ public abstract class TrapSensorBlockEntity<T extends TrapSensorBlockEntity<?>> 
 		activeTicks = nbt.getInt("Activity");
 	}
 	
+	public List<String> inputPorts() { return List.of(); }
+	
 	protected void storeSettings(NbtCompound nbt)
 	{
 		if(minTicksActive > 0)
@@ -50,11 +52,21 @@ public abstract class TrapSensorBlockEntity<T extends TrapSensorBlockEntity<?>> 
 		minTicksActive = nbt.getInt("Delay");
 	}
 	
-	public boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type) { return false; }
+	public boolean processInputConnection(String input, BlockPos pos, String port, WireMode space)
+	{
+		return true;
+	}
+	
+	public boolean processOutputConnection(String output, BlockPos pos, String input, WireMode space)
+	{
+		return false;
+	}
 	
 	public abstract boolean shouldBeActive(T tile);
 	
 	public abstract void runActive(T tile);
+	
+	public abstract void runInactive(T tile);
 	
 	public void setActivationDelay(int delay) { this.minTicksActive = delay; }
 	
@@ -62,7 +74,7 @@ public abstract class TrapSensorBlockEntity<T extends TrapSensorBlockEntity<?>> 
 	
 	public static <T extends TrapSensorBlockEntity<T>> void tickServer(World world, BlockPos pos, BlockState state, T tile)
 	{
-		if(tile.shouldBeActive(tile) || IWireableBlock.getWireable(pos, world).isActive(pos, world))
+		if(tile.shouldBeActive(tile))
 		{
 			if(tile.activeTicks++ > tile.minTicksActive)
 				tile.runActive(tile);
@@ -71,7 +83,10 @@ public abstract class TrapSensorBlockEntity<T extends TrapSensorBlockEntity<?>> 
 		else if(tile.activeTicks > 0)
 		{
 			tile.activeTicks = 0;
+			tile.runInactive(tile);
 			tile.markDirty();
 		}
 	}
+	
+	public void resetBlock() { }
 }

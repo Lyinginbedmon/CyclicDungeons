@@ -11,7 +11,7 @@ import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.LogicWire;
 import com.lying.block.entity.logic.WireState;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDLogicGates;
+import com.lying.reference.Reference;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -25,32 +25,12 @@ import net.minecraft.world.World;
 
 public class ModularLogicBlockEntity extends BlockEntity
 {
-	@SuppressWarnings("unused")
-	private static final List<LogicModule> TEST_LOGIC	= Lists.newArrayList(
-		LogicModule.of(CDLogicGates.TRUE.get())
-			.name("input_a")
-			.addOutput("a"),
-		LogicModule.of(CDLogicGates.FALSE.get())
-			.name("input_b")
-			.addOutput("not_1"),
-		LogicModule.of(CDLogicGates.AND.get())
-			.name("result_gate")
-			.addInput("input_0", "a")
-			.addInput("input_1", "b")
-			.addInput("input_2", "c"),
-		LogicModule.of(CDLogicGates.NOR.get())
-			.addInput("not_1")
-			.addOutput("b"),
-		LogicModule.of(CDLogicGates.NOR.get())
-			.addInput("not_2")
-			.addOutput("c"),
-		LogicModule.of(CDLogicGates.FALSE.get())
-			.name("input_c")
-			.addOutput("not_2")
-		);
-	
+	public static final long UPDATE_FREQUENCY = Reference.Values.TICKS_PER_SECOND / 2;
 	private List<LogicModule> modules = Lists.newArrayList();
 	private Map<String, LogicWire> wires = new HashMap<>();
+	private int ticks = 0;
+	
+	private Map<String, LogicModule> outputModules = new HashMap<>();
 	
 	public ModularLogicBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -106,13 +86,16 @@ public class ModularLogicBlockEntity extends BlockEntity
 	
 	public static <T extends BlockEntity> void tickServer(World world, BlockPos pos, BlockState state, ModularLogicBlockEntity tile)
 	{
-		tile.processLogic(world.getTime());
+		if(tile.ticks++ % UPDATE_FREQUENCY == 0)
+			tile.processLogic();
 	}
 	
-	public boolean processLogic(long worldTime)
+	public boolean processLogic()
 	{
 		if(modules.isEmpty())
 			return false;
+		
+		outputModules.clear();
 		
 		// Make sure all wires exist within the wire map
 		final Consumer<String> wireRegistry = w -> 
@@ -121,18 +104,31 @@ public class ModularLogicBlockEntity extends BlockEntity
 			{
 				LogicWire wire = new LogicWire(w);
 				// Update the wire on instantiation to ensure initial state is accurate
-				wire.update(modules, worldTime);
+				wire.update(modules);
 				wires.put(w, wire);
 			}
 		};
-		modules.forEach(m -> m.registerWires(wireRegistry));
+		modules.forEach(m -> 
+		{
+			m.registerWires(wireRegistry);
+			
+			if(m.isOutput())
+				outputModules.put(m.displayName(), m);
+		});
 		
 		// Update all modules
-		modules.forEach(m -> m.update(wires, worldTime, this));
+		modules.forEach(m -> m.update(wires, this));
 		
 		// Update all wires
-		wires.values().forEach(w -> w.update(modules, worldTime));
+		wires.values().forEach(w -> w.update(modules));
 		
 		return true;
+	}
+	
+	public List<String> outputPorts() { return Lists.newArrayList(outputModules.keySet()); }
+	
+	public boolean getPortStatus(String output)
+	{
+		return outputModules.containsKey(output) ? outputModules.get(output).getOutputStatus(output) : false;
 	}
 }

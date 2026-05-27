@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 
 import com.lying.block.ProximitySensorBlock;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDBlocks;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -125,6 +126,12 @@ public class ProximitySensorBlockEntity extends TrapSensorBlockEntity<ProximityS
 		tile.getClosestPlayer().ifPresentOrElse(p -> 
 			ProximitySensorBlock.setPower((int)MathHelper.clamp(15 - Math.floor(p), 0, 15), tile.getPos(), tile.getWorld()), () -> 
 			ProximitySensorBlock.setPower(0, tile.getPos(), tile.getWorld()));
+	}
+	
+	public void runInactive(ProximitySensorBlockEntity tile)
+	{
+		if(tile.getCachedState().get(ProximitySensorBlock.POWERED))
+			tile.getWorld().setBlockState(tile.getPos(), CDBlocks.SENSOR_PROXIMITY.get().getDefaultState(), 3);
 	}
 	
 	protected Optional<Double> getClosestPlayer()

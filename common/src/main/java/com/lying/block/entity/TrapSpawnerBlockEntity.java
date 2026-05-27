@@ -2,10 +2,9 @@ package com.lying.block.entity;
 
 import org.joml.Vector3i;
 
-import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.TrapSpawnerBlock;
+import com.lying.block.entity.logic.TrapSpawnerLogic;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;
 
 import net.minecraft.block.BlockState;
@@ -25,7 +24,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 
-public class TrapSpawnerBlockEntity extends TrapActorBlockEntity
+public class TrapSpawnerBlockEntity extends TrapActorBlockEntity<TrapSpawnerBlock>
 {
 	private TrapSpawnerLogic logic = new TrapSpawnerLogic();
 	private ActivationType activation = ActivationType.CONSTANT;
@@ -52,13 +51,6 @@ public class TrapSpawnerBlockEntity extends TrapActorBlockEntity
 		logic.readNbt(nbt);
 		activation = ActivationType.fromString(nbt.getString("Activity"));
 		spawnRate = nbt.getShort("SpawnRate");
-	}
-	
-	public boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type)
-	{
-		if(type != WireRecipient.ACTOR)
-			addWire(pos, space, type);
-		return type != WireRecipient.ACTOR;
 	}
 	
 	public TrapSpawnerLogic getLogic() { return this.logic; }

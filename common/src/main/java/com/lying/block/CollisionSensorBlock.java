@@ -109,7 +109,7 @@ public class CollisionSensorBlock extends AbstractTrapSensorBlock
 		return getDefaultState().with(FACING, ctx.getSide());
 	}
 	
-	public int activity(BlockPos pos, World world)
+	public int portActivity(BlockPos pos, World world)
 	{
 		return world.getBlockState(pos).get(POWERED) ? 15 : 0;
 	}

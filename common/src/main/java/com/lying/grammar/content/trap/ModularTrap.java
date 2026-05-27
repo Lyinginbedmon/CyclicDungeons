@@ -11,9 +11,9 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
+import com.lying.init.CDLogicGates;
 import com.lying.init.CDTrapTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;
@@ -158,7 +158,7 @@ public class ModularTrap extends Trap
 			return;
 		
 		IWireableBlock wireable = (IWireableBlock)state.getBlock();
-		wireable.acceptWireTo(WireRecipient.SENSOR, input, WireMode.GLOBAL, receiver, world);
+		wireable.acceptWireFrom(CDLogicGates.INPUT, receiver, WireMode.GLOBAL, input, CDLogicGates.OUTPUT, world);
 	}
 	
 	public static record Module(

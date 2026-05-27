@@ -3,7 +3,6 @@ package com.lying.block.entity;
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.CyclicDungeons;
-import com.lying.block.IWireableBlock;
 import com.lying.block.SoundSensorBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
@@ -111,7 +110,7 @@ public class SoundSensorBlockEntity extends BlockEntity implements Holder<Vibrat
 			{
 				SoundSensorBlockEntity.this.lastFrequency = Vibrations.getFrequency(event);
 				int i = Vibrations.getSignalStrength(distance, getRange());
-				IWireableBlock.getWireable(this.pos, world).trigger(this.pos, world);
+				((SoundSensorBlock)world.getBlockState(SoundSensorBlockEntity.this.getPos()).getBlock()).trigger(this.pos, world);
 				world.setBlockState(this.pos, world.getBlockState(this.pos).with(SoundSensorBlock.POWER, i));
 			}
 		}

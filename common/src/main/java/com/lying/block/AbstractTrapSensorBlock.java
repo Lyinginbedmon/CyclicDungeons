@@ -1,5 +1,8 @@
 package com.lying.block;
 
+import java.util.List;
+
+import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.Block;
@@ -21,7 +24,18 @@ public abstract class AbstractTrapSensorBlock extends Block implements IWireable
 	
 	public WireRecipient type() { return WireRecipient.SENSOR; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
+	public List<String> inputPorts(BlockPos pos, World world) { return List.of(); }
+	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
+	
+	/** Sensors don't need to respond to ports because they only transmit signals */
+	public void respondToPorts(BlockPos pos, World world) { }
+	
+	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world)
+	{
+		return true;
+	}
+	
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
 	{
 		return false;
 	}

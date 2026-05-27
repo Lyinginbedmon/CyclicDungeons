@@ -1,9 +1,12 @@
 package com.lying.block;
 
+import java.util.List;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.ProximitySensorBlockEntity;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
@@ -102,12 +105,20 @@ public class ProximitySensorBlock extends BlockWithEntity implements IWireableBl
 	
 	protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world) { return false; }
+	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return false; }
+	
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world) { return false; }
 
 	@Override
 	public WireRecipient type() { return WireRecipient.SENSOR; }
 	
-	public int activity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
+	/** Sensors don't need to respond to ports because they only transmit signals */
+	public void respondToPorts(BlockPos pos, World world) { }
+	
+	public List<String> inputPorts(BlockPos pos, World world) { return List.of(); }
+	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
+	
+	public int portActivity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
 	
 	public static void setPower(int value, BlockPos pos, World world)
 	{

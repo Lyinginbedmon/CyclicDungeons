@@ -3,8 +3,8 @@ package com.lying.block.entity;
 import static com.lying.reference.Reference.ModInfo.prefix;
 
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDLogicGates;
 import com.lying.init.CDTrapLogicHandlers;
 import com.lying.init.CDTrapLogicHandlers.LogicHandler;
 import com.lying.item.WiringGunItem.WireMode;
@@ -56,27 +56,37 @@ public class TrapLogicBlockEntity extends AbstractWireableBlockEntity
 	
 	public static <T extends BlockEntity> void tickServer(World world, BlockPos pos, BlockState state, TrapLogicBlockEntity tile)
 	{
-		tile.cleanActors();
-		if(!tile.hasActors())
+		tile.respondToPorts();
+	}
+	
+	public void respondToPorts()
+	{
+		cleanActors();
+		if(!hasOutputs())
 			return;
 		
-		tile.cleanSensors();
-		tile.getHandler().handleLogic(tile.getSensors(), tile.getActors(), (ServerWorld)world);
+		cleanSensors();
+		getHandler().handleLogic(!hasInputs() ? -1 : sensorInputState() ? 1 : 0, getOutputListeners(), (ServerWorld)world);
 	}
+	
+	protected void resetBlock() { }
 	
 	public boolean sensorInputState()
 	{
 		cleanSensors();
-		return hasSensors() && getSensors().stream().anyMatch(p -> IWireableBlock.getWireable(p, world).isActive(p, world));
+		return hasInputs() && getInput(CDLogicGates.INPUT);
 	}
 	
-	public boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type)
+	public boolean processInputConnection(String input, BlockPos pos, String port, WireMode space)
 	{
-		if(type == WireRecipient.LOGIC)
-			return false;
-		
-		addWire(pos, space, type);
+		addInputWire(input, pos, port, space);
 		return true;
+	}
+	
+	public boolean processOutputConnection(String output, BlockPos pos, String input, WireMode space)
+	{
+		addOutputWire(output, pos, input, space);
+		return false;
 	}
 	
 	public TrapLogicBlockEntity setLogic(Identifier idIn)

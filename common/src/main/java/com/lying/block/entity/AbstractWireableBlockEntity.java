@@ -1,16 +1,15 @@
 package com.lying.block.entity;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.WireRecipient;
+import com.lying.block.entity.logic.WiringManifest;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry;
 import com.lying.item.WiringGunItem.WireMode;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -22,7 +21,6 @@ import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.RegistryWrapper.WrapperLookup;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 public abstract class AbstractWireableBlockEntity extends BlockEntity
 {
@@ -39,13 +37,13 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		super.writeNbt(nbt, registryLookup);
 		
 		// Blank NBT isn't read when the block entity updates, so we ensure there's always SOME data
-		nbt.putBoolean("IsActive", IWireableBlock.getWireable(getPos(), getWorld()).isActive(getPos(), getWorld()));
+		nbt.putBoolean("Initialised", true);
 		
 		if(!wiringGlobal.isEmpty())
-			nbt.put("Wires", wiringGlobal.toNbt());
+			nbt.put("Wires", WiringManifest.CODEC.encodeStart(NbtOps.INSTANCE, wiringGlobal).getOrThrow());
 		
 		if(!wiringLocal.isEmpty())
-			nbt.put("LocalWires", wiringLocal.toNbt());
+			nbt.put("LocalWires", WiringManifest.CODEC.encodeStart(NbtOps.INSTANCE, wiringLocal).getOrThrow());
 	}
 	
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
@@ -54,76 +52,143 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		
 		wiringGlobal.clear();
 		if(nbt.contains("Wires", NbtElement.COMPOUND_TYPE))
-			wiringGlobal = WiringManifest.fromNbt(nbt.get("Wires"));
+			wiringGlobal = WiringManifest.CODEC.parse(NbtOps.INSTANCE, nbt.get("Wires")).getOrThrow();
 		
 		wiringLocal.clear();
 		if(nbt.contains("LocalWires", NbtElement.COMPOUND_TYPE))
-			wiringLocal = WiringManifest.fromNbt(nbt.get("LocalWires"));
+			wiringLocal = WiringManifest.CODEC.parse(NbtOps.INSTANCE, nbt.get("LocalWires")).getOrThrow();
 		
 		markDirty();
 	}
 	
-	public final List<BlockPos> getSensors() { return getAllOf(WireRecipient.SENSOR); }
-	public final List<BlockPos> getActors() { return getAllOf(WireRecipient.ACTOR); }
-	
-	protected List<BlockPos> getAllOf(WireRecipient type)
+	/** Returns true if the given input port is active */
+	public final boolean getInput(String port) 
 	{
-		List<BlockPos> list = Lists.newArrayList();
-		list.addAll(wiringGlobal.getAll(type));
-		list.addAll(wiringLocal.getAll(type).stream().map(getPos()::add).toList());
-		return list;
+		Optional<ManifestEntry> global = wiringGlobal.getPort(port, true);
+		if(global.isPresent() && global.get().status(getWorld(), BlockPos.ORIGIN))
+			return true;
+		
+		Optional<ManifestEntry> local = wiringLocal.getPort(port, true);
+		if(local.isPresent() && local.get().status(getWorld(), getPos()))
+			return true;
+		
+		return false;
 	}
 	
-	public final boolean hasSensors() { return !getSensors().isEmpty(); }
-	public final boolean hasActors() { return !getActors().isEmpty(); }
+	public final boolean hasInputs() { return wiringGlobal.totalInputs() + wiringLocal.totalInputs() > 0; }
+	public final boolean hasOutputs() { return wiringGlobal.totalOutputs() + wiringLocal.totalOutputs() > 0; }
+	
+	protected IWireableBlock getWireable() { return getWireable(); }
+	
+	public final List<BlockPos> getInputListeners()
+	{
+		List<BlockPos> set = Lists.newArrayList();
+		final Consumer<BlockPos> registrar = p -> 
+		{
+			if(set.stream().noneMatch(p2 -> p2.getManhattanDistance(p) == 0))
+				set.add(p);
+		};
+		
+		for(String port : getWireable().outputPorts(getPos(), getWorld()))
+		{
+			wiringGlobal.getInputListeners(port, BlockPos.ORIGIN).forEach(registrar);
+			wiringLocal.getInputListeners(port, getPos()).forEach(registrar);
+		}
+		
+		return set;
+	}
+	
+	public final List<BlockPos> getOutputListeners()
+	{
+		List<BlockPos> set = Lists.newArrayList();
+		final Consumer<BlockPos> registrar = p -> 
+		{
+			if(set.stream().noneMatch(p2 -> p2.getManhattanDistance(p) == 0))
+				set.add(p);
+		};
+		
+		for(String port : getWireable().outputPorts(getPos(), getWorld()))
+		{
+			wiringGlobal.getOutputListeners(port, BlockPos.ORIGIN).forEach(registrar);
+			wiringLocal.getOutputListeners(port, getPos()).forEach(registrar);
+		}
+		return set;
+	}
 	
 	public final int wireCount() { return wiringGlobal.size() + wiringLocal.size(); }
 	
-	public abstract boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type);
+	public abstract boolean processInputConnection(String input, BlockPos pos, String port, WireMode space);
+	
+	public abstract boolean processOutputConnection(String output, BlockPos pos, String port, WireMode space);
 	
 	public void reset()
 	{
 		// Deactivate any attached actors
-		getActors().forEach(p -> IWireableBlock.getWireable(p, world).deactivate(p, world));
+		for(String port : getWireable().outputPorts(getPos(), getWorld()))
+		{
+			wiringGlobal.getOutputListeners(port, BlockPos.ORIGIN).forEach(p -> IWireableBlock.getWireable(p, world).respondToPorts(p, world));
+			wiringLocal.getOutputListeners(port, getPos()).forEach(p -> IWireableBlock.getWireable(p, world).respondToPorts(p, world));
+		}
 		
 		// Clear connections
 		wiringGlobal.clear();
 		wiringLocal.clear();
 		
 		// Deactivate self
-		IWireableBlock wireable = IWireableBlock.getWireable(getPos(), getWorld());
-		if(wireable.isActive(getPos(), getWorld()))
-			wireable.deactivate(getPos(), getWorld());
+		resetBlock();
 		
 		markDirty();
 	}
 	
-	protected void cleanActors() { cleanAllOf(WireRecipient.ACTOR); }
+	public void respondToPorts() { }
 	
-	protected void cleanSensors() { cleanAllOf(WireRecipient.SENSOR); }
+	protected abstract void resetBlock();
 	
-	protected void cleanAllOf(WireRecipient type)
+	protected void cleanActors() { cleanAllOf(false); }
+	
+	protected void cleanSensors() { cleanAllOf(true); }
+	
+	protected void cleanAllOf(boolean isInputs)
 	{
-		if(wiringGlobal.cleanGlobal(type, getWorld()) || wiringLocal.cleanLocal(type, getPos(), getWorld()))
+		boolean result = false;
+		if(isInputs)
+		{
+			result = wiringGlobal.cleanInputsGlobal(getWorld());
+			result = wiringLocal.cleanInputsLocal(getWorld(), getPos()) || result;
+		}
+		else
+		{
+			result = wiringGlobal.cleanOutputsGlobal(getWorld());
+			result = wiringLocal.cleanOutputsLocal(getWorld(), getPos()) || result;
+		}
+		if(result)
 			markDirty();
 	}
 	
-	protected final void addWire(BlockPos pos, WireMode space, WireRecipient type)
+	protected final void addInputWire(String input, BlockPos pos, String port, WireMode space)
 	{
-		if(getAllOf(type).stream().anyMatch(p -> pos.getManhattanDistance(p) == 0))
-			return;
-		
-		switch(type)
+		CyclicDungeons.LOGGER.info("Attaching [{}] port of {} to [{}] input", port, getCachedState().getBlock().getName().getString(), input);
+		switch(space)
 		{
-			case ACTOR:
-			case SENSOR:
-				if(space == WireMode.GLOBAL && wiringGlobal.add(pos, type))
-					markDirty();
-				else if(space == WireMode.LOCAL && wiringLocal.add(pos, type))
-					markDirty();
+			case GLOBAL:
+				wiringGlobal.getPort(input, true).ifPresent(m -> m.attach(pos, port));
 				break;
-			case LOGIC:
-			default:
+			case LOCAL:
+				wiringLocal.getPort(input, true).ifPresent(m -> m.attach(pos.subtract(getPos()), port));
+				break;
+		}
+	}
+	
+	protected final void addOutputWire(String output, BlockPos pos, String port, WireMode space)
+	{
+		CyclicDungeons.LOGGER.info("Attaching [{}] output to [{}] input of {}", output, port, getCachedState().getBlock().getName().getString());
+		switch(space)
+		{
+			case GLOBAL:
+				wiringGlobal.getPort(output, false).ifPresent(m -> m.attach(pos, port));
+				break;
+			case LOCAL:
+				wiringLocal.getPort(output, false).ifPresent(m -> m.attach(pos.subtract(getPos()), port));
 				break;
 		}
 	}
@@ -136,109 +201,5 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	{
 		if(world != null)
 			world.updateListeners(getPos(), getCachedState(), getCachedState(), 3);
-	}
-	
-	public static class WiringManifest
-	{
-		private static final Codec<WiringManifest> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-			BlockPos.CODEC.listOf().optionalFieldOf("Sensors").forGetter(m -> m.tryGetAll(WireRecipient.SENSOR)),
-			BlockPos.CODEC.listOf().optionalFieldOf("Actors").forGetter(m -> m.tryGetAll(WireRecipient.ACTOR)),
-			BlockPos.CODEC.listOf().optionalFieldOf("Logic").forGetter(m -> m.tryGetAll(WireRecipient.LOGIC))
-				).apply(instance, (s,a,l) -> 
-				new WiringManifest(s.orElse(Lists.newArrayList()), a.orElse(Lists.newArrayList()), l.orElse(Lists.newArrayList()))));
-		
-		private Map<WireRecipient, List<BlockPos>> targets = new HashMap<>();
-		
-		public WiringManifest() { }
-		
-		public WiringManifest(List<BlockPos> sensors, List<BlockPos> actors, List<BlockPos> logic)
-		{
-			this();
-			targets.put(WireRecipient.SENSOR, sensors);
-			targets.put(WireRecipient.ACTOR, actors);
-			targets.put(WireRecipient.LOGIC, logic);
-		}
-		
-		public boolean isEmpty() { return targets.isEmpty() || targets.values().stream().allMatch(l -> l.isEmpty()); }
-		
-		public int size()
-		{
-			int tally = 0;
-			for(List<BlockPos> points : targets.values())
-				tally += points.size();
-			return tally;
-		}
-		
-		protected Optional<List<BlockPos>> tryGetAll(WireRecipient type)
-		{
-			List<BlockPos> values;
-			return !targets.containsKey(type) ? Optional.empty() : (values = getAll(type)).isEmpty() ? Optional.empty() : Optional.of(values);
-		}
-		
-		public List<BlockPos> getAll(WireRecipient type) { return targets.getOrDefault(type, Lists.newArrayList()); }
-		
-		public boolean add(BlockPos pos, WireRecipient type)
-		{
-			List<BlockPos> set = getAll(type);
-			if(set.stream().anyMatch(p -> p.getManhattanDistance(pos) == 0))
-				return false;
-			
-			set.add(pos);
-			targets.put(type, set);
-			return true;
-		}
-		
-		public void clear()
-		{
-			targets.clear();
-		}
-		
-		public boolean cleanGlobal(WireRecipient type, World world)
-		{
-			List<BlockPos> points = Lists.newArrayList();
-			points.addAll(getAll(type));
-			if(points.isEmpty())
-				return false;
-			
-			if(points.removeIf(pos -> 
-			{
-				BlockState sensorState = world.getBlockState(pos);
-				return !(sensorState.getBlock() instanceof IWireableBlock) || IWireableBlock.getWireable(pos, world).type() != type;
-			}))
-			{
-				targets.put(type, points);
-				return true;
-			};
-			return false;
-		}
-		
-		public boolean cleanLocal(WireRecipient type, BlockPos origin, World world)
-		{
-			List<BlockPos> points = Lists.newArrayList();
-			getAll(type).stream().map(origin::add).forEach(points::add);
-			if(points.isEmpty())
-				return false;
-			
-			if(points.removeIf(pos -> 
-			{
-				BlockState sensorState = world.getBlockState(pos);
-				return !(sensorState.getBlock() instanceof IWireableBlock) || IWireableBlock.getWireable(pos, world).type() != type;
-			}))
-			{
-				targets.put(type, points);
-				return true;
-			};
-			return false;
-		}
-		
-		public NbtElement toNbt()
-		{
-			return CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
-		}
-		
-		public static WiringManifest fromNbt(NbtElement ele)
-		{
-			return CODEC.parse(NbtOps.INSTANCE, ele).getOrThrow();
-		}
 	}
 }

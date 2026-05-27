@@ -3,10 +3,8 @@ package com.lying.block.entity;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.SwingingBladeBlock;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;
 
 import net.minecraft.block.BlockState;
@@ -29,7 +27,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class SwingingBladeBlockEntity extends TrapActorBlockEntity
+public class SwingingBladeBlockEntity extends TrapActorBlockEntity<SwingingBladeBlock>
 {
 	private static final double PIVOT_OFFSET	= 3D / 16D;
 	private static final double BLADE_INNER = 1.5D;
@@ -74,13 +72,6 @@ public class SwingingBladeBlockEntity extends TrapActorBlockEntity
 	public float swingPosition() { return MathHelper.clamp(swingPosition, -1F, 1F); }
 	
 	public boolean swingComplete() { return swingPosition() == swingTarget; }
-	
-	public boolean processWireConnection(BlockPos pos, WireMode space, WireRecipient type)
-	{
-		if(type != WireRecipient.ACTOR)
-			addWire(pos, space, type);
-		return type != WireRecipient.ACTOR;
-	}
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
 	{

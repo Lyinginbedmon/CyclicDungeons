@@ -164,9 +164,10 @@ public class TrapSpawnerBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.SPAWNER.get()).get().wireCount(); }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
 	{
-		return world.getBlockEntity(pos, CDBlockEntityTypes.SPAWNER.get()).get().processWireConnection(target, space, type);
+		world.getBlockEntity(pos, CDBlockEntityTypes.SPAWNER.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		return true;
 	}
 	
 	public void clearWires(BlockPos pos, World world)

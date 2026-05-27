@@ -1,9 +1,12 @@
 package com.lying.block;
 
+import java.util.List;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
@@ -14,7 +17,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public abstract class AbstractTrapActorBlock extends BlockWithEntity implements IWireableBlock
+public abstract class AbstractTrapActorBlock extends BlockWithEntity implements IWireableBlock, ITrapActor
 {
 	protected AbstractTrapActorBlock(Settings settingsIn)
 	{
@@ -23,7 +26,7 @@ public abstract class AbstractTrapActorBlock extends BlockWithEntity implements 
 	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
-		return new TrapActorBlockEntity(pos, state);
+		return new TrapActorBlockEntity<>(pos, state);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -40,9 +43,20 @@ public abstract class AbstractTrapActorBlock extends BlockWithEntity implements 
 	
 	public WireRecipient type() { return WireRecipient.ACTOR; }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
+	public List<String> inputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.INPUT); }
+	public List<String> outputPorts(BlockPos pos, World world) { return List.of(); }
+	
+	public void respondToPorts(BlockPos pos, World world)
 	{
-		return world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).get().processWireConnection(target, space, type);
+		((TrapActorBlockEntity<?>)world.getBlockEntity(pos)).respondToPorts();
+	}
+	
+	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return false; }
+	
+	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, BlockPos pos, String output, World world)
+	{
+		world.getBlockEntity(me, CDBlockEntityTypes.TRAP_ACTOR.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		return true;
 	}
 	
 	public void clearWires(BlockPos pos, World world)

@@ -38,7 +38,7 @@ public class LogicWire
 		return this;
 	}
 	
-	public final void update(List<LogicModule> circuit, long time)
+	public final void update(List<LogicModule> circuit)
 	{
 		isLive = circuit.stream().anyMatch(m -> m.hasOutput(name) && m.getOutputTo(name));
 	}

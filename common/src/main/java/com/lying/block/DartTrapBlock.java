@@ -91,9 +91,10 @@ public class DartTrapBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.DART_TRAP.get()).get().wireCount(); }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
 	{
-		return world.getBlockEntity(pos, CDBlockEntityTypes.DART_TRAP.get()).get().processWireConnection(target, space, type);
+		world.getBlockEntity(pos, CDBlockEntityTypes.DART_TRAP.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		return true;
 	}
 	
 	public void clearWires(BlockPos pos, World world)
@@ -109,7 +110,7 @@ public class DartTrapBlock extends AbstractTrapActorBlock
 	public void trigger(BlockPos pos, World world)
 	{
 		BlockState state = world.getBlockState(pos);
-		boolean isActive = !isActive(pos, world);
+		boolean isActive = !state.get(POWERED);
 		
 		world.setBlockState(pos, state.with(POWERED, isActive));
 		if(isActive && !world.isClient())

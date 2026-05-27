@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.lying.block.IWireableBlock;
 import com.lying.init.CDDataComponentTypes;
+import com.lying.init.CDLogicGates;
 import com.lying.init.CDSoundEvents;
 import com.lying.item.component.WireModeComponent;
 import com.lying.item.component.WiringComponent;
@@ -69,7 +70,10 @@ public class WiringGunItem extends Item
 			final MutableText linkName = world.getBlockState(linkPos).getBlock().getName().styled(s -> s.withHoverEvent(new HoverEvent(Action.SHOW_TEXT, Text.literal(linkPos.toShortString()))));
 			
 			// If target isn't wireable || sneaking = Cancel wiring
-			if(!(block instanceof IWireableBlock) || context.shouldCancelInteraction())
+			if(
+					!(block instanceof IWireableBlock) || 
+					((IWireableBlock)block).inputPorts(blockPos, world).isEmpty() ||
+					context.shouldCancelInteraction())
 			{
 				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty());
 				context.getPlayer().sendMessage(translate("gui", "wiring_gun.cancel"), true);
@@ -85,13 +89,15 @@ public class WiringGunItem extends Item
 			else
 			{
 				// Feed position to block, clear from gun if success
-				IWireableBlock wireable = (IWireableBlock)block;
-				
-				if(wireable.acceptWireTo(wiring.type().get(), mode == WireMode.GLOBAL ? linkPos : linkPos.subtract(blockPos), mode, blockPos, world))
+				if(wiring.tryApplyTo(blockPos, world, mode))
 				{
 					stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty());
 					
-					context.getPlayer().sendMessage(translate("gui", "wiring_gun.success", linkName, blockName), false);
+					context.getPlayer().sendMessage(translate("gui", "wiring_gun.success", 
+							wiring.portA().orElse(CDLogicGates.OUTPUT), 
+							linkName, 
+							wiring.portB().orElse(CDLogicGates.INPUT), 
+							blockName), false);
 					playSound(context.getPlayer(), blockPos);
 					return ActionResult.SUCCESS;
 				}
@@ -129,11 +135,12 @@ public class WiringGunItem extends Item
 				}
 			}
 			// Otherwise = Start wiring
-			else if(block instanceof IWireableBlock)
+			else if(block instanceof IWireableBlock && !((IWireableBlock)block).outputPorts(blockPos, world).isEmpty())
 			{
 				// Store block in position
-				context.getPlayer().sendMessage(translate("gui", "wiring_gun.start", blockName), true);
-				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.of(blockPos, IWireableBlock.getWireable(blockPos, world).type()));
+				String port = ((IWireableBlock)block).outputPorts(blockPos, world).getFirst();
+				context.getPlayer().sendMessage(translate("gui", "wiring_gun.start", port, blockName), true);
+				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.of(blockPos, IWireableBlock.getWireable(blockPos, world).type()).startingAt(port));
 				playSound(context.getPlayer(), blockPos);
 				return ActionResult.SUCCESS;
 			}

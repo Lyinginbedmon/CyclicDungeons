@@ -46,7 +46,7 @@ public class RedstoneSensorBlock extends AbstractTrapSensorBlock
 			world.setBlockState(pos, state.with(POWERED, false), 2);
 	}
 	
-	public int activity(BlockPos pos, World world)
+	public int portActivity(BlockPos pos, World world)
 	{
 		int max = 0;
 		for(Direction face : Direction.values())

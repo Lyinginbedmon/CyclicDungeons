@@ -9,7 +9,6 @@ import com.google.common.collect.Lists;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDLogicGates.LogicGate;
-import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -33,11 +32,9 @@ public class LogicModule
 				return module;
 			}));
 	public static final Codec<List<LogicModule>> LIST_CODEC	= CODEC.listOf();
-	public static final long UPDATE_FREQUENCY = Reference.Values.TICKS_PER_SECOND / 2;
 	
 	private Optional<String> name = Optional.empty();
 	private final LogicGate handler;
-	private long lastUpdated = -1L;
 	
 	private final PortSet inputWires = new PortSet();
 	final PortSet outputWires = new PortSet();
@@ -64,6 +61,8 @@ public class LogicModule
 	}
 	
 	public String displayName() { return name.orElse(handler.registryName()); }
+	
+	public boolean isOutput() { return handler.registryName().equals(CDLogicGates.EXIT.get().registryName()); }
 	
 	/** Attaches a wire to the default result port of this module */
 	public LogicModule addOutput(String wire)
@@ -124,6 +123,8 @@ public class LogicModule
 		return outputWires.wires().contains(name);
 	}
 	
+	public boolean getOutputStatus(String port) { return resultCache.get(port); }
+	
 	/** Adds all wires used by this module to the wire map */
 	public void registerWires(Consumer<String> register)
 	{
@@ -153,14 +154,8 @@ public class LogicModule
 		return port == null ? false : resultCache.get(port);
 	}
 	
-	public void update(Map<String,LogicWire> circuitWires, long time, ModularLogicBlockEntity tile)
+	public void update(Map<String,LogicWire> circuitWires, ModularLogicBlockEntity tile)
 	{
-		if(time - lastUpdated < UPDATE_FREQUENCY)
-			return;
-		
-		// Mostly a formality, stops modules from updating unlimitedly during a singular tick
-		lastUpdated = time;
-		
 		// Map the status of all input ports
 		WireState portState = new WireState();
 		

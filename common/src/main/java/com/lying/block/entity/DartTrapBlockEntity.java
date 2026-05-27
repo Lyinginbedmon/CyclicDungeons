@@ -5,6 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.lying.block.DartTrapBlock;
 import com.lying.block.IWireableBlock;
 import com.lying.entity.DartEntity;
 import com.lying.init.CDBlockEntityTypes;
@@ -30,7 +31,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Position;
 import net.minecraft.world.World;
 
-public class DartTrapBlockEntity extends TrapActorBlockEntity
+public class DartTrapBlockEntity extends TrapActorBlockEntity<DartTrapBlock>
 {
 	protected List<StatusEffectInstance> effects = Lists.newArrayList(
 			new StatusEffectInstance(StatusEffects.POISON, Reference.Values.TICKS_PER_SECOND * 7, 0)

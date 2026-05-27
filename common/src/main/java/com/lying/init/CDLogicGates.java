@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import com.lying.block.ModularLogicBlock;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.LogicResult;
 import com.lying.block.entity.logic.WireState;
@@ -67,12 +68,14 @@ public class CDLogicGates
 			return LogicResult.create().put(OUTPUT, true);
 		}));
 	
-	/** TRUE if any input became TRUE in this frame */
+	/** TRUE if the input became TRUE in this frame */
 	public static final Supplier<LogicGate> EDGE_R	= register("rising_edge", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, isRisingEdge(INPUT, ports, pPorts))));
-	/** TRUE if all inputs became FALSE in this frame */
+	/** TRUE if the input became FALSE in this frame */
 	public static final Supplier<LogicGate> EDGE_F	= register("falling_edge", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, pPorts.get(INPUT) && !ports.get(INPUT))));
+	/** TRUE if the input changed in this frame */
+	public static final Supplier<LogicGate> DELTA	= register("delta", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, ports.get(INPUT) != pPorts.get(INPUT))));
 	
-	/** Outputs a random value when it receives an input */
+	/** Outputs a random value when triggered */
 	public static final Supplier<LogicGate> RAND	= register("random", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, 
 		isRisingEdge(INPUT, ports, pPorts) ? 
 			Random.create().nextBoolean() : 
@@ -86,6 +89,12 @@ public class CDLogicGates
 	public static final Supplier<LogicGate> RSNOR	= register("rs_nor", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT,  
 		ports.get(RESET) ? false :
 			ports.get(INPUT) || pOut.get(OUTPUT))));
+	/** Stores the input value when it receives a set signal, resets when it receives a reset signal */
+	public static final Supplier<LogicGate> SRLATCH	= register("sr_latch", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
+		ports.get(RESET) ?
+			LogicResult.create().put(OUTPUT, false) :
+		ports.get("set") ? 
+			LogicResult.create().put(OUTPUT, ports.get(INPUT)) : pOut));
 	
 	/** Combines the values of two 1-bit input values */
 	public static final Supplier<LogicGate> ADDER_2B = register("2bit_adder", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
@@ -95,6 +104,41 @@ public class CDLogicGates
 		return LogicResult.create()
 			.put(OUTPUT, bit0 != bit1)
 			.put("carry", bit0 && bit1);
+	}));
+	/** Converts a 4-bit number into a value between 0 and 15 (inclusive) */
+	public static final Supplier<LogicGate> CONVERTER_4B	= register("b2d_converter", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
+	{
+		return LogicResult.create()
+				.put("output_"+binaryToDecimal(gatherBits(4, ports)), true);
+	}));
+	/** Holds a 4-bit number and increments it when it receives a rising-edge pulse */
+	public static final Supplier<LogicGate> COUNTER_4B	= register("4bit_counter", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
+	{
+		if(isRisingEdge(RESET, ports, pPorts))
+			return LogicResult.create();
+		
+		if(isRisingEdge("inc", ports, pPorts))
+		{
+			boolean[] data = gatherBits(4, ports);
+			// Toggle values from bit 1 to 4 until we encounter a false, set that to true and break
+			for(int i=0; i<data.length; i++)
+			{
+				if(!data[i])
+				{
+					data[i] = true;
+					break;
+				}
+				else
+					data[i] = false;
+			}
+			return LogicResult.create()
+					.put("bit_1", data[0])
+					.put("bit_2", data[1])
+					.put("bit_4", data[2])
+					.put("bit_8", data[3]);
+		}
+		// TODO Add decrement function?
+		return pOut;
 	}));
 	
 	/** Emits a noise from the logic block when triggered */
@@ -107,10 +151,56 @@ public class CDLogicGates
 		}
 		return LogicResult.create();
 	}));
+	/** Controls the light emission value of the logic block with a 4-bit value */
+	public static final Supplier<LogicGate> LIGHT	= register("light", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
+	{
+		ServerWorld world = (ServerWorld)tile.getWorld();
+		world.setBlockState(tile.getPos(), tile.getCachedState().with(ModularLogicBlock.LIGHT, binaryToDecimal(gatherBits(4, ports))));
+		return LogicResult.create();
+	}));
+	/** When named, used by the logic system to interact with the trap system */
+	public static final Supplier<LogicGate> EXIT	= register("output", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, ports.get(INPUT))));
 	
 	public static boolean isRisingEdge(String port, WireState ports, WireState pPorts)
 	{
 		return !pPorts.get(port) && ports.get(port);
+	}
+	
+	public static boolean[] gatherBits(int count, WireState ports)
+	{
+		boolean[] bits = new boolean[count];
+		for(int i=0; i<bits.length; i++)
+			bits[i] = ports.get("bit_"+(int)Math.pow(2, i));
+		return bits;
+	}
+	
+	public static int binaryToDecimal(boolean... bits)
+	{
+		int result = 0;
+		for(int i=0; i<bits.length; i++)
+			result += (int)Math.pow(2, i) * (bits[i] ? 1 : 0);
+		return result;
+	}
+	
+	public static boolean[] decimalToBinary(int val)
+	{
+		if(val <= 1)
+			return new boolean[] { val == 1 };
+		int bits = (int)Math.floor(Math.sqrt(val)) + 1;
+		boolean[] result = new boolean[bits];
+		for(int i=bits; i>=0; i--)
+		{
+			int d = (int)Math.pow(2, i);
+			
+			if(val <= 0)
+				result[i-1] = false;
+			else
+			{
+				result[i - 1] = val >= d;
+				val -= d;
+			}
+		}
+		return result;
 	}
 	
 	public static Supplier<LogicGate> register(String nameIn, Function<String, LogicGate> factory)

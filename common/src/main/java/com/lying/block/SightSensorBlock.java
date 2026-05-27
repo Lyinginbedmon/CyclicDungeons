@@ -1,9 +1,12 @@
 package com.lying.block;
 
+import java.util.List;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.entity.SightSensorBlockEntity;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
@@ -57,14 +60,19 @@ public class SightSensorBlock extends BlockWithEntity implements IWireableBlock
 		builder.add(POWER, POWERED);
 	}
 	
-	public int activity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
+	public int portActivity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
 	
-	public boolean acceptWireTo(WireRecipient type, BlockPos target, WireMode space, BlockPos pos, World world)
-	{
-		return false;
-	}
+	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return true; }
+	
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world) { return false; }
 	
 	public WireRecipient type() { return WireRecipient.SENSOR; }
+	
+	/** Sensors don't need to respond to ports because they only transmit signals */
+	public void respondToPorts(BlockPos pos, World world) { }
+	
+	public List<String> inputPorts(BlockPos pos, World world) { return List.of(); }
+	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
 	
 	protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
 	

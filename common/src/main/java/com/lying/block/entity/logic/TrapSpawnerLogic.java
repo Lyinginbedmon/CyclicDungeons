@@ -1,4 +1,4 @@
-package com.lying.block.entity;
+package com.lying.block.entity.logic;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +47,7 @@ public class TrapSpawnerLogic
 	@Nullable
 	public SpawnerEntry spawnEntry;
 	protected DataPool<SpawnerEntry> spawnPotentials = DataPool.<SpawnerEntry>empty();
-	protected int[] spawnRanges = new int[] {4, 4, 4};
+	public int[] spawnRanges = new int[] {4, 4, 4};
 	protected BlockPos fallbackOffset = BlockPos.ORIGIN;
 	protected Optional<BlockPos> forcePos = Optional.empty();
 	
@@ -192,7 +192,7 @@ public class TrapSpawnerLogic
 		return this;
 	}
 	
-	protected void spawnNextEntry(ServerWorld world, BlockPos spawnerPos, Box spawnArea)
+	public void spawnNextEntry(ServerWorld world, BlockPos spawnerPos, Box spawnArea)
 	{
 		final Random random = world.getRandom();
 		SpawnerEntry entry = this.getSpawnEntry(world, random, spawnerPos);
