@@ -54,7 +54,7 @@ public class RedstoneSensorBlock extends AbstractTrapSensorBlock
 		return max;
 	}
 	
-	public boolean isPortActive(String port, BlockPos pos, World world)
+	public boolean isPortActive(Port port, BlockPos pos, World world)
 	{
 		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(POWERED);
 	}

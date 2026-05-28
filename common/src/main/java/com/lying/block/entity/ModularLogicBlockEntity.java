@@ -7,9 +7,10 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
+import com.lying.block.IWireableBlock.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.LogicWire;
-import com.lying.block.entity.logic.WireState;
+import com.lying.block.entity.logic.PortState;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
 
@@ -46,10 +47,10 @@ public class ModularLogicBlockEntity extends BlockEntity
 			
 			if(!wires.isEmpty())
 			{
-				WireState set = new WireState();
-				wires.values().forEach(w -> set.put(w.name(), w.isOn()));
+				PortState set = new PortState();
+				wires.values().forEach(w -> set.put(new Port(w.name()), w.isOn()));
 				if(!set.isInert())
-					nbt.put("wires", WireState.CODEC.encodeStart(NbtOps.INSTANCE, set).getOrThrow());
+					nbt.put("wires", PortState.CODEC.encodeStart(NbtOps.INSTANCE, set).getOrThrow());
 			}
 		}
 	}
@@ -65,9 +66,9 @@ public class ModularLogicBlockEntity extends BlockEntity
 			
 			if(nbt.contains("wires"))
 			{
-				WireState set = WireState.CODEC.parse(NbtOps.INSTANCE, nbt.get("wires")).getOrThrow();
-				for(String wire : set.keys())
-					wires.put(wire, new LogicWire(wire).setState(set.get(wire)));
+				PortState set = PortState.CODEC.parse(NbtOps.INSTANCE, nbt.get("wires")).getOrThrow();
+				for(Port wire : set.keys())
+					wires.put(wire.name(), new LogicWire(wire.name()).setState(set.get(wire)));
 			}
 		}
 	}
@@ -111,7 +112,6 @@ public class ModularLogicBlockEntity extends BlockEntity
 		modules.forEach(m -> 
 		{
 			m.registerWires(wireRegistry);
-			
 			if(m.isOutput())
 				outputModules.put(m.displayName(), m);
 		});
@@ -125,10 +125,10 @@ public class ModularLogicBlockEntity extends BlockEntity
 		return true;
 	}
 	
-	public List<String> outputPorts() { return Lists.newArrayList(outputModules.keySet()); }
+	public List<Port> outputPorts() { return Lists.newArrayList(outputModules.keySet().stream().map(Port::new).toList()); }
 	
-	public boolean getPortStatus(String output)
+	public boolean getPortStatus(Port output)
 	{
-		return outputModules.containsKey(output) ? outputModules.get(output).getOutputStatus(output) : false;
+		return outputModules.containsKey(output.name()) ? outputModules.get(output.name()).getOutputStatus(output) : false;
 	}
 }

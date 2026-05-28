@@ -45,25 +45,25 @@ public abstract class AbstractTrapActorBlock extends BlockWithEntity implements 
 	
 	public WireRecipient type() { return WireRecipient.ACTOR; }
 	
-	public List<String> inputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.INPUT); }
-	public List<String> outputPorts(BlockPos pos, World world) { return List.of(); }
+	public List<Port> inputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.INPUT); }
+	public List<Port> outputPorts(BlockPos pos, World world) { return List.of(); }
 	
 	public void respondToPorts(BlockPos pos, World world)
 	{
 		world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).ifPresent(t -> t.respondToPorts());
 	}
 	
-	public boolean isPortActive(String port, BlockPos pos, World world)
+	public boolean isPortActive(Port port, BlockPos pos, World world)
 	{
 		return false;
 	}
 	
-	public boolean acceptWireTo(String output, BlockPos me, WireMode space, PortEntry input, World world)
+	public boolean acceptWireTo(Port output, BlockPos me, WireMode space, PortEntry input, World world)
 	{
 		return false;
 	}
 	
-	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, PortEntry output, World world)
+	public boolean acceptWireFrom(Port input, BlockPos me, WireMode space, PortEntry output, World world)
 	{
 		world.getBlockEntity(me, CDBlockEntityTypes.TRAP_ACTOR.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;

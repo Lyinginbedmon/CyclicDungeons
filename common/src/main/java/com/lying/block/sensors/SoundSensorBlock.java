@@ -1,14 +1,10 @@
 package com.lying.block.sensors;
 
-import java.util.List;
-
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.IWireableBlock;
 import com.lying.block.sensors.entity.SoundSensorBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDLogicGates;
-import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -111,24 +107,12 @@ public class SoundSensorBlock extends AbstractTrapSensorBlock implements IWireab
 				: null;
 	}
 	
-	public WireRecipient type() { return WireRecipient.SENSOR; }
-	
-	/** Sensors don't need to respond to ports because they only transmit signals */
-	public void respondToPorts(BlockPos pos, World world) { }
-	
-	public List<String> inputPorts(BlockPos pos, World world) { return List.of(); }
-	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
-	
-	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return true; }
-	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world) { return false; }
-	
 	public int portActivity(BlockPos pos, World world)
 	{
 		return world.getBlockState(pos).get(PHASE) == SculkSensorPhase.ACTIVE ? 15 : 0;
 	}
 	
-	public boolean isPortActive(String port, BlockPos pos, World world)
+	public boolean isPortActive(Port port, BlockPos pos, World world)
 	{
 		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(PHASE) == SculkSensorPhase.ACTIVE;
 	}

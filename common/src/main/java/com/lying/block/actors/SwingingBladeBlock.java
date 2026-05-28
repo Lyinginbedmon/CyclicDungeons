@@ -118,7 +118,7 @@ public class SwingingBladeBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.SWINGING_BLADE.get()).get().wireCount(); }
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
+	public boolean acceptWireFrom(Port input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
 		world.getBlockEntity(target, CDBlockEntityTypes.SWINGING_BLADE.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
@@ -40,17 +41,17 @@ public interface IWireableBlock
 		return block instanceof IWireableBlock ? (IWireableBlock)block : null;
 	}
 	
-	public List<String> inputPorts(BlockPos pos, World world);
-	public List<String> outputPorts(BlockPos pos, World world);
+	public List<Port> inputPorts(BlockPos pos, World world);
+	public List<Port> outputPorts(BlockPos pos, World world);
 	
 	/** Calls the block to update its behaviour based on its input ports */
 	public void respondToPorts(BlockPos pos, World world);
 	
 	/** Called when the block receives a port connection from the given block */
-	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, PortEntry output, World world);
+	public boolean acceptWireFrom(Port input, BlockPos me, WireMode space, PortEntry output, World world);
 	
 	/** Called when the block delivers a port connection to the given block */
-	public boolean acceptWireTo(String output, BlockPos me, WireMode space, PortEntry input, World world);
+	public boolean acceptWireTo(Port output, BlockPos me, WireMode space, PortEntry input, World world);
 	
 	public WireRecipient type();
 	
@@ -61,7 +62,7 @@ public interface IWireableBlock
 	public default Vec3d wireRenderOffset(BlockState state) { return Vec3d.ZERO; }
 	
 	/** Returns true if the given output port of the block is active */
-	public boolean isPortActive(String port, BlockPos pos, World world);
+	public boolean isPortActive(Port port, BlockPos pos, World world);
 	
 	public static enum WireRecipient implements StringIdentifiable
 	{
@@ -76,5 +77,13 @@ public interface IWireableBlock
 		public static final PacketCodec<ByteBuf, WireRecipient> PACKET_CODEC = PacketCodecs.indexed(id -> values()[id], value -> value.ordinal());
 		
 		public String asString() { return name().toLowerCase(); }
+	}
+	
+	public static record Port(String name)
+	{
+		public static final Codec<Port> CODEC	= Codec.STRING.comapFlatMap(s -> DataResult.success(new Port(s)), Port::name);
+		public static final PacketCodec<ByteBuf, Port> PACKET_CODEC	= PacketCodecs.STRING.xmap(Port::new, Port::name);
+		
+		public boolean equals(Object obj) { return obj instanceof Port && ((Port)obj).name.equalsIgnoreCase(name); }
 	}
 }

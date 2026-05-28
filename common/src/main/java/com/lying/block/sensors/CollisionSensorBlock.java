@@ -114,7 +114,7 @@ public class CollisionSensorBlock extends AbstractTrapSensorBlock
 		return world.getBlockState(pos).get(POWERED) ? 15 : 0;
 	}
 	
-	public boolean isPortActive(String port, BlockPos pos, World world)
+	public boolean isPortActive(Port port, BlockPos pos, World world)
 	{
 		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(POWERED);
 	}

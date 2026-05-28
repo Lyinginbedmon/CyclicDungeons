@@ -26,24 +26,24 @@ public abstract class AbstractTrapSensorBlock extends Block implements IWireable
 	
 	public WireRecipient type() { return WireRecipient.SENSOR; }
 	
-	public List<String> inputPorts(BlockPos pos, World world) { return List.of(); }
-	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
+	public List<Port> inputPorts(BlockPos pos, World world) { return List.of(); }
+	public List<Port> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
 	
 	/** Sensors don't need to respond to ports because they only transmit signals */
 	public void respondToPorts(BlockPos pos, World world) { }
 	
-	public boolean acceptWireTo(String output, BlockPos target, WireMode space, PortEntry input, World world)
+	public boolean acceptWireTo(Port output, BlockPos target, WireMode space, PortEntry input, World world)
 	{
 		return true;
 	}
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
+	public boolean acceptWireFrom(Port input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
 		return false;
 	}
 	
-	public boolean isPortActive(String port, BlockPos pos, World world)
+	public boolean isPortActive(Port port, BlockPos pos, World world)
 	{
-		return port.equalsIgnoreCase(CDLogicGates.OUTPUT);
+		return port.equals(CDLogicGates.OUTPUT);
 	}
 }

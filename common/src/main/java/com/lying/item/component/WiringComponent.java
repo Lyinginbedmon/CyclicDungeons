@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
+import com.lying.block.IWireableBlock.Port;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
@@ -24,27 +25,32 @@ import net.minecraft.world.World;
 
 public record WiringComponent(
 		Optional<PortEntry> output, 
-		Optional<String> portB
+		Optional<Port> input
 		) implements TooltipAppender
 {
 	public static final Codec<WiringComponent> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			PortEntry.CODEC.optionalFieldOf("target_port").forGetter(WiringComponent::output),
-			Codec.STRING.optionalFieldOf("end_port").forGetter(WiringComponent::portB)
+			Port.CODEC.optionalFieldOf("end_port").forGetter(WiringComponent::input)
 			)
 			.apply(instance, WiringComponent::new));
 	
 	public static final PacketCodec<ByteBuf, WiringComponent> PACKET_CODEC = PacketCodec.tuple(
 			PacketCodecs.optional(PortEntry.PACKET_CODEC), WiringComponent::output, 
-			PacketCodecs.optional(PacketCodecs.STRING), WiringComponent::portB,
+			PacketCodecs.optional(Port.PACKET_CODEC), WiringComponent::input,
 			WiringComponent::new);
 	
 	public boolean isWiring() { return output.isPresent(); }
 	
 	public static WiringComponent of(BlockPos pos) { return new WiringComponent(Optional.of(new PortEntry(pos, CDLogicGates.OUTPUT)), Optional.empty()); }
 	
-	public WiringComponent startingAt(String port)
+	public WiringComponent startingAt(Port port)
 	{
-		return new WiringComponent(Optional.of(new PortEntry(output.get().pos(), port)), portB);
+		return new WiringComponent(Optional.of(new PortEntry(output.get().pos(), port)), input);
+	}
+	
+	public WiringComponent targeting(Port port)
+	{
+		return new WiringComponent(output, Optional.of(port));
 	}
 	
 	public static WiringComponent empty() { return new WiringComponent(Optional.empty(), Optional.empty()); }
@@ -68,8 +74,8 @@ public record WiringComponent(
 			return false;
 		}
 		
-		String input = portB.orElse(CDLogicGates.INPUT);
-		String output = output().get().port();
+		Port input = input().orElse(CDLogicGates.INPUT);
+		Port output = output().get().port();
 		if(!receiver.inputPorts(pos, world).contains(input) || !provider.outputPorts(origin, world).contains(output))
 		{
 			CyclicDungeons.LOGGER.error("Ports not acceptable to wiring target(s)");

@@ -49,10 +49,10 @@ public class TrapLogicBlock extends BlockWithEntity implements IWireableBlock
 		world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_LOGIC.get()).ifPresent(t -> t.respondToPorts());
 	}
 	
-	public List<String> inputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.INPUT); }
-	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
+	public List<Port> inputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.INPUT); }
+	public List<Port> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
 	
-	public boolean isPortActive(String port, BlockPos pos, World world)
+	public boolean isPortActive(Port port, BlockPos pos, World world)
 	{
 		Optional<TrapLogicBlockEntity> tile;
 		return 
@@ -61,13 +61,13 @@ public class TrapLogicBlock extends BlockWithEntity implements IWireableBlock
 				tile.get().getOutput(port);
 	}
 	
-	public boolean acceptWireTo(String output, BlockPos target, WireMode space, PortEntry input, World world)
+	public boolean acceptWireTo(Port output, BlockPos target, WireMode space, PortEntry input, World world)
 	{
 		world.getBlockEntity(target, CDBlockEntityTypes.TRAP_LOGIC.get()).ifPresent(t -> t.processOutputConnection(output, input, space));
 		return true;
 	}
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
+	public boolean acceptWireFrom(Port input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
 		world.getBlockEntity(target, CDBlockEntityTypes.TRAP_LOGIC.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;

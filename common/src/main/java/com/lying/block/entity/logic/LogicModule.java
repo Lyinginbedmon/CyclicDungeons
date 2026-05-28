@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
+import com.lying.block.IWireableBlock.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDLogicGates.LogicGate;
@@ -19,7 +20,7 @@ public class LogicModule
 			LogicGate.CODEC.fieldOf("logic").forGetter(m -> m.handler),
 			PortSet.CODEC.optionalFieldOf("input_wires").forGetter(m -> m.inputWires.isEmpty() ? Optional.empty() : Optional.of(m.inputWires)),
 			PortSet.CODEC.optionalFieldOf("output_wires").forGetter(m -> m.outputWires.isEmpty() ? Optional.empty() : Optional.of(m.outputWires)),
-			WireState.CODEC.optionalFieldOf("prev_inputs").forGetter(m -> m.portCache.isWorthStoring() ? Optional.of(m.portCache) : Optional.empty()),
+			PortState.CODEC.optionalFieldOf("prev_inputs").forGetter(m -> m.portCache.isWorthStoring() ? Optional.of(m.portCache) : Optional.empty()),
 			LogicResult.CODEC.optionalFieldOf("prev_result").forGetter(m -> m.resultCache.isWorthStoring() ? Optional.of(m.resultCache) : Optional.empty())
 			).apply(instance, (name,handler,inputs,outputs,prevWires,prevOut) -> 
 			{
@@ -40,7 +41,7 @@ public class LogicModule
 	final PortSet outputWires = new PortSet();
 	
 	// State of input ports in previous frame
-	private WireState portCache = new WireState();
+	private PortState portCache = new PortState();
 	// Module output in previous frame
 	private LogicResult resultCache = LogicResult.create();
 	
@@ -72,12 +73,12 @@ public class LogicModule
 	
 	public LogicModule addOutput(PortSet wires)
 	{
-		for(String port : wires.ports())
+		for(Port port : wires.ports())
 			addOutput(port, wires.get(port).toArray(new String[0]));
 		return this;
 	}
 	
-	public LogicModule addOutput(String input, String... wires)
+	public LogicModule addOutput(Port input, String... wires)
 	{
 		outputWires.put(input, wires);
 		return this;
@@ -90,12 +91,12 @@ public class LogicModule
 	
 	public LogicModule addInput(PortSet wires)
 	{
-		for(String port : wires.ports())
+		for(Port port : wires.ports())
 			addInput(port, wires.get(port).toArray(new String[0]));
 		return this;
 	}
 	
-	public LogicModule addInput(String input, String... wires)
+	public LogicModule addInput(Port input, String... wires)
 	{
 		inputWires.put(input, wires);
 		return this;
@@ -123,7 +124,7 @@ public class LogicModule
 		return outputWires.wires().contains(name);
 	}
 	
-	public boolean getOutputStatus(String port) { return resultCache.get(port); }
+	public boolean getOutputStatus(Port port) { return resultCache.get(port); }
 	
 	/** Adds all wires used by this module to the wire map */
 	public void registerWires(Consumer<String> register)
@@ -144,8 +145,8 @@ public class LogicModule
 	public boolean getOutputTo(String wire)
 	{
 		// Find port wire is connected to, return status of that port
-		String port = null;
-		for(String portName : outputWires.ports())
+		Port port = null;
+		for(Port portName : outputWires.ports())
 			if(outputWires.get(portName).contains(wire))
 			{
 				port = portName;
@@ -157,12 +158,12 @@ public class LogicModule
 	public void update(Map<String,LogicWire> circuitWires, ModularLogicBlockEntity tile)
 	{
 		// Map the status of all input ports
-		WireState portState = new WireState();
+		PortState portState = new PortState();
 		
 		if(!inputWires.isEmpty())
 		{
 			// Port is live if any wire connected to it is TRUE
-			for(String port : inputWires.ports())
+			for(Port port : inputWires.ports())
 				portState.put(port, inputWires.get(port).stream().anyMatch(w -> circuitWires.containsKey(w) ? circuitWires.get(w).isOn() : false));
 		}
 		

@@ -7,10 +7,11 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import com.lying.block.IWireableBlock.Port;
 import com.lying.block.ModularLogicBlock;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.LogicResult;
-import com.lying.block.entity.logic.WireState;
+import com.lying.block.entity.logic.PortState;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -23,9 +24,15 @@ public class CDLogicGates
 {
 	private static final Map<String, Supplier<LogicGate>> MODULES	= new HashMap<>();
 	
-	public static final String INPUT	= "input";
-	public static final String OUTPUT	= "output";
-	public static final String RESET	= "reset";
+	public static final Port INPUT	= new Port("input");
+	public static final Port OUTPUT	= new Port("output");
+	public static final Port RESET	= new Port("reset");
+	public static final Port SET	= new Port("set");
+	public static final Port CARRY	= new Port("carry");
+	public static final Port BIT_1	= new Port("bit1");
+	public static final Port BIT_2	= new Port("bit2");
+	public static final Port BIT_4	= new Port("bit4");
+	public static final Port BIT_8	= new Port("bit8");
 	
 	/** Always TRUE */
 	public static final Supplier<LogicGate> TRUE	= register("true", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, true)));
@@ -93,23 +100,23 @@ public class CDLogicGates
 	public static final Supplier<LogicGate> SRLATCH	= register("sr_latch", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
 		ports.get(RESET) ?
 			LogicResult.create().put(OUTPUT, false) :
-		ports.get("set") ? 
+		ports.get(SET) ? 
 			LogicResult.create().put(OUTPUT, ports.get(INPUT)) : pOut));
 	
 	/** Combines the values of two 1-bit input values */
 	public static final Supplier<LogicGate> ADDER_2B = register("2bit_adder", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
 	{
-		boolean bit0 = ports.get("bit_a");
-		boolean bit1 = ports.get("bit_b");
+		boolean bit0 = ports.get(BIT_1);
+		boolean bit1 = ports.get(BIT_2);
 		return LogicResult.create()
 			.put(OUTPUT, bit0 != bit1)
-			.put("carry", bit0 && bit1);
+			.put(CARRY, bit0 && bit1);
 	}));
 	/** Converts a 4-bit number into a value between 0 and 15 (inclusive) */
 	public static final Supplier<LogicGate> CONVERTER_4B	= register("b2d_converter", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
 	{
 		return LogicResult.create()
-				.put("output_"+binaryToDecimal(gatherBits(4, ports)), true);
+				.put(new Port("output_"+binaryToDecimal(gatherBits(4, ports))), true);
 	}));
 	/** Holds a 4-bit number and increments it when it receives a rising-edge pulse */
 	public static final Supplier<LogicGate> COUNTER_4B	= register("4bit_counter", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
@@ -117,7 +124,7 @@ public class CDLogicGates
 		if(isRisingEdge(RESET, ports, pPorts))
 			return LogicResult.create();
 		
-		if(isRisingEdge("inc", ports, pPorts))
+		if(isRisingEdge(new Port("inc"), ports, pPorts))
 		{
 			boolean[] data = gatherBits(4, ports);
 			// Toggle values from bit 1 to 4 until we encounter a false, set that to true and break
@@ -132,10 +139,10 @@ public class CDLogicGates
 					data[i] = false;
 			}
 			return LogicResult.create()
-					.put("bit_1", data[0])
-					.put("bit_2", data[1])
-					.put("bit_4", data[2])
-					.put("bit_8", data[3]);
+					.put(BIT_1, data[0])
+					.put(BIT_2, data[1])
+					.put(BIT_4, data[2])
+					.put(BIT_8, data[3]);
 		}
 		// TODO Add decrement function?
 		return pOut;
@@ -161,16 +168,16 @@ public class CDLogicGates
 	/** When named, used by the logic system to interact with the trap system */
 	public static final Supplier<LogicGate> EXIT	= register("output", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, ports.get(INPUT))));
 	
-	public static boolean isRisingEdge(String port, WireState ports, WireState pPorts)
+	public static boolean isRisingEdge(Port port, PortState ports, PortState pPorts)
 	{
 		return !pPorts.get(port) && ports.get(port);
 	}
 	
-	public static boolean[] gatherBits(int count, WireState ports)
+	public static boolean[] gatherBits(int count, PortState ports)
 	{
 		boolean[] bits = new boolean[count];
 		for(int i=0; i<bits.length; i++)
-			bits[i] = ports.get("bit_"+(int)Math.pow(2, i));
+			bits[i] = ports.get(new Port("bit_"+(int)Math.pow(2, i)));
 		return bits;
 	}
 	
@@ -229,7 +236,7 @@ public class CDLogicGates
 		
 		public final String registryName() { return registryName; }
 		
-		public final LogicResult getResult(WireState portState, WireState portCache, LogicResult prevResult, ModularLogicBlockEntity tile)
+		public final LogicResult getResult(PortState portState, PortState portCache, LogicResult prevResult, ModularLogicBlockEntity tile)
 		{
 			return logic.result(portState, portCache, prevResult, tile);
 		}
@@ -244,6 +251,6 @@ public class CDLogicGates
 		 * @param prevResult	The result of this gate in the previous update
 		 * @return
 		 */
-		public LogicResult result(WireState portState, WireState portCache, LogicResult prevResult, ModularLogicBlockEntity tile);
+		public LogicResult result(PortState portState, PortState portCache, LogicResult prevResult, ModularLogicBlockEntity tile);
 	}
 }

@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
+import com.lying.block.IWireableBlock.Port;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.init.CDLogicGates;
 import com.lying.reference.Reference;
@@ -23,7 +24,6 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -41,8 +41,8 @@ public class WiringManifest
 				return manifest;
 			}));
 	
-	private Map<String, ManifestEntry> inputs = new HashMap<>();
-	private Map<String, ManifestEntry> outputs = new HashMap<>();
+	private Map<Port, ManifestEntry> inputs = new HashMap<>();
+	private Map<Port, ManifestEntry> outputs = new HashMap<>();
 	
 	public WiringManifest() { }
 	
@@ -71,7 +71,7 @@ public class WiringManifest
 		return tally;
 	}
 	
-	public Optional<ManifestEntry> getPort(String name, boolean isInput)
+	public Optional<ManifestEntry> getPort(Port name, boolean isInput)
 	{
 		ManifestEntry port = (isInput ? inputs : outputs).getOrDefault(name, null);
 		if(port == null)
@@ -83,14 +83,14 @@ public class WiringManifest
 	}
 	
 	/** Returns all blocks being listened to by an input port */
-	public List<BlockPos> getInputListeners(String name, BlockPos offset)
+	public List<BlockPos> getInputListeners(Port name, BlockPos offset)
 	{
 		ManifestEntry port = inputs.getOrDefault(name, null);
 		return port == null ? List.of() : port.connections().stream().map(ManifestEntry.PortEntry::pos).map(p -> p.add(offset)).toList();
 	}
 	
 	/** Returns all blocks listening to the given output port */
-	public List<BlockPos> getOutputListeners(String name, BlockPos offset)
+	public List<BlockPos> getOutputListeners(Port name, BlockPos offset)
 	{
 		ManifestEntry port = outputs.getOrDefault(name, null);
 		return port == null ? List.of() : port.connections().stream().map(ManifestEntry.PortEntry::pos).map(p -> p.add(offset)).toList();
@@ -151,10 +151,10 @@ public class WiringManifest
 	{
 		public static final Codec<List<ManifestEntry>> LIST_CODEC	= Codec.of(ManifestEntry::encodeSet, ManifestEntry::decodeSet);
 		
-		private final String port;
+		private final Port port;
 		private final List<PortEntry> positions = Lists.newArrayList();
 		
-		public ManifestEntry(String name)
+		public ManifestEntry(Port name)
 		{
 			port = name;
 		}
@@ -166,7 +166,7 @@ public class WiringManifest
 			return this;
 		}
 		
-		public ManifestEntry attach(BlockPos pos, String port)
+		public ManifestEntry attach(BlockPos pos, Port port)
 		{
 			return attach(new PortEntry(pos, port));
 		}
@@ -188,7 +188,7 @@ public class WiringManifest
 			return this;
 		}
 		
-		public String port() { return port; }
+		public Port port() { return port; }
 		
 		public List<PortEntry> connections() { return positions; }
 		
@@ -224,7 +224,7 @@ public class WiringManifest
 			RecordBuilder<T> map = ops.mapBuilder();
 			for(ManifestEntry entry : manifest)
 			{
-				T key = ops.createString(entry.port());
+				T key = ops.createString(entry.port().name());
 				List<PortEntry> values = entry.connections();
 				if(values == null || values.isEmpty())
 					continue;
@@ -246,9 +246,9 @@ public class WiringManifest
 				T value = entry.getSecond();
 				DataResult<PortEntry> single = PortEntry.CODEC.parse(ops, value);
 				if(single.isSuccess())
-					wires.add(new ManifestEntry(key).attach(single.getOrThrow()));
+					wires.add(new ManifestEntry(new Port(key)).attach(single.getOrThrow()));
 				else
-					wires.add(new ManifestEntry(key).attachAll(PortEntry.CODEC.listOf().parse(ops, value).getOrThrow()));
+					wires.add(new ManifestEntry(new Port(key)).attachAll(PortEntry.CODEC.listOf().parse(ops, value).getOrThrow()));
 			});
 			return DataResult.success(Pair.of(wires, input));
 		}
@@ -256,15 +256,15 @@ public class WiringManifest
 		/**
 		 * Holder object containing a BlockPos and the name of an output port from that position
 		 */
-		public static record PortEntry(BlockPos pos, String port)
+		public static record PortEntry(BlockPos pos, Port port)
 		{
 			public static final Codec<PortEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 					BlockPos.CODEC.fieldOf("pos").forGetter(PortEntry::pos),
-					Codec.STRING.fieldOf("port").forGetter(PortEntry::port)
+					Port.CODEC.fieldOf("port").forGetter(PortEntry::port)
 					).apply(instance, PortEntry::new));
 			public static final PacketCodec<ByteBuf, PortEntry> PACKET_CODEC	= PacketCodec.tuple(
 					BlockPos.PACKET_CODEC, PortEntry::pos, 
-					PacketCodecs.STRING, PortEntry::port, 
+					Port.PACKET_CODEC, PortEntry::port, 
 					PortEntry::new);
 			
 			public MutableText displayName() { return Reference.ModInfo.translate("gui", "port_name", port, pos.toShortString()); }
@@ -280,7 +280,7 @@ public class WiringManifest
 					return false;
 				
 				PortEntry other = (PortEntry)obj;
-				return pos.getManhattanDistance(other.pos()) == 0 && port.equalsIgnoreCase(other.port());
+				return pos.getManhattanDistance(other.pos()) == 0 && port.equals(other.port());
 			}
 			
 			public boolean isActive(World world, BlockPos origin)

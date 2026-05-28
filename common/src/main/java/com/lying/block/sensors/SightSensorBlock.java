@@ -1,14 +1,10 @@
 package com.lying.block.sensors;
 
-import java.util.List;
-
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.IWireableBlock;
 import com.lying.block.sensors.entity.SightSensorBlockEntity;
 import com.lying.init.CDBlocks;
-import com.lying.init.CDLogicGates;
-import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -63,22 +59,10 @@ public class SightSensorBlock extends AbstractTrapSensorBlock implements IWireab
 	
 	public int portActivity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
 	
-	public boolean isPortActive(String port, BlockPos pos, World world)
+	public boolean isPortActive(Port port, BlockPos pos, World world)
 	{
 		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(POWERED);
 	}
-	
-	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return true; }
-	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world) { return false; }
-	
-	public WireRecipient type() { return WireRecipient.SENSOR; }
-	
-	/** Sensors don't need to respond to ports because they only transmit signals */
-	public void respondToPorts(BlockPos pos, World world) { }
-	
-	public List<String> inputPorts(BlockPos pos, World world) { return List.of(); }
-	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
 	
 	@SuppressWarnings("unchecked")
 	@Nullable

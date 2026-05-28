@@ -149,7 +149,7 @@ public class FlameJetBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.FLAME_JET.get()).get().wireCount(); }
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
+	public boolean acceptWireFrom(Port input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
 		world.getBlockEntity(target, CDBlockEntityTypes.FLAME_JET.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;

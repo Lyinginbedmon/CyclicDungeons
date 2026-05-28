@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
+import com.lying.block.IWireableBlock.Port;
 import com.lying.block.entity.logic.WiringManifest;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
@@ -62,18 +63,18 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	}
 	
 	/** Returns true if the given input port is active */
-	public final boolean getInput(String port) 
+	public final boolean getInput(Port port) 
 	{
 		return getPortStatus(port, true);
 	}
 	
 	/** Returns true if the given output port is active */
-	public final boolean getOutput(String port) 
+	public final boolean getOutput(Port port) 
 	{
 		return getPortStatus(port, false);
 	}
 	
-	protected final boolean getPortStatus(String port, boolean isInput)
+	protected final boolean getPortStatus(Port port, boolean isInput)
 	{
 		Optional<ManifestEntry> global = wiringGlobal.getPort(port, isInput);
 		if(global.isPresent() && global.get().status(getWorld(), BlockPos.ORIGIN))
@@ -103,7 +104,7 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 				set.add(p);
 		};
 		
-		for(String port : getWireable().inputPorts(getPos(), getWorld()))
+		for(Port port : getWireable().inputPorts(getPos(), getWorld()))
 		{
 			wiringGlobal.getInputListeners(port, BlockPos.ORIGIN).forEach(registrar);
 			wiringLocal.getInputListeners(port, getPos()).forEach(registrar);
@@ -121,7 +122,7 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 				set.add(p);
 		};
 		
-		for(String port : getWireable().outputPorts(getPos(), getWorld()))
+		for(Port port : getWireable().outputPorts(getPos(), getWorld()))
 		{
 			wiringGlobal.getOutputListeners(port, BlockPos.ORIGIN).forEach(registrar);
 			wiringLocal.getOutputListeners(port, getPos()).forEach(registrar);
@@ -131,14 +132,14 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	
 	public final int wireCount() { return wiringGlobal.size() + wiringLocal.size(); }
 	
-	public abstract boolean processInputConnection(String input, PortEntry output, WireMode space);
+	public abstract boolean processInputConnection(Port input, PortEntry output, WireMode space);
 	
-	public abstract boolean processOutputConnection(String output, PortEntry input, WireMode space);
+	public abstract boolean processOutputConnection(Port output, PortEntry input, WireMode space);
 	
 	public void reset()
 	{
 		// Deactivate any attached actors
-		for(String port : getWireable().outputPorts(getPos(), getWorld()))
+		for(Port port : getWireable().outputPorts(getPos(), getWorld()))
 		{
 			wiringGlobal.getOutputListeners(port, BlockPos.ORIGIN).forEach(p -> IWireableBlock.getWireable(p, world).respondToPorts(p, world));
 			wiringLocal.getOutputListeners(port, getPos()).forEach(p -> IWireableBlock.getWireable(p, world).respondToPorts(p, world));
@@ -177,7 +178,7 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 			markDirty();
 	}
 	
-	protected final void addInputWire(String input, PortEntry port, WireMode space)
+	protected final void addInputWire(Port input, PortEntry port, WireMode space)
 	{
 		switch(space)
 		{
@@ -191,7 +192,7 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		markDirty();
 	}
 	
-	protected final void addOutputWire(String output, PortEntry port, WireMode space)
+	protected final void addOutputWire(Port output, PortEntry port, WireMode space)
 	{
 		switch(space)
 		{

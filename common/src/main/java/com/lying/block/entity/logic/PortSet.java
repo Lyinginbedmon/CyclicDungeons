@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Lists;
+import com.lying.block.IWireableBlock.Port;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -21,9 +22,9 @@ public class PortSet
 	private static final Codec<String> CODEC_STRING	= Codec.STRING;
 	private static final Codec<List<String>> CODEC_LIST	= CODEC_STRING.listOf();
 	
-	private final Map<String, List<String>> values = new HashMap<>();
+	private final Map<Port, List<String>> values = new HashMap<>();
 	
-	public void put(String key, String... value)
+	public void put(Port key, String... value)
 	{
 		List<String> set = values.getOrDefault(key, Lists.newArrayList());
 		for(String wire : value)
@@ -32,12 +33,12 @@ public class PortSet
 		values.put(key, set);
 	}
 	
-	public List<String> get(String key)
+	public List<String> get(Port key)
 	{
 		return values.getOrDefault(key, List.of());
 	}
 	
-	public Collection<String> ports()
+	public Collection<Port> ports()
 	{
 		return values.keySet();
 	}
@@ -60,9 +61,9 @@ public class PortSet
 	private static <T extends Object> DataResult<T> encode(final PortSet wireSet, final DynamicOps<T> ops, final T prefix)
 	{
 		RecordBuilder<T> map = ops.mapBuilder();
-		for(Entry<String, List<String>> entry : wireSet.values.entrySet())
+		for(Entry<Port, List<String>> entry : wireSet.values.entrySet())
 		{
-			T key = ops.createString(entry.getKey());
+			T key = ops.createString(entry.getKey().name());
 			List<String> values = entry.getValue();
 			if(values == null || values.isEmpty())
 				continue;
@@ -84,9 +85,9 @@ public class PortSet
 			T value = entry.getSecond();
 			DataResult<String> single = CODEC_STRING.parse(ops, value);
 			if(single.isSuccess())
-				wires.put(key, single.getOrThrow());
+				wires.put(new Port(key), single.getOrThrow());
 			else
-				wires.put(key, CODEC_LIST.parse(ops, value).getOrThrow().toArray(new String[0]));
+				wires.put(new Port(key), CODEC_LIST.parse(ops, value).getOrThrow().toArray(new String[0]));
 		});
 		return DataResult.success(Pair.of(wires, input));
 	}

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.lying.block.ITrapActor;
 import com.lying.block.IWireableBlock;
+import com.lying.block.IWireableBlock.Port;
 import com.lying.block.entity.AbstractWireableBlockEntity;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
@@ -74,13 +75,13 @@ public class TrapActorBlockEntity<T extends ITrapActor> extends AbstractWireable
 		return hasInputs() && getInput(CDLogicGates.INPUT);
 	}
 	
-	public boolean processInputConnection(String input, PortEntry output, WireMode space)
+	public boolean processInputConnection(Port input, PortEntry output, WireMode space)
 	{
 		addInputWire(input, output, space);
 		return true;
 	}
 	
-	public boolean processOutputConnection(String output, PortEntry input, WireMode space)
+	public boolean processOutputConnection(Port output, PortEntry input, WireMode space)
 	{
 		return false;
 	}
