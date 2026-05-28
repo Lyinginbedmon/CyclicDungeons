@@ -5,10 +5,10 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
-import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
 import com.lying.block.entity.logic.WiringManifest;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
@@ -64,11 +64,22 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	/** Returns true if the given input port is active */
 	public final boolean getInput(String port) 
 	{
-		Optional<ManifestEntry> global = wiringGlobal.getPort(port, true);
+		return getPortStatus(port, true);
+	}
+	
+	/** Returns true if the given output port is active */
+	public final boolean getOutput(String port) 
+	{
+		return getPortStatus(port, false);
+	}
+	
+	protected final boolean getPortStatus(String port, boolean isInput)
+	{
+		Optional<ManifestEntry> global = wiringGlobal.getPort(port, isInput);
 		if(global.isPresent() && global.get().status(getWorld(), BlockPos.ORIGIN))
 			return true;
 		
-		Optional<ManifestEntry> local = wiringLocal.getPort(port, true);
+		Optional<ManifestEntry> local = wiringLocal.getPort(port, isInput);
 		if(local.isPresent() && local.get().status(getWorld(), getPos()))
 			return true;
 		
@@ -78,18 +89,21 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	public final boolean hasInputs() { return wiringGlobal.totalInputs() + wiringLocal.totalInputs() > 0; }
 	public final boolean hasOutputs() { return wiringGlobal.totalOutputs() + wiringLocal.totalOutputs() > 0; }
 	
-	protected IWireableBlock getWireable() { return getWireable(); }
+	protected IWireableBlock getWireable()
+	{
+		return (IWireableBlock)getCachedState().getBlock();
+	}
 	
 	public final List<BlockPos> getInputListeners()
 	{
 		List<BlockPos> set = Lists.newArrayList();
 		final Consumer<BlockPos> registrar = p -> 
 		{
-			if(set.stream().noneMatch(p2 -> p2.getManhattanDistance(p) == 0))
+			if(p != null && set.stream().noneMatch(p2 -> p2.getManhattanDistance(p) == 0))
 				set.add(p);
 		};
 		
-		for(String port : getWireable().outputPorts(getPos(), getWorld()))
+		for(String port : getWireable().inputPorts(getPos(), getWorld()))
 		{
 			wiringGlobal.getInputListeners(port, BlockPos.ORIGIN).forEach(registrar);
 			wiringLocal.getInputListeners(port, getPos()).forEach(registrar);
@@ -117,9 +131,9 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	
 	public final int wireCount() { return wiringGlobal.size() + wiringLocal.size(); }
 	
-	public abstract boolean processInputConnection(String input, BlockPos pos, String port, WireMode space);
+	public abstract boolean processInputConnection(String input, PortEntry output, WireMode space);
 	
-	public abstract boolean processOutputConnection(String output, BlockPos pos, String port, WireMode space);
+	public abstract boolean processOutputConnection(String output, PortEntry input, WireMode space);
 	
 	public void reset()
 	{
@@ -139,8 +153,6 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		
 		markDirty();
 	}
-	
-	public void respondToPorts() { }
 	
 	protected abstract void resetBlock();
 	
@@ -165,32 +177,32 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 			markDirty();
 	}
 	
-	protected final void addInputWire(String input, BlockPos pos, String port, WireMode space)
+	protected final void addInputWire(String input, PortEntry port, WireMode space)
 	{
-		CyclicDungeons.LOGGER.info("Attaching [{}] port of {} to [{}] input", port, getCachedState().getBlock().getName().getString(), input);
 		switch(space)
 		{
 			case GLOBAL:
-				wiringGlobal.getPort(input, true).ifPresent(m -> m.attach(pos, port));
+				wiringGlobal.getPort(input, true).ifPresent(m -> m.attach(port));
 				break;
 			case LOCAL:
-				wiringLocal.getPort(input, true).ifPresent(m -> m.attach(pos.subtract(getPos()), port));
+				wiringLocal.getPort(input, true).ifPresent(m -> m.attach(port.relativeTo(getPos())));
 				break;
 		}
+		markDirty();
 	}
 	
-	protected final void addOutputWire(String output, BlockPos pos, String port, WireMode space)
+	protected final void addOutputWire(String output, PortEntry port, WireMode space)
 	{
-		CyclicDungeons.LOGGER.info("Attaching [{}] output to [{}] input of {}", output, port, getCachedState().getBlock().getName().getString());
 		switch(space)
 		{
 			case GLOBAL:
-				wiringGlobal.getPort(output, false).ifPresent(m -> m.attach(pos, port));
+				wiringGlobal.getPort(output, false).ifPresent(m -> m.attach(port));
 				break;
 			case LOCAL:
-				wiringLocal.getPort(output, false).ifPresent(m -> m.attach(pos.subtract(getPos()), port));
+				wiringLocal.getPort(output, false).ifPresent(m -> m.attach(port.relativeTo(getPos())));
 				break;
 		}
+		markDirty();
 	}
 	
 	public BlockEntityUpdateS2CPacket toUpdatePacket() { return BlockEntityUpdateS2CPacket.create(this); }

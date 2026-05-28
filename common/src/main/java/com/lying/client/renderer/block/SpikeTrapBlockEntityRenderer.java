@@ -1,9 +1,9 @@
 package com.lying.client.renderer.block;
 
-import com.lying.block.SpikeTrapBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SpikesBlock.SpikePart;
-import com.lying.block.entity.SpikeTrapBlockEntity;
+import com.lying.block.actors.SpikeTrapBlock;
+import com.lying.block.actors.entity.SpikeTrapBlockEntity;
 import com.lying.init.CDBlocks;
 
 import net.minecraft.block.BlockState;

@@ -1,19 +1,20 @@
-package com.lying.block;
+package com.lying.block.sensors;
 
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.SightSensorBlockEntity;
+import com.lying.block.IWireableBlock;
+import com.lying.block.sensors.entity.SightSensorBlockEntity;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
@@ -27,7 +28,7 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class SightSensorBlock extends BlockWithEntity implements IWireableBlock
+public class SightSensorBlock extends AbstractTrapSensorBlock implements IWireableBlock, BlockEntityProvider
 {
 	public static final MapCodec<SightSensorBlock> CODEC	= createCodec(SightSensorBlock::new);
 	protected static final VoxelShape SHAPE	= Block.createCuboidShape(2, 2, 2, 14, 14, 14);
@@ -62,6 +63,11 @@ public class SightSensorBlock extends BlockWithEntity implements IWireableBlock
 	
 	public int portActivity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
 	
+	public boolean isPortActive(String port, BlockPos pos, World world)
+	{
+		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(POWERED);
+	}
+	
 	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return true; }
 	
 	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world) { return false; }
@@ -73,8 +79,6 @@ public class SightSensorBlock extends BlockWithEntity implements IWireableBlock
 	
 	public List<String> inputPorts(BlockPos pos, World world) { return List.of(); }
 	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
-	
-	protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
 	
 	@SuppressWarnings("unchecked")
 	@Nullable

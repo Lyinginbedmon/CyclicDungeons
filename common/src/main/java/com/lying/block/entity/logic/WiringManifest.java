@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.init.CDLogicGates;
+import com.lying.reference.Reference;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -18,7 +19,12 @@ import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.text.MutableText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -68,6 +74,11 @@ public class WiringManifest
 	public Optional<ManifestEntry> getPort(String name, boolean isInput)
 	{
 		ManifestEntry port = (isInput ? inputs : outputs).getOrDefault(name, null);
+		if(port == null)
+		{
+			port = new ManifestEntry(name);
+			(isInput ? inputs : outputs).put(name, port);
+		}
 		return port == null ? Optional.empty() : Optional.of(port);
 	}
 	
@@ -188,24 +199,24 @@ public class WiringManifest
 			return cleanLocal(world, BlockPos.ORIGIN, type);
 		}
 		
-		public boolean cleanLocal(World world, BlockPos offset, final WireRecipient type)
+		public boolean cleanLocal(World world, BlockPos offset, final WireRecipient typeIn)
 		{
 			return positions.removeIf(p -> 
 			{
 				BlockPos pos = p.pos().add(offset);
 				BlockState state = world.getBlockState(pos);
-				return !(state.getBlock() instanceof IWireableBlock) || ((IWireableBlock)state.getBlock()).type() != type;
+				Block block = state.getBlock();
+				if(!(block instanceof IWireableBlock))
+					return true;
+				
+				WireRecipient type = ((IWireableBlock)block).type();
+				return type != WireRecipient.LOGIC && type != typeIn;
 			});
 		}
 		
 		public boolean status(World world, BlockPos offset)
 		{
-			return positions.stream().anyMatch(p -> 
-			{
-				BlockPos pos = p.pos().add(offset);
-				IWireableBlock wireable = IWireableBlock.getWireable(pos, world);
-				return wireable != null && wireable.isPortActive(p.port(), pos, world);
-			});
+			return positions.stream().anyMatch(p -> p.isActive(world, offset));
 		}
 		
 		private static <T extends Object> DataResult<T> encodeSet(final List<ManifestEntry> manifest, final DynamicOps<T> ops, final T prefix)
@@ -251,6 +262,17 @@ public class WiringManifest
 					BlockPos.CODEC.fieldOf("pos").forGetter(PortEntry::pos),
 					Codec.STRING.fieldOf("port").forGetter(PortEntry::port)
 					).apply(instance, PortEntry::new));
+			public static final PacketCodec<ByteBuf, PortEntry> PACKET_CODEC	= PacketCodec.tuple(
+					BlockPos.PACKET_CODEC, PortEntry::pos, 
+					PacketCodecs.STRING, PortEntry::port, 
+					PortEntry::new);
+			
+			public MutableText displayName() { return Reference.ModInfo.translate("gui", "port_name", port, pos.toShortString()); }
+			
+			public PortEntry relativeTo(BlockPos offset)
+			{
+				return new PortEntry(pos.subtract(offset), port);
+			}
 			
 			public boolean equals(Object obj)
 			{

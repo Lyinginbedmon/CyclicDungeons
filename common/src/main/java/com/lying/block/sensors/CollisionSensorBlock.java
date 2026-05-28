@@ -1,4 +1,4 @@
-package com.lying.block;
+package com.lying.block.sensors;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -112,6 +112,11 @@ public class CollisionSensorBlock extends AbstractTrapSensorBlock
 	public int portActivity(BlockPos pos, World world)
 	{
 		return world.getBlockState(pos).get(POWERED) ? 15 : 0;
+	}
+	
+	public boolean isPortActive(String port, BlockPos pos, World world)
+	{
+		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(POWERED);
 	}
 	
 	protected void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random)

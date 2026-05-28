@@ -1,10 +1,10 @@
-package com.lying.block.entity;
+package com.lying.block.sensors.entity;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import com.lying.block.SightSensorBlock;
+import com.lying.block.sensors.SightSensorBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
 

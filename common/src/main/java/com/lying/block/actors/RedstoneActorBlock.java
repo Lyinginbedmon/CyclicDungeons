@@ -1,4 +1,4 @@
-package com.lying.block;
+package com.lying.block.actors;
 
 import com.lying.init.CDBlockEntityTypes;
 import com.mojang.serialization.MapCodec;
@@ -42,10 +42,7 @@ public class RedstoneActorBlock extends AbstractTrapActorBlock
 		return state.get(POWERED) ? 15 : 0;
 	}
 	
-	public boolean isActive(BlockPos pos, World world)
-	{
-		return world.getBlockState(pos).get(POWERED);
-	}
+	public boolean isActive(BlockPos pos, World world) { return world.getBlockState(pos).get(POWERED); }
 	
 	public void trigger(BlockPos pos, World world)
 	{

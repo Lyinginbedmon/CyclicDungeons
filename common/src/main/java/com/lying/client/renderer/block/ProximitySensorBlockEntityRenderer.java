@@ -3,8 +3,8 @@ package com.lying.client.renderer.block;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import com.lying.block.ProximitySensorBlock;
-import com.lying.block.entity.ProximitySensorBlockEntity;
+import com.lying.block.sensors.ProximitySensorBlock;
+import com.lying.block.sensors.entity.ProximitySensorBlockEntity;
 import com.lying.reference.Reference;
 import com.mojang.blaze3d.systems.RenderSystem;
 

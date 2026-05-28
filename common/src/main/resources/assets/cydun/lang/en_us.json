@@ -65,6 +65,7 @@
 	"gui.cydun.wiring_gun.wires_cleared.success": "Cleared %s wires from [%s]",
 	"gui.cydun.wiring_gun.wires_cleared.failed": "[%s] has no wires to clear",
 	"gui.cydun.wiring_gun.mode_change.success": "Wiring mode set to %s coordinates",
+	"gui.cydun.port_name": "%s port of %s",
 	// Enums
 	"enum.cydun.xyz_mode.global": "Absolute",
 	"enum.cydun.xyz_mode.local": "Relative",

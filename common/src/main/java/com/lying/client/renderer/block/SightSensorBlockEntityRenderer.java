@@ -1,6 +1,6 @@
 package com.lying.client.renderer.block;
 
-import com.lying.block.entity.SightSensorBlockEntity;
+import com.lying.block.sensors.entity.SightSensorBlockEntity;
 
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumerProvider;

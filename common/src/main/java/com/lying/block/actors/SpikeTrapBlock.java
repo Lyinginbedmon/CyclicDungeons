@@ -1,9 +1,10 @@
-package com.lying.block;
+package com.lying.block.actors;
 
 import java.util.Map;
 import java.util.Optional;
 
-import com.lying.block.entity.SpikeTrapBlockEntity;
+import com.lying.block.actors.entity.SpikeTrapBlockEntity;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
@@ -78,9 +79,9 @@ public class SpikeTrapBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get()).get().wireCount(); }
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
-		world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		world.getBlockEntity(target, CDBlockEntityTypes.SPIKE_TRAP.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;
 	}
 	
@@ -89,10 +90,7 @@ public class SpikeTrapBlock extends AbstractTrapActorBlock
 		world.getBlockEntity(pos, CDBlockEntityTypes.SPIKE_TRAP.get()).get().reset();
 	}
 	
-	public boolean isActive(BlockPos pos, World world)
-	{
-		return world.getBlockState(pos).get(POWERED);
-	}
+	public boolean isActive(BlockPos pos, World world) { return world.getBlockState(pos).get(POWERED); }
 	
 	public void trigger(BlockPos pos, World world)
 	{

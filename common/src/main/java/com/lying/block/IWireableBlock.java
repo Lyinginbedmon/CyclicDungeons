@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.Codec;
 
@@ -42,13 +43,14 @@ public interface IWireableBlock
 	public List<String> inputPorts(BlockPos pos, World world);
 	public List<String> outputPorts(BlockPos pos, World world);
 	
+	/** Calls the block to update its behaviour based on its input ports */
 	public void respondToPorts(BlockPos pos, World world);
 	
 	/** Called when the block receives a port connection from the given block */
-	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, BlockPos pos, String output, World world);
+	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, PortEntry output, World world);
 	
 	/** Called when the block delivers a port connection to the given block */
-	public boolean acceptWireTo(String output, BlockPos me, WireMode space, BlockPos pos, String input, World world);
+	public boolean acceptWireTo(String output, BlockPos me, WireMode space, PortEntry input, World world);
 	
 	public WireRecipient type();
 	
@@ -58,17 +60,16 @@ public interface IWireableBlock
 	
 	public default Vec3d wireRenderOffset(BlockState state) { return Vec3d.ZERO; }
 	
-	public default boolean isActive(BlockPos pos, World world) { return activity(pos, world) > 0; }
-	
 	/** Returns true if the given output port of the block is active */
-	public default boolean isPortActive(String port, BlockPos pos, World world) { return false; }
-	
-	public default int activity(BlockPos pos, World world) { return 0; }
+	public boolean isPortActive(String port, BlockPos pos, World world);
 	
 	public static enum WireRecipient implements StringIdentifiable
 	{
+		/** Actors perform changes to the game environment */
 		ACTOR,
+		/** Sensors detect changes to the game environment */
 		SENSOR,
+		/** Logic components react to sensors and control actors */
 		LOGIC;
 		
 		public static final Codec<WireRecipient> CODEC = StringIdentifiable.createCodec(WireRecipient::values);

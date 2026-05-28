@@ -1,12 +1,12 @@
-package com.lying.block.entity;
+package com.lying.block.actors.entity;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
-import com.lying.block.SpikeTrapBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SpikesBlock.SpikePart;
+import com.lying.block.actors.SpikeTrapBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 

@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.block.entity.TrapLogicBlockEntity;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.data.CDTags;
 import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDBlockEntityTypes;
@@ -87,8 +88,8 @@ public abstract class LogicControlledTrap extends Trap
 			else if(state.isIn(CDTags.TRAP_SENSOR))
 				sensors.add(pos);
 		});
-		sensors.forEach(p -> logic.processInputConnection(CDLogicGates.INPUT, p, CDLogicGates.OUTPUT, WireMode.GLOBAL));
-		actors.forEach(p -> logic.processOutputConnection(CDLogicGates.OUTPUT, p, CDLogicGates.INPUT, WireMode.GLOBAL));
+		sensors.forEach(p -> logic.processInputConnection(CDLogicGates.INPUT, new PortEntry(p, CDLogicGates.OUTPUT), WireMode.GLOBAL));
+		actors.forEach(p -> logic.processOutputConnection(CDLogicGates.OUTPUT, new PortEntry(p, CDLogicGates.INPUT), WireMode.GLOBAL));
 	}
 	
 	private static record LogicManifest(Identifier handlerID)

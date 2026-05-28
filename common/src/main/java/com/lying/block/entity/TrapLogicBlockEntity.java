@@ -3,6 +3,7 @@ package com.lying.block.entity;
 import static com.lying.reference.Reference.ModInfo.prefix;
 
 import com.lying.block.IWireableBlock;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDTrapLogicHandlers;
@@ -77,16 +78,16 @@ public class TrapLogicBlockEntity extends AbstractWireableBlockEntity
 		return hasInputs() && getInput(CDLogicGates.INPUT);
 	}
 	
-	public boolean processInputConnection(String input, BlockPos pos, String port, WireMode space)
+	public boolean processInputConnection(String input, PortEntry output, WireMode space)
 	{
-		addInputWire(input, pos, port, space);
+		addInputWire(input, output, space);
 		return true;
 	}
 	
-	public boolean processOutputConnection(String output, BlockPos pos, String input, WireMode space)
+	public boolean processOutputConnection(String output, PortEntry input, WireMode space)
 	{
-		addOutputWire(output, pos, input, space);
-		return false;
+		addOutputWire(output, input, space);
+		return true;
 	}
 	
 	public TrapLogicBlockEntity setLogic(Identifier idIn)

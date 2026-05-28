@@ -1,8 +1,8 @@
-package com.lying.block.entity;
+package com.lying.block.actors.entity;
 
 import java.util.Map;
 
-import com.lying.block.FlameJetBlock;
+import com.lying.block.actors.FlameJetBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
 

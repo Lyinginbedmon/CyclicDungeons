@@ -1,18 +1,19 @@
-package com.lying.block;
+package com.lying.block.sensors;
 
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.ProximitySensorBlockEntity;
+import com.lying.block.IWireableBlock;
+import com.lying.block.sensors.entity.ProximitySensorBlockEntity;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
@@ -30,7 +31,7 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class ProximitySensorBlock extends BlockWithEntity implements IWireableBlock
+public class ProximitySensorBlock extends AbstractTrapSensorBlock implements IWireableBlock, BlockEntityProvider
 {
 	public static final MapCodec<ProximitySensorBlock> CODEC	= createCodec(ProximitySensorBlock::new);
 	private static final VoxelShape UP_SHAPE	= Block.createCuboidShape(4, 0, 4, 12, 4, 12);
@@ -103,8 +104,6 @@ public class ProximitySensorBlock extends BlockWithEntity implements IWireableBl
 		return ProximitySensorBlockEntity.getTicker(world, state, type);
 	}
 	
-	protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
-	
 	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return false; }
 	
 	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world) { return false; }
@@ -119,6 +118,11 @@ public class ProximitySensorBlock extends BlockWithEntity implements IWireableBl
 	public List<String> outputPorts(BlockPos pos, World world) { return List.of(CDLogicGates.OUTPUT); }
 	
 	public int portActivity(BlockPos pos, World world) { return world.getBlockState(pos).get(POWER); }
+	
+	public boolean isPortActive(String port, BlockPos pos, World world)
+	{
+		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(POWERED);
+	}
 	
 	public static void setPower(int value, BlockPos pos, World world)
 	{

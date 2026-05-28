@@ -1,12 +1,12 @@
-package com.lying.block.entity;
+package com.lying.block.actors.entity;
 
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
-import com.lying.block.DartTrapBlock;
 import com.lying.block.IWireableBlock;
+import com.lying.block.actors.DartTrapBlock;
 import com.lying.entity.DartEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;

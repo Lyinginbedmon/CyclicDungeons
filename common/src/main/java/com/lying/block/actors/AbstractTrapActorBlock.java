@@ -1,10 +1,12 @@
-package com.lying.block;
+package com.lying.block.actors;
 
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.TrapActorBlockEntity;
+import com.lying.block.ITrapActor;
+import com.lying.block.actors.entity.TrapActorBlockEntity;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
@@ -17,7 +19,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public abstract class AbstractTrapActorBlock extends BlockWithEntity implements IWireableBlock, ITrapActor
+public abstract class AbstractTrapActorBlock extends BlockWithEntity implements ITrapActor
 {
 	protected AbstractTrapActorBlock(Settings settingsIn)
 	{
@@ -48,14 +50,22 @@ public abstract class AbstractTrapActorBlock extends BlockWithEntity implements 
 	
 	public void respondToPorts(BlockPos pos, World world)
 	{
-		((TrapActorBlockEntity<?>)world.getBlockEntity(pos)).respondToPorts();
+		world.getBlockEntity(pos, CDBlockEntityTypes.TRAP_ACTOR.get()).ifPresent(t -> t.respondToPorts());
 	}
 	
-	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world) { return false; }
-	
-	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, BlockPos pos, String output, World world)
+	public boolean isPortActive(String port, BlockPos pos, World world)
 	{
-		world.getBlockEntity(me, CDBlockEntityTypes.TRAP_ACTOR.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		return false;
+	}
+	
+	public boolean acceptWireTo(String output, BlockPos me, WireMode space, PortEntry input, World world)
+	{
+		return false;
+	}
+	
+	public boolean acceptWireFrom(String input, BlockPos me, WireMode space, PortEntry output, World world)
+	{
+		world.getBlockEntity(me, CDBlockEntityTypes.TRAP_ACTOR.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;
 	}
 	

@@ -1,7 +1,9 @@
-package com.lying.block.entity;
+package com.lying.block.sensors.entity;
 
 import java.util.List;
 
+import com.lying.block.entity.AbstractWireableBlockEntity;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
@@ -52,12 +54,12 @@ public abstract class TrapSensorBlockEntity<T extends TrapSensorBlockEntity<?>> 
 		minTicksActive = nbt.getInt("Delay");
 	}
 	
-	public boolean processInputConnection(String input, BlockPos pos, String port, WireMode space)
+	public boolean processInputConnection(String input, PortEntry output, WireMode space)
 	{
 		return true;
 	}
 	
-	public boolean processOutputConnection(String output, BlockPos pos, String input, WireMode space)
+	public boolean processOutputConnection(String output, PortEntry input, WireMode space)
 	{
 		return false;
 	}

@@ -1,8 +1,9 @@
-package com.lying.block;
+package com.lying.block.actors;
 
 import java.util.Map;
 
-import com.lying.block.entity.FlameJetBlockEntity;
+import com.lying.block.actors.entity.FlameJetBlockEntity;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
@@ -137,10 +138,7 @@ public class FlameJetBlock extends AbstractTrapActorBlock
 		return getDefaultState().with(FACING, ctx.getSide());
 	}
 	
-	public boolean isActive(BlockPos pos, World world)
-	{
-		return world.getBlockState(pos).get(POWERED);
-	}
+	public boolean isActive(BlockPos pos, World world) { return world.getBlockState(pos).get(POWERED); }
 	
 	public void trigger(BlockPos pos, World world)
 	{
@@ -151,9 +149,9 @@ public class FlameJetBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.FLAME_JET.get()).get().wireCount(); }
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
-		world.getBlockEntity(pos, CDBlockEntityTypes.FLAME_JET.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		world.getBlockEntity(target, CDBlockEntityTypes.FLAME_JET.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;
 	}
 	

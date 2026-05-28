@@ -1,8 +1,8 @@
-package com.lying.block.entity;
+package com.lying.block.actors.entity;
 
 import org.joml.Vector3i;
 
-import com.lying.block.TrapSpawnerBlock;
+import com.lying.block.actors.TrapSpawnerBlock;
 import com.lying.block.entity.logic.TrapSpawnerLogic;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;

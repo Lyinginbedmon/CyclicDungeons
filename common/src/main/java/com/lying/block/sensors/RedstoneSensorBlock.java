@@ -1,4 +1,4 @@
-package com.lying.block;
+package com.lying.block.sensors;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -52,5 +52,10 @@ public class RedstoneSensorBlock extends AbstractTrapSensorBlock
 		for(Direction face : Direction.values())
 			max = Math.max(max, world.getEmittedRedstonePower(pos.offset(face), face, false));
 		return max;
+	}
+	
+	public boolean isPortActive(String port, BlockPos pos, World world)
+	{
+		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(POWERED);
 	}
 }

@@ -7,18 +7,18 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
-import com.lying.block.entity.DartTrapBlockEntity;
+import com.lying.block.actors.entity.DartTrapBlockEntity;
+import com.lying.block.actors.entity.FlameJetBlockEntity;
+import com.lying.block.actors.entity.SpikeTrapBlockEntity;
+import com.lying.block.actors.entity.SwingingBladeBlockEntity;
+import com.lying.block.actors.entity.TrapActorBlockEntity;
+import com.lying.block.actors.entity.TrapSpawnerBlockEntity;
 import com.lying.block.entity.EncounterSpawnerBlockEntity;
-import com.lying.block.entity.FlameJetBlockEntity;
 import com.lying.block.entity.ModularLogicBlockEntity;
-import com.lying.block.entity.ProximitySensorBlockEntity;
-import com.lying.block.entity.SightSensorBlockEntity;
-import com.lying.block.entity.SoundSensorBlockEntity;
-import com.lying.block.entity.SpikeTrapBlockEntity;
-import com.lying.block.entity.SwingingBladeBlockEntity;
-import com.lying.block.entity.TrapActorBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
-import com.lying.block.entity.TrapSpawnerBlockEntity;
+import com.lying.block.sensors.entity.ProximitySensorBlockEntity;
+import com.lying.block.sensors.entity.SightSensorBlockEntity;
+import com.lying.block.sensors.entity.SoundSensorBlockEntity;
 import com.lying.reference.Reference;
 
 import dev.architectury.registry.registries.DeferredRegister;

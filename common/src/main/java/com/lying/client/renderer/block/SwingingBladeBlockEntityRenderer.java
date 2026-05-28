@@ -2,8 +2,8 @@ package com.lying.client.renderer.block;
 
 import com.lying.block.BladeBlock;
 import com.lying.block.BladeBlock.Part;
-import com.lying.block.SwingingBladeBlock;
-import com.lying.block.entity.SwingingBladeBlockEntity;
+import com.lying.block.actors.SwingingBladeBlock;
+import com.lying.block.actors.entity.SwingingBladeBlockEntity;
 import com.lying.init.CDBlocks;
 
 import net.minecraft.block.BlockState;

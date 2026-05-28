@@ -1,8 +1,9 @@
-package com.lying.block;
+package com.lying.block.actors;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.SwingingBladeBlockEntity;
+import com.lying.block.actors.entity.SwingingBladeBlockEntity;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
@@ -21,8 +22,8 @@ import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Direction.Axis;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
@@ -117,9 +118,9 @@ public class SwingingBladeBlock extends AbstractTrapActorBlock
 	
 	public int wireCount(BlockPos pos, World world) { return world.getBlockEntity(pos, CDBlockEntityTypes.SWINGING_BLADE.get()).get().wireCount(); }
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
-		world.getBlockEntity(pos, CDBlockEntityTypes.SWINGING_BLADE.get()).ifPresent(t -> t.processInputConnection(input, pos, output, space));
+		world.getBlockEntity(target, CDBlockEntityTypes.SWINGING_BLADE.get()).ifPresent(t -> t.processInputConnection(input, output, space));
 		return true;
 	}
 	
@@ -128,14 +129,11 @@ public class SwingingBladeBlock extends AbstractTrapActorBlock
 		world.getBlockEntity(pos, CDBlockEntityTypes.SWINGING_BLADE.get()).get().reset();
 	}
 	
-	public boolean isActive(BlockPos pos, World world) { return world.getBlockState(pos).get(POWERED); }
-	
 	public void trigger(BlockPos pos, World world)
 	{
 		BlockState state = world.getBlockState(pos);
 		world.setBlockState(pos, state.with(POWERED, !state.get(POWERED)), 3);
 	}
 	
-	public void activate(BlockPos pos, World world) { world.setBlockState(pos, world.getBlockState(pos).with(POWERED, true), 3); }
-	public void deactivate(BlockPos pos, World world) { world.setBlockState(pos, world.getBlockState(pos).with(POWERED, false), 3); }
+	public boolean isActive(BlockPos pos, World world) { return world.getBlockState(pos).get(POWERED); }
 }

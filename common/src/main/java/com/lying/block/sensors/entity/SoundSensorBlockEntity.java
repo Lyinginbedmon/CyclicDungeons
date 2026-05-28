@@ -1,9 +1,9 @@
-package com.lying.block.entity;
+package com.lying.block.sensors.entity;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.CyclicDungeons;
-import com.lying.block.SoundSensorBlock;
+import com.lying.block.sensors.SoundSensorBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 

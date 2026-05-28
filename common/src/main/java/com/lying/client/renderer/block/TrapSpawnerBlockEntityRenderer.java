@@ -1,6 +1,6 @@
 package com.lying.client.renderer.block;
 
-import com.lying.block.entity.TrapSpawnerBlockEntity;
+import com.lying.block.actors.entity.TrapSpawnerBlockEntity;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;

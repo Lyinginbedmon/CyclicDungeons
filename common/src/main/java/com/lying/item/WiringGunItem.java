@@ -66,7 +66,7 @@ public class WiringGunItem extends Item
 		// If currently wiring
 		if(wiring.isWiring())
 		{
-			BlockPos linkPos = wiring.pos().get();
+			BlockPos linkPos = wiring.output().get().pos();
 			final MutableText linkName = world.getBlockState(linkPos).getBlock().getName().styled(s -> s.withHoverEvent(new HoverEvent(Action.SHOW_TEXT, Text.literal(linkPos.toShortString()))));
 			
 			// If target isn't wireable || sneaking = Cancel wiring
@@ -80,7 +80,7 @@ public class WiringGunItem extends Item
 				return ActionResult.SUCCESS;
 			}
 			// If too far away = Prevent wiring
-			else if(!wiring.pos().get().isWithinDistance(blockPos, MAX_WIRE_RANGE))
+			else if(!wiring.output().get().pos().isWithinDistance(blockPos, MAX_WIRE_RANGE))
 			{
 				context.getPlayer().sendMessage(translate("gui", "wiring_gun.out_of_range", linkName), true);
 				return ActionResult.PASS;
@@ -92,9 +92,8 @@ public class WiringGunItem extends Item
 				if(wiring.tryApplyTo(blockPos, world, mode))
 				{
 					stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty());
-					
 					context.getPlayer().sendMessage(translate("gui", "wiring_gun.success", 
-							wiring.portA().orElse(CDLogicGates.OUTPUT), 
+							wiring.output().get().port(), 
 							linkName, 
 							wiring.portB().orElse(CDLogicGates.INPUT), 
 							blockName), false);
@@ -119,7 +118,6 @@ public class WiringGunItem extends Item
 						context.getPlayer().sendMessage(translate("gui", "wiring_gun.wires_cleared.failed", blockName), true);
 						return ActionResult.PASS;
 					}
-					
 					wireable.clearWires(blockPos, world);
 					context.getPlayer().sendMessage(translate("gui", "wiring_gun.wires_cleared.success", count, blockName), false);
 					playSound(context.getPlayer(), blockPos);
@@ -140,7 +138,7 @@ public class WiringGunItem extends Item
 				// Store block in position
 				String port = ((IWireableBlock)block).outputPorts(blockPos, world).getFirst();
 				context.getPlayer().sendMessage(translate("gui", "wiring_gun.start", port, blockName), true);
-				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.of(blockPos, IWireableBlock.getWireable(blockPos, world).type()).startingAt(port));
+				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.of(blockPos).startingAt(port));
 				playSound(context.getPlayer(), blockPos);
 				return ActionResult.SUCCESS;
 			}
@@ -150,7 +148,6 @@ public class WiringGunItem extends Item
 				return ActionResult.FAIL;
 			}
 		}
-		
 		return ActionResult.PASS;
 	}
 	

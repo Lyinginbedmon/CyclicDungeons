@@ -1,9 +1,11 @@
-package com.lying.block.entity;
+package com.lying.block.actors.entity;
 
 import java.util.List;
 
 import com.lying.block.ITrapActor;
 import com.lying.block.IWireableBlock;
+import com.lying.block.entity.AbstractWireableBlockEntity;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
@@ -48,15 +50,15 @@ public class TrapActorBlockEntity<T extends ITrapActor> extends AbstractWireable
 	
 	public void respondToPorts()
 	{
-		if(hasInputs())
-		{
-			// Copy sensor state to actor
-			ITrapActor actor = (ITrapActor)world.getBlockState(pos).getBlock();
-			if(sensorInputState())
-				actor.activate(pos, world);
-			else
-				actor.deactivate(pos, world);
-		}
+		if(!hasInputs())
+			return;
+		
+		// Copy sensor state to actor
+		ITrapActor trActor = (ITrapActor)getWireable();
+		if(sensorInputState())
+			trActor.activate(pos, world);
+		else
+			trActor.deactivate(pos, world);
 	}
 	
 	protected void resetBlock()
@@ -72,13 +74,13 @@ public class TrapActorBlockEntity<T extends ITrapActor> extends AbstractWireable
 		return hasInputs() && getInput(CDLogicGates.INPUT);
 	}
 	
-	public boolean processInputConnection(String input, BlockPos pos, String port, WireMode space)
+	public boolean processInputConnection(String input, PortEntry output, WireMode space)
 	{
-		addInputWire(input, pos, port, space);
+		addInputWire(input, output, space);
 		return true;
 	}
 	
-	public boolean processOutputConnection(String output, BlockPos pos, String input, WireMode space)
+	public boolean processOutputConnection(String output, PortEntry input, WireMode space)
 	{
 		return false;
 	}

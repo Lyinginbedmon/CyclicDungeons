@@ -1,18 +1,19 @@
-package com.lying.block;
+package com.lying.block.sensors;
 
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.SoundSensorBlockEntity;
+import com.lying.block.IWireableBlock;
+import com.lying.block.sensors.entity.SoundSensorBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
@@ -35,7 +36,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.event.Vibrations;
 
-public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
+public class SoundSensorBlock extends AbstractTrapSensorBlock implements IWireableBlock, BlockEntityProvider
 {
 	public static final MapCodec<SoundSensorBlock> CODEC	= createCodec(SoundSensorBlock::new);
 	
@@ -59,11 +60,6 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
 		return new SoundSensorBlockEntity(pos, state);
-	}
-	
-	protected MapCodec<? extends BlockWithEntity> getCodec()
-	{
-		return CODEC;
 	}
 	
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
@@ -130,6 +126,11 @@ public class SoundSensorBlock extends BlockWithEntity implements IWireableBlock
 	public int portActivity(BlockPos pos, World world)
 	{
 		return world.getBlockState(pos).get(PHASE) == SculkSensorPhase.ACTIVE ? 15 : 0;
+	}
+	
+	public boolean isPortActive(String port, BlockPos pos, World world)
+	{
+		return super.isPortActive(port, pos, world) && world.getBlockState(pos).get(PHASE) == SculkSensorPhase.ACTIVE;
 	}
 	
 	public BlockState getPlacementState(ItemPlacementContext ctx)

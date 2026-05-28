@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.lying.block.FlameJetBlock;
+import com.lying.block.actors.FlameJetBlock;
 import com.lying.data.CDTags;
 import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;

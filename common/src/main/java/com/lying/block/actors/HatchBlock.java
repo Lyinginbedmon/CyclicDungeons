@@ -1,4 +1,4 @@
-package com.lying.block;
+package com.lying.block.actors;
 
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
@@ -101,10 +101,7 @@ public class HatchBlock extends AbstractTrapActorBlock
 		return state.get(POWERED) ? SHAPE_OPEN : SHAPE_CLOSED;
 	}
 	
-	public boolean isActive(BlockPos pos, World world)
-	{
-		return world.getBlockState(pos).get(POWERED);
-	}
+	public boolean isActive(BlockPos pos, World world) { return world.getBlockState(pos).get(POWERED); }
 	
 	public void trigger(BlockPos pos, World world)
 	{

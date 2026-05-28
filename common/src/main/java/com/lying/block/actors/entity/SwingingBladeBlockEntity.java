@@ -1,9 +1,9 @@
-package com.lying.block.entity;
+package com.lying.block.actors.entity;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import com.lying.block.SwingingBladeBlock;
+import com.lying.block.actors.SwingingBladeBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
 

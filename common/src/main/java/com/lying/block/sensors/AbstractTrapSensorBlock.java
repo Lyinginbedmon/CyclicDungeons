@@ -1,7 +1,9 @@
-package com.lying.block;
+package com.lying.block.sensors;
 
 import java.util.List;
 
+import com.lying.block.IWireableBlock;
+import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 
@@ -30,13 +32,18 @@ public abstract class AbstractTrapSensorBlock extends Block implements IWireable
 	/** Sensors don't need to respond to ports because they only transmit signals */
 	public void respondToPorts(BlockPos pos, World world) { }
 	
-	public boolean acceptWireTo(String output, BlockPos target, WireMode space, BlockPos pos, String input, World world)
+	public boolean acceptWireTo(String output, BlockPos target, WireMode space, PortEntry input, World world)
 	{
 		return true;
 	}
 	
-	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, BlockPos pos, String output, World world)
+	public boolean acceptWireFrom(String input, BlockPos target, WireMode space, PortEntry output, World world)
 	{
 		return false;
+	}
+	
+	public boolean isPortActive(String port, BlockPos pos, World world)
+	{
+		return port.equalsIgnoreCase(CDLogicGates.OUTPUT);
 	}
 }

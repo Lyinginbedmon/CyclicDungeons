@@ -1,9 +1,9 @@
-package com.lying.block.entity;
+package com.lying.block.sensors.entity;
 
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import com.lying.block.ProximitySensorBlock;
+import com.lying.block.sensors.ProximitySensorBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 
