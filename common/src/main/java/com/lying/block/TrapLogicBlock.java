@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.lying.block.entity.TrapLogicBlockEntity;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;

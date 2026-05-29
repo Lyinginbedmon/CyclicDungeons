@@ -7,8 +7,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import com.lying.block.IWireableBlock.Port;
 import com.lying.block.ModularLogicBlock;
+import com.lying.block.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.LogicResult;
 import com.lying.block.entity.logic.PortState;
@@ -24,15 +24,15 @@ public class CDLogicGates
 {
 	private static final Map<String, Supplier<LogicGate>> MODULES	= new HashMap<>();
 	
-	public static final Port INPUT	= new Port("input");
-	public static final Port OUTPUT	= new Port("output");
-	public static final Port RESET	= new Port("reset");
-	public static final Port SET	= new Port("set");
-	public static final Port CARRY	= new Port("carry");
-	public static final Port BIT_1	= new Port("bit1");
-	public static final Port BIT_2	= new Port("bit2");
-	public static final Port BIT_4	= new Port("bit4");
-	public static final Port BIT_8	= new Port("bit8");
+	public static final Port INPUT	= Port.of("input");
+	public static final Port OUTPUT	= Port.of("output");
+	public static final Port RESET	= Port.of("reset");
+	public static final Port SET	= Port.of("set");
+	public static final Port CARRY	= Port.of("carry");
+	public static final Port BIT_1	= Port.of("bit1");
+	public static final Port BIT_2	= Port.of("bit2");
+	public static final Port BIT_4	= Port.of("bit4");
+	public static final Port BIT_8	= Port.of("bit8");
 	
 	/** Always TRUE */
 	public static final Supplier<LogicGate> TRUE	= register("true", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, true)));
@@ -116,7 +116,7 @@ public class CDLogicGates
 	public static final Supplier<LogicGate> CONVERTER_4B	= register("b2d_converter", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
 	{
 		return LogicResult.create()
-				.put(new Port("output_"+binaryToDecimal(gatherBits(4, ports))), true);
+				.put(Port.of("output_"+binaryToDecimal(gatherBits(4, ports))), true);
 	}));
 	/** Holds a 4-bit number and increments it when it receives a rising-edge pulse */
 	public static final Supplier<LogicGate> COUNTER_4B	= register("4bit_counter", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> 
@@ -124,7 +124,7 @@ public class CDLogicGates
 		if(isRisingEdge(RESET, ports, pPorts))
 			return LogicResult.create();
 		
-		if(isRisingEdge(new Port("inc"), ports, pPorts))
+		if(isRisingEdge(Port.of("inc"), ports, pPorts))
 		{
 			boolean[] data = gatherBits(4, ports);
 			// Toggle values from bit 1 to 4 until we encounter a false, set that to true and break
@@ -167,6 +167,8 @@ public class CDLogicGates
 	}));
 	/** When named, used by the logic system to interact with the trap system */
 	public static final Supplier<LogicGate> EXIT	= register("output", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, ports.get(INPUT))));
+	/** When named, used by the logic system to interact with the trap system */
+	public static final Supplier<LogicGate> ENTRY	= register("input", s -> new LogicGate(s, (ports, pPorts, pOut, tile) -> LogicResult.create().put(OUTPUT, ports.get(INPUT))));
 	
 	public static boolean isRisingEdge(Port port, PortState ports, PortState pPorts)
 	{
@@ -177,7 +179,7 @@ public class CDLogicGates
 	{
 		boolean[] bits = new boolean[count];
 		for(int i=0; i<bits.length; i++)
-			bits[i] = ports.get(new Port("bit_"+(int)Math.pow(2, i)));
+			bits[i] = ports.get(Port.of("bit_"+(int)Math.pow(2, i)));
 		return bits;
 	}
 	

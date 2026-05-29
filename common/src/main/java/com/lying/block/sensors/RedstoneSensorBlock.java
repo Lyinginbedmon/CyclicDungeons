@@ -2,6 +2,8 @@ package com.lying.block.sensors;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.lying.block.Port;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;

@@ -5,7 +5,7 @@ import static com.lying.reference.Reference.ModInfo.translate;
 import java.util.List;
 
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.Port;
+import com.lying.block.Port;
 import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDSoundEvents;
@@ -94,9 +94,9 @@ public class WiringGunItem extends Item
 				{
 					stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty());
 					context.getPlayer().sendMessage(translate("gui", "wiring_gun.success", 
-							wiring.output().get().port(), 
+							wiring.output().get().port().name(), 
 							linkName, 
-							wiring.input().orElse(CDLogicGates.INPUT), 
+							wiring.input().orElse(CDLogicGates.INPUT).name(), 
 							blockName), false);
 					playSound(context.getPlayer(), blockPos);
 					return ActionResult.SUCCESS;
@@ -138,7 +138,7 @@ public class WiringGunItem extends Item
 			{
 				// Store block in position
 				Port port = ((IWireableBlock)block).outputPorts(blockPos, world).getFirst();
-				context.getPlayer().sendMessage(translate("gui", "wiring_gun.start", port, blockName), true);
+				context.getPlayer().sendMessage(translate("gui", "wiring_gun.start", port.name(), blockName), true);
 				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.of(blockPos).startingAt(port));
 				playSound(context.getPlayer(), blockPos);
 				return ActionResult.SUCCESS;

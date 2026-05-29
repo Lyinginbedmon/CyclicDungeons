@@ -2,6 +2,7 @@ package com.lying.block.sensors;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.lying.block.Port;
 import com.lying.reference.Reference;
 
 import net.minecraft.block.Block;

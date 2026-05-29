@@ -2,9 +2,9 @@ package com.lying.block.sensors.entity;
 
 import java.util.List;
 
-import com.lying.block.IWireableBlock.Port;
+import com.lying.block.Port;
 import com.lying.block.entity.AbstractWireableBlockEntity;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;

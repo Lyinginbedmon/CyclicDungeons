@@ -3,6 +3,7 @@ package com.lying.block.sensors;
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.IWireableBlock;
+import com.lying.block.Port;
 import com.lying.block.sensors.entity.SoundSensorBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
 import com.mojang.serialization.MapCodec;

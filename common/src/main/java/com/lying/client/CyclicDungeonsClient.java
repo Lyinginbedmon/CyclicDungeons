@@ -1,12 +1,12 @@
 package com.lying.client;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.function.BiConsumer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.Port;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDDataComponentTypes;
@@ -14,7 +14,9 @@ import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.item.component.WiringComponent;
+import com.lying.network.CyclePortPacket;
 import com.lying.network.ShowDungeonLayoutPacket;
+import com.lying.reference.Reference;
 
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientRawInputEvent;
@@ -30,6 +32,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.entity.ArrowEntityRenderer;
 import net.minecraft.client.render.entity.PolarBearEntityRenderer;
 import net.minecraft.client.render.entity.WolfEntityRenderer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult.Type;
 import net.minecraft.util.math.BlockPos;
@@ -39,6 +42,7 @@ import net.minecraft.world.biome.GrassColors;
 public class CyclicDungeonsClient
 {
 	public static final MinecraftClient mc = MinecraftClient.getInstance();
+	public static final Logger LOGGER	= LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_client");
 	
 	public static final int BASE_LEAF = -12012264;
 	/** BlockColorProvider for local grass colour */
@@ -83,18 +87,17 @@ public class CyclicDungeonsClient
 				return EventResult.pass();
 			
 			// Are we holding a wiring gun that is actively wiring and looking at a wireable block?
-			World world = client.player.getWorld();
+			PlayerEntity player = client.player;
+			World world = player.getWorld();
 			BlockPos pos;
 			Block block;
 			WiringComponent wiring;
 			if(
-				client.player.getMainHandStack().isOf(CDItems.WIRING_GUN.get()) && 
-				(wiring = client.player.getMainHandStack().get(CDDataComponentTypes.LINK_POS.get())).isWiring() &&
+				player.getMainHandStack().isOf(CDItems.WIRING_GUN.get()) && 
+				(wiring = player.getMainHandStack().get(CDDataComponentTypes.LINK_POS.get())).isWiring() &&
 				client.crosshairTarget.getType() == Type.BLOCK && 
 				(block = world.getBlockState(pos = ((BlockHitResult)client.crosshairTarget).getBlockPos()).getBlock()) instanceof IWireableBlock)
 			{
-				// FIXME Convert to a packet handled server-side to ensure proper function in multiplayer
-				
 				IWireableBlock wireable = (IWireableBlock)block;
 				int delta = (int)amountY;
 				if(wiring.output().get().pos().getManhattanDistance(pos) == 0)
@@ -102,52 +105,26 @@ public class CyclicDungeonsClient
 					// If the origin block only has 1 output, just ignore this
 					if(wireable.outputPorts(pos, world).size() < 2)
 						return EventResult.pass();
-					
-					// If we're looking at the origin, change the output port
-					wiring = wiring.startingAt(findNewIndex(
-							Optional.of(wiring.output().get().port()), 
-							wireable.outputPorts(pos, world), 
-							delta));
+					else
+					{
+						NetworkManager.sendToServer(new CyclePortPacket.Payload(pos, true, delta));
+						return EventResult.interruptTrue();
+					}
 				}
 				else
 				{
 					// If there are only 1 or fewer input ports in the target block, just ignore this
 					if(wireable.inputPorts(pos, world).size() < 2)
 						return EventResult.pass();
-					
-					// Else, change the targeted input port
-					wiring = wiring.targeting(findNewIndex(
-							wiring.input(), 
-							wireable.inputPorts(pos, world), 
-							delta));
+					else
+					{
+						NetworkManager.sendToServer(new CyclePortPacket.Payload(pos, false, delta));
+						return EventResult.interruptTrue();
+					}
 				}
-				
-				client.player.getMainHandStack().set(CDDataComponentTypes.LINK_POS.get(), wiring);
-				return EventResult.interruptTrue();
 			}
 			return EventResult.pass();
 		});
-	}
-	
-	private static Port findNewIndex(Optional<Port> current, List<Port> ports, final int delta)
-	{
-		if(ports.size() == 1)
-			return ports.getFirst();
-		
-		int index = delta;
-		if(current.isPresent())
-		{
-			// Try to find current index
-			for(int i=0; i<ports.size(); i++)
-				if(ports.get(i).equals(current.get()))
-				{
-					index += i;
-					break;
-				}
-		}
-		while(index < 0)
-			index += ports.size();
-		return ports.get(index % ports.size());
 	}
 	
 	private static void registerClientPackets()

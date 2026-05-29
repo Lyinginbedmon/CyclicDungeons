@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.Port;
+import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.LogicWire;
 import com.lying.block.entity.logic.PortState;
@@ -32,6 +32,7 @@ public class ModularLogicBlockEntity extends BlockEntity
 	private int ticks = 0;
 	
 	private Map<String, LogicModule> outputModules = new HashMap<>();
+	private Map<String, LogicModule> inputModules = new HashMap<>();
 	
 	public ModularLogicBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -48,7 +49,7 @@ public class ModularLogicBlockEntity extends BlockEntity
 			if(!wires.isEmpty())
 			{
 				PortState set = new PortState();
-				wires.values().forEach(w -> set.put(new Port(w.name()), w.isOn()));
+				wires.values().forEach(w -> set.put(Port.of(w.name()), w.isOn()));
 				if(!set.isInert())
 					nbt.put("wires", PortState.CODEC.encodeStart(NbtOps.INSTANCE, set).getOrThrow());
 			}
@@ -125,7 +126,8 @@ public class ModularLogicBlockEntity extends BlockEntity
 		return true;
 	}
 	
-	public List<Port> outputPorts() { return Lists.newArrayList(outputModules.keySet().stream().map(Port::new).toList()); }
+	public List<Port> outputPorts() { return Lists.newArrayList(outputModules.keySet().stream().map(Port::of).toList()); }
+	public List<Port> inputPorts() { return Lists.newArrayList(inputModules.keySet().stream().map(Port::of).toList()); }
 	
 	public boolean getPortStatus(Port output)
 	{

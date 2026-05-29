@@ -5,8 +5,8 @@ import java.util.function.Consumer;
 
 import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.Port;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.Port;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 import com.lying.reference.Reference;

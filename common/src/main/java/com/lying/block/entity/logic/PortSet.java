@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Lists;
-import com.lying.block.IWireableBlock.Port;
+import com.lying.block.Port;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -85,9 +85,9 @@ public class PortSet
 			T value = entry.getSecond();
 			DataResult<String> single = CODEC_STRING.parse(ops, value);
 			if(single.isSuccess())
-				wires.put(new Port(key), single.getOrThrow());
+				wires.put(Port.of(key), single.getOrThrow());
 			else
-				wires.put(new Port(key), CODEC_LIST.parse(ops, value).getOrThrow().toArray(new String[0]));
+				wires.put(Port.of(key), CODEC_LIST.parse(ops, value).getOrThrow().toArray(new String[0]));
 		});
 		return DataResult.success(Pair.of(wires, input));
 	}

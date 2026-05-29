@@ -8,8 +8,8 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.Port;
 import com.lying.block.IWireableBlock.WireRecipient;
+import com.lying.block.Port;
 import com.lying.init.CDLogicGates;
 import com.lying.reference.Reference;
 import com.mojang.datafixers.util.Pair;
@@ -86,14 +86,14 @@ public class WiringManifest
 	public List<BlockPos> getInputListeners(Port name, BlockPos offset)
 	{
 		ManifestEntry port = inputs.getOrDefault(name, null);
-		return port == null ? List.of() : port.connections().stream().map(ManifestEntry.PortEntry::pos).map(p -> p.add(offset)).toList();
+		return port == null ? List.of() : port.connections().stream().map(PortEntry::pos).map(p -> p.add(offset)).toList();
 	}
 	
 	/** Returns all blocks listening to the given output port */
 	public List<BlockPos> getOutputListeners(Port name, BlockPos offset)
 	{
 		ManifestEntry port = outputs.getOrDefault(name, null);
-		return port == null ? List.of() : port.connections().stream().map(ManifestEntry.PortEntry::pos).map(p -> p.add(offset)).toList();
+		return port == null ? List.of() : port.connections().stream().map(PortEntry::pos).map(p -> p.add(offset)).toList();
 	}
 	
 	public void clear()
@@ -246,49 +246,49 @@ public class WiringManifest
 				T value = entry.getSecond();
 				DataResult<PortEntry> single = PortEntry.CODEC.parse(ops, value);
 				if(single.isSuccess())
-					wires.add(new ManifestEntry(new Port(key)).attach(single.getOrThrow()));
+					wires.add(new ManifestEntry(Port.of(key)).attach(single.getOrThrow()));
 				else
-					wires.add(new ManifestEntry(new Port(key)).attachAll(PortEntry.CODEC.listOf().parse(ops, value).getOrThrow()));
+					wires.add(new ManifestEntry(Port.of(key)).attachAll(PortEntry.CODEC.listOf().parse(ops, value).getOrThrow()));
 			});
 			return DataResult.success(Pair.of(wires, input));
 		}
+	}
+	
+	/**
+	 * Holder object containing a BlockPos and a port of the block at that position
+	 */
+	public static record PortEntry(BlockPos pos, Port port)
+	{
+		public static final Codec<PortEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+				BlockPos.CODEC.fieldOf("pos").forGetter(PortEntry::pos),
+				Port.CODEC.fieldOf("port").forGetter(PortEntry::port)
+				).apply(instance, PortEntry::new));
+		public static final PacketCodec<ByteBuf, PortEntry> PACKET_CODEC	= PacketCodec.tuple(
+				BlockPos.PACKET_CODEC, PortEntry::pos, 
+				Port.PACKET_CODEC, PortEntry::port, 
+				PortEntry::new);
 		
-		/**
-		 * Holder object containing a BlockPos and the name of an output port from that position
-		 */
-		public static record PortEntry(BlockPos pos, Port port)
+		public MutableText displayName() { return Reference.ModInfo.translate("gui", "port_name", port.name(), pos.toShortString()); }
+		
+		public PortEntry relativeTo(BlockPos offset)
 		{
-			public static final Codec<PortEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-					BlockPos.CODEC.fieldOf("pos").forGetter(PortEntry::pos),
-					Port.CODEC.fieldOf("port").forGetter(PortEntry::port)
-					).apply(instance, PortEntry::new));
-			public static final PacketCodec<ByteBuf, PortEntry> PACKET_CODEC	= PacketCodec.tuple(
-					BlockPos.PACKET_CODEC, PortEntry::pos, 
-					Port.PACKET_CODEC, PortEntry::port, 
-					PortEntry::new);
+			return new PortEntry(pos.subtract(offset), port);
+		}
+		
+		public boolean equals(Object obj)
+		{
+			if(!(obj instanceof PortEntry))
+				return false;
 			
-			public MutableText displayName() { return Reference.ModInfo.translate("gui", "port_name", port, pos.toShortString()); }
-			
-			public PortEntry relativeTo(BlockPos offset)
-			{
-				return new PortEntry(pos.subtract(offset), port);
-			}
-			
-			public boolean equals(Object obj)
-			{
-				if(!(obj instanceof PortEntry))
-					return false;
-				
-				PortEntry other = (PortEntry)obj;
-				return pos.getManhattanDistance(other.pos()) == 0 && port.equals(other.port());
-			}
-			
-			public boolean isActive(World world, BlockPos origin)
-			{
-				BlockPos target = pos.add(origin);
-				IWireableBlock wireable = IWireableBlock.getWireable(target, world);
-				return wireable.isPortActive(port, target, world);
-			}
+			PortEntry other = (PortEntry)obj;
+			return pos.getManhattanDistance(other.pos()) == 0 && port.equals(other.port());
+		}
+		
+		public boolean isActive(World world, BlockPos origin)
+		{
+			BlockPos target = pos.add(origin);
+			IWireableBlock wireable = IWireableBlock.getWireable(target, world);
+			return wireable.isPortActive(port, target, world);
 		}
 	}
 }

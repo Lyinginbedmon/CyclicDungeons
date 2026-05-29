@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
-import com.lying.block.IWireableBlock.Port;
+import com.lying.block.Port;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -82,7 +82,7 @@ public class LogicResult
 			T value = entry.getSecond();
 			DataResult<Boolean> single = Codec.BOOL.parse(ops, value);
 			if(single.isSuccess())
-				wires.put(new Port(key), single.getOrThrow());
+				wires.put(Port.of(key), single.getOrThrow());
 		});
 		return DataResult.success(Pair.of(wires, input));
 	}

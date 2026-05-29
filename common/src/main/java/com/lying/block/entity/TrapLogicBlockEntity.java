@@ -3,8 +3,8 @@ package com.lying.block.entity;
 import static com.lying.reference.Reference.ModInfo.prefix;
 
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.Port;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.Port;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDTrapLogicHandlers;

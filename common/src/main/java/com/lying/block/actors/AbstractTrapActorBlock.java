@@ -5,8 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.ITrapActor;
+import com.lying.block.Port;
 import com.lying.block.actors.entity.TrapActorBlockEntity;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;

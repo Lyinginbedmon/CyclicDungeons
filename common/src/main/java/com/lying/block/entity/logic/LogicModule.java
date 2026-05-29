@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
-import com.lying.block.IWireableBlock.Port;
+import com.lying.block.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDLogicGates.LogicGate;
@@ -63,7 +63,13 @@ public class LogicModule
 	
 	public String displayName() { return name.orElse(handler.registryName()); }
 	
-	public boolean isOutput() { return handler.registryName().equals(CDLogicGates.EXIT.get().registryName()); }
+	public boolean hasCustomName() { return name.isPresent(); }
+	
+	/** Returns TRUE if this is an output gate with a custom name */
+	public boolean isOutput() { return handler.registryName().equals(CDLogicGates.EXIT.get().registryName()) && hasCustomName(); }
+	
+	/** Returns TRUE if this is an input gate with a custom name */
+	public boolean isInput() { return handler.registryName().equals(CDLogicGates.ENTRY.get().registryName()) && hasCustomName(); }
 	
 	/** Attaches a wire to the default result port of this module */
 	public LogicModule addOutput(String wire)
@@ -166,6 +172,9 @@ public class LogicModule
 			for(Port port : inputWires.ports())
 				portState.put(port, inputWires.get(port).stream().anyMatch(w -> circuitWires.containsKey(w) ? circuitWires.get(w).isOn() : false));
 		}
+		// If we're an input module, set the input port to reflect the wired input port of the tile
+//		else if(isInput())
+//			portState.put(CDLogicGates.INPUT, tile.getInput(Port.of(name.get())));
 		
 		// Recalculate logic result
 		resultCache = handler.getResult(portState, portCache, resultCache, tile);

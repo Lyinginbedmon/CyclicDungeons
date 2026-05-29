@@ -55,7 +55,7 @@
 	// Gui
 	"gui.cydun.dungeon_data": "%s:%s, %s errors",
 	"gui.cydun.dungeon_data_long": "%s:%s, %s errors (%s c, %s i, %s t)",
-	"gui.cydun.wiring_gun.target": "Target: [%s] port of [%s]",
+	"gui.cydun.wiring_gun.target": "Target: [%s]",
 	"gui.cydun.wiring_gun.xyz_mode": "Coordinate mode: %s",
 	"gui.cydun.wiring_gun.failed": "[%s] is not wireable",
 	"gui.cydun.wiring_gun.start": "Started wire from [%s] port of [%s]",

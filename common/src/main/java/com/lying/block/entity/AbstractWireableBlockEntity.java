@@ -6,10 +6,10 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
-import com.lying.block.IWireableBlock.Port;
+import com.lying.block.Port;
 import com.lying.block.entity.logic.WiringManifest;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;

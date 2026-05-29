@@ -4,10 +4,9 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
@@ -77,13 +76,5 @@ public interface IWireableBlock
 		public static final PacketCodec<ByteBuf, WireRecipient> PACKET_CODEC = PacketCodecs.indexed(id -> values()[id], value -> value.ordinal());
 		
 		public String asString() { return name().toLowerCase(); }
-	}
-	
-	public static record Port(String name)
-	{
-		public static final Codec<Port> CODEC	= Codec.STRING.comapFlatMap(s -> DataResult.success(new Port(s)), Port::name);
-		public static final PacketCodec<ByteBuf, Port> PACKET_CODEC	= PacketCodecs.STRING.xmap(Port::new, Port::name);
-		
-		public boolean equals(Object obj) { return obj instanceof Port && ((Port)obj).name.equalsIgnoreCase(name); }
 	}
 }

@@ -3,8 +3,9 @@ package com.lying.block.actors;
 import java.util.Map;
 import java.util.Optional;
 
+import com.lying.block.Port;
 import com.lying.block.actors.entity.SpikeTrapBlockEntity;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;

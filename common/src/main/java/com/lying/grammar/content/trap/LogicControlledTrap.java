@@ -7,7 +7,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.block.entity.TrapLogicBlockEntity;
-import com.lying.block.entity.logic.WiringManifest.ManifestEntry.PortEntry;
+import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.data.CDTags;
 import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDBlockEntityTypes;
