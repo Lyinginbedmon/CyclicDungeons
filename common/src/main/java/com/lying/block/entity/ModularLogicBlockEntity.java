@@ -3,9 +3,13 @@ package com.lying.block.entity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
@@ -27,6 +31,7 @@ import net.minecraft.world.World;
 
 public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 {
+	public static final Logger LOGGER = CyclicDungeons.LOGGER;
 	public static final long UPDATE_FREQUENCY = Reference.Values.TICKS_PER_SECOND / 2;
 	private List<LogicModule> modules = Lists.newArrayList(
 			LogicModule.of(CDLogicGates.ENTRY.get())
@@ -36,7 +41,7 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 				.name("input_2")
 				.addOutput(CDLogicGates.OUTPUT, "wire2"),
 			LogicModule.of(CDLogicGates.ENTRY.get())
-				.addOutput("input_3")
+				.name("input_3")
 				.addOutput(CDLogicGates.OUTPUT, "wire3"),
 			LogicModule.of(CDLogicGates.EXIT.get())
 				.name("output_1")
@@ -51,8 +56,9 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 	private Map<String, LogicWire> wires = new HashMap<>();
 	private int ticks = 0;
 	
-	private Map<String, LogicModule> outputModules = new HashMap<>();
-	private Map<String, LogicModule> inputModules = new HashMap<>();
+	private List<Port> inputModules = Lists.newArrayList();
+	private Map<Port, LogicModule> outputModules = new HashMap<>();
+	private Map<Port, Boolean> outputMap = new HashMap<>();
 	
 	public ModularLogicBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -127,9 +133,9 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 		modules.forEach(m -> 
 		{
 			if(m.isInput())
-				inputModules.put(m.displayName(), m);
+				m.toPort().ifPresent(inputModules::add);
 			if(m.isOutput())
-				outputModules.put(m.displayName(), m);
+				m.toPort().ifPresent(p -> outputModules.put(p, m));
 		});
 	}
 	
@@ -158,22 +164,21 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 		
 		// Update all wires
 		wires.values().forEach(w -> w.update(modules));
+		
+		// Update output port status map
+		outputMap.clear();
+		for(Entry<Port, LogicModule> entry : outputModules.entrySet())
+			outputMap.put(entry.getKey(), entry.getValue().getOutputStatus(CDLogicGates.OUTPUT));
 	}
 	
-	public List<Port> outputPorts() { return Lists.newArrayList(outputModules.keySet().stream().map(Port::of).toList()); }
-	public List<Port> inputPorts() { return Lists.newArrayList(inputModules.keySet().stream().map(Port::of).toList()); }
+	public List<Port> inputPorts() { return Lists.newArrayList(inputModules); }
+	public List<Port> outputPorts() { return Lists.newArrayList(outputModules.keySet()); }
 	
-	// FIXME Identify cause of actors not receiving signals from modular logic circuitry
 	protected boolean getPortStatus(Port port, boolean isInput)
 	{
-		final String name = port.name();
 		if(isInput)
-			return inputModules.containsKey(name) ? 
-					inputModules.get(name).getOutputStatus(CDLogicGates.OUTPUT) : 
-					false;
+			return super.getPortStatus(port, isInput);
 		else
-			return outputModules.containsKey(name) ? 
-					outputModules.get(name).getOutputStatus(CDLogicGates.OUTPUT) : 
-					false;
+			return outputMap.getOrDefault(port, false);
 	}
 }

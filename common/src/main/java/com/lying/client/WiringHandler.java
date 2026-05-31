@@ -68,7 +68,7 @@ public class WiringHandler
 					!canWire(client))
 				return EventResult.pass();
 			
-			targetPortIndex = Optional.of(targetPortIndex.orElse(0) + (int)amountY);
+			targetPortIndex = Optional.of(targetPortIndex.orElse(0) - (int)amountY);
 			LOGGER.info("Processing mouse scroll, port {} selected", targetPortIndex.orElse(0));
 			return EventResult.interruptTrue();
 		});
@@ -85,7 +85,7 @@ public class WiringHandler
 			
 			// Send confirmation packed to server
 			NetworkManager.sendToServer(new PortSelectPacket.Payload(targetWireable.get(), targetPortIndex.orElse(0)));
-			player.getItemCooldownManager().set(player.getMainHandStack(), Reference.Values.TICKS_PER_SECOND);
+			player.getItemCooldownManager().set(player.getMainHandStack(), Reference.Values.TICKS_PER_SECOND / 2);
 			targetWireable = Optional.empty();
 			return EventResult.interruptTrue();
 		});

@@ -4,6 +4,7 @@ import static com.lying.reference.Reference.ModInfo.translate;
 
 import java.util.List;
 
+import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.PortEntry;
@@ -69,12 +70,13 @@ public class PortSelectPacket
 			if(!wiring.isWiring())
 			{
 				IWireableBlock wireable = (IWireableBlock)world.getBlockState(pos).getBlock();
-				List<Port> ports = wireable.outputPorts(pos, world);
+				List<Port> ports = Lists.newArrayList(wireable.outputPorts(pos, world));
 				if(ports.isEmpty())
 				{
 					player.sendMessage(translate("gui", "wiring_gun.no_outputs", blockName), true);
 					return;
 				}
+				ports.sort(Port.SORT);
 				
 				PortEntry port = new PortEntry(pos, CDUtils.objectFromIndex(ports, index));
 				confirm(wireGun, WiringComponent.of(port, blockName), pos, world);
@@ -98,12 +100,13 @@ public class PortSelectPacket
 				}
 				
 				IWireableBlock wireable = (IWireableBlock)world.getBlockState(pos).getBlock();
-				List<Port> ports = wireable.inputPorts(pos, world);
+				List<Port> ports = Lists.newArrayList(wireable.inputPorts(pos, world));
 				if(ports.isEmpty())
 				{
 					player.sendMessage(translate("gui", "wiring_gun.no_inputs", blockName), true);
 					return;
 				}
+				ports.sort(Port.SORT);
 				
 				PortEntry end = new PortEntry(pos, CDUtils.objectFromIndex(ports, index));
 				PortEntry start = wiring.output().get();

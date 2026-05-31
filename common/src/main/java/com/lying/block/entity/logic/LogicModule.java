@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
@@ -63,13 +65,29 @@ public class LogicModule
 	
 	public String displayName() { return name.orElse(handler.registryName()); }
 	
-	public boolean hasCustomName() { return name.isPresent(); }
+	public boolean hasCustomName() { return customName() != null && customName().length() > 0; }
 	
-	/** Returns TRUE if this is an output gate with a custom name */
-	public boolean isOutput() { return handler.registryName().equals(CDLogicGates.EXIT.get().registryName()) && hasCustomName(); }
+	@Nullable
+	public String customName() { return name.orElse(null); }
+	
+	/** Returns an Optional holding the port equivalent of this module, if its name can be a valid port name */
+	public Optional<Port> toPort()
+	{
+		if(!hasCustomName())
+			return Optional.empty();
+		String name = customName();
+		try
+		{
+			return Optional.of(Port.of(name));
+		}
+		catch(Exception e) { return Optional.empty(); }
+	}
 	
 	/** Returns TRUE if this is an input gate with a custom name */
-	public boolean isInput() { return handler.registryName().equals(CDLogicGates.ENTRY.get().registryName()) && hasCustomName(); }
+	public boolean isInput() { return handler.registryName().equals(CDLogicGates.ENTRY.get().registryName()) && toPort().isPresent(); }
+	
+	/** Returns TRUE if this is an output gate with a custom name */
+	public boolean isOutput() { return handler.registryName().equals(CDLogicGates.EXIT.get().registryName()) && toPort().isPresent(); }
 	
 	/** Attaches a wire to the default result port of this module */
 	public LogicModule addOutput(String wire)
@@ -177,7 +195,7 @@ public class LogicModule
 			portState.put(CDLogicGates.INPUT, tile.getInput(Port.of(name.get())));
 		
 		// Recalculate logic result
-		resultCache = handler.getResult(portState, portCache, resultCache, tile);
+		resultCache = handler.getResult(portState, portCache, resultCache, tile, this);
 		
 		// Update port cache
 		portCache.copy(portState);
