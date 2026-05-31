@@ -15,10 +15,15 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.HoverEvent.Action;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
+import net.minecraft.world.World;
 
 public class CDUtils
 {
@@ -121,4 +126,23 @@ public class CDUtils
 	}
 	
 	public static String formatVec2i(Vector2i vec) { return "("+vec.x+", "+vec.y+")"; }
+	
+	@Nullable
+	public static <T extends Object> T objectFromIndex(List<T> list, final int index)
+	{
+		if(list.isEmpty())
+			return null;
+		
+		int i = index;
+		while(i < 0)
+			i += list.size();
+		
+		return list.get(i%list.size());
+	}
+	
+	/** Returns a text with the name of the block at the given position and a hover event showing its coordinates */
+	public static MutableText blockWithPos(BlockPos pos, World world)
+	{
+		return world.getBlockState(pos).getBlock().getName().styled(s -> s.withHoverEvent(new HoverEvent(Action.SHOW_TEXT, Text.literal(pos.toShortString()))));
+	}
 }

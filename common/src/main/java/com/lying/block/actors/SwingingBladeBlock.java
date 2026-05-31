@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.Port;
 import com.lying.block.actors.entity.SwingingBladeBlockEntity;
-import com.lying.block.entity.logic.WiringManifest.PortEntry;
+import com.lying.block.entity.logic.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.MapCodec;

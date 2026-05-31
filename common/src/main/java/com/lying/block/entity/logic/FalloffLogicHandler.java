@@ -1,6 +1,7 @@
 package com.lying.block.entity.logic;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.lying.block.ITrapActor;
 import com.lying.block.IWireableBlock;
@@ -37,9 +38,11 @@ public class FalloffLogicHandler extends LogicHandler
 		
 		for(BlockPos p : actors)
 		{
-			ITrapActor trActor = ((ITrapActor)IWireableBlock.getWireable(p, world));
-			if(trActor == null)
+			Optional<IWireableBlock> wireable = IWireableBlock.getWireable(p, world);
+			if(wireable.isEmpty())
 				continue;
+			
+			final ITrapActor trActor = (ITrapActor)wireable.get();
 			if(status)
 				trActor.activate(p, world);
 			else

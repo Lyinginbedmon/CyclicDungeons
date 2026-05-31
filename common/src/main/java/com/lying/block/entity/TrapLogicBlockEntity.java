@@ -4,7 +4,7 @@ import static com.lying.reference.Reference.ModInfo.prefix;
 
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
-import com.lying.block.entity.logic.WiringManifest.PortEntry;
+import com.lying.block.entity.logic.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDTrapLogicHandlers;
@@ -16,6 +16,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -29,19 +30,28 @@ public class TrapLogicBlockEntity extends AbstractWireableBlockEntity
 	
 	public TrapLogicBlockEntity(BlockPos pos, BlockState state)
 	{
-		super(CDBlockEntityTypes.TRAP_LOGIC.get(), pos, state);
+		this(CDBlockEntityTypes.TRAP_LOGIC.get(), pos, state);
+	}
+	
+	protected <T extends TrapLogicBlockEntity> TrapLogicBlockEntity(BlockEntityType<T> type, BlockPos pos, BlockState state)
+	{
+		super(type, pos, state);
 	}
 	
 	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.writeNbt(nbt, registryLookup);
-		nbt.putString("Logic", logicType.toString());
+		if(logicType != null)
+			nbt.putString("Logic", logicType.toString());
 	}
 	
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
-		logicType = Identifier.of(nbt.getString("Logic"));
+		if(nbt.contains("Logic", NbtElement.STRING_TYPE))
+			logicType = Identifier.of(nbt.getString("Logic"));
+		else
+			logicType = null;
 	}
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)

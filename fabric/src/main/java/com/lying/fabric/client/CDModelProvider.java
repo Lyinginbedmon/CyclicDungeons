@@ -9,17 +9,17 @@ import java.util.function.Function;
 
 import com.lying.block.BladeBlock;
 import com.lying.block.BladeBlock.Part;
-import com.lying.block.CollisionSensorBlock;
 import com.lying.block.CrumblingBlock;
-import com.lying.block.FlameJetBlock;
-import com.lying.block.HatchBlock;
-import com.lying.block.ProximitySensorBlock;
-import com.lying.block.SightSensorBlock;
-import com.lying.block.SoundSensorBlock;
-import com.lying.block.TrapSpawnerBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SpikesBlock.SpikePart;
-import com.lying.block.SwingingBladeBlock;
+import com.lying.block.actors.FlameJetBlock;
+import com.lying.block.actors.HatchBlock;
+import com.lying.block.actors.SwingingBladeBlock;
+import com.lying.block.actors.TrapSpawnerBlock;
+import com.lying.block.sensors.CollisionSensorBlock;
+import com.lying.block.sensors.ProximitySensorBlock;
+import com.lying.block.sensors.SightSensorBlock;
+import com.lying.block.sensors.SoundSensorBlock;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDItems;
 

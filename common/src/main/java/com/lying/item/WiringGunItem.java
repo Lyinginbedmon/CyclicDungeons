@@ -5,9 +5,7 @@ import static com.lying.reference.Reference.ModInfo.translate;
 import java.util.List;
 
 import com.lying.block.IWireableBlock;
-import com.lying.block.Port;
 import com.lying.init.CDDataComponentTypes;
-import com.lying.init.CDLogicGates;
 import com.lying.init.CDSoundEvents;
 import com.lying.item.component.WireModeComponent;
 import com.lying.item.component.WiringComponent;
@@ -40,121 +38,73 @@ public class WiringGunItem extends Item
 	
 	public WiringGunItem(Settings settings)
 	{
-		super(settings.component(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty()).component(CDDataComponentTypes.WIRE_MODE.get(), new WireModeComponent(WireMode.GLOBAL)));
+		super(settings.component(CDDataComponentTypes.WIRE_OP.get(), WiringComponent.empty()).component(CDDataComponentTypes.WIRE_MODE.get(), new WireModeComponent(WireMode.GLOBAL)));
 	}
 	
 	public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type)
 	{
 		stack.get(CDDataComponentTypes.WIRE_MODE.get()).appendTooltip(context, tooltip::add, type);
-		stack.get(CDDataComponentTypes.LINK_POS.get()).appendTooltip(context, tooltip::add, type);
+		stack.get(CDDataComponentTypes.WIRE_OP.get()).appendTooltip(context, tooltip::add, type);
 	}
 	
 	public ActionResult useOnBlock(ItemUsageContext context)
 	{
 		World world = context.getWorld();
-		if(world.isClient())
+		// All non-sneaking control is handled client-side by the PortSelectPacket
+		if(world.isClient() || !context.shouldCancelInteraction())
 			return ActionResult.PASS;
 		
-		ItemStack stack = context.getPlayer().getStackInHand(context.getHand());
-		WiringComponent wiring = stack.get(CDDataComponentTypes.LINK_POS.get());
-		final WireMode mode = stack.get(CDDataComponentTypes.WIRE_MODE.get()).mode();
-		
-		final BlockPos blockPos = context.getBlockPos();
-		final BlockState blockState = world.getBlockState(blockPos);
-		final Block block = blockState.getBlock();
-		final MutableText blockName = block.getName().styled(s -> s.withHoverEvent(new HoverEvent(Action.SHOW_TEXT, Text.literal(blockPos.toShortString()))));
-		
-		// If currently wiring
+		ItemStack stack = context.getPlayer().getMainHandStack();
+		WiringComponent wiring = stack.get(CDDataComponentTypes.WIRE_OP.get());
+		// If currently wiring, cancel wiring operation
 		if(wiring.isWiring())
 		{
-			BlockPos linkPos = wiring.output().get().pos();
-			final MutableText linkName = world.getBlockState(linkPos).getBlock().getName().styled(s -> s.withHoverEvent(new HoverEvent(Action.SHOW_TEXT, Text.literal(linkPos.toShortString()))));
-			
-			// If target isn't wireable || sneaking = Cancel wiring
-			if(
-					!(block instanceof IWireableBlock) || 
-					((IWireableBlock)block).inputPorts(blockPos, world).isEmpty() ||
-					context.shouldCancelInteraction())
-			{
-				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty());
-				context.getPlayer().sendMessage(translate("gui", "wiring_gun.cancel"), true);
-				return ActionResult.SUCCESS;
-			}
-			// If too far away = Prevent wiring
-			else if(!wiring.output().get().pos().isWithinDistance(blockPos, MAX_WIRE_RANGE))
-			{
-				context.getPlayer().sendMessage(translate("gui", "wiring_gun.out_of_range", linkName), true);
-				return ActionResult.PASS;
-			}
-			// Else wire to target block
-			else
-			{
-				// Feed position to block, clear from gun if success
-				if(wiring.tryApplyTo(blockPos, world, mode))
-				{
-					stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.empty());
-					context.getPlayer().sendMessage(translate("gui", "wiring_gun.success", 
-							wiring.output().get().port().name(), 
-							linkName, 
-							wiring.input().orElse(CDLogicGates.INPUT).name(), 
-							blockName), false);
-					playSound(context.getPlayer(), blockPos);
-					return ActionResult.SUCCESS;
-				}
-			}
+			stack.set(CDDataComponentTypes.WIRE_OP.get(), WiringComponent.empty());
+			context.getPlayer().sendMessage(translate("gui", "wiring_gun.cancel"), true);
+			return ActionResult.SUCCESS;
 		}
 		// If not currently wiring
 		else
 		{
-			// Sneaking = Clear attached wires
-			if(context.shouldCancelInteraction())
+			final BlockPos blockPos = context.getBlockPos();
+			final BlockState blockState = world.getBlockState(blockPos);
+			final Block block = blockState.getBlock();
+			
+			// Clear settings of target block
+			if(block instanceof IWireableBlock)
 			{
-				if(block instanceof IWireableBlock)
+				final MutableText blockName = block.getName().styled(s -> s.withHoverEvent(new HoverEvent(Action.SHOW_TEXT, Text.literal(blockPos.toShortString()))));
+				IWireableBlock wireable = IWireableBlock.getWireable(blockPos, world).get();
+				final int count = wireable.wireCount(blockPos, world);
+				if(count < 1)
 				{
-					// Clear settings of target block
-					IWireableBlock wireable = IWireableBlock.getWireable(blockPos, world);
-					final int count = wireable.wireCount(blockPos, world);
-					if(count < 1)
-					{
-						context.getPlayer().sendMessage(translate("gui", "wiring_gun.wires_cleared.failed", blockName), true);
-						return ActionResult.PASS;
-					}
-					wireable.clearWires(blockPos, world);
-					context.getPlayer().sendMessage(translate("gui", "wiring_gun.wires_cleared.success", count, blockName), false);
-					playSound(context.getPlayer(), blockPos);
-					return ActionResult.SUCCESS;
+					context.getPlayer().sendMessage(translate("gui", "wiring_gun.wires_cleared.failed", blockName), true);
+					return ActionResult.PASS;
 				}
-				else
-				{
-					// Cycle gun setting
-					final WireMode mode2 = mode.cycle();
-					stack.set(CDDataComponentTypes.WIRE_MODE.get(), new WireModeComponent(mode2));
-					context.getPlayer().sendMessage(translate("gui", "wiring_gun.mode_change.success", mode2.translate()), false);
-					return ActionResult.SUCCESS;
-				}
-			}
-			// Otherwise = Start wiring
-			else if(block instanceof IWireableBlock && !((IWireableBlock)block).outputPorts(blockPos, world).isEmpty())
-			{
-				// Store block in position
-				Port port = ((IWireableBlock)block).outputPorts(blockPos, world).getFirst();
-				context.getPlayer().sendMessage(translate("gui", "wiring_gun.start", port.name(), blockName), true);
-				stack.set(CDDataComponentTypes.LINK_POS.get(), WiringComponent.of(blockPos).startingAt(port));
+				wireable.clearWires(blockPos, world);
+				context.getPlayer().sendMessage(translate("gui", "wiring_gun.wires_cleared.success", count, blockName), false);
 				playSound(context.getPlayer(), blockPos);
 				return ActionResult.SUCCESS;
 			}
+			// Cycle gun setting
 			else
 			{
-				context.getPlayer().sendMessage(translate("gui", "wiring_gun.failed", blockName), true);
-				return ActionResult.FAIL;
+				final WireMode mode = stack.get(CDDataComponentTypes.WIRE_MODE.get()).mode();
+				stack.set(CDDataComponentTypes.WIRE_MODE.get(), new WireModeComponent(mode.cycle()));
+				context.getPlayer().sendMessage(translate("gui", "wiring_gun.mode_change.success", mode.cycle().translate()), false);
+				return ActionResult.SUCCESS;
 			}
 		}
-		return ActionResult.PASS;
 	}
 	
-	private static void playSound(LivingEntity player, BlockPos pos)
+	public static void playSound(LivingEntity player, BlockPos pos)
 	{
-		player.getEntityWorld().playSound(null, pos, CDSoundEvents.WIRING_GUN.get(), SoundCategory.PLAYERS, 1F, 0.75F + (player.getRandom().nextFloat() * 0.25F));
+		playSound(pos, player.getEntityWorld());
+	}
+	
+	public static void playSound(BlockPos pos, World world)
+	{
+		world.playSound(null, pos, CDSoundEvents.WIRING_GUN.get(), SoundCategory.PLAYERS, 1F, 0.75F + (world.getRandom().nextFloat() * 0.25F));
 	}
 	
 	public static enum WireMode implements StringIdentifiable

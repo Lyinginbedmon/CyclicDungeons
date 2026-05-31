@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
-import com.lying.block.entity.logic.WiringManifest.PortEntry;
+import com.lying.block.entity.logic.PortEntry;
 import com.lying.init.CDLogicGates;
 import com.lying.item.WiringGunItem.WireMode;
 

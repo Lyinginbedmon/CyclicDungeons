@@ -173,8 +173,8 @@ public class LogicModule
 				portState.put(port, inputWires.get(port).stream().anyMatch(w -> circuitWires.containsKey(w) ? circuitWires.get(w).isOn() : false));
 		}
 		// If we're an input module, set the input port to reflect the wired input port of the tile
-//		else if(isInput())
-//			portState.put(CDLogicGates.INPUT, tile.getInput(Port.of(name.get())));
+		else if(isInput())
+			portState.put(CDLogicGates.INPUT, tile.getInput(Port.of(name.get())));
 		
 		// Recalculate logic result
 		resultCache = handler.getResult(portState, portCache, resultCache, tile);

@@ -1,10 +1,12 @@
 package com.lying.block;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.block.entity.logic.WiringManifest.PortEntry;
+import com.lying.block.entity.logic.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 import com.mojang.serialization.Codec;
 
@@ -30,14 +32,14 @@ public interface IWireableBlock
 		return expected == given ? (BlockEntityTicker<A>)ticker : null;
 	}
 	
-	@Nullable
-	public static IWireableBlock getWireable(BlockPos pos, World world)
+	@NotNull
+	public static Optional<IWireableBlock> getWireable(BlockPos pos, World world)
 	{
 		if(pos.getY() < world.getBottomY() || pos.getY() > 256)
-			return null;
+			return Optional.empty();
 		
 		Block block = world.getBlockState(pos).getBlock();
-		return block instanceof IWireableBlock ? (IWireableBlock)block : null;
+		return block instanceof IWireableBlock ? Optional.of((IWireableBlock)block) : Optional.empty();
 	}
 	
 	public List<Port> inputPorts(BlockPos pos, World world);

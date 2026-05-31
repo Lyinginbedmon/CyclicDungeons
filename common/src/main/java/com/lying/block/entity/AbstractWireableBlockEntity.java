@@ -7,9 +7,9 @@ import java.util.function.Consumer;
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
+import com.lying.block.entity.logic.PortEntry;
 import com.lying.block.entity.logic.WiringManifest;
 import com.lying.block.entity.logic.WiringManifest.ManifestEntry;
-import com.lying.block.entity.logic.WiringManifest.PortEntry;
 import com.lying.item.WiringGunItem.WireMode;
 
 import net.minecraft.block.BlockState;
@@ -74,7 +74,7 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		return getPortStatus(port, false);
 	}
 	
-	protected final boolean getPortStatus(Port port, boolean isInput)
+	protected boolean getPortStatus(Port port, boolean isInput)
 	{
 		Optional<ManifestEntry> global = wiringGlobal.getPort(port, isInput);
 		if(global.isPresent() && global.get().status(getWorld(), BlockPos.ORIGIN))
@@ -141,8 +141,8 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 		// Deactivate any attached actors
 		for(Port port : getWireable().outputPorts(getPos(), getWorld()))
 		{
-			wiringGlobal.getOutputListeners(port, BlockPos.ORIGIN).forEach(p -> IWireableBlock.getWireable(p, world).respondToPorts(p, world));
-			wiringLocal.getOutputListeners(port, getPos()).forEach(p -> IWireableBlock.getWireable(p, world).respondToPorts(p, world));
+			wiringGlobal.getOutputListeners(port, BlockPos.ORIGIN).forEach(p -> IWireableBlock.getWireable(p, world).ifPresent(b -> b.respondToPorts(p, world)));
+			wiringLocal.getOutputListeners(port, getPos()).forEach(p -> IWireableBlock.getWireable(p, world).ifPresent(b -> b.respondToPorts(p, world)));
 		}
 		
 		// Clear connections

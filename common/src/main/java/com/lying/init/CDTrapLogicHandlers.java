@@ -38,19 +38,19 @@ public class CDTrapLogicHandlers
 		{
 			if(inputState < 0)
 			{
-				actors.forEach(p -> ((ITrapActor)IWireableBlock.getWireable(p, world)).deactivate(p, world));
+				actors.forEach(p -> IWireableBlock.getWireable(p, world).ifPresent(b -> ((ITrapActor)b).deactivate(p, world)));
 				return;
 			}
 			
 			final boolean status = inputState > 0;
-			actors.forEach(p -> 
+			actors.forEach(p -> IWireableBlock.getWireable(p, world).ifPresent(b -> 
 			{
-				ITrapActor trActor = ((ITrapActor)IWireableBlock.getWireable(p, world));
+				ITrapActor trActor = (ITrapActor)b;
 				if(status)
 					trActor.activate(p, world);
 				else
 					trActor.deactivate(p, world);
-			});
+			}));
 		}
 	};
 	public static final Supplier<LogicHandler> FALLOFF_1S	= register(ID_1S_FALLOFF, id -> new FalloffLogicHandler(id, 1));

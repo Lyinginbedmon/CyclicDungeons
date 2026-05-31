@@ -11,7 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.lying.block.IWireableBlock;
-import com.lying.block.entity.logic.WiringManifest.PortEntry;
+import com.lying.block.entity.logic.PortEntry;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.init.CDLogicGates;

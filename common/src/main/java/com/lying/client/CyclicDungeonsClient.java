@@ -6,20 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lying.CyclicDungeons;
-import com.lying.block.IWireableBlock;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlocks;
-import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDEntityTypes;
-import com.lying.init.CDItems;
 import com.lying.init.CDScreenHandlerTypes;
-import com.lying.item.component.WiringComponent;
-import com.lying.network.CyclePortPacket;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
 
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.client.ClientRawInputEvent;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
@@ -32,11 +25,6 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.entity.ArrowEntityRenderer;
 import net.minecraft.client.render.entity.PolarBearEntityRenderer;
 import net.minecraft.client.render.entity.WolfEntityRenderer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult.Type;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraft.world.biome.GrassColors;
 
 public class CyclicDungeonsClient
@@ -81,50 +69,7 @@ public class CyclicDungeonsClient
 	
 	private static void registerEventHandlers()
 	{
-		ClientRawInputEvent.MOUSE_SCROLLED.register((client, amountX, amountY) -> 
-		{
-			if(!client.isWindowFocused() || client.player == null || client.currentScreen != null)
-				return EventResult.pass();
-			
-			// Are we holding a wiring gun that is actively wiring and looking at a wireable block?
-			PlayerEntity player = client.player;
-			World world = player.getWorld();
-			BlockPos pos;
-			Block block;
-			WiringComponent wiring;
-			if(
-				player.getMainHandStack().isOf(CDItems.WIRING_GUN.get()) && 
-				(wiring = player.getMainHandStack().get(CDDataComponentTypes.LINK_POS.get())).isWiring() &&
-				client.crosshairTarget.getType() == Type.BLOCK && 
-				(block = world.getBlockState(pos = ((BlockHitResult)client.crosshairTarget).getBlockPos()).getBlock()) instanceof IWireableBlock)
-			{
-				IWireableBlock wireable = (IWireableBlock)block;
-				int delta = (int)amountY;
-				if(wiring.output().get().pos().getManhattanDistance(pos) == 0)
-				{
-					// If the origin block only has 1 output, just ignore this
-					if(wireable.outputPorts(pos, world).size() < 2)
-						return EventResult.pass();
-					else
-					{
-						NetworkManager.sendToServer(new CyclePortPacket.Payload(pos, true, delta));
-						return EventResult.interruptTrue();
-					}
-				}
-				else
-				{
-					// If there are only 1 or fewer input ports in the target block, just ignore this
-					if(wireable.inputPorts(pos, world).size() < 2)
-						return EventResult.pass();
-					else
-					{
-						NetworkManager.sendToServer(new CyclePortPacket.Payload(pos, false, delta));
-						return EventResult.interruptTrue();
-					}
-				}
-			}
-			return EventResult.pass();
-		});
+		WiringHandler.registerEvents();
 	}
 	
 	private static void registerClientPackets()

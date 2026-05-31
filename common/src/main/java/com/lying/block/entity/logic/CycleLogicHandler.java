@@ -1,6 +1,7 @@
 package com.lying.block.entity.logic;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.lying.block.ITrapActor;
 import com.lying.block.IWireableBlock;
@@ -24,9 +25,11 @@ public class CycleLogicHandler extends LogicHandler
 		for(int i=0; i<actors.size(); i++)
 		{
 			final BlockPos pos = actors.get(i);
-			final ITrapActor trActor = (ITrapActor)IWireableBlock.getWireable(actors.get(i), world);
-			if(trActor == null)
+			Optional<IWireableBlock> wireable = IWireableBlock.getWireable(pos, world);
+			if(wireable.isEmpty())
 				continue;
+			
+			final ITrapActor trActor = (ITrapActor)wireable.get();
 			if(i == index)
 				trActor.activate(pos, world);
 			else

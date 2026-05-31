@@ -11,7 +11,6 @@ import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.Port;
 import com.lying.init.CDLogicGates;
-import com.lying.reference.Reference;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -20,11 +19,8 @@ import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.text.MutableText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -251,44 +247,6 @@ public class WiringManifest
 					wires.add(new ManifestEntry(Port.of(key)).attachAll(PortEntry.CODEC.listOf().parse(ops, value).getOrThrow()));
 			});
 			return DataResult.success(Pair.of(wires, input));
-		}
-	}
-	
-	/**
-	 * Holder object containing a BlockPos and a port of the block at that position
-	 */
-	public static record PortEntry(BlockPos pos, Port port)
-	{
-		public static final Codec<PortEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-				BlockPos.CODEC.fieldOf("pos").forGetter(PortEntry::pos),
-				Port.CODEC.fieldOf("port").forGetter(PortEntry::port)
-				).apply(instance, PortEntry::new));
-		public static final PacketCodec<ByteBuf, PortEntry> PACKET_CODEC	= PacketCodec.tuple(
-				BlockPos.PACKET_CODEC, PortEntry::pos, 
-				Port.PACKET_CODEC, PortEntry::port, 
-				PortEntry::new);
-		
-		public MutableText displayName() { return Reference.ModInfo.translate("gui", "port_name", port.name(), pos.toShortString()); }
-		
-		public PortEntry relativeTo(BlockPos offset)
-		{
-			return new PortEntry(pos.subtract(offset), port);
-		}
-		
-		public boolean equals(Object obj)
-		{
-			if(!(obj instanceof PortEntry))
-				return false;
-			
-			PortEntry other = (PortEntry)obj;
-			return pos.getManhattanDistance(other.pos()) == 0 && port.equals(other.port());
-		}
-		
-		public boolean isActive(World world, BlockPos origin)
-		{
-			BlockPos target = pos.add(origin);
-			IWireableBlock wireable = IWireableBlock.getWireable(target, world);
-			return wireable.isPortActive(port, target, world);
 		}
 	}
 }

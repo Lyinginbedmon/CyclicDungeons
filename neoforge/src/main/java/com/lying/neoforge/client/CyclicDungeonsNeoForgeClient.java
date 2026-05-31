@@ -1,8 +1,9 @@
 package com.lying.neoforge.client;
 
-import com.lying.block.entity.DartTrapBlockEntity;
-import com.lying.block.entity.FlameJetBlockEntity;
-import com.lying.block.entity.TrapActorBlockEntity;
+import com.lying.block.actors.entity.DartTrapBlockEntity;
+import com.lying.block.actors.entity.FlameJetBlockEntity;
+import com.lying.block.actors.entity.TrapActorBlockEntity;
+import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
 import com.lying.client.renderer.block.ProximitySensorBlockEntityRenderer;
@@ -35,7 +36,8 @@ public class CyclicDungeonsNeoForgeClient
     	registerBlockColors();
     	
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_LOGIC.get(), WireableBlockEntityRenderer<TrapLogicBlockEntity>::new);
-    	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity>::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity<?>>::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.MODULAR_LOGIC.get(), WireableBlockEntityRenderer<ModularLogicBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.FLAME_JET.get(), WireableBlockEntityRenderer<FlameJetBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.DART_TRAP.get(), WireableBlockEntityRenderer<DartTrapBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPAWNER.get(), TrapSpawnerBlockEntityRenderer::new);

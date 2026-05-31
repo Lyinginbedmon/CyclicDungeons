@@ -17,8 +17,8 @@ public class CDDataComponentTypes
 	public static final DeferredRegister<ComponentType<?>> TYPES	= DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.DATA_COMPONENT_TYPE);
 	private static int tally;
 	
-	public static final RegistrySupplier<ComponentType<WiringComponent>> LINK_POS	= register("link_pos", builder -> builder.codec(WiringComponent.CODEC).packetCodec(WiringComponent.PACKET_CODEC));
-	public static final RegistrySupplier<ComponentType<WireModeComponent>> WIRE_MODE	= register("wire_mode", builder -> builder.codec(WireModeComponent.CODEC).packetCodec(WireModeComponent.PACKET_CODEC));
+	public static final RegistrySupplier<ComponentType<WiringComponent>> WIRE_OP	= register("wiring_operation", builder -> builder.codec(WiringComponent.CODEC).packetCodec(WiringComponent.PACKET_CODEC));
+	public static final RegistrySupplier<ComponentType<WireModeComponent>> WIRE_MODE	= register("wiring_mode", builder -> builder.codec(WireModeComponent.CODEC).packetCodec(WireModeComponent.PACKET_CODEC));
 	
 	private static <T extends Object> RegistrySupplier<ComponentType<T>> register(String nameIn, UnaryOperator<ComponentType.Builder<T>> builderOperator)
 	{
