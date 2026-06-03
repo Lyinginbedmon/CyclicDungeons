@@ -10,6 +10,7 @@ import java.util.function.Function;
 import com.lying.block.BladeBlock;
 import com.lying.block.BladeBlock.Part;
 import com.lying.block.CrumblingBlock;
+import com.lying.block.ModularLogicBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SpikesBlock.SpikePart;
 import com.lying.block.actors.FlameJetBlock;
@@ -63,6 +64,7 @@ public class CDModelProvider extends FabricModelProvider
 		CDBlocks.SOLID_CUBES.forEach(entry -> blockStateModelGenerator.registerSimpleCubeAll(entry.get()));
 		
 		registerUnrotatedPillar(CDBlocks.TRAP_LOGIC.get(), blockStateModelGenerator);
+		ModularLogic.register(CDBlocks.MODULAR_LOGIC.get(), blockStateModelGenerator);
 		blockStateModelGenerator.registerParented(CDBlocks.TRAP_LOGIC.get(), CDBlocks.TRAP_LOGIC_DECOY.get());
 		
 		registerTrapBlockStates(blockStateModelGenerator);
@@ -79,6 +81,7 @@ public class CDModelProvider extends FabricModelProvider
 				CDItems.RABID_POLAR_BEAR_SPAWN_EGG.get(), 
 				CDItems.RABID_WOLF_SPAWN_EGG.get());
 		registerBlockModel((BlockItem)CDItems.SWINGING_BLADE.get(), "_horizontal", itemModelGenerator);
+		registerBlockModel((BlockItem)CDItems.MODULAR_LOGIC.get(), "_on", itemModelGenerator);
 	}
 	
 	private void registerCyclicium(BlockStateModelGenerator generator)
@@ -575,6 +578,30 @@ public class CDModelProvider extends FabricModelProvider
 			appendSettings(Direction.DOWN, VariantSettings.Rotation.R90, VariantSettings.Rotation.R0, map, model, modelOn);
 			
 			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(map));
+		}
+	}
+	
+	private static class ModularLogic
+	{
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			final Identifier top = TextureMap.getSubId(block, "_top");
+			TextureMap mapOff = new TextureMap()
+					.put(TextureKey.TOP, top)
+					.put(TextureKey.BOTTOM, top)
+					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_off"));
+			TextureMap mapOn = new TextureMap()
+					.put(TextureKey.TOP, top)
+					.put(TextureKey.BOTTOM, top)
+					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_on"));
+			
+			final Identifier off = Models.CUBE_BOTTOM_TOP.upload(block, "_off", mapOff, generator.modelCollector);
+			final Identifier on = Models.CUBE_BOTTOM_TOP.upload(block, "_on", mapOn, generator.modelCollector);
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(BlockStateVariantMap.create(ModularLogicBlock.LIGHT).register(l -> 
+				l > 0 ? 
+					BlockStateVariant.create().put(VariantSettings.MODEL, on) : 
+					BlockStateVariant.create().put(VariantSettings.MODEL, off))));
 		}
 	}
 }

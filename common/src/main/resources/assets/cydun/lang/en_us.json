@@ -66,7 +66,7 @@
 	"gui.cydun.wiring_gun.cannot_self_wire": "Blocks cannot be wired to themselves!",
 	"gui.cydun.wiring_gun.no_outputs": "%s has no output ports available",
 	"gui.cydun.wiring_gun.no_inputs": "%s has no input ports available",
-	"gui.cydun.wiring_gun.success": "Connected [%s] of [%s] to [%s] of [%s] successfully",
+	"gui.cydun.wiring_gun.success": "Wired [%s] of [%s] to [%s] of [%s]",
 	"gui.cydun.wiring_gun.wires_cleared.success": "Cleared %s wires from [%s]",
 	"gui.cydun.wiring_gun.wires_cleared.failed": "[%s] has no wires to clear",
 	"gui.cydun.wiring_gun.mode_change.success": "Wiring mode set to %s coordinates",

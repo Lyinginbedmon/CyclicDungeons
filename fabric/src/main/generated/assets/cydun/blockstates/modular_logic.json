@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "light=0": {
+      "model": "cydun:block/modular_logic_off"
+    },
+    "light=1": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=10": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=11": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=12": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=13": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=14": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=15": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=2": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=3": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=4": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=5": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=6": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=7": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=8": {
+      "model": "cydun:block/modular_logic_on"
+    },
+    "light=9": {
+      "model": "cydun:block/modular_logic_on"
+    }
+  }
+}

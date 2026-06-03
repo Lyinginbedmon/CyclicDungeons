@@ -24,6 +24,14 @@
   ],
   "tilesets": [
     {
+      "term": "cydun:big_puzzle",
+      "tile_set": "cydun:puzzle"
+    },
+    {
+      "term": "cydun:battle",
+      "tile_set": "cydun:battle"
+    },
+    {
       "term": "cydun:end",
       "tile_set": "cydun:end"
     },
@@ -50,14 +58,6 @@
     {
       "term": "cydun:treasure",
       "tile_set": "cydun:treasure"
-    },
-    {
-      "term": "cydun:big_puzzle",
-      "tile_set": "cydun:puzzle"
-    },
-    {
-      "term": "cydun:battle",
-      "tile_set": "cydun:battle"
     }
   ],
   "traps": [

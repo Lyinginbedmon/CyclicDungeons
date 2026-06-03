@@ -118,7 +118,7 @@ public class PortSelectPacket
 							start.port().name(), 
 							wiring.startName(), 
 							end.port().name(), 
-							blockName), false);
+							blockName), true);
 				}
 			}
 		}

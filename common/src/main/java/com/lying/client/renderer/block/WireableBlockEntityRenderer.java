@@ -44,7 +44,7 @@ public class WireableBlockEntityRenderer<T extends AbstractWireableBlockEntity> 
 		
 		final Vec3d here = toWireConnector(entity.getPos(), entity.getWorld());
 		entity.getInputListeners().stream().map(p -> toWireConnector(p, entity.getWorld())).forEach(pos -> drawWireBetween(pos, here, entity.getPos(), tickDelta, matrices, vertexConsumers));
-		entity.getOutputListeners().stream().map(p -> toWireConnector(p, entity.getWorld())).forEach(pos -> drawWireBetween(here, pos, entity.getPos(), tickDelta, matrices, vertexConsumers));
+//		entity.getOutputListeners().stream().map(p -> toWireConnector(p, entity.getWorld())).forEach(pos -> drawWireBetween(here, pos, entity.getPos(), tickDelta, matrices, vertexConsumers));
 	}
 	
 	private static Vec3d toWireConnector(BlockPos pos, World world)
