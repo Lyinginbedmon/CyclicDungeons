@@ -8,14 +8,19 @@ import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.item.WiringGunItem.WireMode;
+import com.lying.network.ShowCircuitScreenPacket;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.IntProperty;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -38,6 +43,13 @@ public class ModularLogicBlock extends TrapLogicBlock
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
 		builder.add(LIGHT);
+	}
+	
+	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit)
+	{
+		if(!world.isClient() && player.isCreative())
+			ShowCircuitScreenPacket.sendTo((ServerPlayerEntity)player);
+		return ActionResult.CONSUME;
 	}
 	
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)

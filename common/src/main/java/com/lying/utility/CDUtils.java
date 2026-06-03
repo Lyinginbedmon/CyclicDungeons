@@ -145,4 +145,33 @@ public class CDUtils
 	{
 		return world.getBlockState(pos).getBlock().getName().styled(s -> s.withHoverEvent(new HoverEvent(Action.SHOW_TEXT, Text.literal(pos.toShortString()))));
 	}
+	
+	public static int binaryToDecimal(boolean... bits)
+	{
+		int result = 0;
+		for(int i=0; i<bits.length; i++)
+			result += (int)Math.pow(2, i) * (bits[i] ? 1 : 0);
+		return result;
+	}
+	
+	public static boolean[] decimalToBinary(int val)
+	{
+		if(val <= 1)
+			return new boolean[] { val == 1 };
+		
+		if(val > 15)
+			val = 15;
+		
+		boolean[] result = new boolean[4];
+		for(int i=result.length; i>0; i--)
+			if(val <= 0)
+				result[i-1] = false;
+			else
+			{
+				int d = (int)Math.pow(2, i);
+				result[i-1] = val >= d;
+				val -= d;
+			}
+		return result;
+	}
 }

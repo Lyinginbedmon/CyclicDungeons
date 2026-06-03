@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lying.CyclicDungeons;
+import com.lying.client.screen.CircuitScreen;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDScreenHandlerTypes;
+import com.lying.network.ShowCircuitScreenPacket;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
 
@@ -82,5 +84,7 @@ public class CyclicDungeonsClient
 			if(mc.currentScreen instanceof DungeonScreen)
 				((DungeonScreen)mc.currentScreen).getScreenHandler().setDisplayedGraph(value.graph());
 		});
+		
+		NetworkManager.registerReceiver(NetworkManager.s2c(), ShowCircuitScreenPacket.PACKET_TYPE, ShowCircuitScreenPacket.PACKET_CODEC, (value, context) -> mc.setScreen(new CircuitScreen()));
 	}
 }

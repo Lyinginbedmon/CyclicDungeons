@@ -1,29 +1,36 @@
 package com.lying.init;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import com.ibm.icu.text.Collator;
 import com.lying.block.ModularLogicBlock;
 import com.lying.block.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.LogicResult;
 import com.lying.block.entity.logic.PortState;
+import com.lying.reference.Reference;
+import com.lying.utility.CDUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.random.Random;
 
 public class CDLogicGates
 {
 	private static final Map<String, Supplier<LogicGate>> MODULES	= new HashMap<>();
+	private static final Map<LogicCategory, List<String>> BY_CATEGORY	= new HashMap<>();
 	
 	// FIXME Implement in-game circuit builder screen
 	
@@ -41,63 +48,97 @@ public class CDLogicGates
 	/** Always TRUE */
 	public static final Supplier<LogicGate> TRUE	= register("true", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, true))
+			.category(LogicCategory.IO)
 			.addOutput(OUTPUT)
 			.build(s));
 	
 	/** Always FALSE */
 	public static final Supplier<LogicGate> FALSE	= register("false", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, false))
+			.category(LogicCategory.IO)
 			.addOutput(OUTPUT)
 			.build(s));
 	
 	/**  TRUE only if all input values are uniformly TRUE */
-	public static final Supplier<LogicGate> AND		= register("and", s -> new LogicGate(s, (ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().allMatch(v -> v))));
+	public static final Supplier<LogicGate> AND		= register("and", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().allMatch(v -> v)))
+			.category(LogicCategory.BASIC)
+			.addInputCollector(CDLogicGates::freeInputs)
+			.addOutput(OUTPUT)
+			.build(s));
 	/** TRUE only if all input values are not uniformly TRUE */
-	public static final Supplier<LogicGate> NAND	= register("nand", s -> new LogicGate(s, (ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, !ports.values().stream().allMatch(v -> v))));
+	public static final Supplier<LogicGate> NAND	= register("nand", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, !ports.values().stream().allMatch(v -> v)))
+			.category(LogicCategory.BASIC)
+			.addInputCollector(CDLogicGates::freeInputs)
+			.addOutput(OUTPUT)
+			.build(s));
 	/** TRUE if any input value is TRUE */
-	public static final Supplier<LogicGate> OR		= register("or", s -> new LogicGate(s, (ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().anyMatch(v -> v))));
+	public static final Supplier<LogicGate> OR		= register("or", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().anyMatch(v -> v)))
+			.category(LogicCategory.BASIC)
+			.addInputCollector(CDLogicGates::freeInputs)
+			.addOutput(OUTPUT)
+			.build(s));
 	/** TRUE while all input values are FALSE, functionally a multi-input NOT */
-	public static final Supplier<LogicGate> NOR		= register("nor", s -> new LogicGate(s, (ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().noneMatch(v -> v))));
+	public static final Supplier<LogicGate> NOR		= register("nor", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().noneMatch(v -> v)))
+			.category(LogicCategory.BASIC)
+			.addInputCollector(CDLogicGates::freeInputs)
+			.addOutput(OUTPUT)
+			.build(s));
 	/** TRUE if only one input value is TRUE */
-	public static final Supplier<LogicGate> XOR		= register("xor", s -> new LogicGate(s, (ports, pPorts, pOut, tile, module) -> 
-		{
-			boolean result = false;
-			for(Boolean var : ports.values())
-				if(var)
-					if(!result)
-						result = true;
-					else
-						return LogicResult.create().put(OUTPUT, false);
-			return LogicResult.create().put(OUTPUT, result);
-		}
-	));
+	public static final Supplier<LogicGate> XOR		= register("xor", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> 
+			{
+				boolean result = false;
+				for(Boolean var : ports.values())
+					if(var)
+						if(!result)
+							result = true;
+						else
+							return LogicResult.create().put(OUTPUT, false);
+				return LogicResult.create().put(OUTPUT, result);
+			})
+			.category(LogicCategory.BASIC)
+			.addInputCollector(CDLogicGates::freeInputs)
+			.addOutput(OUTPUT)
+			.build(s));
 	/** TRUE if all input values share the same value */
-	public static final Supplier<LogicGate> XNOR	= register("xnor", s -> new LogicGate(s, (ports, pPorts, pOut, tile, module) -> 
-		{
-			List<Boolean> lines = Lists.newArrayList(ports.values());
-			if(lines.isEmpty())
+	public static final Supplier<LogicGate> XNOR	= register("xnor", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> 
+			{
+				List<Boolean> lines = Lists.newArrayList(ports.values());
+				if(lines.isEmpty())
+					return LogicResult.create().put(OUTPUT, true);
+				
+				final boolean goal = lines.removeFirst();
+				while(!lines.isEmpty())
+					if(lines.removeFirst() != goal)
+						return LogicResult.create().put(OUTPUT, false);
 				return LogicResult.create().put(OUTPUT, true);
-			
-			final boolean goal = lines.removeFirst();
-			while(!lines.isEmpty())
-				if(lines.removeFirst() != goal)
-					return LogicResult.create().put(OUTPUT, false);
-			return LogicResult.create().put(OUTPUT, true);
-		}));
+			})
+			.category(LogicCategory.BASIC)
+			.addInputCollector(CDLogicGates::freeInputs)
+			.addOutput(OUTPUT)
+			.build(s));
 	
 	/** TRUE if the input became TRUE in this frame */
 	public static final Supplier<LogicGate> EDGE_R	= register("rising_edge", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, isRisingEdge(INPUT, ports, pPorts)))
+			.category(LogicCategory.UTILITY)
 			.addInput(INPUT).addOutput(OUTPUT)
 			.build(s));
 	/** TRUE if the input became FALSE in this frame */
 	public static final Supplier<LogicGate> EDGE_F	= register("falling_edge", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, pPorts.get(INPUT) && !ports.get(INPUT)))
+			.category(LogicCategory.UTILITY)
 			.addInput(INPUT).addOutput(OUTPUT)
 			.build(s));
 	/** TRUE if the input changed in this frame */
 	public static final Supplier<LogicGate> DELTA	= register("delta", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.get(INPUT) != pPorts.get(INPUT)))
+			.category(LogicCategory.UTILITY)
 			.addInput(INPUT).addOutput(OUTPUT)
 			.build(s));
 	
@@ -107,6 +148,7 @@ public class CDLogicGates
 				isRisingEdge(INPUT, ports, pPorts) ? 
 					Random.create().nextBoolean() : 
 					pOut.get(OUTPUT)))
+			.category(LogicCategory.MATH)
 			.addInput(INPUT).addOutput(OUTPUT)
 			.build(s));
 	
@@ -115,6 +157,7 @@ public class CDLogicGates
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, 
 				ports.get(RESET) ? false :
 					isRisingEdge(INPUT, ports, pPorts) ? !pOut.get(OUTPUT) : pOut.get(OUTPUT)))
+			.category(LogicCategory.MEMORY)
 			.addInput(INPUT, RESET).addOutput(OUTPUT)
 			.build(s));
 	/** Turns TRUE when it receives an input, until it receives a reset input */
@@ -122,6 +165,7 @@ public class CDLogicGates
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT,  
 				ports.get(RESET) ? false :
 					ports.get(INPUT) || pOut.get(OUTPUT)))
+			.category(LogicCategory.MEMORY)
 			.addInput(INPUT, RESET).addOutput(OUTPUT)
 			.build(s));
 	/** Stores the input value when it receives a set signal, resets when it receives a reset signal */
@@ -131,6 +175,7 @@ public class CDLogicGates
 					LogicResult.create().put(OUTPUT, false) :
 				ports.get(SET) ? 
 					LogicResult.create().put(OUTPUT, ports.get(INPUT)) : pOut)
+			.category(LogicCategory.MEMORY)
 			.addInput(INPUT, RESET, SET).addOutput(OUTPUT)
 			.build(s));
 	
@@ -144,15 +189,55 @@ public class CDLogicGates
 					.put(OUTPUT, bit0 != bit1)
 					.put(CARRY, bit0 && bit1);
 			})
+			.category(LogicCategory.MATH)
 			.addInput(BIT_1, BIT_2)
 			.addOutput(OUTPUT, CARRY)
 			.build(s));
-	/** Converts a 4-bit number into a value between 0 and 15 (inclusive) */
-	public static final Supplier<LogicGate> CONVERTER_4B	= register("b2d_converter", s -> new LogicGate(s, (ports, pPorts, pOut, tile, module) -> 
-	{
-		return LogicResult.create()
-				.put(Port.of("output_"+binaryToDecimal(gatherBits(4, ports))), true);
-	}));
+	/** Converts a 4-bit number into an output value between 0 and 15 (inclusive) */
+	public static final Supplier<LogicGate> CONVERTER_4B	= register("b2d_converter", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> 
+			{
+				return LogicResult.create()
+						.put(Port.of("output_"+CDUtils.binaryToDecimal(gatherBits(4, ports))), true);
+			})
+			.category(LogicCategory.MATH)
+			.addInput(BIT_1, BIT_2, BIT_4, BIT_8)
+			.addOutputCollector(m -> 
+			{
+				List<Port> ports = Lists.newArrayList();
+				for(int i=0; i<16; i++) ports.add(Port.of("output_"+i));
+				return ports;
+			})
+			.build(s));
+	public static final Supplier<LogicGate> CONVERTER_D	= register("d2b_converter", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> 
+			{
+				// Identify highest active input port
+				int val = 0;
+				for(int i=15; i>=0; i--)
+					if(ports.get(Port.of("input_"+i)))
+					{
+						val = i;
+						break;
+					}
+				
+				// Convert value to 4bit binary
+				final boolean[] result = CDUtils.decimalToBinary(val);
+				return LogicResult.create()
+						.put(BIT_1, result[0])
+						.put(BIT_2, result[1])
+						.put(BIT_4, result[2])
+						.put(BIT_8, result[3]);
+			})
+			.category(LogicCategory.MATH)
+			.addInputCollector(m -> 
+			{
+				List<Port> ports = Lists.newArrayList();
+				for(int i=0; i<16; i++) ports.add(Port.of("input_"+i));
+				return ports;
+			})
+			.addOutput(BIT_1, BIT_2, BIT_4, BIT_8)
+			.build(s));
 	/** Holds a 4-bit number and increments it when it receives a rising-edge pulse */
 	public static final Supplier<LogicGate> COUNTER_4B	= register("4bit_counter", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> 
@@ -183,6 +268,7 @@ public class CDLogicGates
 				// TODO Add decrement function?
 				return pOut;
 			})
+			.category(LogicCategory.MATH)
 			.addInput(INC, RESET).addOutput(BIT_1, BIT_2, BIT_4, BIT_8)
 			.build(s));
 	
@@ -197,6 +283,7 @@ public class CDLogicGates
 				}
 				return LogicResult.create();
 			})
+			.category(LogicCategory.UTILITY)
 			.addInput(INPUT)
 			.build(s));
 	/** Controls the light emission value of the logic block with a 4-bit value */
@@ -204,9 +291,10 @@ public class CDLogicGates
 			.create((ports, pPorts, pOut, tile, module) -> 
 			{
 				ServerWorld world = (ServerWorld)tile.getWorld();
-				world.setBlockState(tile.getPos(), tile.getCachedState().with(ModularLogicBlock.LIGHT, binaryToDecimal(gatherBits(4, ports))));
+				world.setBlockState(tile.getPos(), tile.getCachedState().with(ModularLogicBlock.LIGHT, CDUtils.binaryToDecimal(gatherBits(4, ports))));
 				return LogicResult.create();
 			})
+			.category(LogicCategory.UTILITY)
 			.addInput(BIT_1, BIT_2, BIT_4, BIT_8)
 			.build(s));
 	
@@ -215,6 +303,7 @@ public class CDLogicGates
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(
 				OUTPUT, 
 				module.toPort().isPresent() && tile.getInput(module.toPort().get())))
+			.category(LogicCategory.IO)
 			.addOutput(OUTPUT)
 			.build(s));
 	/** When named, used by the modular logic system to interact with the trap system */
@@ -222,15 +311,16 @@ public class CDLogicGates
 			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(
 				OUTPUT, 
 				ports.get(INPUT)))
+			.category(LogicCategory.IO)
 			.addInput(INPUT).addOutput(OUTPUT)
 			.build(s));
 	
-	public static boolean isRisingEdge(Port port, PortState ports, PortState pPorts)
+	protected static boolean isRisingEdge(Port port, PortState ports, PortState pPorts)
 	{
 		return !pPorts.get(port) && ports.get(port);
 	}
 	
-	public static boolean[] gatherBits(int count, PortState ports)
+	protected static boolean[] gatherBits(int count, PortState ports)
 	{
 		boolean[] bits = new boolean[count];
 		for(int i=0; i<bits.length; i++)
@@ -238,74 +328,94 @@ public class CDLogicGates
 		return bits;
 	}
 	
-	public static int binaryToDecimal(boolean... bits)
+	/** Returns a list of ports one greater than the inport ports currently in use by the module */
+	protected static List<Port> freeInputs(LogicModule module)
 	{
-		int result = 0;
-		for(int i=0; i<bits.length; i++)
-			result += (int)Math.pow(2, i) * (bits[i] ? 1 : 0);
-		return result;
+		List<Port> ports = Lists.newArrayList();
+		module.collectInputs().orElse(List.of()).stream().map(Port::of).forEach(ports::add);
+		ports.add(Port.of("input_"+ports.size()));
+		return ports;
 	}
 	
-	public static boolean[] decimalToBinary(int val)
+	/** Returns a list of ports one greater than the output ports currently in use by the module */
+	protected static List<Port> freeOutputs(LogicModule module)
 	{
-		if(val <= 1)
-			return new boolean[] { val == 1 };
-		int bits = (int)Math.floor(Math.sqrt(val)) + 1;
-		boolean[] result = new boolean[bits];
-		for(int i=bits; i>=0; i--)
-		{
-			int d = (int)Math.pow(2, i);
-			
-			if(val <= 0)
-				result[i-1] = false;
-			else
-			{
-				result[i - 1] = val >= d;
-				val -= d;
-			}
-		}
-		return result;
+		List<Port> ports = Lists.newArrayList();
+		module.collectOutputs().orElse(List.of()).stream().map(Port::of).forEach(ports::add);
+		ports.add(Port.of("input_"+ports.size()));
+		return ports;
 	}
 	
-	public static Supplier<LogicGate> register(String nameIn, Function<String, LogicGate> factory)
+	private static Supplier<LogicGate> register(String nameIn, Function<String, LogicGate> factory)
 	{
 		final Supplier<LogicGate> supplier = () -> factory.apply(nameIn);
 		MODULES.put(nameIn, supplier);
+		
+		LogicGate gate = supplier.get();
+		List<String> set = BY_CATEGORY.getOrDefault(gate.category(), Lists.newArrayList());
+		set.add(nameIn);
+		BY_CATEGORY.put(gate.category(), set);
+		
 		return supplier;
 	}
 	
-	public static class LogicGate
+	/** Returns a name-sorted list of logic gates in the given category */
+	public static List<LogicGate> byCategory(LogicCategory category)
+	{
+		return BY_CATEGORY.getOrDefault(category, List.of()).stream()
+				.map(MODULES::get)
+				.map(Supplier::get)
+				.sorted(LogicGate.SORT)
+				.toList();
+	}
+	
+	/** Returns a list of all registered logic gates */
+	public static List<LogicGate> getAllGates() { return MODULES.values().stream().map(Supplier::get).toList(); }
+	
+	public static abstract class LogicGate
 	{
 		public static final Codec<LogicGate> CODEC	= Codec.STRING.comapFlatMap(s -> 
 		{
 			LogicGate gate = CDLogicGates.MODULES.getOrDefault(s,() -> null).get();
 			return gate == null ? DataResult.error(() -> "Logic gate name not recognised") : DataResult.success(gate);
 		}, LogicGate::registryName);
+		public static final Comparator<LogicGate> SORT	= (a,b) -> Collator.getInstance().compare(a.registryName.toLowerCase(), b.registryName.toLowerCase());
 		
 		private final String registryName;
 		private final GateLogic logic;
+		private final LogicCategory category;
 		
-		protected LogicGate(String nameIn, GateLogic logicIn)
+		protected LogicGate(String nameIn, GateLogic logicIn, LogicCategory categoryIn)
 		{
 			registryName = nameIn;
 			logic = logicIn;
+			category = categoryIn;
 		}
 		
 		public final String registryName() { return registryName; }
+		
+		public Text displayName() { return Reference.ModInfo.translate("logic", registryName); }
+		
+		public final LogicCategory category() { return category; }
 		
 		public final LogicResult getResult(PortState portState, PortState portCache, LogicResult prevResult, ModularLogicBlockEntity tile, LogicModule module)
 		{
 			return logic.result(portState, portCache, prevResult, tile, module);
 		}
 		
-		public List<Port> inputPorts() { return List.of(INPUT); }
+		public abstract List<Port> inputPorts(LogicModule module);
 		
-		public List<Port> outputPorts() { return List.of(OUTPUT); }
+		public abstract List<Port> outputPorts(LogicModule module);
+		
+		public LogicModule create() { return LogicModule.of(this); }
 		
 		public static class Builder
 		{
 			private final GateLogic logic;
+			private LogicCategory category = LogicCategory.BASIC;
 			private List<Port> inputs = Lists.newArrayList(), outputs = Lists.newArrayList();
+			private Optional<Function<LogicModule,List<Port>>> inputCollector = Optional.empty();
+			private Optional<Function<LogicModule,List<Port>>> outputCollector = Optional.empty();
 			
 			protected Builder(GateLogic logicIn)
 			{
@@ -317,12 +427,23 @@ public class CDLogicGates
 				return new Builder(logicIn);
 			}
 			
-			// FIXME Implement declaration support for freeform inputs
+			public Builder category(LogicCategory cat)
+			{
+				category = cat;
+				return this;
+			}
+			
 			public Builder addInput(Port... ports)
 			{
 				for(Port port : ports)
 					if(!inputs.contains(port))
 						inputs.add(port);
+				return this;
+			}
+			
+			public Builder addInputCollector(Function<LogicModule,List<Port>> collector)
+			{
+				inputCollector = Optional.of(collector);
 				return this;
 			}
 			
@@ -334,12 +455,18 @@ public class CDLogicGates
 				return this;
 			}
 			
+			public Builder addOutputCollector(Function<LogicModule,List<Port>> collector)
+			{
+				outputCollector = Optional.of(collector);
+				return this;
+			}
+			
 			public LogicGate build(String registryName)
 			{
-				return new LogicGate(registryName, logic)
+				return new LogicGate(registryName, logic, category)
 						{
-							public List<Port> inputPorts() { return inputs; }
-							public List<Port> outputPorts() { return outputs; }
+							public List<Port> inputPorts(LogicModule module) { return inputCollector.isPresent() ? inputCollector.get().apply(module) : inputs; }
+							public List<Port> outputPorts(LogicModule module) { return outputCollector.isPresent() ? outputCollector.get().apply(module) : outputs; }
 						};
 			}
 		}
@@ -355,5 +482,14 @@ public class CDLogicGates
 		 * @return
 		 */
 		public LogicResult result(PortState portState, PortState portCache, LogicResult prevResult, ModularLogicBlockEntity tile, LogicModule module);
+	}
+	
+	public static enum LogicCategory
+	{
+		BASIC,
+		IO,
+		MATH,
+		MEMORY,
+		UTILITY;
 	}
 }

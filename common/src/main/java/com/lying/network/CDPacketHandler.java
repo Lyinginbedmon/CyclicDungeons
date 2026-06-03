@@ -12,6 +12,7 @@ import net.minecraft.world.World;
 public class CDPacketHandler
 {
 	public static final Identifier SHOW_DUNGEON_LAYOUT_ID	= make("show_dungeon_layout_screen");
+	public static final Identifier SHOW_CIRCUIT_SCREEN_ID	= make("show_circuit_builder_screen");
 	public static final Identifier PORT_SELECT_ID			= make("port_select");
 	
 	private static Identifier make(String nameIn) { return Reference.ModInfo.prefix(nameIn); }

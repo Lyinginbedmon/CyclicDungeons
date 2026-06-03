@@ -25,6 +25,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -94,7 +95,7 @@ public class WiringHud extends Screen
 				return IconState.NONE;
 			
 			final BlockPos outputPos = output.get().pos();
-			renderText(sneaking ? Text.literal(outputPos.toShortString()) : comp.startName(), context, crosshairLeft, centreY - (fontHeight * 1), OUTPUT_COLOR, true);
+			renderText((sneaking ? Text.literal(outputPos.toShortString()) : comp.startName()).formatted(Formatting.BOLD), context, crosshairLeft, centreY - (fontHeight * 1), OUTPUT_COLOR, true);
 			renderName(output.get().port(), context, width - 20, centreY, OUTPUT_COLOR, true);
 			
 			// Input wheel
@@ -112,7 +113,7 @@ public class WiringHud extends Screen
 			final int crosshairRight = width + 20;
 			
 			Block block = mc.world.getBlockState(pos).getBlock();
-			renderText(sneaking ? Text.literal(pos.toShortString()) : block.getName(), context, crosshairRight, centreY - (fontHeight * 2), INPUT_COLOR, false);
+			renderText((sneaking ? Text.literal(pos.toShortString()) : block.getName()).formatted(Formatting.BOLD), context, crosshairRight, centreY - (fontHeight * 2), INPUT_COLOR, false);
 			inputs.sort(Port.SORT);
 			renderName(CDUtils.objectFromIndex(inputs, index), context, crosshairRight, centreY, SELECTED_COLOR, false);
 			if(inputs.size() > 1)
@@ -140,7 +141,7 @@ public class WiringHud extends Screen
 				return IconState.NONE;
 			
 			Block block = mc.world.getBlockState(pos).getBlock();
-			renderText(sneaking ? Text.literal(pos.toShortString()) : block.getName(), context, crosshairLeft, centreY - (fontHeight * 2), OUTPUT_COLOR, true);
+			renderText((sneaking ? Text.literal(pos.toShortString()) : block.getName()).formatted(Formatting.BOLD), context, crosshairLeft, centreY - (fontHeight * 2), OUTPUT_COLOR, true);
 			
 			outputs.sort(Port.SORT);
 			renderName(CDUtils.objectFromIndex(outputs, index), context, crosshairLeft, centreY, SELECTED_COLOR, true);
