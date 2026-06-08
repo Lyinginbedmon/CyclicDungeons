@@ -83,6 +83,8 @@ public class LogicModule
 		catch(Exception e) { return Optional.empty(); }
 	}
 	
+	public LogicGate gate() { return handler; }
+	
 	/** Returns TRUE if this is an input gate with a custom name */
 	public boolean isInput() { return handler.registryName().equals(CDLogicGates.ENTRY.get().registryName()) && toPort().isPresent(); }
 	
@@ -124,6 +126,18 @@ public class LogicModule
 	{
 		inputWires.put(input, wires);
 		return this;
+	}
+	
+	public Optional<List<Port>> inputPorts()
+	{
+		List<Port> ports = handler.inputPorts(this);
+		return ports.isEmpty() ? Optional.empty() : Optional.of(ports);
+	}
+	
+	public Optional<List<Port>> outputPorts()
+	{
+		List<Port> ports = handler.outputPorts(this);
+		return ports.isEmpty() ? Optional.empty() : Optional.of(ports);
 	}
 	
 	public Optional<List<String>> collectInputs()
