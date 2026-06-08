@@ -34,8 +34,8 @@ public class CDLogicGates
 	
 	// FIXME Implement in-game circuit builder screen
 	
-	public static final Port INPUT	= Port.of("input");
-	public static final Port OUTPUT	= Port.of("output");
+	public static final Port INPUT	= Port.of("in");
+	public static final Port OUTPUT	= Port.of("out");
 	public static final Port SET	= Port.of("set");
 	public static final Port RESET	= Port.of("reset");
 	public static final Port INC	= Port.of("inc");
@@ -198,14 +198,14 @@ public class CDLogicGates
 			.create((ports, pPorts, pOut, tile, module) -> 
 			{
 				return LogicResult.create()
-						.put(Port.of("output_"+CDUtils.binaryToDecimal(gatherBits(4, ports))), true);
+						.put(Port.of("out_"+CDUtils.binaryToDecimal(gatherBits(4, ports))), true);
 			})
 			.category(LogicCategory.MATH)
 			.addInput(BIT_1, BIT_2, BIT_4, BIT_8)
 			.addOutputCollector(m -> 
 			{
 				List<Port> ports = Lists.newArrayList();
-				for(int i=0; i<16; i++) ports.add(Port.of("output_"+i));
+				for(int i=0; i<16; i++) ports.add(Port.of("out_"+i));
 				return ports;
 			})
 			.build(s));
@@ -215,7 +215,7 @@ public class CDLogicGates
 				// Identify highest active input port
 				int val = 0;
 				for(int i=15; i>=0; i--)
-					if(ports.get(Port.of("input_"+i)))
+					if(ports.get(Port.of("in_"+i)))
 					{
 						val = i;
 						break;
@@ -233,7 +233,7 @@ public class CDLogicGates
 			.addInputCollector(m -> 
 			{
 				List<Port> ports = Lists.newArrayList();
-				for(int i=0; i<16; i++) ports.add(Port.of("input_"+i));
+				for(int i=0; i<16; i++) ports.add(Port.of("in_"+i));
 				return ports;
 			})
 			.addOutput(BIT_1, BIT_2, BIT_4, BIT_8)
@@ -333,7 +333,7 @@ public class CDLogicGates
 	{
 		List<Port> ports = Lists.newArrayList();
 		module.collectInputs().orElse(List.of()).stream().map(Port::of).forEach(ports::add);
-		ports.add(Port.of("input_"+ports.size()));
+		ports.add(Port.of("in_"+ports.size()));
 		return ports;
 	}
 	
@@ -342,7 +342,7 @@ public class CDLogicGates
 	{
 		List<Port> ports = Lists.newArrayList();
 		module.collectOutputs().orElse(List.of()).stream().map(Port::of).forEach(ports::add);
-		ports.add(Port.of("input_"+ports.size()));
+		ports.add(Port.of("in_"+ports.size()));
 		return ports;
 	}
 	

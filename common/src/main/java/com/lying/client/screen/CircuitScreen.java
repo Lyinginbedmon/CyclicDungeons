@@ -22,6 +22,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
 public class CircuitScreen extends Screen
@@ -187,6 +188,9 @@ public class CircuitScreen extends Screen
 	
 	protected static class CircuitModule
 	{
+		private static final int PORT_SPACING	= (int)(GRID_SIZE * 0.75F);
+		private static final float PORT_SCALE	=	0.75F;
+		
 		private final LogicModule module;
 		private final Vector2i position;
 		
@@ -196,6 +200,13 @@ public class CircuitScreen extends Screen
 			position = gridIn;
 		}
 		
+		/**
+		 * Returns the closest port (if any) of this module to the given coordinates
+		 * @param mouseX
+		 * @param mouseY
+		 * @param isOutput
+		 * @return
+		 */
 		public Optional<Port> getClosestPort(int mouseX, int mouseY, boolean isOutput)
 		{
 			Vector2i gridPos = gridToPoint(position);
@@ -241,41 +252,56 @@ public class CircuitScreen extends Screen
 			final Vector2i position = gridToPoint(this.position);
 			final int x = position.x();
 			final int y = position.y();
-			context.drawText(textRenderer, name, x - (textRenderer.getWidth(name) / 2), y, -1, false);
+			context.drawText(textRenderer, name, x - (textRenderer.getWidth(name) / 2), y, -1, true);
 			
-			// Render inputs, if any
-			module.inputPorts().ifPresent(set ->
-			{
-				final double inc = -Math.toRadians(180D / (set.size() + 1));
-				final double cs = Math.cos(inc);
-				final double sn = Math.sin(inc);
-				
-				Vector2i vec = new Vector2i(0, -1).mul(GRID_SIZE / 2);
-				vec = new Vector2i((int)(vec.x() * cs - vec.y() * sn), (int)(vec.x() * sn + vec.y() * cs));
-				for(Port port : set)
+			MatrixStack matrices = context.getMatrices();
+			matrices.push();
+				matrices.translate(position.x(), position.y(), 0);
+				// Render inputs, if any
+				module.inputPorts().ifPresent(set ->
 				{
-					Text n = Text.literal(port.name());
-					context.drawText(textRenderer, n, x + vec.x() - textRenderer.getWidth(n), y + vec.y(), -1, false);
+					final double inc = -Math.toRadians(180D / (set.size() + 1));
+					final double cs = Math.cos(inc);
+					final double sn = Math.sin(inc);
+					
+					Vector2i vec = new Vector2i(0, -1).mul(PORT_SPACING);
 					vec = new Vector2i((int)(vec.x() * cs - vec.y() * sn), (int)(vec.x() * sn + vec.y() * cs));
-				}
-			});
-			
-			// Render outputs, if any
-			module.outputPorts().ifPresent(set -> 
-			{
-				final double inc = Math.toRadians(180D / (set.size() + 1));
-				final double cs = Math.cos(inc);
-				final double sn = Math.sin(inc);
+					for(Port port : set)
+					{
+						Text n = Text.literal(port.name());
+						renderScaledText(n, vec.x(), vec.y(), context, matrices, PORT_SCALE, textRenderer, textRenderer.getWidth(n));
+						
+						vec = new Vector2i((int)(vec.x() * cs - vec.y() * sn), (int)(vec.x() * sn + vec.y() * cs));
+					}
+				});
 				
-				Vector2i vec = new Vector2i(0, -1).mul(GRID_SIZE / 2);
-				vec = new Vector2i((int)(vec.x() * cs - vec.y() * sn), (int)(vec.x() * sn + vec.y() * cs));
-				for(Port port : set)
+				// Render outputs, if any
+				module.outputPorts().ifPresent(set -> 
 				{
-					Text n = Text.literal(port.name());
-					context.drawText(textRenderer, n, x + vec.x(), y + vec.y(), -1, false);
+					final double inc = Math.toRadians(180D / (set.size() + 1));
+					final double cs = Math.cos(inc);
+					final double sn = Math.sin(inc);
+					
+					Vector2i vec = new Vector2i(0, -1).mul(PORT_SPACING);
 					vec = new Vector2i((int)(vec.x() * cs - vec.y() * sn), (int)(vec.x() * sn + vec.y() * cs));
-				}
-			});
+					for(Port port : set)
+					{
+						Text n = Text.literal(port.name());
+						renderScaledText(n, vec.x(), vec.y(), context, matrices, PORT_SCALE, textRenderer, 0);
+						
+						vec = new Vector2i((int)(vec.x() * cs - vec.y() * sn), (int)(vec.x() * sn + vec.y() * cs));
+					}
+				});
+			matrices.pop();
+		}
+		
+		private static void renderScaledText(Text n, int x, int y, DrawContext context, MatrixStack matrices, float scale, TextRenderer textRenderer, int xOffset)
+		{
+			matrices.push();
+				matrices.translate(x, y, 0);
+				matrices.scale(scale, scale, 1F);
+				context.drawText(textRenderer, n, -xOffset, 0, -1, false);
+			matrices.pop();
 		}
 	}
 }
