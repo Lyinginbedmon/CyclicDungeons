@@ -138,6 +138,7 @@ public class LineSegment2f extends Line2f
 		return new Box2f(minX, maxX, minY, maxY);
 	}
 	
+	/** Returns true if these two line segments have any meaningful intersection */
 	public boolean intersectsAtAll(LineSegment2f other)
 	{
 		return contains(other.left) || contains(other.right) || doSegmentsIntersect(this, other);

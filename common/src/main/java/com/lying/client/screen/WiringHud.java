@@ -39,8 +39,8 @@ public class WiringHud extends Screen
 				prefix("textures/gui/wiring_icon_2.png")
 			};
 	
-	private static final int OUTPUT_COLOR	= 0xD55E00;
-	private static final int INPUT_COLOR	= 0x2E2585;
+	public static final int OUTPUT_COLOR	= 0xD55E00;
+	public static final int INPUT_COLOR	= 0x2E2585;
 	private static final int SELECTED_COLOR	= 0xFFFFFF;
 	private static final int OPTION_COLOR	= 0xb3b3b3;
 	

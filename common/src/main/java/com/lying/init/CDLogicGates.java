@@ -337,15 +337,6 @@ public class CDLogicGates
 		return ports;
 	}
 	
-	/** Returns a list of ports one greater than the output ports currently in use by the module */
-	protected static List<Port> freeOutputs(LogicModule module)
-	{
-		List<Port> ports = Lists.newArrayList();
-		module.collectOutputs().orElse(List.of()).stream().map(Port::of).forEach(ports::add);
-		ports.add(Port.of("in_"+ports.size()));
-		return ports;
-	}
-	
 	private static Supplier<LogicGate> register(String nameIn, Function<String, LogicGate> factory)
 	{
 		final Supplier<LogicGate> supplier = () -> factory.apply(nameIn);
