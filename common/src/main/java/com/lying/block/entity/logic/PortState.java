@@ -14,12 +14,35 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+
 /** Map of wire names to their states */
 public class PortState
 {
 	public static final Codec<PortState> CODEC	= Codec.of(PortState::encode, PortState::decode);
+	public static final PacketCodec<ByteBuf, PortState> PACKET_CODEC	= PacketCodec.of(PortState::write, PortState::read);
 	
 	private final Map<Port, Boolean> values = new HashMap<>();
+	
+	private void write(ByteBuf buf)
+	{
+		buf.writeInt(values.size());
+		values.entrySet().forEach(entry -> 
+		{
+			Port.PACKET_CODEC.encode(buf, entry.getKey());
+			buf.writeBoolean(entry.getValue());
+		});
+	}
+	
+	private static PortState read(ByteBuf buf)
+	{
+		PortState state = new PortState();
+		int size = buf.readInt();
+		while(size-- > 0)
+			state.put(Port.PACKET_CODEC.decode(buf), buf.readBoolean());
+		return state;
+	}
 	
 	public void copy(PortState state)
 	{

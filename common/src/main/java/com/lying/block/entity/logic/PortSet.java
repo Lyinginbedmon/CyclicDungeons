@@ -15,14 +15,47 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+
 /** Map of ports to the named wires attached to them */
 public class PortSet
 {
 	public static final Codec<PortSet> CODEC	= Codec.of(PortSet::encode, PortSet::decode);
+	public static final PacketCodec<ByteBuf, PortSet> PACKET_CODEC	= PacketCodec.of(PortSet::write, PortSet::read);
 	private static final Codec<String> CODEC_STRING	= Codec.STRING;
 	private static final Codec<List<String>> CODEC_LIST	= CODEC_STRING.listOf();
 	
 	private final Map<Port, List<String>> values = new HashMap<>();
+	
+	private void write(ByteBuf buf)
+	{
+		buf.writeInt(values.size());
+		values.entrySet().forEach(entry -> 
+		{
+			Port.PACKET_CODEC.encode(buf, entry.getKey());
+			buf.writeInt(entry.getValue().size());
+			entry.getValue().forEach(s -> PacketCodecs.STRING.encode(buf, s));
+		});
+	}
+	
+	private static PortSet read(ByteBuf buf)
+	{
+		PortSet state = new PortSet();
+		int size = buf.readInt();
+		while(size-- > 0)
+		{
+			Port port = Port.PACKET_CODEC.decode(buf);
+			List<String> set = Lists.newArrayList();
+			int scale = buf.readInt();
+			while(scale-- > 0)
+				set.add(PacketCodecs.STRING.decode(buf));
+			
+			state.values.put(port, set);
+		}
+		return state;
+	}
 	
 	public void put(Port key, String... value)
 	{
@@ -43,6 +76,14 @@ public class PortSet
 		return values.keySet();
 	}
 	
+	public boolean hasWire(String wireName)
+	{
+		for(List<String> value : values.values())
+			if(value.contains(wireName))
+				return true;
+		return false;
+	}
+	
 	/** Returns a list of all wires that this set contacts */
 	public List<String> wires()
 	{
@@ -52,6 +93,21 @@ public class PortSet
 				if(!wires.contains(wire))
 					wires.add(wire);
 		return wires;
+	}
+	
+	public boolean clear(String wireName)
+	{
+		boolean result = false;
+		for(Port port : values.keySet())
+		{
+			List<String> set = Lists.newArrayList(values.get(port));
+			if(!set.contains(wireName))
+				continue;
+			
+			set.removeIf(wireName::equals);
+			values.put(port, set);
+		}
+		return result;
 	}
 	
 	public boolean isEmpty() { return values.isEmpty(); }

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.item.LogicCardItem;
 import com.lying.item.WiringGunItem;
 import com.lying.reference.Reference;
 
@@ -72,6 +73,7 @@ public class CDItems
 	public static final RegistrySupplier<Item> TRAP_LOGIC		= registerRareBlock("trap_logic", CDBlocks.TRAP_LOGIC, Rarity.EPIC);
 	public static final RegistrySupplier<Item> TRAP_LOGIC_DECOY	= registerBlockNoItem("trap_logic_decoy", CDBlocks.TRAP_LOGIC_DECOY, s -> s.rarity(Rarity.RARE));
 	public static final RegistrySupplier<Item> MODULAR_LOGIC	= registerRareBlockNoItem("modular_logic", CDBlocks.MODULAR_LOGIC, Rarity.EPIC);
+	public static final RegistrySupplier<Item> LOGIC_CARD		= register("logic_card", s -> new LogicCardItem(s.maxCount(1).fireproof().rarity(Rarity.EPIC)));
 	
 	// Trap sensors
 	public static final RegistrySupplier<Item> SENSOR_REDSTONE	= registerRareBlock("redstone_sensor", CDBlocks.SENSOR_REDSTONE, Rarity.RARE);

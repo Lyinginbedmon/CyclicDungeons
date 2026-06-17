@@ -15,6 +15,11 @@ import com.lying.init.CDLogicGates.LogicGate;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.text.Text;
+
 public class LogicModule
 {
 	public static final Codec<LogicModule> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
@@ -35,6 +40,38 @@ public class LogicModule
 				return module;
 			}));
 	public static final Codec<List<LogicModule>> LIST_CODEC	= CODEC.listOf();
+	public static final PacketCodec<ByteBuf, LogicModule> PACKET_CODEC	= PacketCodec.tuple(
+			PacketCodecs.optional(PacketCodecs.STRING), m -> m.name, 
+			LogicGate.PACKET_CODEC, m -> m.handler, 
+			PacketCodecs.optional(PortSet.PACKET_CODEC), m -> m.inputWires.isEmpty() ? Optional.empty() : Optional.of(m.inputWires), 
+			PacketCodecs.optional(PortSet.PACKET_CODEC), m -> m.outputWires.isEmpty() ? Optional.empty() : Optional.of(m.outputWires), 
+			PacketCodecs.optional(PortState.PACKET_CODEC), m -> m.portCache.isWorthStoring() ? Optional.of(m.portCache) : Optional.empty(), 
+			PacketCodecs.optional(LogicResult.PACKET_CODEC), m -> m.resultCache.isWorthStoring() ? Optional.of(m.resultCache) : Optional.empty(), 
+			(name,handler,inputs,outputs,prevWires,prevOut) ->
+			{
+				LogicModule module = new LogicModule(handler);
+				name.ifPresent(module::name);
+				inputs.ifPresent(module::addInput);
+				outputs.ifPresent(module::addOutput);
+				prevWires.ifPresent(module.portCache::copy);
+				module.resultCache = prevOut.orElse(LogicResult.create());
+				return module;
+			});
+	public static final PacketCodec<ByteBuf, List<LogicModule>> LIST_PACKET_CODEC = PacketCodec.of(
+			(list,buf) -> 
+			{
+				buf.writeInt(list.size());
+				if(!list.isEmpty())
+					list.forEach(m -> LogicModule.PACKET_CODEC.encode(buf, m));
+			}, 
+			buf -> 
+			{
+				List<LogicModule> set = Lists.newArrayList();
+				int size = buf.readInt();
+				while(size-- > 0)
+					set.add(LogicModule.PACKET_CODEC.decode(buf));
+				return set;
+			});
 	
 	private Optional<String> name = Optional.empty();
 	private final LogicGate handler;
@@ -63,7 +100,7 @@ public class LogicModule
 		return this;
 	}
 	
-	public String displayName() { return name.orElse(handler.registryName()); }
+	public Text displayName() { return name.isPresent() ? Text.literal(name.get()) : handler.displayName(); }
 	
 	public boolean hasCustomName() { return customName() != null && customName().length() > 0; }
 	
@@ -154,12 +191,21 @@ public class LogicModule
 	
 	public boolean hasInput(String name)
 	{
-		return inputWires.wires().contains(name);
+		return inputWires.hasWire(name);
 	}
 	
 	public boolean hasOutput(String name)
 	{
-		return outputWires.wires().contains(name);
+		return outputWires.hasWire(name);
+	}
+	
+	public void removeConnections(String name)
+	{
+		if(hasInput(name))
+			inputWires.clear(name);
+		
+		if(hasOutput(name))
+			outputWires.clear(name);
 	}
 	
 	public boolean getOutputStatus(Port port) { return resultCache.get(port); }

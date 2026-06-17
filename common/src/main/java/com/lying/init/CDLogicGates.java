@@ -21,6 +21,9 @@ import com.lying.utility.CDUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -31,8 +34,6 @@ public class CDLogicGates
 {
 	private static final Map<String, Supplier<LogicGate>> MODULES	= new HashMap<>();
 	private static final Map<LogicCategory, List<String>> BY_CATEGORY	= new HashMap<>();
-	
-	// FIXME Implement in-game circuit builder screen
 	
 	public static final Port INPUT	= Port.of("in");
 	public static final Port OUTPUT	= Port.of("out");
@@ -370,6 +371,7 @@ public class CDLogicGates
 			LogicGate gate = CDLogicGates.MODULES.getOrDefault(s,() -> null).get();
 			return gate == null ? DataResult.error(() -> "Logic gate name not recognised") : DataResult.success(gate);
 		}, LogicGate::registryName);
+		public static final PacketCodec<ByteBuf, LogicGate> PACKET_CODEC	= PacketCodecs.STRING.xmap(s -> CDLogicGates.MODULES.get(s).get(), LogicGate::registryName);
 		public static final Comparator<LogicGate> SORT	= (a,b) -> Collator.getInstance().compare(a.registryName.toLowerCase(), b.registryName.toLowerCase());
 		
 		private final String registryName;

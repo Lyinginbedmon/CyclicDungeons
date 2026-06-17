@@ -4,22 +4,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
+import com.mojang.serialization.Codec;
 
+import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.HoverEvent.Action;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
@@ -27,6 +32,27 @@ import net.minecraft.world.World;
 
 public class CDUtils
 {
+	public static final Codec<Vector2i> VEC2I_CODEC	= Codec.INT_STREAM
+			.<Vector2i>comapFlatMap(
+					stream -> Util.decodeFixedLengthArray(stream, 2).map(values -> new Vector2i(values[0], values[1])),
+					pos -> IntStream.of(new int[]{pos.x(), pos.y()})
+				)
+				.stable();
+
+	public static final PacketCodec<ByteBuf, Vector2i> VEC2I_PACKET_CODEC = new PacketCodec<ByteBuf, Vector2i>()
+	{
+		public Vector2i decode(ByteBuf byteBuf)
+		{
+			return new Vector2i(byteBuf.readInt(), byteBuf.readInt());
+		}
+		
+		public void encode(ByteBuf byteBuf, Vector2i vector)
+		{
+			byteBuf.writeInt(vector.x());
+			byteBuf.writeInt(vector.y());
+		}
+	};
+	
 	private static final Map<DyeColor, Pair<Block,Block>> DYE_TO_CONCRETE = new HashMap<>();
 	
 	static

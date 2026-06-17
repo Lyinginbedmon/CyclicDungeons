@@ -38,7 +38,9 @@ public class WiringGunItem extends Item
 	
 	public WiringGunItem(Settings settings)
 	{
-		super(settings.component(CDDataComponentTypes.WIRE_OP.get(), WiringComponent.empty()).component(CDDataComponentTypes.WIRE_MODE.get(), new WireModeComponent(WireMode.GLOBAL)));
+		super(settings
+				.component(CDDataComponentTypes.WIRE_OP.get(), WiringComponent.empty())
+				.component(CDDataComponentTypes.WIRE_MODE.get(), new WireModeComponent(WireMode.GLOBAL)));
 	}
 	
 	public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type)

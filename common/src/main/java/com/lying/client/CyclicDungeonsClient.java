@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lying.CyclicDungeons;
-import com.lying.client.screen.CircuitScreen;
 import com.lying.client.screen.DungeonScreen;
+import com.lying.client.screen.circuit.CircuitScreen;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDScreenHandlerTypes;

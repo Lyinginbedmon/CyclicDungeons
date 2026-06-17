@@ -46,6 +46,7 @@
 	"item.cydun.wiring_gun": "Wiring Gun",
 	"item.cydun.rabid_wolf_spawn_egg": "Rabid Wolf Egg",
 	"item.cydun.rabid_polar_bear_spawn_egg": "Rabid Polar Bear Egg",
+	"item.cydun.logic_card": "Logic Punch Card",
 	// Item tags
 	// Status effects
 	// Logic gates
@@ -95,6 +96,9 @@
 	"gui.cydun.wiring_gun.wires_cleared.failed": "[%s] has no wires to clear",
 	"gui.cydun.wiring_gun.mode_change.success": "Wiring mode set to %s coordinates",
 	"gui.cydun.port_name": "%s port of %s",
+	"gui.cydun.logic_card.no_circuit": "No circuit encoded",
+	"gui.cydun.logic_card.circuit": "Circuit of %s logic gates:",
+	"gui.cydun.circuit_builder.build": "Build",
 	// Enums
 	"enum.cydun.xyz_mode.global": "Absolute",
 	"enum.cydun.xyz_mode.local": "Relative",

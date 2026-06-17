@@ -13,11 +13,34 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+
 public class LogicResult
 {
 	public static final Codec<LogicResult> CODEC	= Codec.of(LogicResult::encode, LogicResult::decode);
+	public static final PacketCodec<ByteBuf, LogicResult> PACKET_CODEC	= PacketCodec.of(LogicResult::write, LogicResult::read);
 	
 	private final Map<Port, Boolean> values = new HashMap<>();
+	
+	private void write(ByteBuf buf)
+	{
+		buf.writeInt(values.size());
+		values.entrySet().forEach(entry -> 
+		{
+			Port.PACKET_CODEC.encode(buf, entry.getKey());
+			buf.writeBoolean(entry.getValue());
+		});
+	}
+	
+	private static LogicResult read(ByteBuf buf)
+	{
+		LogicResult state = new LogicResult();
+		int size = buf.readInt();
+		while(size-- > 0)
+			state.put(Port.PACKET_CODEC.decode(buf), buf.readBoolean());
+		return state;
+	}
 	
 	public void copy(LogicResult state)
 	{
