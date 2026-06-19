@@ -98,6 +98,7 @@
 	"gui.cydun.port_name": "%s port of %s",
 	"gui.cydun.logic_card.no_circuit": "No circuit encoded",
 	"gui.cydun.logic_card.circuit": "Circuit of %s logic gates:",
+	"gui.cydun.circuit_builder.clear": "Clear",
 	"gui.cydun.circuit_builder.build": "Build",
 	// Enums
 	"enum.cydun.xyz_mode.global": "Absolute",

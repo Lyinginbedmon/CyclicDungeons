@@ -21,14 +21,18 @@ public class CircuitWire
 	public static final int WIRE_HIGHLIGHT	= 0xFFFFFF;
 	private static final int WIRE_WIDTH	= 2;
 	private final String name;
-	private List<CircuitPort> inputSet = Lists.newArrayList();
-	private List<CircuitPort> outputSet = Lists.newArrayList();
+	private List<CircuitPort> termini = Lists.newArrayList();
+	
+	public CircuitWire(String nameIn)
+	{
+		name = nameIn;
+	}
 	
 	public CircuitWire(String nameIn, CircuitPort start, CircuitPort end)
 	{
-		name = nameIn;
-		inputSet.add(start);
-		outputSet.add(end);
+		this(nameIn);
+		termini.add(start);
+		termini.add(end);
 	}
 	
 	public final String name() { return name; }
@@ -44,18 +48,23 @@ public class CircuitWire
 		return name;
 	}
 	
-	public boolean removeAndDecapitate(Vector2i grid)
-	{
-		removeTerminus(grid);
-		return decapitated();
-	}
-	
 	public List<Vector2i> getTermini()
 	{
-		List<Vector2i> points = Lists.newArrayList();
-		inputSet.stream().map(CircuitPort::gridPos).forEach(points::add);
-		outputSet.stream().map(CircuitPort::gridPos).forEach(points::add);
-		return points;
+		return termini.stream()
+				.map(CircuitPort::gridPos)
+				.toList();
+	}
+	
+	public void assertOnCircuit(Map<Vector2i, CircuitModule> circuit)
+	{
+		termini.forEach(p -> 
+		{
+			CircuitModule module = circuit.getOrDefault(p.gridPos(), null);
+			if(module == null)
+				return;
+			
+			module.addPort(p.port(), name());
+		});
 	}
 	
 	public boolean isTerminus(Vector2i grid)
@@ -63,26 +72,20 @@ public class CircuitWire
 		return getTermini().contains(grid);
 	}
 	
-	public void attachInput(CircuitPort port)
+	public void attachPort(CircuitPort port)
 	{
-		inputSet.add(port);
-	}
-	
-	public void attachOutput(CircuitPort port)
-	{
-		outputSet.add(port);
+		termini.add(port);
 	}
 	
 	public void removeTerminus(Vector2i grid)
 	{
-		outputSet.removeIf(out -> out.gridPos().gridDistance(grid) == 0);
-		inputSet.removeIf(in -> in.gridPos().gridDistance(grid) == 0);
+		termini.removeIf(in -> in.gridPos().gridDistance(grid) == 0);
 	}
 	
-	/** Returns true if this wire has no input or output positions */
+	/** Returns true if this wire has insufficient positions to exist */
 	public boolean decapitated()
 	{
-		return inputSet.isEmpty() || outputSet.isEmpty();
+		return termini.size() < 2;
 	}
 	
 	public boolean isHovered(int mouseX, int mouseY, Map<Vector2i,CircuitModule> circuit)
@@ -90,15 +93,11 @@ public class CircuitWire
 		if(decapitated())
 			return false;
 		
-		List<CircuitPort> totalPorts = Lists.newArrayList();
-		totalPorts.addAll(inputSet);
-		totalPorts.addAll(outputSet);
-		
 		// Identify all terminus points and the median where they all meet
 		final Vector2i median = medianPoint(circuit);
 		
 		return 
-				totalPorts.stream()
+				termini.stream()
 				.map(p -> p.screenPosition(circuit))
 				.filter(Optional::isPresent)
 				.map(Optional::get)
@@ -116,17 +115,16 @@ public class CircuitWire
 	
 	public Vector2i medianPoint(Map<Vector2i,CircuitModule> circuit)
 	{
-		List<CircuitPort> totalPorts = Lists.newArrayList();
-		totalPorts.addAll(inputSet);
-		totalPorts.addAll(outputSet);
 		Vector2i median = new Vector2i(0,0);
-		for(Vector2i point : totalPorts.stream()
-				.map(p -> p.screenPosition(circuit))
-				.filter(Optional::isPresent)
-				.map(Optional::get)
-				.toList())
-			median = median.add(point);
-		return new Vector2i(median.x() / totalPorts.size(), median.y() / totalPorts.size());
+		for(CircuitPort p : termini)
+		{
+			Optional<Vector2i> point = p.screenPosition(circuit);
+			if(point.isEmpty())
+				continue;
+			median = median.add(point.get());
+		}
+		
+		return new Vector2i(median.x() / termini.size(), median.y() / termini.size());
 	}
 	
 	public void render(boolean isHovered, DrawContext context, Map<Vector2i,CircuitModule> circuit)
@@ -134,19 +132,14 @@ public class CircuitWire
 		if(decapitated())
 			return;
 		
-		List<CircuitPort> totalPorts = Lists.newArrayList();
-		totalPorts.addAll(inputSet);
-		totalPorts.addAll(outputSet);
-		
 		// Identify all terminus points and the median where they all meet
 		final Vector2i median = medianPoint(circuit);
 		
 		// Render each terminus as a line connecting its screen position to the median
-		totalPorts.stream()
-			.map(p -> p.screenPosition(circuit))
-			.filter(Optional::isPresent)
-			.map(Optional::get)
-			.forEach(point -> 
-				NodeRenderUtils.renderStraightLine(new Vec2f(point.x(), point.y()), new Vec2f(median.x(), median.y()), WIRE_WIDTH, context, isHovered ? WIRE_HIGHLIGHT : WIRE_COLOUR));
+		final Vec2f endVec = new Vec2f(median.x(), median.y());
+		final int colour = isHovered ? WIRE_HIGHLIGHT : WIRE_COLOUR;
+		for(CircuitPort p : termini)
+			p.screenPosition(circuit).ifPresent(point -> 
+				NodeRenderUtils.renderStraightLine(new Vec2f(point.x(), point.y()), endVec, WIRE_WIDTH, context, colour));
 	}
 }

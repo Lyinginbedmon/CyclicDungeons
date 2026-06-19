@@ -40,6 +40,7 @@ public class LogicModule
 				return module;
 			}));
 	public static final Codec<List<LogicModule>> LIST_CODEC	= CODEC.listOf();
+	
 	public static final PacketCodec<ByteBuf, LogicModule> PACKET_CODEC	= PacketCodec.tuple(
 			PacketCodecs.optional(PacketCodecs.STRING), m -> m.name, 
 			LogicGate.PACKET_CODEC, m -> m.handler, 
@@ -120,19 +121,11 @@ public class LogicModule
 		catch(Exception e) { return Optional.empty(); }
 	}
 	
-	public LogicGate gate() { return handler; }
-	
 	/** Returns TRUE if this is an input gate with a custom name */
 	public boolean isInput() { return handler.registryName().equals(CDLogicGates.ENTRY.get().registryName()) && toPort().isPresent(); }
 	
 	/** Returns TRUE if this is an output gate with a custom name */
 	public boolean isOutput() { return handler.registryName().equals(CDLogicGates.EXIT.get().registryName()) && toPort().isPresent(); }
-	
-	/** Attaches a wire to the default result port of this module */
-	public LogicModule addOutput(String wire)
-	{
-		return addOutput(CDLogicGates.OUTPUT, wire);
-	}
 	
 	public LogicModule addOutput(PortSet wires)
 	{
@@ -183,11 +176,15 @@ public class LogicModule
 		return set.isEmpty() ? Optional.empty() : Optional.of(set);
 	}
 	
-	public Optional<List<String>> collectOutputs()
+	/** Returns true if there are no wires connected to any port of this module */
+	public boolean hasNoWires()
 	{
-		List<String> set = outputWires.wires();
-		return set.isEmpty() ? Optional.empty() : Optional.of(set);
+		return inputWires.isEmpty() && outputWires.isEmpty();
 	}
+	
+	public PortSet inputPortSet() { return inputWires; }
+	
+	public PortSet outputPortSet() { return outputWires; }
 	
 	public boolean hasInput(String name)
 	{
@@ -208,6 +205,12 @@ public class LogicModule
 			outputWires.clear(name);
 	}
 	
+	public void clearConnections()
+	{
+		inputWires.clear();
+		outputWires.clear();
+	}
+	
 	public boolean getOutputStatus(Port port) { return resultCache.get(port); }
 	
 	/** Adds all wires used by this module to the wire map */
@@ -215,14 +218,6 @@ public class LogicModule
 	{
 		outputWires.wires().forEach(register::accept);
 		inputWires.wires().forEach(register::accept);
-	}
-	
-	/** Returns a list of all input wires that must be calculated before this module */
-	public List<String> prerequisites()
-	{
-		List<String> wires = Lists.newArrayList();
-		inputWires.wires().forEach(wires::add);
-		return wires.stream().distinct().toList();
 	}
 	
 	/** Returns the status of the port the given wire is connected to */

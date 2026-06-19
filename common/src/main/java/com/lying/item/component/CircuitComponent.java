@@ -59,16 +59,16 @@ public record CircuitComponent(
 				() -> tooltip.accept(translate("gui", "logic_card.no_circuit")));
 	}
 	
-	public static record CircuitPart(LogicModule module, Vector2i pos)
+	public static record CircuitPart(LogicModule module, Vector2i gridPos)
 	{
 		public static final Codec<CircuitPart> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				LogicModule.CODEC.fieldOf("gate").forGetter(CircuitPart::module), 
-				CDUtils.VEC2I_CODEC.fieldOf("grid").forGetter(CircuitPart::pos))
+				CDUtils.VEC2I_CODEC.fieldOf("grid").forGetter(CircuitPart::gridPos))
 				.apply(instance, CircuitPart::new));
 		public static final Codec<List<CircuitPart>> LIST_CODEC	= CODEC.listOf();
 		public static final PacketCodec<ByteBuf, CircuitPart> PACKET_CODEC	= PacketCodec.tuple(
 				LogicModule.PACKET_CODEC, CircuitPart::module, 
-				CDUtils.VEC2I_PACKET_CODEC, CircuitPart::pos,
+				CDUtils.VEC2I_PACKET_CODEC, CircuitPart::gridPos,
 				CircuitPart::new);
 		public static final PacketCodec<ByteBuf, List<CircuitPart>> LIST_PACKET_CODEC	= PacketCodec.of((val,buf) -> 
 		{

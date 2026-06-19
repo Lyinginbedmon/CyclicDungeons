@@ -10,12 +10,14 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.client.screen.circuit.handlers.ClickHandler;
 import com.lying.client.screen.circuit.handlers.ConnectPortHandler;
 import com.lying.client.screen.circuit.handlers.ConnectWireHandler;
-import com.lying.client.screen.circuit.handlers.GateHandler;
+import com.lying.client.screen.circuit.handlers.PlaceGateHandler;
 import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDLogicGates;
@@ -69,11 +71,38 @@ public class CircuitScreen extends Screen
 			CircuitComponent comp = mc.player.getMainHandStack().get(CDDataComponentTypes.CIRCUIT.get());
 			comp.modules().ifPresent(set -> 
 			{
-				set.forEach(part -> circuitMap.put(part.pos(), new CircuitModule(part.module(), part.pos())));
+				circuitMap.clear();
+				circuitWires.clear();
 				
-				Map<String, CircuitWire> wireMap = new HashMap<>();
-				// FIXME Generate map of wires from modules
-				wireMap.entrySet().forEach(entry -> circuitWires.put(entry.getKey(), entry.getValue()));
+				// Load circuit modules from held logic card
+				set.forEach(part -> circuitMap.put(part.gridPos(), new CircuitModule(part.module(), part.gridPos())));
+				
+				// Reconstruct wiring
+				for(CircuitModule module : circuitMap.values())
+				{
+					module.cachePortPositions();
+					
+					// Attach inputs of module to outputs of wires
+					Map<Port, List<String>> inputs = module.collectInputWires();
+					for(Port port : inputs.keySet())
+						for(String name : inputs.get(port))
+						{
+							CircuitWire wire = circuitWires.getOrDefault(name, new CircuitWire(name));
+							wire.attachPort(new CircuitPort(module.gridPosition(), port));
+							circuitWires.put(name, wire);
+						}
+					
+					// Attach outputs of module to inputs of wires
+					Map<Port, List<String>> outputs = module.collectOutputWires();
+					for(Port port : outputs.keySet())
+						for(String name : outputs.get(port))
+						{
+							CircuitWire wire = circuitWires.getOrDefault(name, new CircuitWire(name));
+							wire.attachPort(new CircuitPort(module.gridPosition(), port));
+							circuitWires.put(name, wire);
+						}
+				}
+				cleanCircuit();
 			});
 		}
 	}
@@ -94,7 +123,7 @@ public class CircuitScreen extends Screen
 			{
 				ButtonWidget button = addDrawableChild(ButtonWidget.builder(gate.displayName(), b -> 
 				{
-					currentHandler = Optional.of(new GateHandler(gate, this));
+					currentHandler = Optional.of(new PlaceGateHandler(gate, this));
 					showCategory(null);
 				})
 						.dimensions(x, 5 + 21 + buttons.size() * 20, 60, 20)
@@ -105,8 +134,14 @@ public class CircuitScreen extends Screen
 			categoryMap.put(cat, buttons);
 		}
 		
+		addDrawableChild(ButtonWidget.builder(translate("gui","circuit_builder.clear"), b -> 
+		{
+			circuitMap.clear();
+			circuitWires.clear();
+		}).dimensions(width - 125, height - 20, 60, 20).build());
 		addDrawableChild(ButtonWidget.builder(translate("gui","circuit_builder.build"), b -> 
 		{
+			cleanCircuit();
 			BuildCircuitPacket.sendToServer(circuitMap.values().stream().map(CircuitModule::toPart).toList());
 			close();
 		}).dimensions(width - 60, height - 20, 60, 20).build());
@@ -129,12 +164,13 @@ public class CircuitScreen extends Screen
 	{
 		super.renderBackground(context, mouseX, mouseY, delta);
 		
-		boolean canHighlightWires = currentHandler.isEmpty() || !currentHandler.get().preventsWireHighlighting();
-		circuitWires.values().forEach(wire -> 
+		if(!circuitWires.isEmpty())
 		{
-			if(!wire.decapitated())
-				wire.render(canHighlightWires && wire.isHovered(mouseX, mouseY, circuitMap), context, circuitMap);
-		});
+			final boolean canHighlightWires = currentHandler.isEmpty() || !currentHandler.get().preventsWireHighlighting();
+			circuitWires.values().stream()
+				.filter(Predicates.not(CircuitWire::decapitated))
+				.forEach(wire -> wire.render(canHighlightWires && wire.isHovered(mouseX, mouseY, circuitMap), context, circuitMap));
+		}
 		
 		circuitMap.values().forEach(c -> c.renderBackground(context));
 		
@@ -150,6 +186,19 @@ public class CircuitScreen extends Screen
 	}
 	
 	public void clearHandler() { currentHandler = Optional.empty(); }
+	
+	/** Cleans the connections of all modules to just those represented by wires present on the screen */
+	public void cleanCircuit()
+	{
+		// Reset all circuit modules
+		circuitMap.values().forEach(CircuitModule::clearConnections);
+		
+		// Repopulate connections between modules based on extant wires
+		circuitWires.values().forEach(wire -> wire.assertOnCircuit(circuitMap));
+		
+		// Remove all circuit modules that don't have any connections
+		circuitMap.values().stream().filter(CircuitModule::unconnected).toList().forEach(m -> circuitMap.remove(m.gridPosition()));
+	}
 	
 	public String makeWireName()
 	{
@@ -184,7 +233,9 @@ public class CircuitScreen extends Screen
 	
 	public Optional<CircuitWire> getWireAt(int mouseX, int mouseY)
 	{
-		return circuitWires.values().stream().filter(w -> w.isHovered(mouseX, mouseY, circuitMap)).findFirst();
+		return circuitWires.values().stream()
+				.filter(w -> w.isHovered(mouseX, mouseY, circuitMap))
+				.findFirst();
 	}
 	
 	public boolean mouseClicked(double mouseX, double mouseY, int button)
@@ -195,6 +246,7 @@ public class CircuitScreen extends Screen
 
 		final Vector2i gridPos = pointToGrid(mouseX, mouseY);
 		final int mX = (int)mouseX, mY = (int)mouseY;
+		// Left click, begin or progress an action
 		if(button == 0)
 		{
 			if(currentHandler.isPresent())
@@ -210,6 +262,7 @@ public class CircuitScreen extends Screen
 				}
 			}
 		}
+		// Right click, cancel an action or close/delete a component
 		else if(button == 1)
 		{
 			// Hide displayed category
@@ -248,9 +301,14 @@ public class CircuitScreen extends Screen
 	protected void removeModule(Vector2i gridPos)
 	{
 		circuitMap.remove(gridPos);
-		List<CircuitWire> affectedWires = circuitWires.values().stream().filter(w -> w.isTerminus(gridPos)).toList();
-		affectedWires.forEach(w -> w.removeTerminus(gridPos));
-		affectedWires.stream().filter(CircuitWire::decapitated).forEach(w -> circuitWires.remove(w.name()));
+		for(CircuitWire wire : circuitWires.values().stream()
+				.filter(w -> w.isTerminus(gridPos))
+				.toList())
+		{
+			wire.removeTerminus(gridPos);
+			if(wire.decapitated())
+				circuitWires.remove(wire.name());
+		}
 	}
 	
 	protected void removeWire(CircuitWire wire)

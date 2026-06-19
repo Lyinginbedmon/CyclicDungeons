@@ -10,6 +10,7 @@ import org.joml.Vector2i;
 
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
+import com.lying.block.entity.logic.PortSet;
 import com.lying.client.screen.NodeRenderUtils;
 import com.lying.client.screen.WiringHud;
 import com.lying.item.component.CircuitComponent.CircuitPart;
@@ -59,9 +60,31 @@ public class CircuitModule
 	/** Reduces this module to a server-friendly record for relay and storage */
 	public CircuitPart toPart() { return new CircuitPart(module, gridPosition); }
 	
+	public Vector2i gridPosition() { return gridPosition; }
+	
 	public Vector2i screenPosition() { return screenPosition; }
 	
 	public LogicModule module() { return module; }
+	
+	public boolean unconnected() { return module.hasNoWires(); }
+	
+	public Map<Port, List<String>> collectInputWires()
+	{
+		Map<Port, List<String>> wires = new HashMap<>();
+		PortSet inputs = module.inputPortSet();
+		for(Port port : inputs.ports())
+			wires.put(port, inputs.get(port));
+		return wires;
+	}
+	
+	public Map<Port, List<String>> collectOutputWires()
+	{
+		Map<Port, List<String>> wires = new HashMap<>();
+		PortSet inputs = module.outputPortSet();
+		for(Port port : inputs.ports())
+			wires.put(port, inputs.get(port));
+		return wires;
+	}
 	
 	protected void cachePortPositions()
 	{
@@ -118,6 +141,14 @@ public class CircuitModule
 		return closest == null || minDist > 10D ? Optional.empty() : Optional.of(closest);
 	}
 	
+	public void addPort(Port port, String wireName)
+	{
+		if(module.inputPorts().isPresent() && module.inputPorts().get().contains(port))
+			addInput(port, wireName);
+		else if(module.outputPorts().isPresent() && module.outputPorts().get().contains(port))
+			addOutput(port, wireName);
+	}
+	
 	public void addInput(Port input, String wireName)
 	{
 		module.addInput(input, wireName);
@@ -131,13 +162,20 @@ public class CircuitModule
 	
 	public void removeConnections(String wireName)
 	{
-		if(!module.hasInput(wireName) && !module.hasOutput(wireName))
+		if(!(module.hasInput(wireName) || module.hasOutput(wireName)))
 			return;
 		
 		module.removeConnections(wireName);
 		cachePortPositions();
 	}
 	
+	public void clearConnections()
+	{
+		module.clearConnections();
+		cachePortPositions();
+	}
+	
+	/** Returns the screen position of the given port, if any */
 	public Optional<Vector2i> getPortPosition(Port port)
 	{
 		if(inputPortPositions.containsKey(port))

@@ -11,11 +11,11 @@ import com.lying.init.CDLogicGates.LogicGate;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
-public class GateHandler extends AbstractHandler
+public class PlaceGateHandler extends AbstractHandler
 {
 	final LogicGate gate;
 	
-	public GateHandler(LogicGate gateIn, CircuitScreen parentIn)
+	public PlaceGateHandler(LogicGate gateIn, CircuitScreen parentIn)
 	{
 		super(parentIn);
 		gate = gateIn;

@@ -66,11 +66,13 @@ public class PortSet
 		values.put(key, set);
 	}
 	
+	/** Returns a list of all wires attached to the given port */
 	public List<String> get(Port key)
 	{
 		return values.getOrDefault(key, List.of());
 	}
 	
+	/** Returns a list of all ports registered in this set */
 	public Collection<Port> ports()
 	{
 		return values.keySet();
@@ -110,7 +112,8 @@ public class PortSet
 		return result;
 	}
 	
-	public boolean isEmpty() { return values.isEmpty(); }
+	/** Returns true if there are no wire assignments within this set */
+	public boolean isEmpty() { return values.isEmpty() || values.values().stream().allMatch(v -> v == null || v.isEmpty()); }
 	
 	public void clear() { values.clear(); }
 	

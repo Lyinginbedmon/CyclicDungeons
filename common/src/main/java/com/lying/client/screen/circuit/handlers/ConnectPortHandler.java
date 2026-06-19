@@ -62,7 +62,7 @@ public class ConnectPortHandler extends AbstractHandler
 			module.addOutput(output.port(), wire.name());
 			
 			// Attach wire to port
-			wire.attachInput(output);
+			wire.attachPort(output);
 			
 			if(!isHoldingShift)
 				parent.clearHandler();
