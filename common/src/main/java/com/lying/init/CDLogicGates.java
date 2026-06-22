@@ -15,6 +15,7 @@ import com.lying.block.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.LogicResult;
+import com.lying.block.entity.logic.PortSet;
 import com.lying.block.entity.logic.PortState;
 import com.lying.reference.Reference;
 import com.lying.utility.CDUtils;
@@ -194,51 +195,6 @@ public class CDLogicGates
 			.addInput(BIT_1, BIT_2)
 			.addOutput(OUTPUT, CARRY)
 			.build(s));
-	/** Converts a 4-bit number into an output value between 0 and 15 (inclusive) */
-	public static final Supplier<LogicGate> CONVERTER_4B	= register("b2d_converter", s -> LogicGate.Builder
-			.create((ports, pPorts, pOut, tile, module) -> 
-			{
-				return LogicResult.create()
-						.put(Port.of("out_"+CDUtils.binaryToDecimal(gatherBits(4, ports))), true);
-			})
-			.category(LogicCategory.MATH)
-			.addInput(BIT_1, BIT_2, BIT_4, BIT_8)
-			.addOutputCollector(m -> 
-			{
-				List<Port> ports = Lists.newArrayList();
-				for(int i=0; i<16; i++) ports.add(Port.of("out_"+i));
-				return ports;
-			})
-			.build(s));
-	public static final Supplier<LogicGate> CONVERTER_D	= register("d2b_converter", s -> LogicGate.Builder
-			.create((ports, pPorts, pOut, tile, module) -> 
-			{
-				// Identify highest active input port
-				int val = 0;
-				for(int i=15; i>=0; i--)
-					if(ports.get(Port.of("in_"+i)))
-					{
-						val = i;
-						break;
-					}
-				
-				// Convert value to 4bit binary
-				final boolean[] result = CDUtils.decimalToBinary(val);
-				return LogicResult.create()
-						.put(BIT_1, result[0])
-						.put(BIT_2, result[1])
-						.put(BIT_4, result[2])
-						.put(BIT_8, result[3]);
-			})
-			.category(LogicCategory.MATH)
-			.addInputCollector(m -> 
-			{
-				List<Port> ports = Lists.newArrayList();
-				for(int i=0; i<16; i++) ports.add(Port.of("in_"+i));
-				return ports;
-			})
-			.addOutput(BIT_1, BIT_2, BIT_4, BIT_8)
-			.build(s));
 	/** Holds a 4-bit number and increments it when it receives a rising-edge pulse */
 	public static final Supplier<LogicGate> COUNTER_4B	= register("4bit_counter", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> 
@@ -333,8 +289,10 @@ public class CDLogicGates
 	protected static List<Port> freeInputs(LogicModule module)
 	{
 		List<Port> ports = Lists.newArrayList();
-		module.collectInputs().orElse(List.of()).stream().map(Port::of).forEach(ports::add);
-		ports.add(Port.of("in_"+ports.size()));
+		PortSet inputs = module.inputPortSet();
+		List<Port> activePorts = inputs.ports().stream().filter(inputs::isConnected).toList();
+		for(int i=0; i<activePorts.size() + 1; i++)
+			ports.add(Port.of("in_"+i));
 		return ports;
 	}
 	
@@ -484,5 +442,9 @@ public class CDLogicGates
 		MATH,
 		MEMORY,
 		UTILITY;
+		
+		public String asString() { return name().toLowerCase(); }
+		
+		public Text displayName() { return Reference.ModInfo.translate("enum", "logic_category."+asString()); }
 	}
 }

@@ -32,6 +32,25 @@ import net.minecraft.world.World;
 
 public class CDUtils
 {
+	public static final DyeColor[] ORDERED_COLORS = new DyeColor[] 
+			{
+				DyeColor.WHITE,
+				DyeColor.LIGHT_GRAY,
+				DyeColor.GRAY,
+				DyeColor.BLACK,
+				DyeColor.BROWN,
+				DyeColor.RED,
+				DyeColor.ORANGE,
+				DyeColor.YELLOW,
+				DyeColor.LIME,
+				DyeColor.GREEN,
+				DyeColor.CYAN,
+				DyeColor.LIGHT_BLUE,
+				DyeColor.BLUE,
+				DyeColor.PURPLE,
+				DyeColor.MAGENTA,
+				DyeColor.PINK
+			};
 	public static final Codec<Vector2i> VEC2I_CODEC	= Codec.INT_STREAM
 			.<Vector2i>comapFlatMap(
 					stream -> Util.decodeFixedLengthArray(stream, 2).map(values -> new Vector2i(values[0], values[1])),

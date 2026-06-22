@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
@@ -199,7 +200,12 @@ public class LogicModule
 	public void removeConnections(String name)
 	{
 		if(hasInput(name))
+		{
 			inputWires.clear(name);
+			List<Port> ports = handler.inputPorts(this);
+			List<Port> absent = inputWires.ports().stream().filter(Predicates.not(ports::contains)).toList();
+			absent.forEach(inputWires::removePort);
+		}
 		
 		if(hasOutput(name))
 			outputWires.clear(name);

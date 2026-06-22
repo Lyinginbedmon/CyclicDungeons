@@ -9,12 +9,14 @@ import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
+import org.lwjgl.glfw.GLFW;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.client.screen.circuit.handlers.ClickHandler;
+import com.lying.client.screen.circuit.handlers.ColorHandler;
 import com.lying.client.screen.circuit.handlers.ConnectPortHandler;
 import com.lying.client.screen.circuit.handlers.ConnectWireHandler;
 import com.lying.client.screen.circuit.handlers.PlaceGateHandler;
@@ -36,6 +38,9 @@ import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -46,6 +51,9 @@ public class CircuitScreen extends Screen
 	public static final int GRID_SIZE	= 80;
 	
 	private List<Drawable> drawables = Lists.newArrayList();
+	public Vector2i displayOffset = new Vector2i(0,0);
+	private boolean isDragging = false;
+	private Optional<Vector2i> dragStart = Optional.empty();
 	
 	private Map<LogicCategory, ButtonWidget> categoryButtons = new HashMap<>();
 	private Map<LogicCategory, List<ButtonWidget>> categoryMap = new HashMap<>();
@@ -55,7 +63,7 @@ public class CircuitScreen extends Screen
 	private Map<String, CircuitWire> circuitWires = new HashMap<>();
 	private int wireIndex = 0;
 	
-	// FIXME Implement naming gates & colouring wires
+	// FIXME Implement naming gates
 	private static final List<ClickHandlerBuilder> HANDLERS = Lists.newArrayList(
 			ConnectPortHandler::tryCreateFrom,
 			ConnectWireHandler::tryCreateFrom
@@ -75,7 +83,7 @@ public class CircuitScreen extends Screen
 				circuitWires.clear();
 				
 				// Load circuit modules from held logic card
-				set.forEach(part -> circuitMap.put(part.gridPos(), new CircuitModule(part.module(), part.gridPos())));
+				set.forEach(part -> circuitMap.put(part.gridPos(), new CircuitModule(part.module(), part.gridPos()).setColor(part.color().orElse(null))));
 				
 				// Reconstruct wiring
 				for(CircuitModule module : circuitMap.values())
@@ -115,7 +123,7 @@ public class CircuitScreen extends Screen
 		for(LogicCategory cat : LogicCategory.values())
 		{
 			int x = 5 + categoryButtons.size() * 60;
-			ButtonWidget category = addDrawableChild(ButtonWidget.builder(Text.literal(cat.name()), b -> showCategory(cat)).dimensions(x, 5, 60, 20).build());
+			ButtonWidget category = addDrawableChild(ButtonWidget.builder(cat.displayName(), b -> showCategory(cat)).dimensions(x, 5, 60, 20).build());
 			categoryButtons.put(cat, category);
 			
 			List<ButtonWidget> buttons = Lists.newArrayList();
@@ -131,6 +139,20 @@ public class CircuitScreen extends Screen
 				button.visible = button.active = false;
 				buttons.add(button);
 			}
+			
+			// FIXME Replace paint button with external icon button
+			if(cat == LogicCategory.UTILITY)
+			{
+				ButtonWidget button = addDrawableChild(ButtonWidget.builder(translate("gui", "circuit_builder.paint_circuit"), b -> 
+				{
+					currentHandler = Optional.of(new ColorHandler(this));
+					showCategory(null);
+				})
+						.dimensions(x, 5 + 21 + buttons.size() * 20, 60, 20)
+						.build());
+				button.visible = button.active = false;
+				buttons.add(button);
+			}
 			categoryMap.put(cat, buttons);
 		}
 		
@@ -138,6 +160,7 @@ public class CircuitScreen extends Screen
 		{
 			circuitMap.clear();
 			circuitWires.clear();
+			displayOffset = new Vector2i(0, 0);
 		}).dimensions(width - 125, height - 20, 60, 20).build());
 		addDrawableChild(ButtonWidget.builder(translate("gui","circuit_builder.build"), b -> 
 		{
@@ -155,6 +178,20 @@ public class CircuitScreen extends Screen
 	
 	public void render(DrawContext context, int mouseX, int mouseY, float delta)
 	{
+		if(!isDragging && dragStart.isPresent())
+		{
+			final int mX = (int)mouseX, mY = (int)mouseY;
+			displayOffset.add(mX - dragStart.get().x(), mY - dragStart.get().y());
+			
+			dragStart = Optional.empty();
+			setDragging(false);
+		}
+		else if(isDragging && dragStart.isEmpty())
+		{
+			dragStart = Optional.of(new Vector2i(mouseX, mouseY));
+			setDragging(true);
+		}
+		
 		this.renderBackground(context, mouseX, mouseY, delta);
 		this.renderForeground(context, mouseX, mouseY, delta);
 		this.drawables.forEach(d -> d.render(context, mouseX, mouseY, delta));
@@ -164,25 +201,47 @@ public class CircuitScreen extends Screen
 	{
 		super.renderBackground(context, mouseX, mouseY, delta);
 		
-		if(!circuitWires.isEmpty())
-		{
-			final boolean canHighlightWires = currentHandler.isEmpty() || !currentHandler.get().preventsWireHighlighting();
-			circuitWires.values().stream()
-				.filter(Predicates.not(CircuitWire::decapitated))
-				.forEach(wire -> wire.render(canHighlightWires && wire.isHovered(mouseX, mouseY, circuitMap), context, circuitMap));
-		}
+		MatrixStack stack = context.getMatrices();
+		Vector2i offset = new Vector2i(displayOffset.x(), displayOffset.y());
+		dragStart.ifPresent(v -> offset.add(mouseX - v.x(), mouseY - v.y()));
 		
-		circuitMap.values().forEach(c -> c.renderBackground(context));
+		final int 
+			mouseMicroX = mouseX - offset.x(), 
+			mouseMicroY = mouseY - offset.y();
+		stack.push();
+			stack.translate(offset.x(), offset.y(), 0);
+			if(!circuitWires.isEmpty())
+				circuitWires.values().stream()
+					.filter(Predicates.not(CircuitWire::decapitated))
+					.forEach(wire -> wire.render(
+							(dragStart.isEmpty() && (currentHandler.isEmpty() || !currentHandler.get().preventsWireHighlighting(wire))) && wire.isHovered(mouseMicroX, mouseMicroY, circuitMap), 
+							context, 
+							circuitMap));
+			circuitMap.values().forEach(c -> c.renderBackground(context));
+			
+			currentHandler.ifPresent(handler -> handler.renderBackground(context, mouseMicroX, mouseMicroY, delta, circuitMap));
+		stack.pop();
 		
-		currentHandler.ifPresent(handler -> handler.renderBackground(context, mouseX, mouseY, delta, circuitMap));
 	}
 	
 	protected void renderForeground(DrawContext context, int mouseX, int mouseY, float delta)
 	{
 		TextRenderer textRenderer = getTextRenderer();
-		circuitMap.values().forEach(c -> c.renderForeground(context, textRenderer));
+		currentHandler.ifPresent(h -> context.drawText(textRenderer, translate("gui", "circuit_builder.current_operation", h.displayName()), 5, height - (textRenderer.fontHeight + 5) * 2, -1, true));
+		context.drawText(textRenderer, translate("gui", "circuit_builder.drag_key", mc.options.jumpKey.getBoundKeyLocalizedText()), 5, height - (textRenderer.fontHeight + 5), -1, true);
 		
-		currentHandler.ifPresent(handler -> handler.renderForeground(context, mouseX, mouseY, delta, circuitMap));
+		MatrixStack stack = context.getMatrices();
+		Vector2i offset = new Vector2i(displayOffset.x(), displayOffset.y());
+		dragStart.ifPresent(v -> offset.add(mouseX - v.x(), mouseY - v.y()));
+		
+		final int 
+			mouseMicroX = mouseX - offset.x(), 
+			mouseMicroY = mouseY - offset.y();
+		stack.push();
+			stack.translate(offset.x(), offset.y(), 0);
+			circuitMap.values().forEach(c -> c.renderForeground(context, textRenderer));
+			currentHandler.ifPresent(handler -> handler.renderForeground(context, mouseMicroX, mouseMicroY, delta, circuitMap));
+		stack.pop();
 	}
 	
 	public void clearHandler() { currentHandler = Optional.empty(); }
@@ -213,6 +272,15 @@ public class CircuitScreen extends Screen
 		circuitWires.put(wireIn.name(), wireIn);
 	}
 	
+	/** Returns the first wire (if any) at the given micro-grid position */
+	public Optional<CircuitWire> getWireAt(int microX, int microY)
+	{
+		for(CircuitWire w : circuitWires.values())
+			if(w.isHovered(microX, microY, circuitMap))
+				return Optional.of(w);
+		return Optional.empty();
+	}
+	
 	public void showCategory(@Nullable LogicCategory cat)
 	{
 		// Deactivate previous category
@@ -231,21 +299,18 @@ public class CircuitScreen extends Screen
 		});
 	}
 	
-	public Optional<CircuitWire> getWireAt(int mouseX, int mouseY)
-	{
-		return circuitWires.values().stream()
-				.filter(w -> w.isHovered(mouseX, mouseY, circuitMap))
-				.findFirst();
-	}
-	
 	public boolean mouseClicked(double mouseX, double mouseY, int button)
 	{
 		boolean isHoldingShift = 
 				InputUtil.isKeyPressed(mc.getWindow().getHandle(), InputUtil.GLFW_KEY_LEFT_SHIFT) || 
 				InputUtil.isKeyPressed(mc.getWindow().getHandle(), InputUtil.GLFW_KEY_RIGHT_SHIFT);
-
-		final Vector2i gridPos = pointToGrid(mouseX, mouseY);
-		final int mX = (int)mouseX, mY = (int)mouseY;
+		
+		final int 
+			mX = (int)mouseX - displayOffset.x(), 
+			mY = (int)mouseY - displayOffset.y();
+		final Vector2i microPos = new Vector2i(mX, mY);
+		final Vector2i gridPos = microToGrid(microPos);
+		
 		// Left click, begin or progress an action
 		if(button == 0)
 		{
@@ -263,12 +328,13 @@ public class CircuitScreen extends Screen
 			}
 		}
 		// Right click, cancel an action or close/delete a component
-		else if(button == 1)
+		else if(button == 1 && dragStart.isEmpty())
 		{
 			// Hide displayed category
 			if(displayedCategory.isPresent())
 			{
 				showCategory(null);
+				categoryButtons.values().forEach(b -> b.setFocused(false));
 				return true;
 			}
 			
@@ -279,9 +345,10 @@ public class CircuitScreen extends Screen
 			}
 			
 			// Clearing placed gate
-			final double distToSlot = gridToPoint(gridPos).distance(mX, mY);
+			final double distToSlot = gridToMicro(gridPos).distance(microPos);
 			if(circuitMap.containsKey(gridPos) && distToSlot < GRID_SIZE / 2)
 			{
+				playSound(SoundEvents.ENTITY_ITEM_FRAME_REMOVE_ITEM);
 				removeModule(gridPos);
 				return true;
 			}
@@ -290,12 +357,45 @@ public class CircuitScreen extends Screen
 			Optional<CircuitWire> hoveredWire = getWireAt(mX, mY);
 			if(hoveredWire.isPresent())
 			{
+				playSound(SoundEvents.BLOCK_TRIPWIRE_DETACH);
 				removeWire(hoveredWire.get());
 				return true;
 			}
 		}
 		
 		return super.mouseClicked(mouseX, mouseY, button);
+	}
+	
+	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
+	{
+		if(currentHandler.isPresent() && currentHandler.get().handleScroll((int)verticalAmount))
+			return true;
+		
+		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+	}
+	
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+	{
+		if(keyCode == GLFW.GLFW_KEY_SPACE)
+		{
+			setDragging(true);
+			isDragging = true;
+			return true;
+		}
+		
+		return super.keyPressed(keyCode, scanCode, modifiers);
+	}
+	
+	public boolean keyReleased(int keyCode, int scanCode, int modifiers)
+	{
+		if(keyCode == GLFW.GLFW_KEY_SPACE)
+		{
+			setDragging(false);
+			isDragging = false;
+			return true;
+		}
+		
+		return super.keyReleased(keyCode, scanCode, modifiers);
 	}
 	
 	protected void removeModule(Vector2i gridPos)
@@ -307,7 +407,7 @@ public class CircuitScreen extends Screen
 		{
 			wire.removeTerminus(gridPos);
 			if(wire.decapitated())
-				circuitWires.remove(wire.name());
+				removeWire(wire);
 		}
 	}
 	
@@ -325,14 +425,19 @@ public class CircuitScreen extends Screen
 		circuitWires.remove(wire.name());
 	}
 	
-	public static Vector2i pointToGrid(double mouseX, double mouseY)
+	public static Vector2i microToGrid(Vector2i vec)
 	{
-		int x = Math.floorDiv((int)mouseX, GRID_SIZE);
-		int y = Math.floorDiv((int)mouseY, GRID_SIZE);
+		return microToGrid(vec.x(), vec.y());
+	}
+	
+	public static Vector2i microToGrid(double xIn, double yIn)
+	{
+		int x = Math.floorDiv((int)xIn, GRID_SIZE);
+		int y = Math.floorDiv((int)yIn, GRID_SIZE);
 		return new Vector2i(x, y);
 	}
 	
-	public static Vector2i gridToPoint(Vector2i vec)
+	public static Vector2i gridToMicro(Vector2i vec)
 	{
 		return new Vector2i(
 				vec.x() * GRID_SIZE + (GRID_SIZE / 2),
@@ -348,6 +453,11 @@ public class CircuitScreen extends Screen
 	public void put(Vector2i vec, LogicGate gate)
 	{
 		circuitMap.put(vec, new CircuitModule(gate.create(), vec));
+	}
+	
+	public void playSound(SoundEvent sound)
+	{
+		mc.player.playSound(sound);
 	}
 	
 	@FunctionalInterface

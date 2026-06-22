@@ -72,10 +72,20 @@ public class PortSet
 		return values.getOrDefault(key, List.of());
 	}
 	
+	public void removePort(Port key)
+	{
+		values.remove(key);
+	}
+	
 	/** Returns a list of all ports registered in this set */
 	public Collection<Port> ports()
 	{
 		return values.keySet();
+	}
+	
+	public boolean isConnected(Port port)
+	{
+		return values.containsKey(port) && !values.getOrDefault(port, List.of()).isEmpty();
 	}
 	
 	public boolean hasWire(String wireName)

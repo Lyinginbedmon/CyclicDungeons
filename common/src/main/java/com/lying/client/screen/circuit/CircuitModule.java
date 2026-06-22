@@ -6,8 +6,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
+import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.PortSet;
@@ -23,6 +25,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Vec2f;
@@ -31,17 +34,20 @@ public class CircuitModule
 {
 	public static final Codec<CircuitModule> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			LogicModule.CODEC.fieldOf("module").forGetter(CircuitModule::module),
-			CDUtils.VEC2I_CODEC.fieldOf("grid").forGetter(c -> c.gridPosition)
-			).apply(instance, (module, grid) -> new CircuitModule(module, grid)));
-	private static final int gateColour = ColorHelper.withAlpha(255, 0x1D77F5);
-	private static final int inputColour = ColorHelper.withAlpha(255, WiringHud.INPUT_COLOR);
-	private static final int outputColour = ColorHelper.withAlpha(255, WiringHud.OUTPUT_COLOR);
+			CDUtils.VEC2I_CODEC.fieldOf("grid").forGetter(c -> c.gridPosition),
+			DyeColor.CODEC.optionalFieldOf("color").forGetter(c -> c.color)
+			).apply(instance, (module, grid, color) -> new CircuitModule(module, grid).setColor(color.orElse(null))));
+	public static final int DEFAULT_COLOUR = ColorHelper.withAlpha(255, 0x1D77F5);
+	private static final int INPUT_COLOUR = ColorHelper.withAlpha(255, WiringHud.INPUT_COLOR);
+	private static final int OUTPUT_COLOUR = ColorHelper.withAlpha(255, WiringHud.OUTPUT_COLOR);
 	public static final Identifier TEXTURE = CircuitScreen.TEXTURE;
 	private static final int PORT_SPACING	= 36;
 	private static final float PORT_SCALE	=	0.75F;
+	private static final int DEG45 = (int)(0.7F * PORT_SPACING);
 	
 	private final LogicModule module;
-	private final Vector2i gridPosition, screenPosition;
+	private final Vector2i gridPosition, microPosition;
+	private Optional<DyeColor> color = Optional.empty();
 	
 	private Map<Port, Vector2i> 
 			inputPortPositions = new HashMap<>(), 
@@ -51,18 +57,26 @@ public class CircuitModule
 	{
 		module = moduleIn;
 		gridPosition = gridIn;
-		screenPosition = CircuitScreen.gridToPoint(gridPosition);
+		microPosition = CircuitScreen.gridToMicro(gridPosition);
 		
 		module.outputPorts().ifPresent(set -> calculatePortPositions(set, 1).forEach((key, val) -> outputPortPositions.put(key, val)));
 		cachePortPositions();
 	}
 	
-	/** Reduces this module to a server-friendly record for relay and storage */
-	public CircuitPart toPart() { return new CircuitPart(module, gridPosition); }
+	public CircuitModule setColor(@Nullable DyeColor colorIn)
+	{
+		color = colorIn == null ? Optional.empty() : Optional.of(colorIn);
+		return this;
+	}
 	
+	/** Reduces this module to a server-friendly record for relay and storage */
+	public CircuitPart toPart() { return new CircuitPart(module, gridPosition, color); }
+	
+	/** Module's position on the grid, which is used for rapid indexing of gates */
 	public Vector2i gridPosition() { return gridPosition; }
 	
-	public Vector2i screenPosition() { return screenPosition; }
+	/** Module's position within the micro-grid, which is used for placement of ports */
+	public Vector2i microPosition() { return microPosition; }
 	
 	public LogicModule module() { return module; }
 	
@@ -92,20 +106,42 @@ public class CircuitModule
 		module.inputPorts().ifPresent(set -> calculatePortPositions(set, -1).forEach((key, val) -> inputPortPositions.put(key, val)));
 	}
 	
-	protected static Map<Port, Vector2i> calculatePortPositions(List<Port> set, int clockwise)
+	protected static Map<Port, Vector2i> calculatePortPositions(List<Port> portsIn, int clockwise)
 	{
+		List<Port> set = Lists.newArrayList(portsIn);
+		if(clockwise < 0)
+			set.sort(Port.SORT);
 		Map<Port, Vector2i> positions = new HashMap<>();
-		final double inc = Math.toRadians(180D / (set.size() + 1)) * clockwise;
-		final double cs = Math.cos(inc);
-		final double sn = Math.sin(inc);
-		
-		Vec2f vec = new Vec2f(0, -1).multiply(PORT_SPACING);
-		for(int i=0; i<set.size(); i++)
+		switch(set.size())
 		{
-			vec = new Vec2f((float)(vec.x * cs - vec.y * sn), (float)(vec.x * sn + vec.y * cs));
-			positions.put(set.get(i), new Vector2i((int)vec.x, (int)vec.y));
+			case 0:
+				return positions;
+			case 1:
+				positions.put(set.getFirst(), new Vector2i(PORT_SPACING * clockwise, 0));
+				return positions;
+			case 2:
+				positions.put(set.getFirst(), new Vector2i(DEG45 * clockwise, -DEG45));
+				positions.put(set.getLast(), new Vector2i(DEG45 * clockwise, +DEG45));
+				return positions;
+			case 3:
+				positions.put(set.get(0), new Vector2i(DEG45 * clockwise, -DEG45));
+				positions.put(set.get(1), new Vector2i(PORT_SPACING * clockwise, 0));
+				positions.put(set.get(2), new Vector2i(DEG45 * clockwise, +DEG45));
+				return positions;
+			default:
+			case 4:
+				final double inc = Math.toRadians(180D / (set.size() + 1)) * clockwise;
+				final double cs = Math.cos(inc);
+				final double sn = Math.sin(inc);
+				
+				Vec2f vec = new Vec2f(0, -1).multiply(PORT_SPACING);
+				for(int i=0; i<set.size(); i++)
+				{
+					vec = new Vec2f((float)(vec.x * cs - vec.y * sn), (float)(vec.x * sn + vec.y * cs));
+					positions.put(portsIn.get(i), new Vector2i((int)vec.x, (int)vec.y));
+				}
+				return positions;
 		}
-		return positions;
 	}
 	
 	/**
@@ -117,7 +153,7 @@ public class CircuitModule
 	 */
 	public Optional<Port> getClosestPort(int mouseX, int mouseY, boolean isOutput)
 	{
-		final Vector2i mouseLocal = new Vector2i(mouseX - screenPosition.x(), mouseY - screenPosition.y());
+		final Vector2i mouseLocal = new Vector2i(mouseX - microPosition.x(), mouseY - microPosition.y());
 		// Ignore if the mouse is outside the grid space of this module
 		if(mouseLocal.length() > CircuitScreen.GRID_SIZE)
 			return Optional.empty();
@@ -188,8 +224,8 @@ public class CircuitModule
 	
 	public void renderBackground(DrawContext context)
 	{
-		final int x = screenPosition.x();
-		final int y = screenPosition.y();
+		final int x = microPosition.x();
+		final int y = microPosition.y();
 		
 		MatrixStack matrices = context.getMatrices();
 		matrices.push();
@@ -197,27 +233,27 @@ public class CircuitModule
 			// Render inputs, if any
 			inputPortPositions.values().forEach(vec -> 
 			{
-				NodeRenderUtils.renderStraightLine(Vec2f.ZERO, new Vec2f(vec.x(), vec.y()), 2, context, inputColour);
-				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 48F, 0F, 20, 20, 256, 256, inputColour);
+				NodeRenderUtils.renderStraightLine(Vec2f.ZERO, new Vec2f(vec.x(), vec.y()), 2, context, INPUT_COLOUR);
+				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 48F, 0F, 20, 20, 256, 256, INPUT_COLOUR);
 			});
 			
 			// Render outputs, if any
 			outputPortPositions.values().forEach(vec -> 
 			{
-				NodeRenderUtils.renderStraightLine(Vec2f.ZERO, new Vec2f(vec.x(), vec.y()), 2, context, outputColour);
-				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 48F, 0F, 20, 20, 256, 256, outputColour);
+				NodeRenderUtils.renderStraightLine(Vec2f.ZERO, new Vec2f(vec.x(), vec.y()), 2, context, OUTPUT_COLOUR);
+				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 48F, 0F, 20, 20, 256, 256, OUTPUT_COLOUR);
 			});
 		matrices.pop();
 		
-		context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, x - 24, y - 24, 0F, 0F, 48, 48, 256, 256, gateColour);
+		context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, x - 24, y - 24, 0F, 0F, 48, 48, 256, 256, color.isPresent() ? color.get().getEntityColor() : DEFAULT_COLOUR);
 	}
 	
 	public void renderForeground(DrawContext context, TextRenderer textRenderer)
 	{
 		// Render display name
 		Text name = module.displayName();
-		final int x = screenPosition.x();
-		final int y = screenPosition.y();
+		final int x = microPosition.x();
+		final int y = microPosition.y();
 		context.drawText(textRenderer, name, x - (textRenderer.getWidth(name) / 2), y-(textRenderer.fontHeight / 2), -1, true);
 		
 		MatrixStack matrices = context.getMatrices();

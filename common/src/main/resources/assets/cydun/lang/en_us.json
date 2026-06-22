@@ -100,9 +100,21 @@
 	"gui.cydun.logic_card.circuit": "Circuit of %s logic gates:",
 	"gui.cydun.circuit_builder.clear": "Clear",
 	"gui.cydun.circuit_builder.build": "Build",
+	"gui.cydun.circuit_builder.paint_circuit": "Paint",
+	"gui.cydun.circuit_builder.current_operation": "Current Operation: %s",
+	"gui.cydun.circuit_builder.place_gate": "Place a new logic gate",
+	"gui.cydun.circuit_builder.connect_port": "Click another port or wire to connect the port to it",
+	"gui.cydun.circuit_builder.connect_wire": "Click another port to connect the wire to it",
+	"gui.cydun.circuit_builder.paint": "Scroll to select a color, then click on a wire or logic gate to paint it",
+	"gui.cydun.circuit_builder.drag_key": "Hold [%s] to reposition the circuit",
 	// Enums
 	"enum.cydun.xyz_mode.global": "Absolute",
 	"enum.cydun.xyz_mode.local": "Relative",
+	"enum.cydun.logic_category.basic": "Basic",
+	"enum.cydun.logic_category.io": "I/O",
+	"enum.cydun.logic_category.math": "Math",
+	"enum.cydun.logic_category.memory": "Memory",
+	"enum.cydun.logic_category.utility": "Utility",
 	// Keybinds
 	// Sounds
 	"sound.cydun.wiring_gun": "Wiring Gun fires",

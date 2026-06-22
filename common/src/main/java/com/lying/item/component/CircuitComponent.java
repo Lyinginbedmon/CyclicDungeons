@@ -21,7 +21,7 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.text.Text;
-import net.minecraft.util.Pair;
+import net.minecraft.util.DyeColor;
 
 public record CircuitComponent(
 		Optional<List<CircuitPart>> modules
@@ -59,16 +59,18 @@ public record CircuitComponent(
 				() -> tooltip.accept(translate("gui", "logic_card.no_circuit")));
 	}
 	
-	public static record CircuitPart(LogicModule module, Vector2i gridPos)
+	public static record CircuitPart(LogicModule module, Vector2i gridPos, Optional<DyeColor> color)
 	{
 		public static final Codec<CircuitPart> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				LogicModule.CODEC.fieldOf("gate").forGetter(CircuitPart::module), 
-				CDUtils.VEC2I_CODEC.fieldOf("grid").forGetter(CircuitPart::gridPos))
+				CDUtils.VEC2I_CODEC.fieldOf("grid").forGetter(CircuitPart::gridPos),
+				DyeColor.CODEC.optionalFieldOf("color").forGetter(CircuitPart::color))
 				.apply(instance, CircuitPart::new));
 		public static final Codec<List<CircuitPart>> LIST_CODEC	= CODEC.listOf();
 		public static final PacketCodec<ByteBuf, CircuitPart> PACKET_CODEC	= PacketCodec.tuple(
 				LogicModule.PACKET_CODEC, CircuitPart::module, 
 				CDUtils.VEC2I_PACKET_CODEC, CircuitPart::gridPos,
+				PacketCodecs.optional(DyeColor.PACKET_CODEC), CircuitPart::color,
 				CircuitPart::new);
 		public static final PacketCodec<ByteBuf, List<CircuitPart>> LIST_PACKET_CODEC	= PacketCodec.of((val,buf) -> 
 		{
@@ -82,7 +84,5 @@ public record CircuitComponent(
 				set.add(PACKET_CODEC.decode(buf));
 			return set;
 		});
-		
-		public static CircuitPart fromPair(Pair<LogicModule,Vector2i> pair) { return new CircuitPart(pair.getLeft(), pair.getRight()); }
 	}
 }
