@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
+import com.lying.block.ModularLogicBlock;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.LogicWire;
@@ -25,7 +26,9 @@ import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.registry.RegistryWrapper.WrapperLookup;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -33,26 +36,7 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 {
 	public static final Logger LOGGER = CyclicDungeons.LOGGER;
 	public static final long UPDATE_FREQUENCY = Reference.Values.TICKS_PER_SECOND / 2;
-	private List<LogicModule> modules = Lists.newArrayList(
-			LogicModule.of(CDLogicGates.ENTRY.get())
-				.name("input_1")
-				.addOutput(CDLogicGates.OUTPUT, "wire1"),
-			LogicModule.of(CDLogicGates.ENTRY.get())
-				.name("input_2")
-				.addOutput(CDLogicGates.OUTPUT, "wire2"),
-			LogicModule.of(CDLogicGates.ENTRY.get())
-				.name("input_3")
-				.addOutput(CDLogicGates.OUTPUT, "wire3"),
-			LogicModule.of(CDLogicGates.EXIT.get())
-				.name("output_1")
-				.addInput(CDLogicGates.INPUT, "wire1"),
-			LogicModule.of(CDLogicGates.EXIT.get())
-				.name("output_2")
-				.addInput(CDLogicGates.INPUT, "wire2"),
-			LogicModule.of(CDLogicGates.EXIT.get())
-				.name("output_3")
-				.addInput(CDLogicGates.INPUT, "wire3")
-			);
+	private List<LogicModule> modules = Lists.newArrayList();
 	private Map<String, LogicWire> wires = new HashMap<>();
 	private int ticks = 0;
 	
@@ -105,6 +89,25 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 		}
 		
 		logPorts();
+	}
+	
+	public void setCircuit(List<LogicModule> circuit)
+	{
+		wires.clear();
+		modules.clear();
+		modules.addAll(circuit);
+		logPorts();
+		updateListeners();
+		
+		if(hasWorld())
+		{
+			BlockState state = getCachedState();
+			state = state.with(ModularLogicBlock.HAS_CARD, !modules.isEmpty());
+			if(modules.isEmpty() || modules.stream().noneMatch(m -> m.is(CDLogicGates.LIGHT.get())))
+				state = state.with(ModularLogicBlock.LIGHT, 0);
+			
+			world.setBlockState(getPos(), state, 3);
+		}
 	}
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
@@ -180,5 +183,21 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 			return super.getPortStatus(port, isInput);
 		else
 			return outputMap.getOrDefault(port, false);
+	}
+	
+	private void updateListeners()
+	{
+		this.markDirty();
+		this.world.updateListeners(getPos(), getCachedState(), getCachedState(), 3);
+	}
+	
+	public BlockEntityUpdateS2CPacket toUpdatePacket()
+	{
+		return BlockEntityUpdateS2CPacket.create(this);
+	}
+	
+	public NbtCompound toInitialChunkDataNbt(WrapperLookup registries)
+	{
+		return createComponentlessNbt(registries);
 	}
 }

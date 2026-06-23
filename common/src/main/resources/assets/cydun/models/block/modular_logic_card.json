@@ -1,0 +1,19 @@
+{
+	"format_version": "1.21.11",
+	"textures": {
+		"2": "cydun:block/modular_logic_card",
+		"particle": "cydun:block/modular_logic_top"
+	},
+	"elements": [
+		{
+			"name": "card",
+			"from": [4, 4, -2],
+			"to": [12, 4, 2],
+			"rotation": {"angle": -45, "axis": "x", "origin": [4, 2, 0]},
+			"faces": {
+				"up": {"uv": [0, 0, 8, 4], "texture": "#2", "cullface": "north"},
+				"down": {"uv": [0, 4, 8, 8], "texture": "#2", "cullface": "north"}
+			}
+		}
+	]
+}

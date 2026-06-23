@@ -43,6 +43,8 @@ public record CircuitComponent(
 	
 	public static CircuitComponent empty() { return new CircuitComponent(Optional.empty()); }
 	
+	public boolean isEmpty() { return modules.isEmpty(); }
+	
 	public List<LogicModule> circuit()
 	{
 		return modules.isEmpty() ? List.of() : modules.get().stream().map(CircuitPart::module).toList();

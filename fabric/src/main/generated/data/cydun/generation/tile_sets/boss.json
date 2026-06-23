@@ -6,11 +6,11 @@
       "weight": 1000.0
     },
     {
-      "tile": "cydun:pillar_cap",
+      "tile": "cydun:pillar",
       "weight": 3000.0
     },
     {
-      "tile": "cydun:pillar",
+      "tile": "cydun:pillar_cap",
       "weight": 3000.0
     },
     {

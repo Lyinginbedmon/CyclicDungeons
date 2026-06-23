@@ -23,6 +23,10 @@ public interface ClickHandler
 	
 	public default boolean handleScroll(int scroll) { return false; }
 	
+	public default boolean handleKeyPress(int keyCode, int modifiers) { return false; }
+	
+	public default void onNameChanged(String name, Map<Vector2i, CircuitModule> circuit) { }
+	
 	/** Renders the background elements of this handler */
 	public default void renderBackground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit) { }
 	

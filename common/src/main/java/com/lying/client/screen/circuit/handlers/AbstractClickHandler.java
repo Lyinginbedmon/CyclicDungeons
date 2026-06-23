@@ -12,14 +12,10 @@ import com.lying.client.screen.circuit.CircuitScreen;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
 
 public abstract class AbstractClickHandler implements ClickHandler
 {
-	public static final Identifier TEXTURE = CircuitScreen.TEXTURE;
 	protected static final MinecraftClient mc = MinecraftClient.getInstance();
 	protected final CircuitScreen parent;
 	protected final TextRenderer textRenderer;
@@ -45,22 +41,6 @@ public abstract class AbstractClickHandler implements ClickHandler
 	}
 	
 	protected int iconColor() { return -1; }
-	
-	public void renderBackground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit)
-	{
-		context.drawTexture(
-				RenderLayer::getGuiTextured, 
-				TEXTURE, 
-				microX - 8, 
-				microY - 8, 
-				iconPos.x(), 
-				iconPos.y(), 
-				16, 
-				16, 
-				256, 
-				256, 
-				iconColor());
-	}
 	
 	protected static void playSound(SoundEvent event)
 	{

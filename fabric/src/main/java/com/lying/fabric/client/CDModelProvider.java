@@ -74,12 +74,17 @@ public class CDModelProvider extends FabricModelProvider
 	public void generateItemModels(ItemModelGenerator itemModelGenerator)
 	{
 		// Block items
-		CDItems.BASIC_BLOCK_ITEMS.stream().map(e -> (BlockItem)e.get()).forEach(entry -> registerBlockModel(entry, itemModelGenerator));
+		CDItems.BASIC_BLOCK_ITEMS.stream()
+			.map(e -> (BlockItem)e.get())
+			.forEach(entry -> registerBlockModel(entry, itemModelGenerator));
 		
+		// 2D icon items
 		registerSimpleItems(itemModelGenerator, 
 				CDItems.PIT.get(), 
 				CDItems.RABID_POLAR_BEAR_SPAWN_EGG.get(), 
-				CDItems.RABID_WOLF_SPAWN_EGG.get());
+				CDItems.RABID_WOLF_SPAWN_EGG.get(),
+				CDItems.LOGIC_CARD.get());
+		
 		registerBlockModel((BlockItem)CDItems.SWINGING_BLADE.get(), "_horizontal", itemModelGenerator);
 		registerBlockModel((BlockItem)CDItems.MODULAR_LOGIC.get(), "_on", itemModelGenerator);
 	}

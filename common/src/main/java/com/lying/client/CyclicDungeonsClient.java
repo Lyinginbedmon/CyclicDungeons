@@ -61,7 +61,8 @@ public class CyclicDungeonsClient
 				CDBlocks.SENSOR_SOUND.get(), 
 				CDBlocks.DART_TRAP.get(),
 				CDBlocks.SPIKES.get(),
-				CDBlocks.SPAWNER.get());
+				CDBlocks.SPAWNER.get(),
+				CDBlocks.MODULAR_LOGIC.get());
 	}
 	
 	public static void registerColorHandlers(BiConsumer<BlockColorProvider, Block[]> function)

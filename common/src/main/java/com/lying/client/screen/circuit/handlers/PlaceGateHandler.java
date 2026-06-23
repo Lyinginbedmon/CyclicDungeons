@@ -40,7 +40,7 @@ public class PlaceGateHandler extends AbstractClickHandler
 		Vector2i gridPos = CircuitScreen.gridToMicro(CircuitScreen.microToGrid(new Vector2i(microX, microY)));
 		if(circuit.containsKey(gridPos))
 			return;
-		context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, gridPos.x() - 24, gridPos.y() - 24, 0F, 0F, 48, 48, 256, 256, ColorHelper.withAlpha(120, CircuitModule.DEFAULT_COLOUR));
+		context.drawTexture(RenderLayer::getGuiTextured, CircuitScreen.TEXTURE, gridPos.x() - 24, gridPos.y() - 24, 0F, 0F, 48, 48, 256, 256, ColorHelper.withAlpha(120, CircuitModule.DEFAULT_COLOUR));
 	}
 	
 	public void renderForeground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit)

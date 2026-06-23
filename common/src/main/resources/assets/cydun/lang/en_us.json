@@ -106,6 +106,7 @@
 	"gui.cydun.circuit_builder.connect_port": "Click another port or wire to connect the port to it",
 	"gui.cydun.circuit_builder.connect_wire": "Click another port to connect the wire to it",
 	"gui.cydun.circuit_builder.paint": "Scroll to select a color, then click on a wire or logic gate to paint it",
+	"gui.cydun.circuit_builder.name_gate": "Type the name of the gate, press [Enter] to confirm",
 	"gui.cydun.circuit_builder.drag_key": "Hold [%s] to reposition the circuit",
 	// Enums
 	"enum.cydun.xyz_mode.global": "Absolute",

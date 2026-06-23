@@ -63,6 +63,13 @@ public class CircuitModule
 		cachePortPositions();
 	}
 	
+	public Optional<String> customName() { return module.customName(); }
+	
+	public void setName(String nameIn)
+	{
+		module.name(nameIn);
+	}
+	
 	public CircuitModule setColor(@Nullable DyeColor colorIn)
 	{
 		color = colorIn == null ? Optional.empty() : Optional.of(colorIn);

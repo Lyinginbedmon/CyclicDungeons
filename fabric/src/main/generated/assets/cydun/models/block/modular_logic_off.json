@@ -1,8 +1,6 @@
 {
-  "parent": "minecraft:block/cube_bottom_top",
+  "parent": "cydun:block/modular_logic",
   "textures": {
-    "bottom": "cydun:block/modular_logic_top",
-    "side": "cydun:block/modular_logic_side_off",
-    "top": "cydun:block/modular_logic_top"
+    "side": "cydun:block/modular_logic_side_off"
   }
 }

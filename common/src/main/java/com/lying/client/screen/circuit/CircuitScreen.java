@@ -16,10 +16,11 @@ import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.client.screen.circuit.handlers.ClickHandler;
-import com.lying.client.screen.circuit.handlers.ColorHandler;
 import com.lying.client.screen.circuit.handlers.ConnectPortHandler;
 import com.lying.client.screen.circuit.handlers.ConnectWireHandler;
+import com.lying.client.screen.circuit.handlers.PaintHandler;
 import com.lying.client.screen.circuit.handlers.PlaceGateHandler;
+import com.lying.client.screen.circuit.handlers.RenameGateHandler;
 import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDLogicGates;
@@ -37,6 +38,7 @@ import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.sound.SoundEvent;
@@ -51,8 +53,9 @@ public class CircuitScreen extends Screen
 	public static final int GRID_SIZE	= 80;
 	
 	private List<Drawable> drawables = Lists.newArrayList();
+	public TextFieldWidget nameField;
 	public Vector2i displayOffset = new Vector2i(0,0);
-	private boolean isDragging = false;
+	private boolean dragActive = false;
 	private Optional<Vector2i> dragStart = Optional.empty();
 	
 	private Map<LogicCategory, ButtonWidget> categoryButtons = new HashMap<>();
@@ -66,7 +69,8 @@ public class CircuitScreen extends Screen
 	// FIXME Implement naming gates
 	private static final List<ClickHandlerBuilder> HANDLERS = Lists.newArrayList(
 			ConnectPortHandler::tryCreateFrom,
-			ConnectWireHandler::tryCreateFrom
+			ConnectWireHandler::tryCreateFrom,
+			RenameGateHandler::tryCreateFrom
 			);
 	private Optional<ClickHandler> currentHandler = Optional.empty();
 	
@@ -123,7 +127,7 @@ public class CircuitScreen extends Screen
 		for(LogicCategory cat : LogicCategory.values())
 		{
 			int x = 5 + categoryButtons.size() * 60;
-			ButtonWidget category = addDrawableChild(ButtonWidget.builder(cat.displayName(), b -> showCategory(cat)).dimensions(x, 5, 60, 20).build());
+			ButtonWidget category = addDrawableChild(ButtonWidget.builder(cat.displayName(), b -> { showCategory(cat); b.setFocused(false); }).dimensions(x, 5, 60, 20).build());
 			categoryButtons.put(cat, category);
 			
 			List<ButtonWidget> buttons = Lists.newArrayList();
@@ -140,22 +144,24 @@ public class CircuitScreen extends Screen
 				buttons.add(button);
 			}
 			
-			// FIXME Replace paint button with external icon button
-			if(cat == LogicCategory.UTILITY)
-			{
-				ButtonWidget button = addDrawableChild(ButtonWidget.builder(translate("gui", "circuit_builder.paint_circuit"), b -> 
-				{
-					currentHandler = Optional.of(new ColorHandler(this));
-					showCategory(null);
-				})
-						.dimensions(x, 5 + 21 + buttons.size() * 20, 60, 20)
-						.build());
-				button.visible = button.active = false;
-				buttons.add(button);
-			}
 			categoryMap.put(cat, buttons);
 		}
 		
+		this.nameField = new TextFieldWidget(this.textRenderer, 0, -20, 103, 12, Text.empty());
+		this.nameField.setFocusUnlocked(false);
+		this.nameField.setEditableColor(-1);
+		this.nameField.setUneditableColor(-1);
+		this.nameField.setDrawsBackground(false);
+		this.nameField.setMaxLength(15);
+		this.nameField.setChangedListener(n -> currentHandler.ifPresent(h -> h.onNameChanged(n, circuitMap)));
+		this.nameField.setText("");
+		this.addSelectableChild(this.nameField);
+		
+		addDrawableChild(new IconButtonWidget(width - 22 - 5, 5, PaintHandler.TEXTURE, b -> 
+		{
+			currentHandler = Optional.of(new PaintHandler(this));
+			showCategory(null);
+		}));
 		addDrawableChild(ButtonWidget.builder(translate("gui","circuit_builder.clear"), b -> 
 		{
 			circuitMap.clear();
@@ -178,15 +184,14 @@ public class CircuitScreen extends Screen
 	
 	public void render(DrawContext context, int mouseX, int mouseY, float delta)
 	{
-		if(!isDragging && dragStart.isPresent())
+		if(!dragActive && dragStart.isPresent())
 		{
 			final int mX = (int)mouseX, mY = (int)mouseY;
 			displayOffset.add(mX - dragStart.get().x(), mY - dragStart.get().y());
-			
 			dragStart = Optional.empty();
 			setDragging(false);
 		}
-		else if(isDragging && dragStart.isEmpty())
+		else if(dragActive && dragStart.isEmpty())
 		{
 			dragStart = Optional.of(new Vector2i(mouseX, mouseY));
 			setDragging(true);
@@ -218,10 +223,8 @@ public class CircuitScreen extends Screen
 							context, 
 							circuitMap));
 			circuitMap.values().forEach(c -> c.renderBackground(context));
-			
 			currentHandler.ifPresent(handler -> handler.renderBackground(context, mouseMicroX, mouseMicroY, delta, circuitMap));
 		stack.pop();
-		
 	}
 	
 	protected void renderForeground(DrawContext context, int mouseX, int mouseY, float delta)
@@ -244,7 +247,11 @@ public class CircuitScreen extends Screen
 		stack.pop();
 	}
 	
-	public void clearHandler() { currentHandler = Optional.empty(); }
+	public void clearHandler()
+	{
+		currentHandler = Optional.empty();
+		nameField.setFocused(false);
+	}
 	
 	/** Cleans the connections of all modules to just those represented by wires present on the screen */
 	public void cleanCircuit()
@@ -317,13 +324,18 @@ public class CircuitScreen extends Screen
 			if(currentHandler.isPresent())
 				return currentHandler.get().handleClick(isHoldingShift, mX, mY, gridPos, circuitMap);
 			
-			for(ClickHandlerBuilder builder : HANDLERS)
+			if(super.mouseClicked(mouseX, mouseY, button))
+				return true;
+			else
 			{
-				Optional<ClickHandler> result = builder.tryCreateFrom(mX, mY, gridPos, circuitMap, this);
-				if(result.isPresent())
+				for(ClickHandlerBuilder builder : HANDLERS)
 				{
-					currentHandler = result;
-					return true;
+					Optional<ClickHandler> result = builder.tryCreateFrom(mX, mY, gridPos, circuitMap, this);
+					if(result.isPresent())
+					{
+						currentHandler = result;
+						return true;
+					}
 				}
 			}
 		}
@@ -376,10 +388,13 @@ public class CircuitScreen extends Screen
 	
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers)
 	{
+		if(currentHandler.isPresent() && currentHandler.get().handleKeyPress(keyCode, modifiers))
+			return true;
+		
 		if(keyCode == GLFW.GLFW_KEY_SPACE)
 		{
 			setDragging(true);
-			isDragging = true;
+			dragActive = true;
 			return true;
 		}
 		
@@ -391,7 +406,7 @@ public class CircuitScreen extends Screen
 		if(keyCode == GLFW.GLFW_KEY_SPACE)
 		{
 			setDragging(false);
-			isDragging = false;
+			dragActive = false;
 			return true;
 		}
 		

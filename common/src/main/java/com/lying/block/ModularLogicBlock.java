@@ -7,7 +7,10 @@ import java.util.function.ToIntFunction;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDDataComponentTypes;
+import com.lying.init.CDItems;
 import com.lying.item.WiringGunItem.WireMode;
+import com.lying.item.component.CircuitComponent;
 import com.lying.network.ShowCircuitScreenPacket;
 
 import net.minecraft.block.Block;
@@ -16,10 +19,15 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -27,12 +35,13 @@ import net.minecraft.world.World;
 public class ModularLogicBlock extends TrapLogicBlock
 {
 	public static final IntProperty LIGHT	= IntProperty.of("light", 0, 15);
+	public static final BooleanProperty HAS_CARD	= BooleanProperty.of("card");
 	public static final ToIntFunction<BlockState> STATE_TO_LUMINANCE = state -> (Integer)state.get(LIGHT);
 	
 	public ModularLogicBlock(Settings settings)
 	{
 		super(settings);
-		setDefaultState(getDefaultState().with(LIGHT, 0));
+		setDefaultState(getDefaultState().with(LIGHT, 0).with(HAS_CARD, false));
 	}
 	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
@@ -42,7 +51,24 @@ public class ModularLogicBlock extends TrapLogicBlock
 	
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
-		builder.add(LIGHT);
+		builder.add(LIGHT, FACING, HAS_CARD);
+	}
+	
+	protected ActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit)
+	{
+		if(stack.isOf(CDItems.LOGIC_CARD.get()))
+		{
+			CircuitComponent comp = stack.get(CDDataComponentTypes.CIRCUIT.get());
+			if(world.isClient())
+				return ActionResult.SUCCESS;
+			
+			ModularLogicBlockEntity tile = world.getBlockEntity(pos, CDBlockEntityTypes.MODULAR_LOGIC.get()).get();
+			tile.setCircuit(comp.circuit());
+			world.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.BLOCKS);
+			return ActionResult.SUCCESS_SERVER;
+		}
+		
+		return super.onUseWithItem(stack, state, world, pos, player, hand, hit);
 	}
 	
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit)

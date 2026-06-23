@@ -8,6 +8,9 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Lists;
 import com.ibm.icu.text.Collator;
 import com.lying.block.ModularLogicBlock;
@@ -18,7 +21,6 @@ import com.lying.block.entity.logic.LogicResult;
 import com.lying.block.entity.logic.PortSet;
 import com.lying.block.entity.logic.PortState;
 import com.lying.reference.Reference;
-import com.lying.utility.CDUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -33,6 +35,7 @@ import net.minecraft.util.math.random.Random;
 
 public class CDLogicGates
 {
+	public static Logger LOGGER = LoggerFactory.getLogger(Reference.ModInfo.MOD_ID+"_logic");
 	private static final Map<String, Supplier<LogicGate>> MODULES	= new HashMap<>();
 	private static final Map<LogicCategory, List<String>> BY_CATEGORY	= new HashMap<>();
 	
@@ -204,7 +207,13 @@ public class CDLogicGates
 				
 				if(isRisingEdge(INC, ports, pPorts))
 				{
-					boolean[] data = gatherBits(4, ports);
+					boolean[] data = new boolean[]
+							{
+								pOut.get(BIT_1),
+								pOut.get(BIT_2),
+								pOut.get(BIT_4),
+								pOut.get(BIT_8)
+							};
 					// Toggle values from bit 1 to 4 until we encounter a false, set that to true and break
 					for(int i=0; i<data.length; i++)
 					{
@@ -236,7 +245,7 @@ public class CDLogicGates
 				if(isRisingEdge(INPUT, ports, pPorts))
 				{
 					ServerWorld world = (ServerWorld)tile.getWorld();
-					world.playSound(null, tile.getPos(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_ON, SoundCategory.BLOCKS);
+					world.playSound(null, tile.getPos(), SoundEvents.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.BLOCKS);
 				}
 				return LogicResult.create();
 			})
@@ -248,7 +257,13 @@ public class CDLogicGates
 			.create((ports, pPorts, pOut, tile, module) -> 
 			{
 				ServerWorld world = (ServerWorld)tile.getWorld();
-				world.setBlockState(tile.getPos(), tile.getCachedState().with(ModularLogicBlock.LIGHT, CDUtils.binaryToDecimal(gatherBits(4, ports))));
+				final int val = 
+						(ports.get(BIT_8) ? 8 : 0) + 
+						(ports.get(BIT_4) ? 4 : 0) +
+						(ports.get(BIT_2) ? 2 : 0) +
+						(ports.get(BIT_1) ? 1 : 0);
+				if(val != tile.getCachedState().get(ModularLogicBlock.LIGHT))
+					world.setBlockState(tile.getPos(), tile.getCachedState().with(ModularLogicBlock.LIGHT, val));
 				return LogicResult.create();
 			})
 			.category(LogicCategory.UTILITY)
@@ -275,14 +290,6 @@ public class CDLogicGates
 	protected static boolean isRisingEdge(Port port, PortState ports, PortState pPorts)
 	{
 		return !pPorts.get(port) && ports.get(port);
-	}
-	
-	protected static boolean[] gatherBits(int count, PortState ports)
-	{
-		boolean[] bits = new boolean[count];
-		for(int i=0; i<bits.length; i++)
-			bits[i] = ports.get(Port.of("bit_"+(int)Math.pow(2, i)));
-		return bits;
 	}
 	
 	/** Returns a list of ports one greater than the inport ports currently in use by the module */

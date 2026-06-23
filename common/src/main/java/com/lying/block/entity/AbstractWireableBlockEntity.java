@@ -212,7 +212,10 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	
 	public void markDirty()
 	{
-		if(world != null)
-			world.updateListeners(getPos(), getCachedState(), getCachedState(), 3);
+		if(world == null)
+			return;
+		
+		world.markDirty(getPos());
+		world.updateListeners(getPos(), getCachedState(), getCachedState(), 3);
 	}
 }

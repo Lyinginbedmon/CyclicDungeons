@@ -8,16 +8,21 @@ import org.joml.Vector2i;
 import com.lying.client.screen.circuit.CircuitModule;
 import com.lying.client.screen.circuit.CircuitScreen;
 import com.lying.client.screen.circuit.CircuitWire;
+import com.lying.reference.Reference;
 import com.lying.utility.CDUtils;
 
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.Identifier;
 
-public class ColorHandler extends AbstractClickHandler
+public class PaintHandler extends AbstractClickHandler
 {
+	public static final Identifier TEXTURE = Reference.ModInfo.prefix("textures/gui/paint_brush.png");
 	private int colorIndex = 0;
 	
-	public ColorHandler(CircuitScreen parentIn)
+	public PaintHandler(CircuitScreen parentIn)
 	{
 		super(parentIn);
 		this.iconPos = new Vector2i(0, 48);
@@ -64,5 +69,21 @@ public class ColorHandler extends AbstractClickHandler
 				parent.clearHandler();
 		}
 		return result;
+	}
+	
+	public void renderBackground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit)
+	{
+		context.drawTexture(
+				RenderLayer::getGuiTextured, 
+				TEXTURE, 
+				microX - 8, 
+				microY - 8, 
+				0, 
+				0, 
+				16, 
+				16, 
+				16, 
+				16, 
+				iconColor());
 	}
 }

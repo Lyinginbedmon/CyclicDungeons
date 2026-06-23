@@ -98,23 +98,25 @@ public class LogicModule
 	
 	public LogicModule name(String nameIn)
 	{
-		name = Optional.of(nameIn);
+		name = nameIn.length() == 0 ? Optional.empty() : Optional.of(nameIn);
 		return this;
 	}
 	
+	public boolean is(LogicGate gate) { return handler.registryName().equalsIgnoreCase(gate.registryName()); }
+	
 	public Text displayName() { return name.isPresent() ? Text.literal(name.get()) : handler.displayName(); }
 	
-	public boolean hasCustomName() { return customName() != null && customName().length() > 0; }
+	public boolean hasCustomName() { return customName().orElse("").length() > 0; }
 	
 	@Nullable
-	public String customName() { return name.orElse(null); }
+	public Optional<String> customName() { return name; }
 	
 	/** Returns an Optional holding the port equivalent of this module, if its name can be a valid port name */
 	public Optional<Port> toPort()
 	{
 		if(!hasCustomName())
 			return Optional.empty();
-		String name = customName();
+		String name = customName().get();
 		try
 		{
 			return Optional.of(Port.of(name));
