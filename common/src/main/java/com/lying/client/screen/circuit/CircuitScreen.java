@@ -147,7 +147,22 @@ public class CircuitScreen extends Screen
 			categoryMap.put(cat, buttons);
 		}
 		
-		this.nameField = new TextFieldWidget(this.textRenderer, 0, -20, 103, 12, Text.empty());
+		this.nameField = new TextFieldWidget(this.textRenderer, 0, -20, 103, 12, Text.empty()) 
+		{
+			public boolean charTyped(char chr, int modifiers)
+			{
+				// Replace all spaces with underscores
+				if(chr == ' ')
+					return super.charTyped('_', modifiers);
+				
+				// Ignore any non-alphanumeric characters
+				String str = String.valueOf(chr);
+				if(str.replaceAll("[^a-zA-Z0-9_]", "").length() == 0)
+					return false;
+				
+				return super.charTyped(chr, modifiers);
+			}
+		};
 		this.nameField.setFocusUnlocked(false);
 		this.nameField.setEditableColor(-1);
 		this.nameField.setUneditableColor(-1);

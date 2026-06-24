@@ -9,13 +9,15 @@ import org.lwjgl.glfw.GLFW;
 import com.lying.client.screen.circuit.CircuitModule;
 import com.lying.client.screen.circuit.CircuitScreen;
 
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.util.Identifier;
 
 public class RenameGateHandler extends AbstractClickHandler
 {
+	public static final Identifier TEXTURE = CircuitScreen.TEXTURE;
 	private final Vector2i target;
-	
-	// FIXME Add highlighting to selected gate
 	
 	public RenameGateHandler(Vector2i targetIn, CircuitScreen parentIn)
 	{
@@ -49,7 +51,7 @@ public class RenameGateHandler extends AbstractClickHandler
 	
 	public boolean handleKeyPress(int keyCode, int modifiers)
 	{
-		if(keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER)
+		if(keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
 		{
 			parent.clearHandler();
 			return true;
@@ -62,5 +64,22 @@ public class RenameGateHandler extends AbstractClickHandler
 	{
 		CircuitModule module = circuit.get(target);
 		module.setName(name.replace(' ', '_').replaceAll("[^a-zA-Z0-9_]", ""));
+	}
+	
+	public void renderBackground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit)
+	{
+		Vector2i point = CircuitScreen.gridToMicro(target);
+		context.drawTexture(
+				RenderLayer::getGuiTextured, 
+				TEXTURE, 
+				point.x() - 24, 
+				point.y() - 24, 
+				0F, 
+				48F, 
+				48, 
+				48, 
+				256, 
+				256, 
+				-1);
 	}
 }

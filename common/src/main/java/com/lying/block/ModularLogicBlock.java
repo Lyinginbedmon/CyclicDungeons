@@ -7,10 +7,8 @@ import java.util.function.ToIntFunction;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDItems;
 import com.lying.item.WiringGunItem.WireMode;
-import com.lying.item.component.CircuitComponent;
 import com.lying.network.ShowCircuitScreenPacket;
 
 import net.minecraft.block.Block;
@@ -58,12 +56,14 @@ public class ModularLogicBlock extends TrapLogicBlock
 	{
 		if(stack.isOf(CDItems.LOGIC_CARD.get()))
 		{
-			CircuitComponent comp = stack.get(CDDataComponentTypes.CIRCUIT.get());
 			if(world.isClient())
 				return ActionResult.SUCCESS;
 			
 			ModularLogicBlockEntity tile = world.getBlockEntity(pos, CDBlockEntityTypes.MODULAR_LOGIC.get()).get();
-			tile.setCircuit(comp.circuit());
+			tile.setCard(stack.copyWithCount(1));
+			if(!player.isCreative())
+				stack.decrement(1);
+			
 			world.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.BLOCKS);
 			return ActionResult.SUCCESS_SERVER;
 		}
@@ -73,9 +73,19 @@ public class ModularLogicBlock extends TrapLogicBlock
 	
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit)
 	{
-		if(!world.isClient() && player.isCreative())
-			ShowCircuitScreenPacket.sendTo((ServerPlayerEntity)player);
-		return ActionResult.CONSUME;
+		ModularLogicBlockEntity tile = world.getBlockEntity(pos, CDBlockEntityTypes.MODULAR_LOGIC.get()).get();
+		if(!world.isClient())
+			if(!tile.getCard().isEmpty())
+			{
+				player.giveItemStack(tile.takeCard());
+				return ActionResult.SUCCESS;
+			}
+			else if(player.isCreative())
+			{
+				ShowCircuitScreenPacket.sendTo((ServerPlayerEntity)player);
+				return ActionResult.CONSUME;
+			}
+		return super.onUse(state, world, pos, player, hit);
 	}
 	
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)

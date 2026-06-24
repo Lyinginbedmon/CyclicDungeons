@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -17,14 +18,18 @@ import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.LogicWire;
 import com.lying.block.entity.logic.PortState;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDLogicGates;
+import com.lying.item.component.CircuitComponent;
 import com.lying.reference.Reference;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
@@ -36,6 +41,7 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 {
 	public static final Logger LOGGER = CyclicDungeons.LOGGER;
 	public static final long UPDATE_FREQUENCY = Reference.Values.TICKS_PER_SECOND / 2;
+	private Optional<ItemStack> stack = Optional.empty();
 	private List<LogicModule> modules = Lists.newArrayList();
 	private Map<String, LogicWire> wires = new HashMap<>();
 	private int ticks = 0;
@@ -53,6 +59,8 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 	{
 		super.writeNbt(nbt, registryLookup);
 		nbt.remove("Logic");
+		stack.ifPresent(s -> nbt.put("Card", s.toNbt(registryLookup)));
+		
 		if(!modules.isEmpty())
 		{
 			NbtCompound c = new NbtCompound();
@@ -73,6 +81,11 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
+		if(nbt.contains("Card", NbtElement.COMPOUND_TYPE))
+			stack = ItemStack.fromNbt(registryLookup, nbt.get("Card"));
+		else
+			stack = Optional.empty();
+		
 		modules.clear();
 		wires.clear();
 		if(nbt.contains("Circuit"))
@@ -91,6 +104,32 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 		logPorts();
 	}
 	
+	public ItemStack getCard() { return stack.orElse(ItemStack.EMPTY); }
+	
+	public ItemStack takeCard()
+	{
+		if(stack.isEmpty())
+			return ItemStack.EMPTY;
+		final ItemStack var = stack.orElse(ItemStack.EMPTY).copy();
+		setCard(ItemStack.EMPTY);
+		return var;
+	}
+	
+	public void setCard(ItemStack stackIn)
+	{
+		stack = stackIn.isEmpty() ? Optional.empty() : Optional.of(stackIn);
+		if(stack.isEmpty())
+			setCircuit(List.of());
+		else
+		{
+			CircuitComponent comp = stackIn.get(CDDataComponentTypes.CIRCUIT.get());
+			setCircuit(comp.circuit());
+		}
+		
+		if(world != null)
+			world.setBlockState(getPos(), getCachedState().with(ModularLogicBlock.HAS_CARD, stack.isPresent()), 3);
+	}
+	
 	public void setCircuit(List<LogicModule> circuit)
 	{
 		wires.clear();
@@ -102,7 +141,6 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 		if(hasWorld())
 		{
 			BlockState state = getCachedState();
-			state = state.with(ModularLogicBlock.HAS_CARD, !modules.isEmpty());
 			if(modules.isEmpty() || modules.stream().noneMatch(m -> m.is(CDLogicGates.LIGHT.get())))
 				state = state.with(ModularLogicBlock.LIGHT, 0);
 			
