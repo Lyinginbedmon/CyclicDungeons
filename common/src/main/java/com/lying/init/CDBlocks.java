@@ -57,7 +57,6 @@ public class CDBlocks
 	 * 
 	 * Puzzle Door (to open when puzzle room is completed)
 	 * Locked Door (to open using specific key)
-	 * Puzzle Logic Handler (?)
 	 * 
 	 * Trap sensors
 	 * * Area

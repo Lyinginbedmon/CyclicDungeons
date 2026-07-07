@@ -1,146 +1,129 @@
 {
-	"multipart":
-	[
-		{
-			"when": 
-			{
-				"light": "0",
-				"facing": "north"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_off"
-			}
-		},
-		{
-			"when": 
-			{
-				"light": "0",
-				"facing": "east"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_off",
-				"y": 90
-			}
-		},
-		{
-			"when": 
-			{
-				"light": "0",
-				"facing": "south"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_off",
-				"y": 180
-			}
-		},
-		{
-			"when": 
-			{
-				"light": "0",
-				"facing": "west"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_off",
-				"y": 270
-			}
-		},
-		{
-			"when":
-			{
-				"card": "true",
-				"facing": "north"
-			},
-			"apply":
-			{
-				"model": "cydun:block/modular_logic_card"
-			}
-		},
-		{
-			"when":
-			{
-				"card": "true",
-				"facing": "east"
-			},
-			"apply":
-			{
-				"model": "cydun:block/modular_logic_card",
-				"y": 90
-			}
-		},
-		{
-			"when":
-			{
-				"card": "true",
-				"facing": "south"
-			},
-			"apply":
-			{
-				"model": "cydun:block/modular_logic_card",
-				"y": 180
-			}
-		},
-		{
-			"when":
-			{
-				"card": "true",
-				"facing": "west"
-			},
-			"apply":
-			{
-				"model": "cydun:block/modular_logic_card",
-				"y": 270
-			}
-		},
-		{
-			"when":
-			{
-				"light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15",
-				"facing": "north"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_on"
-			}
-		},
-		{
-			"when":
-			{
-				"light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15",
-				"facing": "east"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_on",
-				"y": 90
-			}
-		},
-		{
-			"when":
-			{
-				"light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15",
-				"facing": "south"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_on",
-				"y": 180
-			}
-		},
-		{
-			"when":
-			{
-				"light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15",
-				"facing": "west"
-			},
-			"apply": 
-			{
-				"model": "cydun:block/modular_logic_on",
-				"y": 270
-			}
-		}
-	]
+  "multipart": [
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_card"
+      },
+      "when": {
+        "card": "true",
+        "facing": "north"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_card",
+        "y": 90
+      },
+      "when": {
+        "card": "true",
+        "facing": "east"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_card",
+        "y": 180
+      },
+      "when": {
+        "card": "true",
+        "facing": "south"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_card",
+        "y": 270
+      },
+      "when": {
+        "card": "true",
+        "facing": "west"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_off",
+        "uvlock": true
+      },
+      "when": {
+        "facing": "north",
+        "light": "0"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_off",
+        "uvlock": true,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "light": "0"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_off",
+        "uvlock": true,
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "light": "0"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_off",
+        "uvlock": true,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "light": "0"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_on",
+        "uvlock": true
+      },
+      "when": {
+        "facing": "north",
+        "light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_on",
+        "uvlock": true,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_on",
+        "uvlock": true,
+        "y": 180
+      },
+      "when": {
+        "facing": "south",
+        "light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15"
+      }
+    },
+    {
+      "apply": {
+        "model": "cydun:block/modular_logic_on",
+        "uvlock": true,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "light": "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15"
+      }
+    }
+  ]
 }

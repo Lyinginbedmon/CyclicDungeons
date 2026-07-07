@@ -38,11 +38,13 @@ import net.minecraft.client.data.Model;
 import net.minecraft.client.data.ModelIds;
 import net.minecraft.client.data.ModelSupplier;
 import net.minecraft.client.data.Models;
+import net.minecraft.client.data.MultipartBlockStateSupplier;
 import net.minecraft.client.data.TextureKey;
 import net.minecraft.client.data.TextureMap;
 import net.minecraft.client.data.TexturedModel;
 import net.minecraft.client.data.VariantSettings;
 import net.minecraft.client.data.VariantsBlockStateSupplier;
+import net.minecraft.client.data.When;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -588,25 +590,80 @@ public class CDModelProvider extends FabricModelProvider
 	
 	private static class ModularLogic
 	{
+		private static final TextureKey FACE	= TextureKey.of("face");
+		private static final Model MODEL_OFF = new Model(
+				Optional.of(prefix("block/template_modular_logic")),
+				Optional.of("_off"),
+				TextureKey.SIDE, FACE);
+		private static final Model MODEL_ON = new Model(
+				Optional.of(prefix("block/template_modular_logic")),
+				Optional.of("_on"),
+				TextureKey.SIDE, FACE);
+		
 		private static void register(Block block, BlockStateModelGenerator generator)
 		{
-			final Identifier top = TextureMap.getSubId(block, "_top");
 			TextureMap mapOff = new TextureMap()
-					.put(TextureKey.TOP, top)
-					.put(TextureKey.BOTTOM, top)
-					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_off"));
+					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_off"))
+					.put(FACE, TextureMap.getSubId(block, "_face_off"));
 			TextureMap mapOn = new TextureMap()
-					.put(TextureKey.TOP, top)
-					.put(TextureKey.BOTTOM, top)
-					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_on"));
+					.put(TextureKey.SIDE, TextureMap.getSubId(block, "_side_on"))
+					.put(FACE, TextureMap.getSubId(block, "_face_on"));
 			
-			final Identifier off = Models.CUBE_BOTTOM_TOP.upload(block, "_off", mapOff, generator.modelCollector);
-			final Identifier on = Models.CUBE_BOTTOM_TOP.upload(block, "_on", mapOn, generator.modelCollector);
+			final Identifier off = MODEL_OFF.upload(block, mapOff, generator.modelCollector);
+			final Identifier on = MODEL_ON.upload(block, mapOn, generator.modelCollector);
+			final Identifier card = TextureMap.getSubId(block, "_card");
 			
-			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(BlockStateVariantMap.create(ModularLogicBlock.LIGHT).register(l -> 
-				l > 0 ? 
-					BlockStateVariant.create().put(VariantSettings.MODEL, on) : 
-					BlockStateVariant.create().put(VariantSettings.MODEL, off))));
+			MultipartBlockStateSupplier map = MultipartBlockStateSupplier.create(block);
+			map.with(When.create()
+					.set(ModularLogicBlock.HAS_CARD, true)
+					.set(ModularLogicBlock.FACING, Direction.NORTH), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, card));
+			map.with(When.create()
+					.set(ModularLogicBlock.HAS_CARD, true)
+					.set(ModularLogicBlock.FACING, Direction.EAST), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, card).put(VariantSettings.Y, VariantSettings.Rotation.R90));
+			map.with(When.create()
+					.set(ModularLogicBlock.HAS_CARD, true)
+					.set(ModularLogicBlock.FACING, Direction.SOUTH), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, card).put(VariantSettings.Y, VariantSettings.Rotation.R180));
+			map.with(When.create()
+					.set(ModularLogicBlock.HAS_CARD, true)
+					.set(ModularLogicBlock.FACING, Direction.WEST), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, card).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 0)
+					.set(ModularLogicBlock.FACING, Direction.NORTH), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, off).put(VariantSettings.UVLOCK, true));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 0)
+					.set(ModularLogicBlock.FACING, Direction.EAST), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, off).put(VariantSettings.UVLOCK, true).put(VariantSettings.Y, VariantSettings.Rotation.R90));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 0)
+					.set(ModularLogicBlock.FACING, Direction.SOUTH), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, off).put(VariantSettings.UVLOCK, true).put(VariantSettings.Y, VariantSettings.Rotation.R180));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 0)
+					.set(ModularLogicBlock.FACING, Direction.WEST), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, off).put(VariantSettings.UVLOCK, true).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+					.set(ModularLogicBlock.FACING, Direction.NORTH),
+					BlockStateVariant.create().put(VariantSettings.MODEL, on).put(VariantSettings.UVLOCK, true));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+					.set(ModularLogicBlock.FACING, Direction.EAST), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, on).put(VariantSettings.UVLOCK, true).put(VariantSettings.Y, VariantSettings.Rotation.R90));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+					.set(ModularLogicBlock.FACING, Direction.SOUTH), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, on).put(VariantSettings.UVLOCK, true).put(VariantSettings.Y, VariantSettings.Rotation.R180));
+			map.with(When.create()
+					.set(ModularLogicBlock.LIGHT, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+					.set(ModularLogicBlock.FACING, Direction.WEST), 
+					BlockStateVariant.create().put(VariantSettings.MODEL, on).put(VariantSettings.UVLOCK, true).put(VariantSettings.Y, VariantSettings.Rotation.R270));
+			
+			generator.blockStateCollector.accept(map);
 		}
 	}
 }

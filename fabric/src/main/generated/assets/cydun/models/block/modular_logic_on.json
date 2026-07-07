@@ -1,6 +1,7 @@
 {
-  "parent": "cydun:block/modular_logic",
+  "parent": "cydun:block/template_modular_logic",
   "textures": {
+    "face": "cydun:block/modular_logic_face_on",
     "side": "cydun:block/modular_logic_side_on"
   }
 }

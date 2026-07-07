@@ -11,7 +11,11 @@ import com.lying.block.actors.FlameJetBlock;
 import com.lying.data.CDTags;
 import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.lying.grammar.content.trap.modular.Module;
+import com.lying.grammar.content.trap.modular.ModuleWiring;
+import com.lying.grammar.content.trap.modular.ModuleWiring.Complex.Output;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDLogicGates;
 import com.lying.utility.BlockPredicate;
 import com.lying.utility.BlockPredicate.BlockFlags;
 import com.lying.utility.BlockPredicate.ChildLogic;
@@ -92,25 +96,26 @@ public class DefaultTraps
 			.build(), BlockPos.ORIGIN)
 			);
 	public static final Supplier<TrapEntry> MODULE_TEST	= register(ID_MODULE_TEST, () -> ModularTrap.create()
-			.module(ModularTrap.Module.Builder
+			.module(Module.Builder
 					.of(prefix("chest"))
 					.positioned(BlockPredicate.Builder.create().addFlag(BlockFlags.AIR).child(new SubPredicate(BlockPos.ORIGIN.down(), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build())).build())
 					.blockState(Blocks.TRAPPED_CHEST.getDefaultState())
 					.markVital()
 					.build())
-			.module(ModularTrap.Module.Builder
+			.module(Module.Builder
 					.of(prefix("sensor"))
 					.positioned(BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build())
 					.relation(prefix("chest"), BlockPos.ORIGIN.up())
 					.blockState(CDBlocks.SENSOR_REDSTONE.get().getDefaultState())
 					.markVital()
 					.build())
-			.module(ModularTrap.Module.Builder
+			.module(Module.Builder
 					.of(prefix("jet"))
 					.positioned(BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build())
 					.blockState(CDBlocks.FLAME_JET.get().getDefaultState().with(FlameJetBlock.FACING, Direction.UP))
 					.relation(prefix("sensor"), BlockPos.ORIGIN.up())
-					.connection(prefix("sensor"))
+//					.wiring(ModuleWiring.Simple.of(List.of(prefix("sensor"))))
+					.wiring(ModuleWiring.Complex.create().attach(CDLogicGates.INPUT, Output.of(CDLogicGates.OUTPUT, prefix("sensor"))))
 					.markVital()
 					.build())
 			);

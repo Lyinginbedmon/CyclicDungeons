@@ -73,9 +73,18 @@
             "solid"
           ]
         },
-        "connections": [
-          "cydun:sensor"
-        ],
+        "connections": {
+          "data": [
+            {
+              "input": "in",
+              "output": {
+                "module": "cydun:sensor",
+                "port": "out"
+              }
+            }
+          ],
+          "style": "complex"
+        },
         "count": 1,
         "id": "cydun:jet",
         "relations": [
