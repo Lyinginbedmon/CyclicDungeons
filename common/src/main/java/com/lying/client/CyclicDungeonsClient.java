@@ -11,6 +11,7 @@ import com.lying.client.screen.circuit.CircuitScreen;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDScreenHandlerTypes;
+import com.lying.init.CDSoundEvents;
 import com.lying.network.ShowCircuitScreenPacket;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
@@ -27,6 +28,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.entity.ArrowEntityRenderer;
 import net.minecraft.client.render.entity.PolarBearEntityRenderer;
 import net.minecraft.client.render.entity.WolfEntityRenderer;
+import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.world.biome.GrassColors;
 
 public class CyclicDungeonsClient
@@ -86,6 +88,10 @@ public class CyclicDungeonsClient
 				((DungeonScreen)mc.currentScreen).getScreenHandler().setDisplayedGraph(value.graph());
 		});
 		
-		NetworkManager.registerReceiver(NetworkManager.s2c(), ShowCircuitScreenPacket.PACKET_TYPE, ShowCircuitScreenPacket.PACKET_CODEC, (value, context) -> mc.setScreen(new CircuitScreen()));
+		NetworkManager.registerReceiver(NetworkManager.s2c(), ShowCircuitScreenPacket.PACKET_TYPE, ShowCircuitScreenPacket.PACKET_CODEC, (value, context) -> 
+		{
+			mc.getSoundManager().play(PositionedSoundInstance.master(CDSoundEvents.LOGIC_SCREEN_OPEN, 1.0F));
+			mc.setScreen(new CircuitScreen());
+		});
 	}
 }

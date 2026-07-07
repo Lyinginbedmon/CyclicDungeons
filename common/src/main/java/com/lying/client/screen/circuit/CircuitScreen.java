@@ -26,6 +26,7 @@ import com.lying.init.CDItems;
 import com.lying.init.CDLogicGates;
 import com.lying.init.CDLogicGates.LogicCategory;
 import com.lying.init.CDLogicGates.LogicGate;
+import com.lying.init.CDSoundEvents;
 import com.lying.item.component.CircuitComponent;
 import com.lying.network.BuildCircuitPacket;
 import com.lying.reference.Reference;
@@ -39,6 +40,7 @@ import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.sound.SoundEvent;
@@ -66,7 +68,6 @@ public class CircuitScreen extends Screen
 	private Map<String, CircuitWire> circuitWires = new HashMap<>();
 	private int wireIndex = 0;
 	
-	// FIXME Implement naming gates
 	private static final List<ClickHandlerBuilder> HANDLERS = Lists.newArrayList(
 			ConnectPortHandler::tryCreateFrom,
 			ConnectWireHandler::tryCreateFrom,
@@ -384,7 +385,7 @@ public class CircuitScreen extends Screen
 			Optional<CircuitWire> hoveredWire = getWireAt(mX, mY);
 			if(hoveredWire.isPresent())
 			{
-				playSound(SoundEvents.BLOCK_TRIPWIRE_DETACH);
+				playSound(CDSoundEvents.WIRE_DETACH.get());
 				removeWire(hoveredWire.get());
 				return true;
 			}
@@ -453,6 +454,7 @@ public class CircuitScreen extends Screen
 			module.removeConnections(name);
 		}
 		circuitWires.remove(wire.name());
+		mc.getSoundManager().play(PositionedSoundInstance.master(CDSoundEvents.WIRE_DETACH, 1.0F));
 	}
 	
 	public static Vector2i microToGrid(Vector2i vec)
@@ -487,7 +489,7 @@ public class CircuitScreen extends Screen
 	
 	public void playSound(SoundEvent sound)
 	{
-		mc.player.playSound(sound);
+		mc.getSoundManager().play(PositionedSoundInstance.master(sound, 1.0F));
 	}
 	
 	@FunctionalInterface

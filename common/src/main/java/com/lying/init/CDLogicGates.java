@@ -30,7 +30,6 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.random.Random;
 
@@ -155,6 +154,7 @@ public class CDLogicGates
 					Random.create().nextBoolean() : 
 					pOut.get(OUTPUT)))
 			.category(LogicCategory.MATH)
+			.icon(192, 0)
 			.addInput(INPUT).addOutput(OUTPUT)
 			.build(s));
 	
@@ -196,6 +196,7 @@ public class CDLogicGates
 					.put(CARRY, bit0 && bit1);
 			})
 			.category(LogicCategory.MATH)
+			.icon(192, 0)
 			.addInput(BIT_1, BIT_2)
 			.addOutput(OUTPUT, CARRY)
 			.build(s));
@@ -236,6 +237,7 @@ public class CDLogicGates
 				return pOut;
 			})
 			.category(LogicCategory.MATH)
+			.icon(192, 0)
 			.addInput(INC, RESET).addOutput(BIT_1, BIT_2, BIT_4, BIT_8)
 			.build(s));
 	
@@ -246,7 +248,7 @@ public class CDLogicGates
 				if(isRisingEdge(INPUT, ports, pPorts))
 				{
 					ServerWorld world = (ServerWorld)tile.getWorld();
-					world.playSound(null, tile.getPos(), SoundEvents.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.BLOCKS);
+					world.playSound(null, tile.getPos(), CDSoundEvents.LOGIC_BLOCK_BEEP.get(), SoundCategory.BLOCKS);
 				}
 				return LogicResult.create();
 			})

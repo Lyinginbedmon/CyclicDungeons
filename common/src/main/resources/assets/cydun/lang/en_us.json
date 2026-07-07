@@ -119,5 +119,9 @@
 	// Keybinds
 	// Sounds
 	"sound.cydun.wiring_gun": "Wiring Gun fires",
-	"sound.cydun.actuated_spawner_spawn": "Actuated Spawner spawns something..."
+	"sound.cydun.actuated_spawner_spawn": "Actuated Spawner spawns something...",
+	"sound.cydun.logic_screen_open": "Logic circuit screen opened",
+	"sound.cydun.logic_block_beep": "Modular Logic Block beeps",
+	"sound.cydun.logic_block_give": "Logic Punch Card inserted",
+	"sound.cydun.logic_block_take": "Logic Punch Card retrieved"
 }

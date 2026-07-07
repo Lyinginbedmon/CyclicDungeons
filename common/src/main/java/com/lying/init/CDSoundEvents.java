@@ -20,8 +20,14 @@ public class CDSoundEvents
 	public static final DeferredRegister<SoundEvent> SOUND_EVENTS 	= DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.SOUND_EVENT);
 	private static int tally;
 	
-	public static final RegistrySupplier<SoundEvent> WIRING_GUN		= register(prefix("wiring_gun"));
-	public static final RegistrySupplier<SoundEvent> SPAWNER_SPAWN	= register(prefix("actuated_spawner_spawn"));
+	public static final RegistrySupplier<SoundEvent> WIRING_GUN			= register(prefix("wiring_gun"));
+	public static final RegistrySupplier<SoundEvent> SPAWNER_SPAWN		= register(prefix("actuated_spawner_spawn"));
+	public static final RegistrySupplier<SoundEvent> LOGIC_SCREEN_OPEN	= register(prefix("logic_screen_open"));
+	public static final RegistrySupplier<SoundEvent> LOGIC_BLOCK_BEEP	= register(prefix("logic_block_beep"));
+	public static final RegistrySupplier<SoundEvent> LOGIC_BLOCK_GIVE	= register(prefix("logic_block_give"));
+	public static final RegistrySupplier<SoundEvent> LOGIC_BLOCK_TAKE	= register(prefix("logic_block_take"));
+	public static final RegistrySupplier<SoundEvent> WIRE_ATTACH		= register(prefix("wire_attach"));	// FIXME Use these sounds during wiring
+	public static final RegistrySupplier<SoundEvent> WIRE_DETACH		= register(prefix("wire_detach"));
 	
 	private static RegistrySupplier<SoundEvent> register(Identifier name)
 	{

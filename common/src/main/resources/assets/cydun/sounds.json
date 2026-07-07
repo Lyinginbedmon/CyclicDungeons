@@ -15,5 +15,44 @@
 			"cydun:actuated_spawner_spawn_05",
 			"cydun:actuated_spawner_spawn_06"
 		]
+	},
+	"logic_screen_open": {
+		"subtitle": "sound.cydun.logic_screen_open",
+		"sounds": [
+			"cydun:logic_screen_open"
+		]
+	},
+	"logic_block_beep": {
+		"subtitle": "sound.cydun.logic_block_beep",
+		"sounds": [
+			"cydun:logic_block_beep"
+		]
+	},
+	"logic_block_give": {
+		"subtitle": "sound.cydun.logic_block_give",
+		"sounds": [
+			"cydun:logic_block_give_01",
+			"cydun:logic_block_give_02",
+			"cydun:logic_block_give_03",
+			"cydun:logic_block_give_04"
+		]
+	},
+	"logic_block_take": {
+		"subtitle": "sound.cydun.logic_block_take",
+		"sounds": [
+			
+		]
+	},
+	"wire_attach": {
+		"subtitle": "sound.cydun.wire_attach",
+		"sounds": [
+			"cydun:wiring_gun"
+		]
+	},
+	"wire_detach": {
+		"subtitle": "sound.cydun.wire_detach",
+		"sounds": [
+			"cydun:wiring_gun"
+		]
 	}
 }

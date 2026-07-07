@@ -8,6 +8,7 @@ import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.logic.PortEntry;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDItems;
+import com.lying.init.CDSoundEvents;
 import com.lying.item.WiringGunItem.WireMode;
 import com.lying.network.ShowCircuitScreenPacket;
 
@@ -20,7 +21,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.IntProperty;
@@ -64,7 +64,7 @@ public class ModularLogicBlock extends TrapLogicBlock
 			if(!player.isCreative())
 				stack.decrement(1);
 			
-			world.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.BLOCKS);
+			world.playSound(null, pos, CDSoundEvents.LOGIC_BLOCK_GIVE.get(), SoundCategory.BLOCKS);
 			return ActionResult.SUCCESS_SERVER;
 		}
 		
@@ -78,6 +78,7 @@ public class ModularLogicBlock extends TrapLogicBlock
 			if(!tile.getCard().isEmpty())
 			{
 				player.giveItemStack(tile.takeCard());
+				world.playSound(null, pos, CDSoundEvents.LOGIC_BLOCK_TAKE.get(), SoundCategory.BLOCKS);
 				return ActionResult.SUCCESS;
 			}
 			else if(player.isCreative())

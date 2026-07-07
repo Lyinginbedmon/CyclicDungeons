@@ -28,6 +28,12 @@ public class PlaceGateHandler extends AbstractClickHandler
 	
 	public boolean handleClick(boolean isHoldingShift, int microX, int mouseY, Vector2i gridPos, Map<Vector2i, CircuitModule> circuit)
 	{
+		if(circuit.containsKey(gridPos))
+		{
+			parent.clearHandler();
+			return true;
+		}
+		
 		playSound(SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM);
 		parent.put(gridPos, gate);
 		if(!isHoldingShift)
@@ -37,9 +43,11 @@ public class PlaceGateHandler extends AbstractClickHandler
 	
 	public void renderBackground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit)
 	{
-		Vector2i gridPos = CircuitScreen.gridToMicro(CircuitScreen.microToGrid(new Vector2i(microX, microY)));
+		Vector2i gridPos = CircuitScreen.microToGrid(new Vector2i(microX, microY));
 		if(circuit.containsKey(gridPos))
 			return;
+		
+		gridPos = CircuitScreen.gridToMicro(gridPos);
 		final Vector2i tex = gate.texCoords();
 		context.drawTexture(
 				RenderLayer::getGuiTextured, 
@@ -57,11 +65,12 @@ public class PlaceGateHandler extends AbstractClickHandler
 	
 	public void renderForeground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit)
 	{
-		Text name = gate.displayName();
 		Vector2i gridPos = CircuitScreen.microToGrid(new Vector2i(microX, microY));
 		if(circuit.containsKey(gridPos))
 			return;
+		
 		gridPos = CircuitScreen.gridToMicro(gridPos);
+		final Text name = gate.displayName();
 		context.drawText(textRenderer, name, gridPos.x() - (textRenderer.getWidth(name) / 2), gridPos.y() - (textRenderer.fontHeight / 2), -1, true);
 	}
 }

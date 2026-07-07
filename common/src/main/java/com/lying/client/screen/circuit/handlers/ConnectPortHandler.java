@@ -10,9 +10,9 @@ import com.lying.client.screen.circuit.CircuitModule;
 import com.lying.client.screen.circuit.CircuitPort;
 import com.lying.client.screen.circuit.CircuitScreen;
 import com.lying.client.screen.circuit.CircuitWire;
+import com.lying.init.CDSoundEvents;
 
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec2f;
 
 public class ConnectPortHandler extends AbstractClickHandler
@@ -35,7 +35,7 @@ public class ConnectPortHandler extends AbstractClickHandler
 		if(closestPort.isEmpty())
 			return Optional.empty();
 		
-		playSound(SoundEvents.BLOCK_TRIPWIRE_ATTACH);
+		playSound(CDSoundEvents.WIRE_ATTACH.get());
 		return Optional.of(new ConnectPortHandler(closestPort.get(), screen));
 	}
 	
@@ -57,7 +57,6 @@ public class ConnectPortHandler extends AbstractClickHandler
 			circuit.get(gridPos).addInput(input.port(), name);
 			
 			parent.addWire(new CircuitWire(name, output, input));
-			playSound(SoundEvents.BLOCK_TRIPWIRE_ATTACH);
 			
 			result = true;
 		}
@@ -78,7 +77,7 @@ public class ConnectPortHandler extends AbstractClickHandler
 		
 		if(result)
 		{
-			playSound(SoundEvents.BLOCK_TRIPWIRE_ATTACH);
+			playSound(CDSoundEvents.WIRE_ATTACH.get());
 			if(!isHoldingShift)
 				parent.clearHandler();
 		}

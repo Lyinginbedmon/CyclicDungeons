@@ -12,6 +12,7 @@ import com.lying.client.screen.circuit.CircuitScreen;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvent;
 
 public abstract class AbstractClickHandler implements ClickHandler
@@ -44,6 +45,6 @@ public abstract class AbstractClickHandler implements ClickHandler
 	
 	protected static void playSound(SoundEvent event)
 	{
-		mc.player.playSound(event);
+		mc.getSoundManager().play(PositionedSoundInstance.master(event, 1.0F));
 	}
 }
