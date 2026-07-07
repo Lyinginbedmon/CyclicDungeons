@@ -68,14 +68,19 @@ public class RenameGateHandler extends AbstractClickHandler
 	
 	public void renderBackground(DrawContext context, int microX, int microY, float delta, Map<Vector2i, CircuitModule> circuit)
 	{
+		CircuitModule module = circuit.getOrDefault(target, null);
+		if(module == null)
+			return;
+		
+		Vector2i tex = module.texCoords();
 		Vector2i point = CircuitScreen.gridToMicro(target);
 		context.drawTexture(
 				RenderLayer::getGuiTextured, 
 				TEXTURE, 
 				point.x() - 24, 
 				point.y() - 24, 
-				0F, 
-				48F, 
+				(float)tex.x(), 
+				(float)tex.y() + 48F, 
 				48, 
 				48, 
 				256, 

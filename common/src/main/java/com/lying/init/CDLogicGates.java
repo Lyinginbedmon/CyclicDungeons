@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.joml.Vector2i;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -250,6 +251,7 @@ public class CDLogicGates
 				return LogicResult.create();
 			})
 			.category(LogicCategory.UTILITY)
+			.icon(144, 0)
 			.addInput(INPUT)
 			.build(s));
 	/** Controls the light emission value of the logic block with a 4-bit value */
@@ -267,6 +269,7 @@ public class CDLogicGates
 				return LogicResult.create();
 			})
 			.category(LogicCategory.UTILITY)
+			.icon(144, 0)
 			.addInput(BIT_1, BIT_2, BIT_4, BIT_8)
 			.build(s));
 	
@@ -276,6 +279,7 @@ public class CDLogicGates
 				OUTPUT, 
 				module.toPort().isPresent() && tile.getInput(module.toPort().get())))
 			.category(LogicCategory.IO)
+			.icon(48, 0)
 			.addOutput(OUTPUT)
 			.build(s));
 	/** When named, used by the modular logic system to interact with the trap system */
@@ -284,6 +288,7 @@ public class CDLogicGates
 				OUTPUT, 
 				ports.get(INPUT)))
 			.category(LogicCategory.IO)
+			.icon(96, 0)
 			.addInput(INPUT).addOutput(OUTPUT)
 			.build(s));
 	
@@ -342,12 +347,14 @@ public class CDLogicGates
 		private final String registryName;
 		private final GateLogic logic;
 		private final LogicCategory category;
+		private final Vector2i icon;
 		
-		protected LogicGate(String nameIn, GateLogic logicIn, LogicCategory categoryIn)
+		protected LogicGate(String nameIn, GateLogic logicIn, LogicCategory categoryIn, Vector2i iconIn)
 		{
 			registryName = nameIn;
 			logic = logicIn;
 			category = categoryIn;
+			icon = iconIn;
 		}
 		
 		public final String registryName() { return registryName; }
@@ -365,6 +372,8 @@ public class CDLogicGates
 		
 		public abstract List<Port> outputPorts(LogicModule module);
 		
+		public Vector2i texCoords() { return icon; }
+		
 		public LogicModule create() { return LogicModule.of(this); }
 		
 		public static class Builder
@@ -374,6 +383,7 @@ public class CDLogicGates
 			private List<Port> inputs = Lists.newArrayList(), outputs = Lists.newArrayList();
 			private Optional<Function<LogicModule,List<Port>>> inputCollector = Optional.empty();
 			private Optional<Function<LogicModule,List<Port>>> outputCollector = Optional.empty();
+			private Vector2i icon = new Vector2i(0, 0);
 			
 			protected Builder(GateLogic logicIn)
 			{
@@ -419,9 +429,15 @@ public class CDLogicGates
 				return this;
 			}
 			
+			public Builder icon(int texX, int texY)
+			{
+				icon = new Vector2i(texX, texY);
+				return this;
+			}
+			
 			public LogicGate build(String registryName)
 			{
-				return new LogicGate(registryName, logic, category)
+				return new LogicGate(registryName, logic, category, icon)
 						{
 							public List<Port> inputPorts(LogicModule module) { return inputCollector.isPresent() ? inputCollector.get().apply(module) : inputs; }
 							public List<Port> outputPorts(LogicModule module) { return outputCollector.isPresent() ? outputCollector.get().apply(module) : outputs; }

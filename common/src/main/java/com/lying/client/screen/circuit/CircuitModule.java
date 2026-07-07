@@ -229,6 +229,8 @@ public class CircuitModule
 			return Optional.empty();
 	}
 	
+	public Vector2i texCoords() { return module.texCoords(); }
+	
 	public void renderBackground(DrawContext context)
 	{
 		final int x = microPosition.x();
@@ -241,18 +243,30 @@ public class CircuitModule
 			inputPortPositions.values().forEach(vec -> 
 			{
 				NodeRenderUtils.renderStraightLine(Vec2f.ZERO, new Vec2f(vec.x(), vec.y()), 2, context, INPUT_COLOUR);
-				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 48F, 0F, 20, 20, 256, 256, INPUT_COLOUR);
+				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 0F, 96F, 20, 20, 256, 256, INPUT_COLOUR);
 			});
 			
 			// Render outputs, if any
 			outputPortPositions.values().forEach(vec -> 
 			{
 				NodeRenderUtils.renderStraightLine(Vec2f.ZERO, new Vec2f(vec.x(), vec.y()), 2, context, OUTPUT_COLOUR);
-				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 48F, 0F, 20, 20, 256, 256, OUTPUT_COLOUR);
+				context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, vec.x() - 10, vec.y() - 10, 0F, 96F, 20, 20, 256, 256, OUTPUT_COLOUR);
 			});
 		matrices.pop();
 		
-		context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, x - 24, y - 24, 0F, 0F, 48, 48, 256, 256, color.isPresent() ? color.get().getEntityColor() : DEFAULT_COLOUR);
+		Vector2i tex = module.texCoords();
+		context.drawTexture(
+				RenderLayer::getGuiTextured, 
+				TEXTURE, 
+				x - 24, 
+				y - 24, 
+				(float)tex.x(), 
+				(float)tex.y(), 
+				48, 
+				48, 
+				256, 
+				256, 
+				color.isPresent() ? color.get().getEntityColor() : DEFAULT_COLOUR);
 	}
 	
 	public void renderForeground(DrawContext context, TextRenderer textRenderer)

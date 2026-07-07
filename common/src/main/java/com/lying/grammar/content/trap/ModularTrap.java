@@ -168,6 +168,7 @@ public class ModularTrap extends Trap
 			BlockPredicate predicate, 
 			Optional<List<Relation>> relations, 
 			BlockState state, 
+			// FIXME Rework to specify ports
 			Optional<List<Identifier>> inputs,
 			Optional<Boolean> isVital)
 	{
@@ -248,7 +249,12 @@ public class ModularTrap extends Trap
 			return true;
 		}
 		
-		public static record Relation(Identifier name, Optional<BlockPos> offset, Optional<Integer> minDist, Optional<Integer> maxDist, Optional<Direction> side)
+		public static record Relation(
+				Identifier name, 
+				Optional<BlockPos> offset, 
+				Optional<Integer> minDist, 
+				Optional<Integer> maxDist, 
+				Optional<Direction> side)
 		{
 			public static final Codec<Relation> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 					Identifier.CODEC.fieldOf("name").forGetter(Relation::name),

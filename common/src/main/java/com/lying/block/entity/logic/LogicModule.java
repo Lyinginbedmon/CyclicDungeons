@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
@@ -110,6 +111,8 @@ public class LogicModule
 	
 	@Nullable
 	public Optional<String> customName() { return name; }
+	
+	public Vector2i texCoords() { return handler.texCoords(); }
 	
 	/** Returns an Optional holding the port equivalent of this module, if its name can be a valid port name */
 	public Optional<Port> toPort()
