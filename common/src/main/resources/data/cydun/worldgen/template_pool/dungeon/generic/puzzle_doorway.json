@@ -1,0 +1,24 @@
+{
+	"name": "cydun:dungeon/generic/puzzle_doorway",
+	"elements": [
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/puzzle_doorway/generic/door_01",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		},
+		{
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "cydun:dungeon/puzzle_doorway/generic/door_02",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			},
+			"weight": 1
+		}
+	],
+	"fallback": "minecraft:empty"
+}

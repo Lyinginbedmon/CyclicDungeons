@@ -1,5 +1,6 @@
 package com.lying.block.entity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,11 +43,11 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 	public static final Logger LOGGER = CyclicDungeons.LOGGER;
 	public static final long UPDATE_FREQUENCY = Reference.Values.TICKS_PER_SECOND / 2;
 	private Optional<ItemStack> stack = Optional.empty();
-	private List<LogicModule> modules = Lists.newArrayList();
+	private List<LogicModule> modules = new ArrayList<>();
 	private Map<String, LogicWire> wires = new HashMap<>();
 	private int ticks = 0;
 	
-	private List<Port> inputModules = Lists.newArrayList();
+	private List<Port> inputModules = new ArrayList<>();
 	private Map<Port, LogicModule> outputModules = new HashMap<>();
 	private Map<Port, Boolean> outputMap = new HashMap<>();
 	
@@ -136,6 +137,7 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 		modules.clear();
 		modules.addAll(circuit);
 		logPorts();
+		evaluateGateDepths();
 		updateListeners();
 		
 		if(hasWorld())
@@ -146,6 +148,42 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 			
 			world.setBlockState(getPos(), state, 3);
 		}
+	}
+	
+	public List<LogicModule> getCircuit() { return modules; }
+	
+	protected void evaluateGateDepths()
+	{
+		if(modules.isEmpty())
+			return;
+		
+		// Flash module memory, assign zeroth layer
+		List<String> evaluatedWires = new ArrayList<>();
+		modules.forEach(m -> 
+		{
+			m.circuitDepth = m.hasNoInputs() ? 0 : -1;
+			if(m.circuitDepth == 0)
+				evaluatedWires.addAll(m.outputPortSet().wires());
+		});
+		
+		int depth = 0;
+		while(modules.stream().anyMatch(m -> m.circuitDepth < 0))
+		{
+			depth++;
+			for(LogicModule m : modules.stream()
+				.filter(m -> m.circuitDepth < 0)
+				.filter(m -> evaluatedWires.containsAll(m.inputPortSet().wires())).toList())
+			{
+				m.circuitDepth = depth;
+				evaluatedWires.addAll(m.outputPortSet().wires());
+			}
+		}
+		
+		// Sort module list by circuit depth
+		modules.sort((a,b) -> 
+			a.circuitDepth < b.circuitDepth ? -1 : 
+			a.circuitDepth > b.circuitDepth ? 1 : 
+			0);
 	}
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
@@ -160,7 +198,15 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 	
 	public static <T extends BlockEntity> void tickServer(World world, BlockPos pos, BlockState state, ModularLogicBlockEntity tile)
 	{
-		if(tile.ticks++ % UPDATE_FREQUENCY == 0)
+		if(tile.modules.isEmpty() && tile.stack.isPresent())
+		{
+			CircuitComponent comp = tile.stack.get().get(CDDataComponentTypes.CIRCUIT.get());
+			if(comp.isEmpty())
+				return;
+			else
+				tile.setCircuit(comp.circuit());
+		}
+		else if(tile.ticks++ % UPDATE_FREQUENCY == 0)
 			tile.respondToPorts();
 	}
 	
@@ -188,23 +234,27 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 			return;
 		
 		// Make sure all wires exist within the wire map
-		final Consumer<String> wireRegistry = w -> 
+		final Consumer<String> wireRegistration = w -> 
 		{
 			if(!wires.containsKey(w))
 			{
 				LogicWire wire = new LogicWire(w);
-				// Update the wire on instantiation to ensure initial state is accurate
-				wire.update(modules);
 				wires.put(w, wire);
 			}
 		};
-		modules.forEach(m -> m.registerWires(wireRegistry));
+		modules.forEach(m -> m.registerWires(wireRegistration));
 		
-		// Update all modules
-		modules.forEach(m -> m.update(wires, this));
-		
-		// Update all wires
-		wires.values().forEach(w -> w.update(modules));
+		int currentDepth = 0;
+		for(LogicModule m : modules)
+		{
+			// Each time the circuit depth changes, update all wires
+			if(m.circuitDepth != currentDepth)
+			{
+				wires.values().forEach(w -> w.update(modules));
+				currentDepth = m.circuitDepth;
+			}
+			m.update(wires, this);
+		}
 		
 		// Update output port status map
 		outputMap.clear();

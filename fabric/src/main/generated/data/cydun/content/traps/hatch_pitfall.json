@@ -14,11 +14,7 @@
               "solid"
             ]
           },
-          "offset": [
-            0,
-            -1,
-            0
-          ]
+          "offset": "0,-1,0"
         },
         {
           "condition": {
@@ -27,50 +23,30 @@
                 "condition": {
                   "block_tag": "#cydun:trap_hatch"
                 },
-                "offset": [
-                  0,
-                  0,
-                  -1
-                ]
+                "offset": "0,0,-1"
               },
               {
                 "condition": {
                   "block_tag": "#cydun:trap_hatch"
                 },
-                "offset": [
-                  1,
-                  0,
-                  0
-                ]
+                "offset": "1,0,0"
               },
               {
                 "condition": {
                   "block_tag": "#cydun:trap_hatch"
                 },
-                "offset": [
-                  0,
-                  0,
-                  1
-                ]
+                "offset": "0,0,1"
               },
               {
                 "condition": {
                   "block_tag": "#cydun:trap_hatch"
                 },
-                "offset": [
-                  -1,
-                  0,
-                  0
-                ]
+                "offset": "-1,0,0"
               }
             ],
             "children_logic": "or"
           },
-          "offset": [
-            0,
-            -1,
-            0
-          ]
+          "offset": "0,-1,0"
         }
       ],
       "flags": [

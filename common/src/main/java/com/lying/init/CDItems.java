@@ -97,6 +97,11 @@ public class CDItems
 	public static final RegistrySupplier<Item> DART_TRAP				= registerRareBlock("dart_trap", CDBlocks.DART_TRAP, Rarity.RARE);
 	public static final RegistrySupplier<Item> SPIKE_TRAP				= registerRareBlock("spike_trap", CDBlocks.SPIKE_TRAP, Rarity.RARE);
 	public static final RegistrySupplier<Item> SPAWNER					= registerRareBlock("spawner", CDBlocks.SPAWNER, Rarity.RARE);
+	public static final RegistrySupplier<Item> PUZZLE_TRIGGER			= registerRareBlock("puzzle_trigger", CDBlocks.PUZZLE_TRIGGER, Rarity.RARE);
+	public static final RegistrySupplier<Item> PUZZLE_RUBBLE			= registerRareBlock("puzzle_rubble", CDBlocks.PUZZLE_RUBBLE, Rarity.RARE);
+	public static final RegistrySupplier<Item> PUZZLE_PLACER			= registerRareBlock("puzzle_placer", CDBlocks.PUZZLE_PLACER, Rarity.RARE);
+	public static final RegistrySupplier<Item> PUZZLE_DOOR				= registerRareBlock("puzzle_door", CDBlocks.PUZZLE_DOOR, Rarity.RARE);
+	public static final RegistrySupplier<Item> PUZZLE_LOCKED_DOOR		= registerRareBlock("locked_puzzle_door", CDBlocks.PUZZLE_LOCKED_DOOR, Rarity.RARE);
 	
 	public static final RegistrySupplier<Item> CYCLICIUM_BLOCK	= registerBlock("cyclicium_block", CDBlocks.CYLICIUM_BLOCK);
 	

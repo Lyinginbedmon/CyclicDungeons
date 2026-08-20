@@ -176,6 +176,9 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		buildExteriorShell(position, world);
 		
+		// Enable rooms to select their contents, as this may affect passageway generation
+		this.forEach(room -> room.metadata().type().prePassageProcessing(room, world, rand));
+		
 		buildExteriorPaths(position, world, rand);
 		
 		buildRooms(position, world, rand);

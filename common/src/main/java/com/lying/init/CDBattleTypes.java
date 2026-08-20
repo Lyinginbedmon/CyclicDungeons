@@ -7,9 +7,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.lying.CyclicDungeons;
-import com.lying.grammar.content.battle.Battle;
-import com.lying.grammar.content.battle.CrowdBattle;
-import com.lying.grammar.content.battle.SquadBattle;
+import com.lying.grammar.content.entities.Battle;
+import com.lying.grammar.content.entities.CrowdBattle;
+import com.lying.grammar.content.entities.SquadBattle;
 
 import net.minecraft.util.Identifier;
 

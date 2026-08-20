@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
+import com.lying.block.entity.IRoomTaggedBlock;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
@@ -28,8 +29,10 @@ import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.RotationSupplier;
 import com.lying.worldgen.tile.Tile;
 
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -342,7 +345,7 @@ public class BlueprintPassage
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(asTiles(), PASSAGE_HEIGHT);
 		
 		// Pre-seed doorway from parent room before generating
-		final GraphTileGrid parent = parent().tileGrid();
+		final GraphTileGrid parentGrid = parent().tileGrid();
 		GridTile doorGrid = getInitialTile();
 		if(doorGrid == null)
 			return;
@@ -367,17 +370,28 @@ public class BlueprintPassage
 		map.finalise(theme, rand);
 		
 		// Ensure doorway from parent room has correct orientation
+		final Identifier doorTileID = parent.getDoorTile();
 		for(Direction face : Direction.Type.HORIZONTAL)
-			if(parent.contains(doorGrid.offset(face)))
+			if(parentGrid.contains(doorGrid.offset(face)))
 			{
 				BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
-				map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY, CDTiles.AIR), theme, rotation));
+				map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(doorTileID, CDTiles.AIR), theme, rotation, Optional.of(parent.uuid())));
 				
 				if(map.contains(doorPos.up()))
-					map.finalise(new TileInstance(doorPos.up(), CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE), theme, rotation));
+					map.finalise(TileInstance.of(doorPos.up(), CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE), theme, rotation));
 				break;
 			}
 		
 		map.generate(origin, world);
+		
+		// FIXME Tag room-tagged blocks in doorway tiles with corresponding room ID
+		BlockPos doorStartGlobal = doorPos.multiply(TILE_SIZE).add(origin);
+		BlockPos doorEndGlobal = doorStartGlobal.add(TILE_SIZE, TILE_SIZE, TILE_SIZE);
+		BlockPos.Mutable.iterate(doorStartGlobal, doorEndGlobal).forEach(p -> 
+		{
+			BlockEntity e = world.getBlockEntity(p);
+			if(e != null && e instanceof IRoomTaggedBlock)
+				((IRoomTaggedBlock)e).setRoom(parent.uuid());
+		});
 	}
 }

@@ -1,5 +1,6 @@
 package com.lying.utility;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
@@ -28,6 +30,7 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
 public class CDUtils
@@ -218,5 +221,56 @@ public class CDUtils
 				val -= d;
 			}
 		return result;
+	}
+	
+	/** Stores a Vec3i as a String, reducing datapack file length and improving human readability */
+	public static final Codec<Vec3i> VEC3_STR_CODEC	= Codec.STRING.comapFlatMap(
+			s -> 
+			{
+				Vec3i result = stringToVec3(s);
+				return result == null ? DataResult.error(() -> "Failed to parse block position from string: "+s) : DataResult.success(result);
+			}, 
+			CDUtils::vec3ToString);
+	/** Stores a BlockPos as a String, reducing datapack file length and improving human readability */
+	public static final Codec<BlockPos> POS_STR_CODEC	= VEC3_STR_CODEC.xmap(v -> new BlockPos(v), p -> (Vec3i)p);
+	
+	/** Converts a BlockPos to a JsonString */
+	public static String vec3ToString(Vec3i pos)
+	{
+		return intArrayToString(pos.getX(), pos.getY(), pos.getZ());
+	}
+	
+	public static String intArrayToString(int... values)
+	{
+		List<String> s = new ArrayList<>();
+		for(int v : values)
+			s.add(String.valueOf(v));
+		return String.join(",", s.toArray(new String[0]));
+	}
+	
+	@Nullable
+	public static Vec3i stringToVec3(String str)
+	{
+		List<Integer> values = new ArrayList<>();
+		for(String v : str.split("[,]", -1))
+		{
+			try
+			{
+				int n = Integer.valueOf(v);
+				values.add(n);
+			}
+			catch(NumberFormatException e) { }
+		}
+		switch(values.size())
+		{
+			case 1:
+				return new Vec3i(0, values.getFirst(), 0);
+			case 2:
+				return new Vec3i(values.getFirst(), 0, values.getLast());
+			case 3:
+				return new Vec3i(values.get(0), values.get(1), values.get(2));
+			default:
+				return null;
+		}
 	}
 }

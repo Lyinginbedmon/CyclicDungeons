@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import com.lying.CyclicDungeons;
 import com.lying.block.actors.entity.DartTrapBlockEntity;
 import com.lying.block.actors.entity.FlameJetBlockEntity;
+import com.lying.block.actors.entity.PuzzleTriggerBlockEntity;
 import com.lying.block.actors.entity.SpikeTrapBlockEntity;
 import com.lying.block.actors.entity.SwingingBladeBlockEntity;
 import com.lying.block.actors.entity.TrapActorBlockEntity;
@@ -16,6 +17,10 @@ import com.lying.block.actors.entity.TrapSpawnerBlockEntity;
 import com.lying.block.entity.EncounterSpawnerBlockEntity;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
+import com.lying.block.puzzle.entity.PuzzleBreakBlockEntity;
+import com.lying.block.puzzle.entity.PuzzleDoorBlockEntity;
+import com.lying.block.puzzle.entity.PuzzleLockedDoorBlockEntity;
+import com.lying.block.puzzle.entity.PuzzlePlaceBlockEntity;
 import com.lying.block.sensors.entity.ProximitySensorBlockEntity;
 import com.lying.block.sensors.entity.SightSensorBlockEntity;
 import com.lying.block.sensors.entity.SoundSensorBlockEntity;
@@ -56,6 +61,11 @@ public class CDBlockEntityTypes
 	public static final RegistrySupplier<BlockEntityType<SpikeTrapBlockEntity>> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlockEntity::new, CDBlocks.SPIKE_TRAP);
 	public static final RegistrySupplier<BlockEntityType<TrapSpawnerBlockEntity>> SPAWNER			= register("spawner", TrapSpawnerBlockEntity::new, CDBlocks.SPAWNER);
 	public static final RegistrySupplier<BlockEntityType<EncounterSpawnerBlockEntity>> ENCOUNTER	= register("encounter", EncounterSpawnerBlockEntity::new, CDBlocks.ENCOUNTER);
+	public static final RegistrySupplier<BlockEntityType<PuzzleTriggerBlockEntity>> PUZZLE_TRIGGER	= register("puzzle_trigger", PuzzleTriggerBlockEntity::new, CDBlocks.PUZZLE_TRIGGER);
+	public static final RegistrySupplier<BlockEntityType<PuzzleBreakBlockEntity>> PUZZLE_BREAK		= register("puzzle_break", PuzzleBreakBlockEntity::new, CDBlocks.PUZZLE_RUBBLE);
+	public static final RegistrySupplier<BlockEntityType<PuzzleBreakBlockEntity>> PUZZLE_PLACE		= register("puzzle_placer", PuzzlePlaceBlockEntity::new, CDBlocks.PUZZLE_PLACER);
+	public static final RegistrySupplier<BlockEntityType<PuzzleDoorBlockEntity>> PUZZLE_DOOR		= register("puzzle_door", PuzzleDoorBlockEntity::new, CDBlocks.PUZZLE_DOOR);
+	public static final RegistrySupplier<BlockEntityType<PuzzleLockedDoorBlockEntity>> PUZZLE_LOCKED_DOOR		= register("puzzle_locked_door", PuzzleLockedDoorBlockEntity::new, CDBlocks.PUZZLE_LOCKED_DOOR);
 	
 	@SafeVarargs
 	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, RegistrySupplier<Block>... blocksIn)

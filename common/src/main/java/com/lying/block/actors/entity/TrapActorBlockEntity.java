@@ -1,7 +1,5 @@
 package com.lying.block.actors.entity;
 
-import java.util.List;
-
 import com.lying.block.ITrapActor;
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
@@ -29,8 +27,6 @@ public class TrapActorBlockEntity<T extends ITrapActor> extends AbstractWireable
 	{
 		this(CDBlockEntityTypes.TRAP_ACTOR.get(), pos, state);
 	}
-	
-	public List<String> outputPorts() { return List.of(); }
 	
 	public static <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
 	{

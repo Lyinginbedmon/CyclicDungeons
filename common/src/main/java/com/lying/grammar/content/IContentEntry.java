@@ -35,6 +35,8 @@ public interface IContentEntry
 	/** Applied after tile generation */
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
+	public default Identifier getDoorTile(Theme theme) { return theme.getStandardDoor(); }
+	
 	public static <T extends BlockEntity> List<T> getTileEntities(BlockPos min, BlockPos max, ServerWorld world, BlockEntityType<T> type)
 	{
 		List<T> tiles = Lists.newArrayList();

@@ -104,6 +104,22 @@ public class CircuitWire
 		return termini.size() < 2;
 	}
 	
+	public boolean equals(Object obj)
+	{
+		if(!(obj instanceof CircuitWire))
+			return false;
+		
+		CircuitWire wire = (CircuitWire)obj;
+		if(wire.termini.size() != termini.size())
+			return false;
+		
+		for(CircuitPort terminus : termini)
+			if(wire.termini.stream().noneMatch(terminus::equals))
+				return false;
+		
+		return true;
+	}
+	
 	public boolean isHovered(int mouseX, int mouseY, Map<Vector2i,CircuitModule> circuit)
 	{
 		if(decapitated())

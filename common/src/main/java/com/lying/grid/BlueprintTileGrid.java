@@ -2,6 +2,8 @@ package com.lying.grid;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -194,7 +196,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			
 			BlockPos pos = entry.getKey();
 			BlockRotation rotation = tile.assignRotation(pos, this, this::get, rand);
-			finalised.add(new TileInstance(pos, tile, theme, rotation));
+			finalised.add(TileInstance.of(pos, tile, theme, rotation));
 		});
 		if(!finalised.isEmpty())
 			LOGGER.info("Tile set finalised");
@@ -225,8 +227,13 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return true;
 	}
 	
-	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation)
+	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation, Optional<UUID> room)
 	{
+		public static TileInstance of(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation)
+		{
+			return new TileInstance(pos, tile, theme, rotation, Optional.empty());
+		}
+		
 		public void generate(BlockPos position, ServerWorld world)
 		{
 			tile.generate(this, position, world);

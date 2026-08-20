@@ -105,6 +105,10 @@ public class CDTemplatePoolProvider
 				create("dungeon/doorway/generic/door_03", 1),
 				create("dungeon/doorway/generic/door_04", 1)
 				), StructurePool.Projection.RIGID));
+		context.register(getPool(CDThemes.ID_GENERIC, DefaultTiles.ID_PUZZLE_DOORWAY), new StructurePool(registry, ImmutableList.of(
+				create("dungeon/puzzle_doorway/generic/door_01", 1),
+				create("dungeon/puzzle_doorway/generic/door_02", 1)
+				), StructurePool.Projection.RIGID));
 		context.register(getPool(CDThemes.ID_GENERIC, CDTiles.ID_DOORWAY_LINTEL), new StructurePool(registry, ImmutableList.of(
 				create("dungeon/doorway_lintel/generic/door_01", 1),
 				create("dungeon/doorway_lintel/generic/door_02", 1),

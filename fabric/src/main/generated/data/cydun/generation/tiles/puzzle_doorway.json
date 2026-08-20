@@ -1,0 +1,16 @@
+{
+  "conditions": [
+    {
+      "id": "cydun:boundary",
+      "sides": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    }
+  ],
+  "generation": "structure",
+  "id": "cydun:puzzle_doorway",
+  "rotation": "cydun:none"
+}

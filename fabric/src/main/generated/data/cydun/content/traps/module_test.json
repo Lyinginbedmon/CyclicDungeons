@@ -19,18 +19,13 @@
                   "solid"
                 ]
               },
-              "offset": [
-                0,
-                -1,
-                0
-              ]
+              "offset": "0,-1,0"
             }
           ],
           "flags": [
             "air"
           ]
         },
-        "count": 1,
         "id": "cydun:chest",
         "vital": true
       },
@@ -46,16 +41,11 @@
             "solid"
           ]
         },
-        "count": 1,
         "id": "cydun:sensor",
         "relations": [
           {
             "name": "cydun:chest",
-            "offset": [
-              0,
-              1,
-              0
-            ]
+            "offset": "0,1,0"
           }
         ],
         "vital": true
@@ -85,16 +75,11 @@
           ],
           "style": "complex"
         },
-        "count": 1,
         "id": "cydun:jet",
         "relations": [
           {
             "name": "cydun:sensor",
-            "offset": [
-              0,
-              1,
-              0
-            ]
+            "offset": "0,1,0"
           }
         ],
         "vital": true

@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.lying.block.BladeBlock;
 import com.lying.block.BladeBlock.Part;
 import com.lying.block.CrumblingBlock;
@@ -28,6 +30,8 @@ import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.enums.DoorHinge;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.block.enums.SculkSensorPhase;
 import net.minecraft.client.data.BlockStateModelGenerator;
 import net.minecraft.client.data.BlockStateVariant;
@@ -43,6 +47,7 @@ import net.minecraft.client.data.TextureKey;
 import net.minecraft.client.data.TextureMap;
 import net.minecraft.client.data.TexturedModel;
 import net.minecraft.client.data.VariantSettings;
+import net.minecraft.client.data.VariantSettings.Rotation;
 import net.minecraft.client.data.VariantsBlockStateSupplier;
 import net.minecraft.client.data.When;
 import net.minecraft.item.BlockItem;
@@ -68,6 +73,8 @@ public class CDModelProvider extends FabricModelProvider
 		registerUnrotatedPillar(CDBlocks.TRAP_LOGIC.get(), blockStateModelGenerator);
 		ModularLogic.register(CDBlocks.MODULAR_LOGIC.get(), blockStateModelGenerator);
 		blockStateModelGenerator.registerParented(CDBlocks.TRAP_LOGIC.get(), CDBlocks.TRAP_LOGIC_DECOY.get());
+		PuzzleDoor.register(CDBlocks.PUZZLE_DOOR.get(), blockStateModelGenerator);
+		blockStateModelGenerator.registerBuiltinWithParticle(CDBlocks.PUZZLE_PLACER.get(), CDItems.PUZZLE_PLACER.get());
 		
 		registerTrapBlockStates(blockStateModelGenerator);
 		registerCyclicium(blockStateModelGenerator);
@@ -664,6 +671,78 @@ public class CDModelProvider extends FabricModelProvider
 					BlockStateVariant.create().put(VariantSettings.MODEL, on).put(VariantSettings.UVLOCK, true).put(VariantSettings.Y, VariantSettings.Rotation.R270));
 			
 			generator.blockStateCollector.accept(map);
+		}
+	}
+	
+	private static class PuzzleDoor
+	{
+		private static BlockStateVariant variant(Identifier model)
+		{
+			return variant(model, null);
+		}
+		
+		private static BlockStateVariant variant(Identifier model, @Nullable Rotation y)
+		{
+			BlockStateVariant variant = BlockStateVariant.create().put(VariantSettings.MODEL, model);
+			if(y != null)
+				variant.put(VariantSettings.Y, y);
+			return variant;
+		}
+		
+		private static void register(Block block, BlockStateModelGenerator generator)
+		{
+			TextureMap textures = new TextureMap()
+					.put(TextureKey.TOP, TextureMap.getSubId(block, "_top"))
+					.put(TextureKey.BOTTOM, TextureMap.getSubId(block, "_bottom"));
+			
+			Identifier topRightClosed	= Models.DOOR_TOP_RIGHT.upload(block, textures, generator.modelCollector);
+//			Identifier topRightOpen		= Models.DOOR_TOP_RIGHT_OPEN.upload(block, textures, generator.modelCollector);
+			Identifier bottomRightClosed	= Models.DOOR_BOTTOM_RIGHT.upload(block, textures, generator.modelCollector);
+//			Identifier bottomRightOpen	= Models.DOOR_BOTTOM_RIGHT_OPEN.upload(block, textures, generator.modelCollector);
+			Identifier topLeftClosed	= Models.DOOR_TOP_LEFT.upload(block, textures, generator.modelCollector);
+//			Identifier topLeftOpen		= Models.DOOR_TOP_LEFT_OPEN.upload(block, textures, generator.modelCollector);
+			Identifier bottomLeftClosed	= Models.DOOR_BOTTOM_LEFT.upload(block, textures, generator.modelCollector);
+//			Identifier bottomLeftOpen	= Models.DOOR_BOTTOM_LEFT_OPEN.upload(block, textures, generator.modelCollector);
+			
+			BlockStateVariantMap map = BlockStateVariantMap.create(Properties.HORIZONTAL_FACING, Properties.DOUBLE_BLOCK_HALF, Properties.DOOR_HINGE)
+					.register(Direction.EAST, DoubleBlockHalf.LOWER, DoorHinge.LEFT, variant(bottomLeftClosed))
+//					.register(Direction.EAST, DoubleBlockHalf.LOWER, DoorHinge.LEFT, true, variant(bottomLeftOpen, VariantSettings.Rotation.R90))
+					.register(Direction.EAST, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, variant(bottomRightClosed))
+//					.register(Direction.EAST, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, true, variant(bottomRightOpen, VariantSettings.Rotation.R270))
+					.register(Direction.EAST, DoubleBlockHalf.UPPER, DoorHinge.LEFT, variant(topLeftClosed))
+//					.register(Direction.EAST, DoubleBlockHalf.UPPER, DoorHinge.LEFT, true, variant(topLeftOpen, VariantSettings.Rotation.R90))
+					.register(Direction.EAST, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, variant(topRightClosed))
+//					.register(Direction.EAST, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, true, variant(topRightOpen, VariantSettings.Rotation.R270))
+					
+					.register(Direction.NORTH, DoubleBlockHalf.LOWER, DoorHinge.LEFT, variant(bottomLeftClosed, VariantSettings.Rotation.R270))
+//					.register(Direction.NORTH, DoubleBlockHalf.LOWER, DoorHinge.LEFT, true, variant(bottomLeftOpen))
+					.register(Direction.NORTH, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, variant(bottomRightClosed, VariantSettings.Rotation.R270))
+//					.register(Direction.NORTH, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, true, variant(bottomRightOpen, VariantSettings.Rotation.R180))
+					.register(Direction.NORTH, DoubleBlockHalf.UPPER, DoorHinge.LEFT, variant(topLeftClosed, VariantSettings.Rotation.R270))
+//					.register(Direction.NORTH, DoubleBlockHalf.UPPER, DoorHinge.LEFT, true, variant(topLeftOpen))
+					.register(Direction.NORTH, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, variant(topRightClosed, VariantSettings.Rotation.R270))
+//					.register(Direction.NORTH, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, true, variant(topRightOpen, VariantSettings.Rotation.R90))
+					
+					.register(Direction.SOUTH, DoubleBlockHalf.LOWER, DoorHinge.LEFT, variant(bottomLeftClosed, VariantSettings.Rotation.R90))
+//					.register(Direction.SOUTH, DoubleBlockHalf.LOWER, DoorHinge.LEFT, true, variant(bottomLeftOpen, VariantSettings.Rotation.R180))
+					.register(Direction.SOUTH, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, variant(bottomRightClosed, VariantSettings.Rotation.R90))
+//					.register(Direction.SOUTH, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, true, variant(bottomRightOpen))
+					.register(Direction.SOUTH, DoubleBlockHalf.UPPER, DoorHinge.LEFT, variant(topLeftClosed, VariantSettings.Rotation.R90))
+//					.register(Direction.SOUTH, DoubleBlockHalf.UPPER, DoorHinge.LEFT, true, variant(topLeftOpen, VariantSettings.Rotation.R180))
+					.register(Direction.SOUTH, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, variant(topRightClosed, VariantSettings.Rotation.R90))
+//					.register(Direction.SOUTH, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, true, variant(topRightOpen))
+					
+					.register(Direction.WEST, DoubleBlockHalf.LOWER, DoorHinge.LEFT, variant(bottomLeftClosed, VariantSettings.Rotation.R180))
+//					.register(Direction.WEST, DoubleBlockHalf.LOWER, DoorHinge.LEFT, true, variant(bottomLeftOpen, VariantSettings.Rotation.R270))
+					.register(Direction.WEST, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, variant(bottomRightClosed, VariantSettings.Rotation.R180))
+//					.register(Direction.WEST, DoubleBlockHalf.LOWER, DoorHinge.RIGHT, true, variant(bottomRightOpen, VariantSettings.Rotation.R90))
+					.register(Direction.WEST, DoubleBlockHalf.UPPER, DoorHinge.LEFT, variant(topLeftClosed, VariantSettings.Rotation.R180))
+//					.register(Direction.WEST, DoubleBlockHalf.UPPER, DoorHinge.LEFT, true, variant(topLeftOpen, VariantSettings.Rotation.R270))
+					.register(Direction.WEST, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, variant(topRightClosed, VariantSettings.Rotation.R180))
+//					.register(Direction.WEST, DoubleBlockHalf.UPPER, DoorHinge.RIGHT, true, variant(topRightOpen, VariantSettings.Rotation.R90))
+					;
+			
+			generator.blockStateCollector.accept(VariantsBlockStateSupplier.create(block).coordinate(map));
 		}
 	}
 }

@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Lists;
-import com.lying.grammar.content.battle.BattleEntry;
-import com.lying.grammar.content.battle.DefaultBattles;
+import com.lying.grammar.content.defaults.DefaultBattles;
+import com.lying.grammar.content.entities.SpawnerEntry;
 import com.lying.reference.Reference;
 import com.mojang.serialization.JsonOps;
 
@@ -32,7 +32,7 @@ public class CDBattleProvider implements DataProvider
 		return wrapperLookup.thenCompose(lookup -> {
 			List<CompletableFuture<?>> futures = Lists.newArrayList();
 			DefaultBattles.getAll().forEach(battle ->
-				futures.add(DataProvider.writeToPath(dataWriter, BattleEntry.CODEC.encodeStart(JsonOps.INSTANCE, battle).getOrThrow(), this.path.resolveJson(battle.registryName()))));
+				futures.add(DataProvider.writeToPath(dataWriter, SpawnerEntry.CODEC.encodeStart(JsonOps.INSTANCE, battle).getOrThrow(), this.path.resolveJson(battle.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
 		});
 	}

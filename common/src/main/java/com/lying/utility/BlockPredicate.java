@@ -185,7 +185,7 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	public static record SubPredicate(BlockPos offset, BlockPredicate predicate)
 	{
 		public static final Codec<SubPredicate> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-				BlockPos.CODEC.fieldOf("offset").forGetter(SubPredicate::offset),
+				CDUtils.POS_STR_CODEC.fieldOf("offset").forGetter(SubPredicate::offset),
 				BlockPredicate.CODEC.fieldOf("condition").forGetter(SubPredicate::predicate)
 				).apply(instance, SubPredicate::new));
 		

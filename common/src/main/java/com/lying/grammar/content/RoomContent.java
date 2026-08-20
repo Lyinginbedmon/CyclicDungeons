@@ -4,6 +4,7 @@ import static com.lying.reference.Reference.ModInfo.prefix;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,7 @@ public abstract class RoomContent
 	});
 	public static final Supplier<BattleRoomContent> BATTLE	= register(BattleRoomContent::new);
 	public static final Supplier<TrapRoomContent> TRAP		= register(TrapRoomContent::new);
+	public static final Supplier<PuzzleRoomContent> PUZZLE	= register(PuzzleRoomContent::new);
 	
 	public static <T extends RoomContent> Supplier<T> register(Supplier<T> processorIn)
 	{
@@ -55,9 +57,17 @@ public abstract class RoomContent
 	
 	public final Identifier registryName() { return id; }
 	
+	/** Applied before passage generation */
+	public void applyPrePassageProcessing(BlueprintRoom node, RoomMetadata meta, ServerWorld world, Random rand) { }
+	
 	/** Applied before room tile generation */
 	public abstract void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand);
 	
 	/** Applied after all other room generation */
 	public abstract void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand);
+	
+	public Optional<IContentEntry> tryGetContents(Identifier registryID)
+	{
+		return Optional.empty();
+	}
 }

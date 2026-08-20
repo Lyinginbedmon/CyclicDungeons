@@ -5,7 +5,7 @@
     "dead_ends": true,
     "max_count": 4
   },
-  "content": "cydun:none",
+  "content": "cydun:puzzle",
   "id": "cydun:small_puzzle",
   "is_placeable": true,
   "size": {

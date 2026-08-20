@@ -20,6 +20,7 @@
     "cydun:simple",
     "cydun:linear"
   ],
+  "puzzles": [],
   "tilesets": [],
   "traps": [
     "cydun:beartraps",

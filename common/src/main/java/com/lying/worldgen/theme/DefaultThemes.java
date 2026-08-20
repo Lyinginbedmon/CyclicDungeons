@@ -11,8 +11,9 @@ import com.google.common.collect.Lists;
 import com.lying.grammar.DefaultTerms;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
-import com.lying.grammar.content.battle.DefaultBattles;
-import com.lying.grammar.content.trap.DefaultTraps;
+import com.lying.grammar.content.defaults.DefaultBattles;
+import com.lying.grammar.content.defaults.DefaultPuzzles;
+import com.lying.grammar.content.defaults.DefaultTraps;
 import com.lying.graph.GraphScruncher.ScrunchStyle;
 import com.lying.init.CDTerms;
 import com.lying.worldgen.tileset.DefaultTileSets;
@@ -59,6 +60,9 @@ public class DefaultThemes
 					DefaultTraps.ID_HATCH_PITFALL,
 					DefaultTraps.ID_MODULE_TEST
 					),
+			Lists.newArrayList(
+					DefaultPuzzles.ID_COMBO_LOCK
+					),
 			Map.of(
 					CDTerms.ID_START, DefaultTileSets.ID_START,
 					CDTerms.ID_END, DefaultTileSets.ID_END,
@@ -90,6 +94,7 @@ public class DefaultThemes
 				DefaultTraps.ID_LAVA_JUMPING,
 				DefaultTraps.ID_LAVA_RIVER
 					),
+			List.of(),
 			Map.of());
 	public static final Supplier<Theme> UNDEAD	= register(ID_UNDEAD, 
 			List.of(
@@ -105,6 +110,7 @@ public class DefaultThemes
 				DefaultBattles.ID_SKELETONS, 
 				DefaultBattles.ID_ZOMBIE_CROWD)), 
 			List.of(),
+			List.of(),
 			Map.of());
 	public static final Supplier<Theme> JUNGLE	= register(ID_JUNGLE, 
 			List.of(
@@ -119,6 +125,7 @@ public class DefaultThemes
 					DefaultTerms.BOSS
 					),
 			new EncounterSet(), 
+			List.of(),
 			List.of(),
 			Map.of());
 	public static final Supplier<Theme> SWAMP	= register(ID_SWAMP, 
@@ -140,9 +147,10 @@ public class DefaultThemes
 				DefaultTraps.ID_BEARTRAPS,
 				DefaultTraps.ID_MINEFIELD
 					),
+			List.of(),
 			Map.of());
 	
-	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, EncounterSet combat, List<Identifier> traps, Map<Identifier, Identifier> tileSets)
+	private static Supplier<Theme> register(Identifier id, List<GrammarTerm> dictionary, EncounterSet combat, List<Identifier> traps, List<Identifier> puzzles, Map<Identifier, Identifier> tileSets)
 	{
 		return register(
 				id, 
@@ -150,6 +158,7 @@ public class DefaultThemes
 				List.of(DefaultPhrases.MILD_BRANCHING.get(), DefaultPhrases.SIMPLE.get(), DefaultPhrases.LINEAR.get()), 
 				combat, 
 				traps, 
+				puzzles,
 				tileSets, 
 				Optional.empty(), 
 				Optional.empty(),
@@ -162,12 +171,13 @@ public class DefaultThemes
 			List<InitialPhrase> phrases, 
 			EncounterSet combat, 
 			List<Identifier> traps, 
+			List<Identifier> puzzles, 
 			Map<Identifier, Identifier> tileSets, 
 			Optional<Identifier> passageTileSet, 
 			Optional<Integer> iterationCap,
 			Optional<ScrunchStyle> scrunchStyle)
 	{
-		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, tileSets, passageTileSet, iterationCap, scrunchStyle);
+		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, puzzles, tileSets, passageTileSet, iterationCap, scrunchStyle);
 		THEMES.add(entry);
 		return entry;
 	}

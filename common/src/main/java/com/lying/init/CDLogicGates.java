@@ -66,28 +66,28 @@ public class CDLogicGates
 	
 	/**  TRUE only if all input values are uniformly TRUE */
 	public static final Supplier<LogicGate> AND		= register("and", s -> LogicGate.Builder
-			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().allMatch(v -> v)))
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, !ports.isEmpty() && ports.values().stream().allMatch(v -> v)))
 			.category(LogicCategory.BASIC)
 			.addInputCollector(CDLogicGates::freeInputs)
 			.addOutput(OUTPUT)
 			.build(s));
 	/** TRUE only if all input values are not uniformly TRUE */
 	public static final Supplier<LogicGate> NAND	= register("nand", s -> LogicGate.Builder
-			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, !ports.values().stream().allMatch(v -> v)))
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, !ports.isEmpty() && !ports.values().stream().allMatch(v -> v)))
 			.category(LogicCategory.BASIC)
 			.addInputCollector(CDLogicGates::freeInputs)
 			.addOutput(OUTPUT)
 			.build(s));
 	/** TRUE if any input value is TRUE */
 	public static final Supplier<LogicGate> OR		= register("or", s -> LogicGate.Builder
-			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().anyMatch(v -> v)))
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, !ports.isEmpty() && ports.values().stream().anyMatch(v -> v)))
 			.category(LogicCategory.BASIC)
 			.addInputCollector(CDLogicGates::freeInputs)
 			.addOutput(OUTPUT)
 			.build(s));
 	/** TRUE while all input values are FALSE, functionally a multi-input NOT */
 	public static final Supplier<LogicGate> NOR		= register("nor", s -> LogicGate.Builder
-			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, ports.values().stream().noneMatch(v -> v)))
+			.create((ports, pPorts, pOut, tile, module) -> LogicResult.create().put(OUTPUT, !ports.isEmpty() && ports.values().stream().noneMatch(v -> v)))
 			.category(LogicCategory.BASIC)
 			.addInputCollector(CDLogicGates::freeInputs)
 			.addOutput(OUTPUT)
@@ -96,6 +96,9 @@ public class CDLogicGates
 	public static final Supplier<LogicGate> XOR		= register("xor", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> 
 			{
+				if(ports.isEmpty())
+					return LogicResult.create().put(OUTPUT, false);
+				
 				boolean result = false;
 				for(Boolean var : ports.values())
 					if(var)
@@ -113,6 +116,9 @@ public class CDLogicGates
 	public static final Supplier<LogicGate> XNOR	= register("xnor", s -> LogicGate.Builder
 			.create((ports, pPorts, pOut, tile, module) -> 
 			{
+				if(ports.isEmpty())
+					return LogicResult.create().put(OUTPUT, false);
+				
 				List<Boolean> lines = Lists.newArrayList(ports.values());
 				if(lines.isEmpty())
 					return LogicResult.create().put(OUTPUT, true);
@@ -274,6 +280,15 @@ public class CDLogicGates
 			.icon(144, 0)
 			.addInput(BIT_1, BIT_2, BIT_4, BIT_8)
 			.build(s));
+	public static final Supplier<LogicGate> CLOCK	= register("clock", s -> LogicGate.Builder
+			.create((ports, pPorts, pOut, tile, module) -> 
+			{
+				return LogicResult.create().put(OUTPUT, !pOut.get(OUTPUT));
+			})
+			.category(LogicCategory.UTILITY)
+			.icon(144, 0)
+			.addOutput(OUTPUT)
+			.build(s));
 	
 	/** When named, used by the modular logic system to interact with the trap system */
 	public static final Supplier<LogicGate> ENTRY	= register("input", s -> LogicGate.Builder
@@ -306,8 +321,13 @@ public class CDLogicGates
 		PortSet inputs = module.inputPortSet();
 		List<Port> activePorts = inputs.ports().stream().filter(inputs::isConnected).toList();
 		for(int i=0; i<activePorts.size() + 1; i++)
-			ports.add(Port.of("in_"+i));
+			ports.add(makeInput(i));
 		return ports;
+	}
+	
+	public static Port makeInput(int index)
+	{
+		return Port.of(index < 0 ? "in" : "in_"+index);
 	}
 	
 	private static Supplier<LogicGate> register(String nameIn, Function<String, LogicGate> factory)
@@ -377,6 +397,8 @@ public class CDLogicGates
 		public Vector2i texCoords() { return icon; }
 		
 		public LogicModule create() { return LogicModule.of(this); }
+		
+		public LogicModule create(String name) { return create().name(name); }
 		
 		public static class Builder
 		{

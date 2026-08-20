@@ -6,15 +6,18 @@ import org.slf4j.LoggerFactory;
 import com.lying.block.PitBlock;
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
+import com.lying.event.PuzzleTriggerEvent;
 import com.lying.init.CDBattleEntries;
 import com.lying.init.CDBattleTypes;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDContentTypes;
 import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDEntityTypes;
 import com.lying.init.CDItems;
 import com.lying.init.CDParticleTypes;
 import com.lying.init.CDPhrases;
+import com.lying.init.CDPuzzleEntries;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.init.CDSoundEvents;
 import com.lying.init.CDTerms;
@@ -25,7 +28,6 @@ import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
 import com.lying.init.CDTrapEntries;
 import com.lying.init.CDTrapLogicHandlers;
-import com.lying.init.CDTrapTypes;
 import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
 import com.lying.utility.BlockResetUtility;
@@ -70,8 +72,9 @@ public final class CyclicDungeons
 		CDTrapLogicHandlers.init();
 		CDBattleTypes.init();
 		CDBattleEntries.init();
-		CDTrapTypes.init();
+		CDContentTypes.init();
 		CDTrapEntries.init();
+		CDPuzzleEntries.init();
 		CDEntityTypes.init();
 		CDPhrases.init();
 		CDThemes.init();
@@ -90,5 +93,6 @@ public final class CyclicDungeons
 		TickEvent.SERVER_LEVEL_POST.register(w -> BlockResetUtility.getBlockResetUtility(w.getServer()).tickWorld(w));
 		TickEvent.SERVER_LEVEL_PRE.register(DungeonBuilder::onServerTick);
 		LifecycleEvent.SERVER_STARTED.register(DungeonBuilder::onServerStart);
+		PuzzleTriggerEvent.EVENT.register(DungeonBuilder.instance()::logPuzzleTrigger);
 	}
 }

@@ -12,13 +12,15 @@ import com.google.gson.JsonElement;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
-import com.lying.grammar.content.battle.BattleEntry;
+import com.lying.grammar.content.entities.SpawnerEntry;
 import com.lying.graph.GraphScruncher.ScrunchStyle;
 import com.lying.init.CDBattleEntries;
+import com.lying.init.CDContentTypes.ContentEntry;
 import com.lying.init.CDPhrases;
+import com.lying.init.CDPuzzleEntries;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTileSets;
+import com.lying.init.CDTiles;
 import com.lying.init.CDTrapEntries;
 import com.lying.worldgen.tile.Tile;
 import com.lying.worldgen.tileset.TileSet;
@@ -38,6 +40,7 @@ public record Theme(
 		List<InitialPhrase> phrases,
 		EncounterSet combatEncounters, 
 		List<Identifier> trapEncounters, 
+		List<Identifier> puzzleEncounters,
 		Map<Identifier,Identifier> tileSets, 
 		Optional<Identifier> passageTiles,
 		Optional<Integer> collapseIterations,
@@ -49,11 +52,12 @@ public record Theme(
 			Identifier.CODEC.listOf().fieldOf("phrases").forGetter(t -> t.phrases.stream().map(InitialPhrase::registryName).toList()),
 			EncounterSet.CODEC.fieldOf("encounters").forGetter(Theme::combatEncounters),
 			Identifier.CODEC.listOf().fieldOf("traps").forGetter(Theme::trapEncounters),
+			Identifier.CODEC.listOf().fieldOf("puzzles").forGetter(Theme::puzzleEncounters),
 			TileSetEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
 			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles),
 			Codec.INT.optionalFieldOf("condense_iterations").forGetter(Theme::collapseIterations),
 			ScrunchStyle.CODEC.optionalFieldOf("condense_style").forGetter(Theme::collapseStyle)
-			).apply(instance, (id,terms,phrases,mobs,traps,tiles,passage,iterations,style)-> 
+			).apply(instance, (id,terms,phrases,mobs,traps,puzzles,tiles,passage,iterations,style)-> 
 			{
 				Map<Identifier, Identifier> tileSets = new HashMap<>();
 				tiles.forEach(t -> tileSets.put(t.roomId(), t.tilesetId()));
@@ -63,6 +67,7 @@ public record Theme(
 						phrases.stream().map(CDPhrases.instance()::get).filter(Optional::isPresent).map(Optional::get).toList(),
 						mobs, 
 						traps, 
+						puzzles,
 						tileSets, 
 						passage,
 						iterations,
@@ -110,7 +115,7 @@ public record Theme(
 		}
 	}
 	
-	public List<BattleEntry> encounters()
+	public List<SpawnerEntry> encounters()
 	{
 		if(combatEncounters.isEmpty())
 			return List.of();
@@ -124,13 +129,25 @@ public record Theme(
 		}
 	}
 	
-	public List<TrapEntry> traps()
+	public List<ContentEntry> traps()
 	{
 		if(trapEncounters.isEmpty())
 			return List.of();
 		else
 			return trapEncounters.stream()
 					.map(CDTrapEntries.instance()::get)
+					.filter(Optional::isPresent)
+					.map(Optional::get)
+					.toList();
+	}
+	
+	public List<ContentEntry> puzzles()
+	{
+		if(puzzleEncounters.isEmpty())
+			return List.of();
+		else
+			return puzzleEncounters.stream()
+					.map(CDPuzzleEntries.instance()::get)
 					.filter(Optional::isPresent)
 					.map(Optional::get)
 					.toList();
@@ -160,6 +177,8 @@ public record Theme(
 		Identifier passageTileSet = passageTiles.orElse(null);
 		return CDTileSets.instance().get(passageTileSet).orElse(CDTileSets.DEFAULT);
 	}
+	
+	public Identifier getStandardDoor() { return CDTiles.ID_DOORWAY; }
 	
 	public int collapseIterationCap() { return collapseIterations.orElse(1000); }
 	

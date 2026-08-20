@@ -7,9 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 
 import com.google.gson.JsonElement;
+import com.lying.block.entity.IRoomTaggedBlock;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
+import com.lying.grammar.content.IContentEntry;
 import com.lying.grammar.content.RoomContent;
 import com.lying.grammar.modifier.PhraseModifier;
 import com.lying.grid.BlueprintTileGrid;
@@ -18,10 +20,12 @@ import com.lying.grid.GridTile;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.TileGenerator;
+import com.lying.worldgen.theme.Theme;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -122,6 +126,11 @@ public class GrammarTerm
 		return (!modifier.isBranchInjector() || inRoom.canAddLink()) && conditions.test(this, inRoom, previous, next, graph);
 	}
 	
+	public void prePassageProcessing(BlueprintRoom node, ServerWorld world, Random rand)
+	{
+		contentBuilder.applyPrePassageProcessing(node, node.metadata(), world, rand);
+	}
+	
 	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, List<BlueprintPassage> passages, Random rand)
 	{
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT);
@@ -146,9 +155,19 @@ public class GrammarTerm
 			Box box = node.worldBox().offset(position);
 			BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
 			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
+			
 			contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
+			
+			// Assign room coordinates to room-tagged blocks
+			BlockPos.Mutable.iterate(min, max).forEach(p -> 
+			{
+				BlockEntity e = world.getBlockEntity(p);
+				if(e != null && e instanceof IRoomTaggedBlock)
+					((IRoomTaggedBlock)e).setRoom(node.uuid());
+			});
 			return true;
 		}
+		
 		return false;
 	}
 	
@@ -185,6 +204,17 @@ public class GrammarTerm
 	public void prepare(RoomMetadata metadata, Random rand)
 	{
 		metadata.setSize(sizeFunc.apply(rand));
+	}
+	
+	public Identifier getDoorTileFor(Optional<Identifier> contentID, Theme theme)
+	{
+		if(contentID.isPresent())
+		{
+			Optional<IContentEntry> entry = contentBuilder.tryGetContents(contentID.get());
+			if(entry.isPresent())
+				return entry.get().getDoorTile(theme);
+		}
+		return theme.getStandardDoor();
 	}
 	
 	public static class Builder

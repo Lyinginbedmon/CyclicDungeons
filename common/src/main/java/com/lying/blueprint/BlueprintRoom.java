@@ -18,6 +18,7 @@ import com.lying.utility.geometry.AbstractBox2f;
 import com.lying.utility.geometry.Box2f;
 import com.lying.worldgen.tile.Tile;
 
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 
@@ -112,6 +113,11 @@ public class BlueprintRoom
 	/** Returns the doorway tile that this room is entered from */
 	@Nullable
 	public GridTile getEntryTile() { return entryTile.orElse(null); }
+	
+	public Identifier getDoorTile()
+	{
+		return metadata.type().getDoorTileFor(metadata.processorID(), metadata.theme());
+	}
 	
 	public BlueprintRoom offset(Vector2i vec)
 	{

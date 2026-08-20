@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.EncounterSpawnerBlock;
 import com.lying.grammar.RoomMetadata;
-import com.lying.grammar.content.battle.Battle;
+import com.lying.grammar.content.entities.Battle;
 import com.lying.init.CDBlockEntityTypes;
 
 import net.minecraft.block.BlockState;

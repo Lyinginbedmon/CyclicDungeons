@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Lists;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
-import com.lying.grammar.content.trap.DefaultTraps;
+import com.lying.grammar.content.defaults.DefaultTraps;
+import com.lying.init.CDContentTypes.ContentEntry;
 import com.lying.reference.Reference;
 import com.mojang.serialization.JsonOps;
 
@@ -32,7 +32,7 @@ public class CDTrapProvider implements DataProvider
 		return wrapperLookup.thenCompose(lookup -> {
 			List<CompletableFuture<?>> futures = Lists.newArrayList();
 			DefaultTraps.getAll().forEach(trap ->
-				futures.add(DataProvider.writeToPath(dataWriter, TrapEntry.CODEC.encodeStart(JsonOps.INSTANCE, trap).getOrThrow(), this.path.resolveJson(trap.registryName()))));
+				futures.add(DataProvider.writeToPath(dataWriter, ContentEntry.CODEC.encodeStart(JsonOps.INSTANCE, trap).getOrThrow(), this.path.resolveJson(trap.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
 		});
 	}

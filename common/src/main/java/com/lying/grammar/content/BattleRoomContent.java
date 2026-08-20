@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.JsonElement;
-import com.lying.grammar.content.battle.BattleEntry;
+import com.lying.grammar.content.entities.SpawnerEntry;
 import com.lying.init.CDBattleEntries;
 import com.lying.worldgen.theme.Theme;
 import com.mojang.serialization.Codec;
@@ -16,7 +16,7 @@ import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;
 
-public class BattleRoomContent extends RegistryRoomContent<BattleEntry>
+public class BattleRoomContent extends RegistryRoomContent<SpawnerEntry>
 {
 	public static final Identifier ID	= prefix("combat_encounter");
 	
@@ -56,7 +56,7 @@ public class BattleRoomContent extends RegistryRoomContent<BattleEntry>
 			return CODEC.parse(ops, ele).getOrThrow();
 		}
 		
-		public List<BattleEntry> collect()
+		public List<SpawnerEntry> collect()
 		{
 			return stream()
 				.map(CDBattleEntries.instance()::get)

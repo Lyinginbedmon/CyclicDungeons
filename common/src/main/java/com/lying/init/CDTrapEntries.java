@@ -17,7 +17,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
 import com.lying.data.ReloadListener;
-import com.lying.grammar.content.TrapRoomContent.TrapEntry;
+import com.lying.init.CDContentTypes.ContentEntry;
 import com.mojang.serialization.JsonOps;
 
 import dev.architectury.registry.ReloadListenerRegistry;
@@ -29,10 +29,8 @@ import net.minecraft.util.JsonHelper;
 
 public class CDTrapEntries implements ReloadListener<List<JsonObject>>
 {
-	// TODO Implement puzzle entries
-	
 	private static CDTrapEntries INSTANCE;
-	private final Map<Identifier, TrapEntry> REGISTRY	= new HashMap<>();
+	private final Map<Identifier, ContentEntry> REGISTRY	= new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
 	public static final String FILE_PATH = "content/traps";
@@ -51,12 +49,12 @@ public class CDTrapEntries implements ReloadListener<List<JsonObject>>
 		return prefix(FILE_PATH);
 	}
 	
-	public Optional<TrapEntry> get(Identifier id)
+	public Optional<ContentEntry> get(Identifier id)
 	{
 		return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id)) : Optional.empty();
 	}
 	
-	public void register(TrapEntry trap)
+	public void register(ContentEntry trap)
 	{
 		REGISTRY.put(trap.registryName(), trap);
 		CyclicDungeons.LOGGER.info(" ## Loaded {}", trap.registryName().toString());
@@ -86,7 +84,7 @@ public class CDTrapEntries implements ReloadListener<List<JsonObject>>
 		{
 			CyclicDungeons.LOGGER.info(" # Loading trap entries from datapack", REGISTRY.size());
 			REGISTRY.clear();
-			data.forEach(prep -> register(TrapEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
+			data.forEach(prep -> register(ContentEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
 			CyclicDungeons.LOGGER.info(" # {} trap entries loaded", REGISTRY.size());
 		});
 	}

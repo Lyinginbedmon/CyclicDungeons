@@ -15,10 +15,15 @@ import com.lying.block.TrapLogicBlock;
 import com.lying.block.actors.DartTrapBlock;
 import com.lying.block.actors.FlameJetBlock;
 import com.lying.block.actors.HatchBlock;
+import com.lying.block.actors.PuzzleTriggerBlock;
 import com.lying.block.actors.RedstoneActorBlock;
 import com.lying.block.actors.SpikeTrapBlock;
 import com.lying.block.actors.SwingingBladeBlock;
 import com.lying.block.actors.TrapSpawnerBlock;
+import com.lying.block.puzzle.PuzzleBreakBlock;
+import com.lying.block.puzzle.PuzzleDoorBlock;
+import com.lying.block.puzzle.PuzzleLockedDoorBlock;
+import com.lying.block.puzzle.PuzzlePlaceBlock;
 import com.lying.block.sensors.CollisionSensorBlock;
 import com.lying.block.sensors.ProximitySensorBlock;
 import com.lying.block.sensors.RedstoneSensorBlock;
@@ -62,7 +67,6 @@ public class CDBlocks
 	 * * Area
 	 * Trap actors
 	 * * Toggled ceiling block
-	 * * Puzzle Door Trigger
 	 */
 	
 	// Primary logic block for managing complex trap functions
@@ -94,6 +98,11 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> SPIKE_TRAP			= register("spike_trap", SpikeTrapBlock::new);
 	public static final RegistrySupplier<Block> SPAWNER				= register("spawner", s -> new TrapSpawnerBlock(s.noCollision().allowsSpawning(CDBlocks::always)));
 	public static final RegistrySupplier<Block> ENCOUNTER			= register("encounter", EncounterSpawnerBlock::new);
+	public static final RegistrySupplier<Block> PUZZLE_TRIGGER		= registerSolidCube("puzzle_trigger", PuzzleTriggerBlock::new);
+	public static final RegistrySupplier<Block> PUZZLE_RUBBLE		= registerSolidCube("puzzle_rubble", s -> new PuzzleBreakBlock(s.dropsNothing().suffocates(CDBlocks::always).solidBlock(CDBlocks::always).strength(-1.0F, 3600000.8F).pistonBehavior(PistonBehavior.BLOCK)));
+	public static final RegistrySupplier<Block> PUZZLE_PLACER		= register("puzzle_placer", s -> new PuzzlePlaceBlock(s.dropsNothing().noCollision().strength(-1.0F, 3600000.8F).pistonBehavior(PistonBehavior.BLOCK)));
+	public static final RegistrySupplier<Block> PUZZLE_DOOR			= register("puzzle_door", s -> new PuzzleDoorBlock(s.dropsNothing().strength(-1.0F, 3600000.8F).pistonBehavior(PistonBehavior.BLOCK)));
+	public static final RegistrySupplier<Block> PUZZLE_LOCKED_DOOR	= register("locked_puzzle_door", s -> new PuzzleLockedDoorBlock(s.dropsNothing().strength(-1F, 3600000.8F).pistonBehavior(PistonBehavior.BLOCK)));
 	
 	// Hazards
 	private static final Function<Settings, Settings> stoneSettings				= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);

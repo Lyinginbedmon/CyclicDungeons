@@ -22,42 +22,45 @@
     "cydun:simple",
     "cydun:linear"
   ],
+  "puzzles": [
+    "cydun:combo_lock"
+  ],
   "tilesets": [
     {
-      "term": "cydun:treasure",
-      "tile_set": "cydun:treasure"
-    },
-    {
-      "term": "cydun:big_puzzle",
-      "tile_set": "cydun:puzzle"
+      "term": "cydun:end",
+      "tile_set": "cydun:end"
     },
     {
       "term": "cydun:battle",
       "tile_set": "cydun:battle"
     },
     {
-      "term": "cydun:end",
-      "tile_set": "cydun:end"
+      "term": "cydun:big_puzzle",
+      "tile_set": "cydun:puzzle"
     },
     {
-      "term": "cydun:boss",
-      "tile_set": "cydun:boss"
+      "term": "cydun:treasure",
+      "tile_set": "cydun:treasure"
     },
     {
-      "term": "cydun:trap",
-      "tile_set": "cydun:trap"
-    },
-    {
-      "term": "cydun:empty",
-      "tile_set": "cydun:empty"
+      "term": "cydun:small_puzzle",
+      "tile_set": "cydun:puzzle"
     },
     {
       "term": "cydun:start",
       "tile_set": "cydun:start"
     },
     {
-      "term": "cydun:small_puzzle",
-      "tile_set": "cydun:puzzle"
+      "term": "cydun:empty",
+      "tile_set": "cydun:empty"
+    },
+    {
+      "term": "cydun:trap",
+      "tile_set": "cydun:trap"
+    },
+    {
+      "term": "cydun:boss",
+      "tile_set": "cydun:boss"
     }
   ],
   "traps": [

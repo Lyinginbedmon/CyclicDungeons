@@ -2,6 +2,7 @@ package com.lying.client.screen.circuit;
 
 import static com.lying.reference.Reference.ModInfo.translate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,9 +11,10 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
 
-import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.client.screen.circuit.handlers.ClickHandler;
@@ -28,6 +30,7 @@ import com.lying.init.CDLogicGates.LogicCategory;
 import com.lying.init.CDLogicGates.LogicGate;
 import com.lying.init.CDSoundEvents;
 import com.lying.item.component.CircuitComponent;
+import com.lying.item.component.CircuitComponent.CircuitPart;
 import com.lying.network.BuildCircuitPacket;
 import com.lying.reference.Reference;
 
@@ -43,6 +46,8 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
@@ -54,7 +59,7 @@ public class CircuitScreen extends Screen
 	public static final Identifier TEXTURE = Reference.ModInfo.prefix("textures/gui/circuitry.png");
 	public static final int GRID_SIZE	= 80;
 	
-	private List<Drawable> drawables = Lists.newArrayList();
+	private List<Drawable> drawables = new ArrayList<>();
 	public TextFieldWidget nameField;
 	public Vector2i displayOffset = new Vector2i(0,0);
 	private boolean dragActive = false;
@@ -131,7 +136,7 @@ public class CircuitScreen extends Screen
 			ButtonWidget category = addDrawableChild(ButtonWidget.builder(cat.displayName(), b -> { showCategory(cat); b.setFocused(false); }).dimensions(x, 5, 60, 20).build());
 			categoryButtons.put(cat, category);
 			
-			List<ButtonWidget> buttons = Lists.newArrayList();
+			List<ButtonWidget> buttons = new ArrayList<>();
 			for(LogicGate gate : CDLogicGates.byCategory(cat))
 			{
 				ButtonWidget button = addDrawableChild(ButtonWidget.builder(gate.displayName(), b -> 
@@ -183,6 +188,12 @@ public class CircuitScreen extends Screen
 			circuitMap.clear();
 			circuitWires.clear();
 			displayOffset = new Vector2i(0, 0);
+		}).dimensions(width - 190, height - 20, 60, 20).build());
+		addDrawableChild(ButtonWidget.builder(translate("gui","circuit_builder.nbt"), b -> 
+		{
+			cleanCircuit();
+			NbtElement text = CircuitPart.LIST_CODEC.encodeStart(NbtOps.INSTANCE, circuitMap.values().stream().map(CircuitModule::toPart).toList()).getOrThrow();
+			mc.keyboard.setClipboard(text.asString());
 		}).dimensions(width - 125, height - 20, 60, 20).build());
 		addDrawableChild(ButtonWidget.builder(translate("gui","circuit_builder.build"), b -> 
 		{
@@ -233,7 +244,6 @@ public class CircuitScreen extends Screen
 			stack.translate(offset.x(), offset.y(), 0);
 			if(!circuitWires.isEmpty())
 				circuitWires.values().stream()
-					.filter(Predicates.not(CircuitWire::decapitated))
 					.forEach(wire -> wire.render(
 							(dragStart.isEmpty() && (currentHandler.isEmpty() || !currentHandler.get().preventsWireHighlighting(wire))) && wire.isHovered(mouseMicroX, mouseMicroY, circuitMap), 
 							context, 
@@ -272,14 +282,27 @@ public class CircuitScreen extends Screen
 	/** Cleans the connections of all modules to just those represented by wires present on the screen */
 	public void cleanCircuit()
 	{
+		final Logger LOGGER = CyclicDungeons.LOGGER;
+		// Log circuit state before cleaning
+		LOGGER.info("Circuit before cleaning: {} gates, {} wires", circuitMap.size(), circuitWires.size());
+		
 		// Reset all circuit modules
 		circuitMap.values().forEach(CircuitModule::clearConnections);
 		
 		// Repopulate connections between modules based on extant wires
-		circuitWires.values().forEach(wire -> wire.assertOnCircuit(circuitMap));
+		List<CircuitWire> wiresToAssert = new ArrayList<>();
+		circuitWires.values().forEach(w -> 
+		{
+			if(!w.decapitated() && wiresToAssert.stream().noneMatch(w::equals))
+				wiresToAssert.add(w);
+		});
+		wiresToAssert.forEach(wire -> wire.assertOnCircuit(circuitMap));
 		
 		// Remove all circuit modules that don't have any connections
 		circuitMap.values().stream().filter(CircuitModule::unconnected).toList().forEach(m -> circuitMap.remove(m.gridPosition()));
+		
+		// Log circuit state after cleaning
+		LOGGER.info("Circuit after cleaning: {} gates, {} wires", circuitMap.size(), wiresToAssert.size());
 	}
 	
 	public String makeWireName()

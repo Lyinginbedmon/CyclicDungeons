@@ -42,6 +42,10 @@
 	"block.cydun.spawner": "Actuated Spawner",
 	"block.cydun.encounter": "Encounter Spawner",
 	"block.cydun.cyclicium_block": "Cyclicium Block",
+	"block.cydun.puzzle_trigger": "Puzzle Trigger",
+	"block.cydun.puzzle_rubble": "Puzzling Rubble",
+	"block.cydun.puzzle_placer": "Puzzle Block Placer",
+	"block.cydun.puzzle_door": "Puzzling Door",
 	// Items
 	"item.cydun.wiring_gun": "Wiring Gun",
 	"item.cydun.rabid_wolf_spawn_egg": "Rabid Wolf Egg",
@@ -71,6 +75,7 @@
 	"logic.cydun.4bit_counter": "Counter",
 	"logic.cydun.beep": "Beeper",
 	"logic.cydun.light": "Light",
+	"logic.cydun.clock": "Clock",
 	"logic.cydun.input": "Input",
 	"logic.cydun.output": "Output",
 	// Commands
@@ -99,6 +104,7 @@
 	"gui.cydun.logic_card.no_circuit": "No circuit encoded",
 	"gui.cydun.logic_card.circuit": "Circuit of %s logic gates:",
 	"gui.cydun.circuit_builder.clear": "Clear",
+	"gui.cydun.circuit_builder.nbt": "NBT",
 	"gui.cydun.circuit_builder.build": "Build",
 	"gui.cydun.circuit_builder.paint_circuit": "Paint",
 	"gui.cydun.circuit_builder.current_operation": "Current Operation: %s",
@@ -108,6 +114,7 @@
 	"gui.cydun.circuit_builder.paint": "Scroll to select a color, then click on a wire or logic gate to paint it",
 	"gui.cydun.circuit_builder.name_gate": "Type the name of the gate, press [Enter] to confirm",
 	"gui.cydun.circuit_builder.drag_key": "Hold [%s] to reposition the circuit",
+	"gui.cydun.puzzle_trigger.activated": "Puzzle solved!",
 	// Enums
 	"enum.cydun.xyz_mode.global": "Absolute",
 	"enum.cydun.xyz_mode.local": "Relative",

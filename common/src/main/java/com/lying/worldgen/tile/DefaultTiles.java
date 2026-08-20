@@ -42,6 +42,7 @@ public class DefaultTiles
 		ID_PIT				= prefix("pit"),
 		ID_PRISTINE_FLOOR	= prefix("pristine_floor"),
 		ID_PUDDLE			= prefix("puddle"),
+		ID_PUZZLE_DOORWAY	= prefix("puzzle_doorway"),
 		ID_SEAT				= prefix("seat"),
 		ID_TABLE_LIGHT		= prefix("table_light"),
 		ID_TABLE			= prefix("table"),
@@ -113,6 +114,11 @@ public class DefaultTiles
 				.build())
 			.asStructure()
 			.freeRotation().build());
+	
+	public static final Supplier<Tile> PUZZLE_DOORWAY	= register(ID_PUZZLE_DOORWAY, Tile.Builder
+			.of(TilePredicate.fromCondition(Boundary.of(Direction.Type.HORIZONTAL)))
+			.asStructure()
+			.build());
 	
 	// Decoration & content tiles
 	public static final Supplier<Tile> TABLE	= register(ID_TABLE, Tile.Builder

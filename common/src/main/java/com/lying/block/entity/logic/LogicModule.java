@@ -24,6 +24,19 @@ import net.minecraft.text.Text;
 
 public class LogicModule
 {
+	public static final Codec<LogicModule> MIN_CODEC	= RecordCodecBuilder.create(instance -> instance.group(
+			Codec.STRING.optionalFieldOf("name").forGetter(m -> m.name),
+			LogicGate.CODEC.fieldOf("logic").forGetter(m -> m.handler),
+			PortSet.CODEC.optionalFieldOf("input_wires").forGetter(m -> m.inputWires.isEmpty() ? Optional.empty() : Optional.of(m.inputWires)),
+			PortSet.CODEC.optionalFieldOf("output_wires").forGetter(m -> m.outputWires.isEmpty() ? Optional.empty() : Optional.of(m.outputWires))
+			).apply(instance, (name,handler,inputs,outputs) -> 
+			{
+				LogicModule module = new LogicModule(handler);
+				name.ifPresent(module::name);
+				inputs.ifPresent(module::addInput);
+				outputs.ifPresent(module::addOutput);
+				return module;
+			}));
 	public static final Codec<LogicModule> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Codec.STRING.optionalFieldOf("name").forGetter(m -> m.name),
 			LogicGate.CODEC.fieldOf("logic").forGetter(m -> m.handler),
@@ -42,7 +55,20 @@ public class LogicModule
 				return module;
 			}));
 	public static final Codec<List<LogicModule>> LIST_CODEC	= CODEC.listOf();
-	
+
+	public static final PacketCodec<ByteBuf, LogicModule> PACKET_MIN_CODEC	= PacketCodec.tuple(
+			PacketCodecs.optional(PacketCodecs.STRING), m -> m.name, 
+			LogicGate.PACKET_CODEC, m -> m.handler, 
+			PacketCodecs.optional(PortSet.PACKET_CODEC), m -> m.inputWires.isEmpty() ? Optional.empty() : Optional.of(m.inputWires), 
+			PacketCodecs.optional(PortSet.PACKET_CODEC), m -> m.outputWires.isEmpty() ? Optional.empty() : Optional.of(m.outputWires),
+			(name,handler,inputs,outputs) ->
+			{
+				LogicModule module = new LogicModule(handler);
+				name.ifPresent(module::name);
+				inputs.ifPresent(module::addInput);
+				outputs.ifPresent(module::addOutput);
+				return module;
+			});
 	public static final PacketCodec<ByteBuf, LogicModule> PACKET_CODEC	= PacketCodec.tuple(
 			PacketCodecs.optional(PacketCodecs.STRING), m -> m.name, 
 			LogicGate.PACKET_CODEC, m -> m.handler, 
@@ -86,6 +112,8 @@ public class LogicModule
 	private PortState portCache = new PortState();
 	// Module output in previous frame
 	private LogicResult resultCache = LogicResult.create();
+	
+	public int circuitDepth = -1;
 	
 	protected LogicModule(LogicGate handlerIn)
 	{
@@ -185,7 +213,12 @@ public class LogicModule
 	/** Returns true if there are no wires connected to any port of this module */
 	public boolean hasNoWires()
 	{
-		return inputWires.isEmpty() && outputWires.isEmpty();
+		return hasNoInputs() && outputWires.isEmpty();
+	}
+	
+	public boolean hasNoInputs()
+	{
+		return inputWires.isEmpty();
 	}
 	
 	public PortSet inputPortSet() { return inputWires; }

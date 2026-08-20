@@ -21,6 +21,7 @@
     "cydun:simple",
     "cydun:linear"
   ],
+  "puzzles": [],
   "tilesets": [],
   "traps": [
     "cydun:lava_jumping",

@@ -74,12 +74,14 @@ public class DefaultTerms
 					.popCap(2)
 					.consecutive(false))
 			.size(10, 16, 10, 16)
+			.setContent(RoomContent.PUZZLE.get())
 			.onApply(PhraseModifier.INJECT_TREASURE.get()));
 	public static final GrammarTerm SML_PUZZLE	= register(ID_SML_PUZZLE, () -> GrammarTerm.Builder.create(0x2768CA)
 			.withCondition(TermConditions.create()
 				.popCap(4)
 				.consecutive(false))
-			.size(5, 8, 5, 8));
+			.size(5, 8, 5, 8)
+			.setContent(RoomContent.PUZZLE.get()));
 	public static final GrammarTerm BOSS			= register(ID_BOSS, () -> GrammarTerm.Builder.create(0x7D1D1D)
 			.withCondition(TermConditions.create()
 				.popCap(1)

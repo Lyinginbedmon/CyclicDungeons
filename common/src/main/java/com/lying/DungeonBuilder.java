@@ -1,7 +1,9 @@
 package com.lying;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -11,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.grammar.CDGrammar;
 import com.lying.grammar.GrammarPhrase;
@@ -33,7 +34,9 @@ public class DungeonBuilder
 	private static final DungeonBuilder INSTANCE	= new DungeonBuilder();
 	private static final GraphOrganiser ORGANISER = GraphOrganiser.Poisson.create();
 	private static final ExecutorService THREAD = new ThreadPoolExecutor(0, 16, 60L, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
-	private static List<BlueprintGeneration> SPOOL = Lists.newArrayList();
+	private static List<BlueprintGeneration> SPOOL = new ArrayList<>();
+	
+	private static List<PuzzleTrigger> PUZZLES	= new ArrayList<>();
 	
 	protected DungeonBuilder() { }
 	
@@ -101,6 +104,7 @@ public class DungeonBuilder
 	public static void onServerStart(MinecraftServer server)
 	{
 		SPOOL.clear();
+		PUZZLES.clear();
 	}
 	
 	public static void onServerTick(ServerWorld event)
@@ -120,6 +124,17 @@ public class DungeonBuilder
 			}
 		});
 		SPOOL.removeIf(BlueprintGeneration::isFinished);
+	}
+	
+	public void logPuzzleTrigger(UUID id, Optional<String> channel)
+	{
+		LOGGER.info("Puzzle triggered in room {}", id.toString());
+		PUZZLES.add(new PuzzleTrigger(id, channel));
+	}
+	
+	public boolean hasBeenTriggered(UUID id, Optional<String> channel)
+	{
+		return PUZZLES.stream().anyMatch(p -> p.matches(id, channel));
 	}
 	
 	private record BlueprintGeneration(Future<Optional<Blueprint>> future, BlockPos position, ServerWorld world, Theme theme, Random rand, long startTime)
@@ -149,6 +164,17 @@ public class DungeonBuilder
 		{
 			Optional<Blueprint> blueprint = blueprint();
 			return blueprint.isPresent() && blueprint.get().build(position, world, rand);
+		}
+	}
+	
+	private record PuzzleTrigger(UUID id, Optional<String> channel)
+	{
+		public boolean matches(UUID id, Optional<String> channel)
+		{
+			return
+					id().equals(id) &&
+					channel().isEmpty() == channel.isEmpty() &&
+					(channel().isEmpty() || channel().get().equalsIgnoreCase(channel.get()));
 		}
 	}
 }

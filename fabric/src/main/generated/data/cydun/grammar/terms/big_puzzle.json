@@ -5,7 +5,7 @@
     "dead_ends": true,
     "max_count": 2
   },
-  "content": "cydun:none",
+  "content": "cydun:puzzle",
   "id": "cydun:big_puzzle",
   "is_placeable": true,
   "phrase_modifier": "cydun:inject_treasure",

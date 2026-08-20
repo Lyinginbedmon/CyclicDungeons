@@ -2,6 +2,7 @@ package com.lying.fabric.client;
 
 import com.lying.block.actors.entity.DartTrapBlockEntity;
 import com.lying.block.actors.entity.FlameJetBlockEntity;
+import com.lying.block.actors.entity.PuzzleTriggerBlockEntity;
 import com.lying.block.actors.entity.TrapActorBlockEntity;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
@@ -14,11 +15,14 @@ import com.lying.client.renderer.block.TrapSpawnerBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDBlocks;
 import com.lying.init.CDScreenHandlerTypes;
 
+import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 
 public final class CyclicDungeonsFabricClient implements ClientModInitializer
@@ -31,11 +35,14 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     	registerBlockColors();
     	registerParticleProviders();
     	
+    	RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.PUZZLE_DOOR.get());
+    	
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_LOGIC.get(), WireableBlockEntityRenderer<TrapLogicBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.MODULAR_LOGIC.get(), WireableBlockEntityRenderer<ModularLogicBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity<?>>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.FLAME_JET.get(), WireableBlockEntityRenderer<FlameJetBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.DART_TRAP.get(), WireableBlockEntityRenderer<DartTrapBlockEntity>::new);
+    	BlockEntityRendererFactories.register(CDBlockEntityTypes.PUZZLE_TRIGGER.get(), WireableBlockEntityRenderer<PuzzleTriggerBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SPAWNER.get(), TrapSpawnerBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.PROXIMITY_SENSOR.get(), ProximitySensorBlockEntityRenderer::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.SIGHT_SENSOR.get(), SightSensorBlockEntityRenderer::new);

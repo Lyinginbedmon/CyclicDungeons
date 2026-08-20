@@ -40,7 +40,7 @@ public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomC
 			registry.put(id, entry);
 	}
 	
-	public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
+	public void applyPrePassageProcessing(BlueprintRoom room, RoomMetadata meta, ServerWorld world, Random rand)
 	{
 		registry.clear();
 		buildRegistry(meta.theme());
@@ -55,13 +55,28 @@ public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomC
 			Identifier id = ids.size() == 1 ? ids.getFirst() : ids.get(world.random.nextInt(ids.size()));
 			meta.setProcessorID(id);
 			CDLoggers.WORLDGEN.info("# Processor selected registry entry {}", id.toString());
-			getEntry(id).ifPresent(entry -> entry.prepare(room, tileMap, world, rand));
 		}
+		else
+			CDLoggers.WORLDGEN.warn("# Processor failed to find a registry entry to select");
+	}
+	
+	public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
+	{
+		registry.clear();
+		buildRegistry(meta.theme());
+		
+		meta.processorID().ifPresent(id -> getEntry(id).ifPresent(entry -> entry.prepare(room, tileMap, world, rand)));
 	}
 	
 	public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand)
 	{
 		meta.processorID().ifPresent(id -> 
 			registry.get(id).apply(min, max, world, meta, rand));
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Optional<IContentEntry> tryGetContents(Identifier registryID)
+	{
+		return (Optional<IContentEntry>)getEntry(registryID);
 	}
 }

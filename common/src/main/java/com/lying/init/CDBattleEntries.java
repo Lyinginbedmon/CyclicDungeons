@@ -17,7 +17,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.lying.CyclicDungeons;
 import com.lying.data.ReloadListener;
-import com.lying.grammar.content.battle.BattleEntry;
+import com.lying.grammar.content.entities.SpawnerEntry;
 import com.mojang.serialization.JsonOps;
 
 import dev.architectury.registry.ReloadListenerRegistry;
@@ -30,7 +30,7 @@ import net.minecraft.util.JsonHelper;
 public class CDBattleEntries implements ReloadListener<List<JsonObject>>
 {
 	private static CDBattleEntries INSTANCE;
-	private final Map<Identifier, BattleEntry> REGISTRY	= new HashMap<>();
+	private final Map<Identifier, SpawnerEntry> REGISTRY	= new HashMap<>();
 	
 	public static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
 	public static final String FILE_PATH = "content/encounters";
@@ -49,13 +49,13 @@ public class CDBattleEntries implements ReloadListener<List<JsonObject>>
 		return prefix(FILE_PATH);
 	}
 	
-	public Optional<BattleEntry> get(Identifier id)
+	public Optional<SpawnerEntry> get(Identifier id)
 	{
-		BattleEntry entry;
+		SpawnerEntry entry;
 		return REGISTRY.containsKey(id) && (entry = REGISTRY.get(id)) != null ? Optional.of(entry) : Optional.empty();
 	}
 	
-	public void register(BattleEntry entry)
+	public void register(SpawnerEntry entry)
 	{
 		if(entry == null)
 			return;
@@ -87,7 +87,7 @@ public class CDBattleEntries implements ReloadListener<List<JsonObject>>
 		{
 			CyclicDungeons.LOGGER.info(" # Loading encounter entries from datapack", REGISTRY.size());
 			REGISTRY.clear();
-			data.forEach(prep -> register(BattleEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
+			data.forEach(prep -> register(SpawnerEntry.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
 			CyclicDungeons.LOGGER.info(" # {} encounter entries loaded", REGISTRY.size());
 		});
 	}
