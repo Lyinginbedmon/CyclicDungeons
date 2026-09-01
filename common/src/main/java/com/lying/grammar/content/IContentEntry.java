@@ -10,6 +10,7 @@ import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.worldgen.theme.Theme;
+import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.block.entity.BlockEntity;
@@ -35,7 +36,9 @@ public interface IContentEntry
 	/** Applied after tile generation */
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
-	public default Identifier getDoorTile(Theme theme) { return theme.getStandardDoor(); }
+	public default DoorWaySet getExitDoorTiles() { return DoorWaySet.BLANK; }
+	
+	public default DoorWaySet getEntryDoorTiles() { return DoorWaySet.BLANK; }
 	
 	public static <T extends BlockEntity> List<T> getTileEntities(BlockPos min, BlockPos max, ServerWorld world, BlockEntityType<T> type)
 	{

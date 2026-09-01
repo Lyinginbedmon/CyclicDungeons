@@ -5,7 +5,9 @@ import java.util.Optional;
 
 import org.joml.Vector2i;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.lying.grammar.content.IContentEntry;
 import com.lying.grammar.content.RoomContent;
 import com.lying.grid.GridTile;
 import com.lying.init.CDTerms;
@@ -14,6 +16,7 @@ import com.lying.reference.Reference;
 import com.lying.utility.geometry.Vector2iUtils;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -162,4 +165,41 @@ public class RoomMetadata
 	
 	/** Returns true if this room can be replaced during generation */
 	public boolean isReplaceable() { return type.isReplaceable(); }
+	
+	public DoorWaySet getEntryDoorTiles()
+	{
+		GrammarTerm type = type();
+		Optional<IContentEntry> content = type.getContentEntry(processorID);
+		return buildCompoundDoorSet(
+				type.getEntryDoors(theme()), 
+				content.isPresent() ? content.get().getEntryDoorTiles() : DoorWaySet.BLANK);
+	}
+	
+	public DoorWaySet getExitDoorTiles()
+	{
+		GrammarTerm type = type();
+		Optional<IContentEntry> content = type.getContentEntry(processorID);
+		return buildCompoundDoorSet(
+				type.getExitDoors(theme()), 
+				content.isPresent() ? content.get().getExitDoorTiles() : DoorWaySet.BLANK);
+	}
+	
+	/** Assembles a hierarchical DoorWaySet based on room content, room type, and dungeon theme */
+	protected DoorWaySet buildCompoundDoorSet(final DoorWaySet typeSet, final DoorWaySet contentSet)
+	{
+		DoorWaySet themeSet = theme().getStandardDoors();
+		final List<DoorWaySet> sets = List.of(contentSet, typeSet, themeSet);
+		final Function<Function<DoorWaySet,Optional<Identifier>>,Optional<Identifier>> retrieval = sup -> 
+		{
+			for(DoorWaySet set : sets)
+			{
+				final Optional<Identifier> result = sup.apply(set);
+				if(result.isPresent())
+					return result;
+			}
+			return Optional.empty();
+		};
+		
+		return new DoorWaySet(retrieval.apply(DoorWaySet::doorTile), retrieval.apply(DoorWaySet::lintelTile), retrieval.apply(DoorWaySet::flooringTile));
+	}
 }

@@ -23,6 +23,7 @@ import com.lying.grammar.content.generation.TileSetContent;
 import com.lying.grammar.content.generation.TileToBlockContent;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.worldgen.theme.Theme;
+import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -108,7 +109,9 @@ public class CDContentTypes
 		
 		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { type.apply(min, max, world, meta, rand); }
 		
-		public Identifier getDoorTile(Theme theme) { return type.getDoorTile(theme); }
+		public DoorWaySet getExitDoorTiles() { return type.getExitDoorTiles(); }
+		
+		public DoorWaySet getEntryDoorTiles() { return type.getEntryDoorTiles(); }
 		
 		public JsonObject toJson(JsonOps ops)
 		{

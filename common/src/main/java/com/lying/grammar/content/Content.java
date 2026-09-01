@@ -8,6 +8,7 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDContentTypes;
 import com.lying.worldgen.theme.Theme;
+import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
@@ -27,7 +28,9 @@ public abstract class Content
 	
 	private final Identifier registryName;
 	protected boolean allowDeadEnds = true;
-	protected Optional<Identifier> doorTile = Optional.empty();
+	protected Optional<DoorWaySet> 
+		entryDoors = Optional.empty(), 
+		exitDoors = Optional.empty();
 	
 	protected Content(Identifier nameIn)
 	{
@@ -45,11 +48,26 @@ public abstract class Content
 	/** Applied after tile generation */
 	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
-	public Identifier getDoorTile(Theme theme) { return doorTile.orElse(theme.getStandardDoor()); }
+	public DoorWaySet getEntryDoorTiles() { return entryDoors.orElse(DoorWaySet.BLANK); }
 	
-	public Content setDoorTile(Identifier tileId)
+	public DoorWaySet getExitDoorTiles() { return exitDoors.orElse(DoorWaySet.BLANK); }
+	
+	public Content setEntryDoorTiles(DoorWaySet set)
 	{
-		doorTile = tileId == null ? Optional.empty() : Optional.of(tileId);
+		entryDoors = set == null ? Optional.empty() : Optional.of(set);
+		return this;
+	}
+	
+	public Content setExitDoorTiles(DoorWaySet set)
+	{
+		exitDoors = set == null ? Optional.empty() : Optional.of(set);
+		return this;
+	}
+	
+	public Content setDoorTiles(DoorWaySet entry, DoorWaySet exit)
+	{
+		setEntryDoorTiles(entry);
+		setExitDoorTiles(exit);
 		return this;
 	}
 	
@@ -58,8 +76,10 @@ public abstract class Content
 		JsonObject obj = toJson(new JsonObject(), JsonOps.INSTANCE);
 		if(!allowDeadEnds)
 			obj.addProperty("AllowDeadEnds", allowDeadEnds);
-		if(doorTile.isPresent())
-			obj.addProperty("DoorTileID", doorTile.get().toString());
+		if(entryDoors.isPresent())
+			obj.add("DoorwaysIn", entryDoors.get().toJson());
+		if(exitDoors.isPresent())
+			obj.add("DoorwaysOut", exitDoors.get().toJson());
 		return obj.isEmpty() ? Optional.empty() : Optional.of(obj);
 	}
 	
@@ -74,8 +94,10 @@ public abstract class Content
 	{
 		if(obj.has("AllowDeadEnds"))
 			allowDeadEnds = obj.get("AllowDeadEnds").getAsBoolean();
-		if(obj.has("DoorTileID"))
-			doorTile = Optional.of(Identifier.of(obj.get("DoorTileID").getAsString()));
+		if(obj.has("DoorwaysIn"))
+			entryDoors = Optional.of(DoorWaySet.fromJson(obj.get("DoorwaysIn")));
+		if(obj.has("DoorwaysOut"))
+			exitDoors = Optional.of(DoorWaySet.fromJson(obj.get("DoorwaysOut")));
 		return this;
 	}
 }

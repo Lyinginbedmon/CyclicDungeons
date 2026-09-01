@@ -20,14 +20,22 @@ public class TileSet extends HashMap<Identifier,Float>
 	private static final long serialVersionUID = 1L;
 	public static final Codec<TileSet> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(TileSet::registryName),
-			TileEntry.CODEC.listOf().fieldOf("values").forGetter(t -> t.entrySet().stream().map(e -> new TileEntry(e.getKey(), e.getValue())).toList())
-			).apply(instance, (id,values) -> 
+			TileEntry.CODEC.listOf().fieldOf("values").forGetter(t -> t.entrySet().stream().map(e -> new TileEntry(e.getKey(), e.getValue())).toList()),
+			DoorWaySet.CODEC.optionalFieldOf("entry_doorways").forGetter(TileSet::entryDoorTiles),
+			DoorWaySet.CODEC.optionalFieldOf("exit_doorways").forGetter(TileSet::exitDoorTiles)
+			).apply(instance, (id,values,doorsIn,doorsOut) -> 
 			{
 				TileSet tileSet = new TileSet(id);
 				values.forEach(e -> tileSet.add(e.tile, e.weight));
+				tileSet.entryDoorTiles = doorsIn;
+				tileSet.exitDoorTiles = doorsOut;
 				return tileSet;
 			}));
+	
 	private final Identifier registryName;
+	private Optional<DoorWaySet> 
+		entryDoorTiles = Optional.empty(), 
+		exitDoorTiles = Optional.empty();
 	
 	public TileSet(Identifier idIn)
 	{
@@ -35,6 +43,10 @@ public class TileSet extends HashMap<Identifier,Float>
 	}
 	
 	public Identifier registryName() { return registryName; }
+	
+	public Optional<DoorWaySet> entryDoorTiles() { return entryDoorTiles; }
+	
+	public Optional<DoorWaySet> exitDoorTiles() { return exitDoorTiles; }
 	
 	public Collection<Tile> keys()
 	{

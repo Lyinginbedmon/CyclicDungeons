@@ -20,9 +20,9 @@ import com.lying.init.CDPhrases;
 import com.lying.init.CDPuzzleEntries;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTileSets;
-import com.lying.init.CDTiles;
 import com.lying.init.CDTrapEntries;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tileset.DoorWaySet;
 import com.lying.worldgen.tileset.TileSet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
@@ -178,7 +178,7 @@ public record Theme(
 		return CDTileSets.instance().get(passageTileSet).orElse(CDTileSets.DEFAULT);
 	}
 	
-	public Identifier getStandardDoor() { return CDTiles.ID_DOORWAY; }
+	public DoorWaySet getStandardDoors() { return DoorWaySet.DEFAULTS; }
 	
 	public int collapseIterationCap() { return collapseIterations.orElse(1000); }
 	

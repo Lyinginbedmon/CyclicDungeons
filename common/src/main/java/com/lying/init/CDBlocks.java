@@ -65,6 +65,8 @@ public class CDBlocks
 	 * 
 	 * Trap sensors
 	 * * Area
+	 * * Player entry
+	 * * Player exit/death (reset)
 	 * Trap actors
 	 * * Toggled ceiling block
 	 */

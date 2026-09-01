@@ -1,7 +1,9 @@
 {
   "Name": "cydun:combo_lock",
   "Settings": {
-    "DoorTileID": "cydun:puzzle_doorway",
+    "DoorwaysOut": {
+      "Door": "cydun:puzzle_doorway"
+    },
     "Modules": [
       {
         "blockstate": {

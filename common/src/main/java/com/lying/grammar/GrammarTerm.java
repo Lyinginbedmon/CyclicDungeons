@@ -21,6 +21,7 @@ import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
+import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -206,15 +207,19 @@ public class GrammarTerm
 		metadata.setSize(sizeFunc.apply(rand));
 	}
 	
-	public Identifier getDoorTileFor(Optional<Identifier> contentID, Theme theme)
+	public Optional<IContentEntry> getContentEntry(Optional<Identifier> contentID)
 	{
-		if(contentID.isPresent())
-		{
-			Optional<IContentEntry> entry = contentBuilder.tryGetContents(contentID.get());
-			if(entry.isPresent())
-				return entry.get().getDoorTile(theme);
-		}
-		return theme.getStandardDoor();
+		return contentID.isEmpty() ? Optional.empty() : contentBuilder.tryGetContents(contentID.get());
+	}
+	
+	public DoorWaySet getEntryDoors(Theme theme)
+	{
+		return theme.getTileSet(this).entryDoorTiles().orElse(DoorWaySet.BLANK);
+	}
+	
+	public DoorWaySet getExitDoors(Theme theme)
+	{
+		return theme.getTileSet(this).entryDoorTiles().orElse(DoorWaySet.BLANK);
 	}
 	
 	public static class Builder

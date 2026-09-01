@@ -1,6 +1,9 @@
 package com.lying.blueprint;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -11,6 +14,8 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.entity.IRoomTaggedBlock;
+import com.lying.grammar.GrammarTerm;
+import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
@@ -28,6 +33,7 @@ import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.RotationSupplier;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tileset.DoorWaySet;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -155,6 +161,18 @@ public class BlueprintPassage
 	/** Returns the doorway tile of the parent room that this passage originates from */
 	@Nullable
 	public GridTile getInitialTile() { return startTile.orElse(null); }
+	
+	@Nullable
+	public GridTile getTileAdjacentTo(BlueprintRoom room)
+	{
+		if(!room.equals(parent) && children.stream().noneMatch(room::equals))
+			return null;
+		else if(room.equals(parent))
+			return getInitialTile();
+		
+		GraphTileGrid grid = room.tileGrid();
+		return tiles().stream().filter(grid::containsAdjacent).findFirst().orElse(null);
+	}
 	
 	/** Returns the doorway tile in the parent room's tile grid that is closest to all child rooms */
 	protected static GridTile findExitDoorway(BlueprintRoom parent, List<BlueprintRoom> children, @Nullable GridTile grandParentEntry)
@@ -342,56 +360,110 @@ public class BlueprintPassage
 	
 	public void generate(BlockPos origin, ServerWorld world, Random rand)
 	{
+		// List of all rooms this passage accesses
+		final List<BlueprintRoom> rooms = new ArrayList<>();
+		rooms.add(parent);
+		rooms.addAll(children);
+		final Map<BlueprintRoom, GridTile> doorways = new HashMap<>();
+		
+		final Theme theme = parent().metadata().theme();
 		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(asTiles(), PASSAGE_HEIGHT);
 		
 		// Pre-seed doorway from parent room before generating
-		final GraphTileGrid parentGrid = parent().tileGrid();
-		GridTile doorGrid = getInitialTile();
-		if(doorGrid == null)
-			return;
-		
-		BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
-		map.put(doorPos.down(), CDTiles.instance().getElse(DefaultTiles.ID_PRISTINE_FLOOR, CDTiles.STONE));
-		map.put(doorPos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
-		if(PASSAGE_HEIGHT > 2)
+		List<GridTile> doorTiles = new ArrayList<GridTile>();
+		for(BlueprintRoom terminus : rooms)
 		{
-			BlockPos pos = doorPos.up();
-			
-			// Place a lintel above the door
-			map.put(pos, CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE));
-			
-			// Fill remaining vertical space above the door with boundary
-			while(map.contains(pos.up()))
-				map.put((pos = pos.up()), CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
+			GridTile doorGrid = getTileAdjacentTo(terminus);
+			if(doorGrid == null || doorTiles.contains(doorGrid))
+				continue;
+			else
+			{
+				doorTiles.add(doorGrid);
+				doorways.put(terminus, doorGrid);
+			}
 		}
 		
-		final Theme theme = parent().metadata().theme();
+		for(BlueprintRoom terminus : rooms)
+		{
+			GridTile doorGrid = doorways.get(terminus);
+			if(doorGrid == null)
+				continue;
+			
+			BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
+			
+			GrammarTerm type = terminus.metadata().type();
+			DoorWaySet doorWaySet = terminus.equals(parent) ? type.getExitDoors(theme) : type.getEntryDoors(theme);
+			doorWaySet.flooringTile().ifPresent(id -> map.put(doorPos.down(), CDTiles.instance().getElse(id, CDTiles.STONE)));
+			
+			// Lintel & boundary addition
+			if(PASSAGE_HEIGHT > 2)
+				for(GridTile doorway : doorways.values())
+				{
+					BlockPos pos = new BlockPos(doorway.x, 1, doorway.y).up();
+					
+					// Place a lintel above the door
+					final BlockPos lintelPos = pos;
+					if(doorWaySet.lintelTile().isPresent() && doorways.values().stream().noneMatch(t -> t.manhattanDistance(doorway) == 1))
+						doorWaySet.lintelTile().ifPresent(id -> map.put(lintelPos, CDTiles.instance().getElse(id, CDTiles.STONE)));
+					
+					// Fill remaining vertical space above the door with boundary
+					while(map.contains(pos.up()))
+						map.put((pos = pos.up()), CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
+				}
+		}
+		
 		TileGenerator.generate(map, theme.passageTileSet(), rand);
 		map.finalise(theme, rand);
 		
 		// Ensure doorway from parent room has correct orientation
-		final Identifier doorTileID = parent.getDoorTile();
-		for(Direction face : Direction.Type.HORIZONTAL)
-			if(parentGrid.contains(doorGrid.offset(face)))
-			{
-				BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
-				map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(doorTileID, CDTiles.AIR), theme, rotation, Optional.of(parent.uuid())));
-				
-				if(map.contains(doorPos.up()))
-					map.finalise(TileInstance.of(doorPos.up(), CDTiles.instance().getElse(CDTiles.ID_DOORWAY_LINTEL, CDTiles.STONE), theme, rotation));
-				break;
-			}
+		for(BlueprintRoom terminus : rooms)
+		{
+			if(doorways.get(terminus) == null)
+				continue;
+			
+			final GridTile doorGrid = doorways.get(terminus);
+			final BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
+			final GraphTileGrid parentGrid = terminus.tileGrid();
+			
+			RoomMetadata type = terminus.metadata();
+			DoorWaySet doorWaySet = terminus.equals(parent) ? type.getExitDoorTiles() : type.getEntryDoorTiles();
+			final Identifier doorTileID = 
+					terminus.equals(parent) ? doorWaySet.doorTile().orElse(CDTiles.ID_DOORWAY) : 
+						doorTiles.stream().anyMatch(t -> t.manhattanDistance(doorGrid) == 1) ? CDTiles.ID_AIR : doorWaySet.doorTile().orElse(CDTiles.ID_DOORWAY);
+			
+			for(Direction face : Direction.Type.HORIZONTAL)
+				if(parentGrid.contains(doorGrid.offset(face)))
+				{
+					BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
+					if(!terminus.equals(parent))
+						rotation = rotation.rotate(BlockRotation.CLOCKWISE_180);
+					
+					map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(doorTileID, CDTiles.AIR), theme, rotation, Optional.of(terminus.uuid())));
+					
+					if(map.contains(doorPos.up()) && !doorTileID.equals(CDTiles.ID_AIR))
+						map.finalise(TileInstance.of(doorPos.up(), CDTiles.instance().getElse(doorWaySet.lintelTile().orElse(CDTiles.ID_DOORWAY_LINTEL), CDTiles.STONE), theme, rotation));
+					break;
+				}
+		}
 		
 		map.generate(origin, world);
 		
 		// FIXME Tag room-tagged blocks in doorway tiles with corresponding room ID
-		BlockPos doorStartGlobal = doorPos.multiply(TILE_SIZE).add(origin);
-		BlockPos doorEndGlobal = doorStartGlobal.add(TILE_SIZE, TILE_SIZE, TILE_SIZE);
-		BlockPos.Mutable.iterate(doorStartGlobal, doorEndGlobal).forEach(p -> 
+		for(BlueprintRoom terminus : rooms)
 		{
-			BlockEntity e = world.getBlockEntity(p);
-			if(e != null && e instanceof IRoomTaggedBlock)
-				((IRoomTaggedBlock)e).setRoom(parent.uuid());
-		});
+			final GridTile doorGrid = doorways.get(terminus);
+			if(doorGrid == null)
+				continue;
+			
+			final BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
+			BlockPos doorStartGlobal = doorPos.multiply(TILE_SIZE).add(origin);
+			BlockPos doorEndGlobal = doorStartGlobal.add(TILE_SIZE, TILE_SIZE, TILE_SIZE);
+			BlockPos.Mutable.iterate(doorStartGlobal, doorEndGlobal).forEach(p -> 
+			{
+				BlockEntity e = world.getBlockEntity(p);
+				if(e != null && e instanceof IRoomTaggedBlock)
+					((IRoomTaggedBlock)e).setRoom(terminus.uuid());
+			});
+		}
 	}
 }

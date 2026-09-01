@@ -28,6 +28,7 @@ import com.lying.utility.BlockPredicate;
 import com.lying.utility.BlockPredicate.BlockFlags;
 import com.lying.utility.BlockPredicate.SubPredicate;
 import com.lying.worldgen.tile.DefaultTiles;
+import com.lying.worldgen.tileset.DoorWaySet;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LeverBlock;
@@ -153,7 +154,7 @@ public class DefaultPuzzles
 					.relation(prefix("sensor_3"), BlockPos.ORIGIN.down())
 					.markVital()
 					.build())
-			.setDoorTile(DefaultTiles.ID_PUZZLE_DOORWAY)
+			.setExitDoorTiles(DoorWaySet.of(DefaultTiles.ID_PUZZLE_DOORWAY))
 			);
 	
 	private static Supplier<ContentEntry> register(final Identifier id, Supplier<Content> func)
