@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import com.lying.block.actors.FlameJetBlock;
 import com.lying.data.CDTags;
 import com.lying.grammar.content.Content;
+import com.lying.grammar.content.ContentViability;
 import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.grammar.content.generation.ModularContent;
 import com.lying.grammar.content.generation.SimpleJumpingContent;
@@ -51,7 +52,8 @@ public class DefaultTraps
 		ID_MODULE_TEST		= prefix("module_test");
 	
 	public static final Supplier<ContentEntry> PITFALL			= register(ID_PITFALL, () -> TileSetContent.of(DefaultTileSets.ID_PITFALL_TRAP));
-	public static final Supplier<ContentEntry> LAVA_RIVER		= register(ID_LAVA_RIVER, () -> TileContent.of(DefaultTiles.ID_LAVA_RIVER, new RoomNumberProvider.Unlimited(), false));
+	public static final Supplier<ContentEntry> LAVA_RIVER		= register(ID_LAVA_RIVER, () -> TileContent.of(DefaultTiles.ID_LAVA_RIVER, new RoomNumberProvider.Unlimited())
+			.setConditions(ContentViability.Builder.create().setMinimumExits(1).build()));
 	public static final Supplier<ContentEntry> PIT_JUMPING		= register(ID_PIT_JUMPING, () -> SimpleJumpingContent.of(DefaultTiles.ID_PIT));
 	public static final Supplier<ContentEntry> LAVA_JUMPING	= register(ID_LAVA_JUMPING, () -> SimpleJumpingContent.of(DefaultTiles.ID_LAVA));
 	public static final Supplier<ContentEntry> MINEFIELD		= register(ID_MINEFIELD, () -> StructurePlacerContent.of(

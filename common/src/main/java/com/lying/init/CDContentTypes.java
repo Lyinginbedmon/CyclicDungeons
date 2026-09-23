@@ -1,6 +1,7 @@
 package com.lying.init;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -109,7 +110,10 @@ public class CDContentTypes
 		
 		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { type.apply(min, max, world, meta, rand); }
 		
-		public DoorWaySet getExitDoorTiles() { return type.getExitDoorTiles(); }
+		public List<DoorWaySet> getExitDoorTiles(Random rand, int count)
+		{
+			return type.getExitDoorTiles(rand, count);
+		}
 		
 		public DoorWaySet getEntryDoorTiles() { return type.getEntryDoorTiles(); }
 		

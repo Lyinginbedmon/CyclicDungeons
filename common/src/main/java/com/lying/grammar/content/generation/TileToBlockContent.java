@@ -97,7 +97,7 @@ public class TileToBlockContent extends LogicControlledTrap
 	
 	protected void updateSubTraps()
 	{
-		tileApplier = TileContent.of(tileID, tileCount, true);
+		tileApplier = TileContent.of(tileID, tileCount);
 		structureApplier = StructurePlacerContent.of(structureKey, placementOffset, 0, 0, structureCount, viabilityCheck);
 	}
 	

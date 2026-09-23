@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_bottom_left_open",
+  "textures": {
+    "bottom": "cydun:block/locked_puzzle_door_bottom",
+    "top": "cydun:block/locked_puzzle_door_top"
+  }
+}

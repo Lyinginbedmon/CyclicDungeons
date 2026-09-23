@@ -26,7 +26,7 @@ public class CDSoundEvents
 	public static final RegistrySupplier<SoundEvent> LOGIC_BLOCK_BEEP	= register(prefix("logic_block_beep"));
 	public static final RegistrySupplier<SoundEvent> LOGIC_BLOCK_GIVE	= register(prefix("logic_block_give"));
 	public static final RegistrySupplier<SoundEvent> LOGIC_BLOCK_TAKE	= register(prefix("logic_block_take"));
-	public static final RegistrySupplier<SoundEvent> WIRE_ATTACH		= register(prefix("wire_attach"));	// FIXME Use these sounds during wiring
+	public static final RegistrySupplier<SoundEvent> WIRE_ATTACH		= register(prefix("wire_attach"));
 	public static final RegistrySupplier<SoundEvent> WIRE_DETACH		= register(prefix("wire_detach"));
 	
 	private static RegistrySupplier<SoundEvent> register(Identifier name)

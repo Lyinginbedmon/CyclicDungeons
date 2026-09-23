@@ -87,6 +87,7 @@ public class PuzzleBreakBlockEntity extends BlockEntity implements IRoomTaggedBl
 		});
 	}
 	
+	/** Called when the server registers a matching room event trigger */
 	protected void onTrigger()
 	{
 		world.breakBlock(pos, false);

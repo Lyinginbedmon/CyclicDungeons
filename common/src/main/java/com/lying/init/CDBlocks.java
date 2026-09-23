@@ -20,6 +20,7 @@ import com.lying.block.actors.RedstoneActorBlock;
 import com.lying.block.actors.SpikeTrapBlock;
 import com.lying.block.actors.SwingingBladeBlock;
 import com.lying.block.actors.TrapSpawnerBlock;
+import com.lying.block.puzzle.OneWayDoorBlock;
 import com.lying.block.puzzle.PuzzleBreakBlock;
 import com.lying.block.puzzle.PuzzleDoorBlock;
 import com.lying.block.puzzle.PuzzleLockedDoorBlock;
@@ -105,6 +106,8 @@ public class CDBlocks
 	public static final RegistrySupplier<Block> PUZZLE_PLACER		= register("puzzle_placer", s -> new PuzzlePlaceBlock(s.dropsNothing().noCollision().strength(-1.0F, 3600000.8F).pistonBehavior(PistonBehavior.BLOCK)));
 	public static final RegistrySupplier<Block> PUZZLE_DOOR			= register("puzzle_door", s -> new PuzzleDoorBlock(s.dropsNothing().strength(-1.0F, 3600000.8F).pistonBehavior(PistonBehavior.BLOCK)));
 	public static final RegistrySupplier<Block> PUZZLE_LOCKED_DOOR	= register("locked_puzzle_door", s -> new PuzzleLockedDoorBlock(s.dropsNothing().strength(-1F, 3600000.8F).pistonBehavior(PistonBehavior.BLOCK)));
+	public static final RegistrySupplier<Block> BOSS_DOOR			= register("boss_door", s -> new OneWayDoorBlock(s));
+	
 	
 	// Hazards
 	private static final Function<Settings, Settings> stoneSettings				= settings -> settings.mapColor(MapColor.STONE_GRAY).instrument(NoteBlockInstrument.BASEDRUM).requiresTool().strength(1.5F, 6.0F);

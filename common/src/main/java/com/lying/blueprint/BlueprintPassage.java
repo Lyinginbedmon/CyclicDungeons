@@ -13,11 +13,7 @@ import org.slf4j.Logger;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
-import com.lying.block.entity.IRoomTaggedBlock;
-import com.lying.grammar.GrammarTerm;
-import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
-import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridPathing;
 import com.lying.grid.GridPathing.BoundTilePair;
@@ -31,17 +27,11 @@ import com.lying.utility.logging.DataLog;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
-import com.lying.worldgen.tile.RotationSupplier;
 import com.lying.worldgen.tile.Tile;
-import com.lying.worldgen.tileset.DoorWaySet;
 
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.BlockRotation;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 
 public class BlueprintPassage
@@ -308,6 +298,7 @@ public class BlueprintPassage
 						.anyMatch(l::isAdjacentOrSame));
 	}
 	
+	// FIXME Include metadata check to prevent passages of distinct routes merging
 	/** Returns true if any of my tiles are adjacent to any of their tiles */
 	public boolean canMergeWith(BlueprintPassage other)
 	{
@@ -358,6 +349,33 @@ public class BlueprintPassage
 		return false;
 	}
 	
+	public boolean shouldGenerateDoorTo(BlueprintRoom node)
+	{
+		if(!isTerminus(node))
+			return true;
+		
+		// List of all rooms this passage accesses
+		final List<BlueprintRoom> rooms = new ArrayList<>();
+		rooms.add(parent);
+		rooms.addAll(children);
+		
+		List<GridTile> doorTiles = new ArrayList<GridTile>();
+		GridTile target = null;
+		for(BlueprintRoom terminus : rooms)
+		{
+			GridTile doorGrid = getTileAdjacentTo(terminus);
+			if(terminus.equals(node))
+				target = doorGrid;
+			if(doorGrid == null || doorTiles.contains(doorGrid))
+				continue;
+			else
+				doorTiles.add(doorGrid);
+		}
+		
+		final GridTile door = target;
+		return door == null || doorTiles.stream().noneMatch(t -> t.manhattanDistance(door) == 1);
+	}
+	
 	public void generate(BlockPos origin, ServerWorld world, Random rand)
 	{
 		// List of all rooms this passage accesses
@@ -389,81 +407,15 @@ public class BlueprintPassage
 			if(doorGrid == null)
 				continue;
 			
-			BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
-			
-			GrammarTerm type = terminus.metadata().type();
-			DoorWaySet doorWaySet = terminus.equals(parent) ? type.getExitDoors(theme) : type.getEntryDoors(theme);
-			doorWaySet.flooringTile().ifPresent(id -> map.put(doorPos.down(), CDTiles.instance().getElse(id, CDTiles.STONE)));
-			
-			// Lintel & boundary addition
-			if(PASSAGE_HEIGHT > 2)
-				for(GridTile doorway : doorways.values())
-				{
-					BlockPos pos = new BlockPos(doorway.x, 1, doorway.y).up();
-					
-					// Place a lintel above the door
-					final BlockPos lintelPos = pos;
-					if(doorWaySet.lintelTile().isPresent() && doorways.values().stream().noneMatch(t -> t.manhattanDistance(doorway) == 1))
-						doorWaySet.lintelTile().ifPresent(id -> map.put(lintelPos, CDTiles.instance().getElse(id, CDTiles.STONE)));
-					
-					// Fill remaining vertical space above the door with boundary
-					while(map.contains(pos.up()))
-						map.put((pos = pos.up()), CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
-				}
+			final Tile flag = CDTiles.instance().get(CDTiles.ID_PASSAGE_FLAG).get();
+			BlockPos doorPos = new BlockPos(doorGrid.x, 0, doorGrid.y);
+			for(int i=0; i<PASSAGE_HEIGHT; i++)
+				map.put(doorPos.withY(i), i < 3 ? flag : CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
 		}
 		
 		TileGenerator.generate(map, theme.passageTileSet(), rand);
-		map.finalise(theme, rand);
-		
-		// Ensure doorway from parent room has correct orientation
-		for(BlueprintRoom terminus : rooms)
-		{
-			if(doorways.get(terminus) == null)
-				continue;
-			
-			final GridTile doorGrid = doorways.get(terminus);
-			final BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
-			final GraphTileGrid parentGrid = terminus.tileGrid();
-			
-			RoomMetadata type = terminus.metadata();
-			DoorWaySet doorWaySet = terminus.equals(parent) ? type.getExitDoorTiles() : type.getEntryDoorTiles();
-			final Identifier doorTileID = 
-					terminus.equals(parent) ? doorWaySet.doorTile().orElse(CDTiles.ID_DOORWAY) : 
-						doorTiles.stream().anyMatch(t -> t.manhattanDistance(doorGrid) == 1) ? CDTiles.ID_AIR : doorWaySet.doorTile().orElse(CDTiles.ID_DOORWAY);
-			
-			for(Direction face : Direction.Type.HORIZONTAL)
-				if(parentGrid.contains(doorGrid.offset(face)))
-				{
-					BlockRotation rotation = RotationSupplier.faceToRotationMap.get(face);
-					if(!terminus.equals(parent))
-						rotation = rotation.rotate(BlockRotation.CLOCKWISE_180);
-					
-					map.finalise(new TileInstance(doorPos, CDTiles.instance().getElse(doorTileID, CDTiles.AIR), theme, rotation, Optional.of(terminus.uuid())));
-					
-					if(map.contains(doorPos.up()) && !doorTileID.equals(CDTiles.ID_AIR))
-						map.finalise(TileInstance.of(doorPos.up(), CDTiles.instance().getElse(doorWaySet.lintelTile().orElse(CDTiles.ID_DOORWAY_LINTEL), CDTiles.STONE), theme, rotation));
-					break;
-				}
-		}
-		
-		map.generate(origin, world);
-		
-		// FIXME Tag room-tagged blocks in doorway tiles with corresponding room ID
-		for(BlueprintRoom terminus : rooms)
-		{
-			final GridTile doorGrid = doorways.get(terminus);
-			if(doorGrid == null)
-				continue;
-			
-			final BlockPos doorPos = new BlockPos(doorGrid.x, 1, doorGrid.y);
-			BlockPos doorStartGlobal = doorPos.multiply(TILE_SIZE).add(origin);
-			BlockPos doorEndGlobal = doorStartGlobal.add(TILE_SIZE, TILE_SIZE, TILE_SIZE);
-			BlockPos.Mutable.iterate(doorStartGlobal, doorEndGlobal).forEach(p -> 
-			{
-				BlockEntity e = world.getBlockEntity(p);
-				if(e != null && e instanceof IRoomTaggedBlock)
-					((IRoomTaggedBlock)e).setRoom(terminus.uuid());
-			});
-		}
+		map.
+			finalise(theme, rand).
+			generate(origin, world);
 	}
 }

@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "cydun:block/boss_door"
+    },
+    "facing=west": {
+      "model": "cydun:block/boss_door"
+    },
+    "facing=north": {
+      "model": "cydun:block/boss_door",
+	  "y": 90
+    },
+	"facing=south": {
+	  "model": "cydun:block/boss_door",
+	  "y": 90
+	}
+  }
+}

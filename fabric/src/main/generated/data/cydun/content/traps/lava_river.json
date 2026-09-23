@@ -1,7 +1,12 @@
 {
   "Name": "cydun:lava_river",
   "Settings": {
-    "AllowDeadEnds": false,
+    "Prerequisites": {
+      "Exits": [
+        1,
+        -1
+      ]
+    },
     "Tile": "cydun:lava_river"
   },
   "Type": "cydun:tile"

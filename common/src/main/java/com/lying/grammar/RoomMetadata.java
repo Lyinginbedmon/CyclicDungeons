@@ -25,6 +25,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.random.Random;
 
 /** Metadata describing non-structural details of a dungeon room */
 public class RoomMetadata
@@ -175,13 +176,16 @@ public class RoomMetadata
 				content.isPresent() ? content.get().getEntryDoorTiles() : DoorWaySet.BLANK);
 	}
 	
-	public DoorWaySet getExitDoorTiles()
+	public List<DoorWaySet> getExitDoorTiles(Random rand, int count)
 	{
-		GrammarTerm type = type();
+		List<DoorWaySet> set;
 		Optional<IContentEntry> content = type.getContentEntry(processorID);
-		return buildCompoundDoorSet(
-				type.getExitDoors(theme()), 
-				content.isPresent() ? content.get().getExitDoorTiles() : DoorWaySet.BLANK);
+		if(content.isPresent() && !(set = content.get().getExitDoorTiles(rand, count)).isEmpty())
+				return set;
+		
+		return List.of(buildCompoundDoorSet(
+				type().getExitDoors(theme()), 
+				DoorWaySet.BLANK));
 	}
 	
 	/** Assembles a hierarchical DoorWaySet based on room content, room type, and dungeon theme */

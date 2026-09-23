@@ -1,3 +1,6 @@
 {
-  "parent": "cydun:block/locked_puzzle_door"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "cydun:item/locked_puzzle_door"
+  }
 }

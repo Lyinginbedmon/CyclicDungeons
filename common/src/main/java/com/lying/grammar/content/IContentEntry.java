@@ -36,7 +36,7 @@ public interface IContentEntry
 	/** Applied after tile generation */
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
-	public default DoorWaySet getExitDoorTiles() { return DoorWaySet.BLANK; }
+	public default List<DoorWaySet> getExitDoorTiles(Random rand, int count) { return List.of(DoorWaySet.BLANK); }
 	
 	public default DoorWaySet getEntryDoorTiles() { return DoorWaySet.BLANK; }
 	

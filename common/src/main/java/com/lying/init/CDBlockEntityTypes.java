@@ -17,6 +17,7 @@ import com.lying.block.actors.entity.TrapSpawnerBlockEntity;
 import com.lying.block.entity.EncounterSpawnerBlockEntity;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
+import com.lying.block.puzzle.entity.OneWayDoorBlockEntity;
 import com.lying.block.puzzle.entity.PuzzleBreakBlockEntity;
 import com.lying.block.puzzle.entity.PuzzleDoorBlockEntity;
 import com.lying.block.puzzle.entity.PuzzleLockedDoorBlockEntity;
@@ -66,6 +67,7 @@ public class CDBlockEntityTypes
 	public static final RegistrySupplier<BlockEntityType<PuzzleBreakBlockEntity>> PUZZLE_PLACE		= register("puzzle_placer", PuzzlePlaceBlockEntity::new, CDBlocks.PUZZLE_PLACER);
 	public static final RegistrySupplier<BlockEntityType<PuzzleDoorBlockEntity>> PUZZLE_DOOR		= register("puzzle_door", PuzzleDoorBlockEntity::new, CDBlocks.PUZZLE_DOOR);
 	public static final RegistrySupplier<BlockEntityType<PuzzleLockedDoorBlockEntity>> PUZZLE_LOCKED_DOOR		= register("puzzle_locked_door", PuzzleLockedDoorBlockEntity::new, CDBlocks.PUZZLE_LOCKED_DOOR);
+	public static final RegistrySupplier<BlockEntityType<OneWayDoorBlockEntity>> BOSS_DOOR			= register("boss_door", OneWayDoorBlockEntity::new, CDBlocks.BOSS_DOOR);
 	
 	@SafeVarargs
 	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> register(String nameIn, BlockEntityType.BlockEntityFactory<? extends T> factory, RegistrySupplier<Block>... blocksIn)

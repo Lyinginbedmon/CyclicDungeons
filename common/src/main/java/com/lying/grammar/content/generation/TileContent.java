@@ -35,24 +35,22 @@ public class TileContent extends Content
 		super(name);
 	}
 	
-	public TileContent(Identifier name, Identifier hazardIn, RoomNumberProvider countIn, boolean allowDeadEndsIn)
+	public TileContent(Identifier name, Identifier hazardIn, RoomNumberProvider countIn)
 	{
 		super(name);
 		hazardID = hazardIn;
 		counter = countIn;
-		allowDeadEnds = allowDeadEndsIn;
 	}
 	
-	public static TileContent of(Identifier hazardIn, RoomNumberProvider hazardCountIn, boolean allowDeadEndsIn)
+	public static TileContent of(Identifier hazardIn, RoomNumberProvider hazardCountIn)
 	{
-		return new TileContent(ID, hazardIn, hazardCountIn, allowDeadEndsIn);
+		return new TileContent(ID, hazardIn, hazardCountIn);
 	}
 	
 	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
 		super.toJson(obj, ops);
 		obj.addProperty("Tile", hazardID.toString());
-		obj.addProperty("AllowDeadEnds", allowDeadEnds);
 		return obj;
 	}
 	
@@ -60,7 +58,6 @@ public class TileContent extends Content
 	{
 		super.fromJson(ops, obj);
 		hazardID = Identifier.of(obj.get("Tile").getAsString());
-		allowDeadEnds = obj.get("AllowDeadEnds").getAsBoolean();
 		return this;
 	}
 	

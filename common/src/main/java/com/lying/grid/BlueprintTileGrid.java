@@ -184,7 +184,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	}
 	
 	/** Populates the finalised map with tile instances with appropriate orientations */
-	public void finalise(Theme theme, Random rand)
+	public BlueprintTileGrid finalise(Theme theme, Random rand)
 	{
 		LOGGER.info("Finalising tile set...");
 		finalised.clear();
@@ -202,6 +202,8 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			LOGGER.info("Tile set finalised");
 		else
 			LOGGER.warn("Error while finalising tile set");
+		
+		return this;
 	}
 	
 	public void finalise(TileInstance instance)
