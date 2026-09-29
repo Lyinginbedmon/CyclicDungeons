@@ -3,6 +3,7 @@ package com.lying.block.puzzle;
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.puzzle.entity.OneWayDoorBlockEntity;
+import com.lying.init.CDParticleTypes;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.block.Block;
@@ -22,7 +23,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.state.StateManager.Builder;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.EnumProperty;
@@ -172,6 +172,9 @@ public class OneWayDoorBlock extends BlockWithEntity
 	
 	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random)
 	{
+		if(state.get(HALF) != DoubleBlockHalf.LOWER)
+			return;
+		
 		final double pix = 1 / 16D;
 		final double offset = 13 * pix;
 		final double offset2 = random.nextDouble() * pix * 3D;
@@ -199,8 +202,7 @@ public class OneWayDoorBlock extends BlockWithEntity
 			posX = (double)pos.getX() + random.nextDouble();
 		}
 		
-		// FIXME Replace with custom mist/fog particle
-		world.addParticle(ParticleTypes.LARGE_SMOKE, posX, posY, posZ, 0, 0, 0);
+		world.addParticle(CDParticleTypes.MIST.get(), posX, posY, posZ, 0, 0, 0);
 	}
 	
 	protected void onBlockBreakStart(BlockState state, World world, BlockPos pos, PlayerEntity player)

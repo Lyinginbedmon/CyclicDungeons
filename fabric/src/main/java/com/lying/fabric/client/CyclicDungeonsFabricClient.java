@@ -7,6 +7,7 @@ import com.lying.block.actors.entity.TrapActorBlockEntity;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
+import com.lying.client.particle.MistParticle;
 import com.lying.client.renderer.block.ProximitySensorBlockEntityRenderer;
 import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
 import com.lying.client.renderer.block.SpikeTrapBlockEntityRenderer;
@@ -16,10 +17,12 @@ import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDParticleTypes;
 import com.lying.init.CDScreenHandlerTypes;
 
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.RenderLayer;
@@ -33,7 +36,7 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     	
     	registerScreens();
     	registerBlockColors();
-    	registerParticleProviders();
+    	registerParticleFactories();
     	
     	RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.PUZZLE_DOOR.get());
     	
@@ -60,8 +63,9 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     	CyclicDungeonsClient.registerColorHandlers(ColorProviderRegistry.BLOCK::register);
     }
     
-    private static void registerParticleProviders()
+    private static void registerParticleFactories()
     {
-    	
+		ParticleFactoryRegistry registry = ParticleFactoryRegistry.getInstance();
+    	registry.register(CDParticleTypes.MIST.get(), MistParticle.Factory::new);
     }
 }

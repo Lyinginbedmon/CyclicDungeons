@@ -61,29 +61,31 @@ public final class CyclicDungeons
 		config = new ServerConfig("config/CyclicDungeonsServer.cfg");
 		config.read();
 		
-		CDTileConditions.init();
-		CDTiles.init();
-		CDTileTags.init();
-		CDTileSets.init();
-		CDTerms.init();
 		CDCommands.init();
 		CDBlocks.init();
 		CDBlockEntityTypes.init();
 		CDTrapLogicHandlers.init();
-		CDBattleTypes.init();
-		CDBattleEntries.init();
-		CDContentTypes.init();
-		CDTrapEntries.init();
-		CDPuzzleEntries.init();
 		CDEntityTypes.init();
-		CDPhrases.init();
-		CDThemes.init();
 		CDDataComponentTypes.init();
 		CDItems.init();
 		CDSoundEvents.init();
 		CDParticleTypes.init();
 		CDScreenHandlerTypes.init();
 		CDPacketHandler.initServer();
+		
+		CDTileConditions.init();
+		CDTiles.init();
+		CDTileTags.init();
+		CDTileSets.init();
+		CDTerms.init();
+		CDBattleTypes.init();
+		CDBattleEntries.init();
+		CDContentTypes.init();
+		CDTrapEntries.init();
+		CDPuzzleEntries.init();
+		CDPhrases.init();
+		CDThemes.init();
+		
 		registerServerEvents();
 	}
 	

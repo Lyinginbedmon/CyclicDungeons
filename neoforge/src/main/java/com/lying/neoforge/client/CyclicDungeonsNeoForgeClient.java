@@ -7,6 +7,7 @@ import com.lying.block.actors.entity.TrapActorBlockEntity;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.block.entity.TrapLogicBlockEntity;
 import com.lying.client.CyclicDungeonsClient;
+import com.lying.client.particle.MistParticle;
 import com.lying.client.renderer.block.ProximitySensorBlockEntityRenderer;
 import com.lying.client.renderer.block.SightSensorBlockEntityRenderer;
 import com.lying.client.renderer.block.SpikeTrapBlockEntityRenderer;
@@ -16,6 +17,7 @@ import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
+import com.lying.init.CDParticleTypes;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.reference.Reference;
 
@@ -70,6 +72,6 @@ public class CyclicDungeonsNeoForgeClient
     @SubscribeEvent
     private static void registerParticleProviders(RegisterParticleProvidersEvent event)
     {
-    	
+    	event.registerSpriteSet(CDParticleTypes.MIST.get(), MistParticle.Factory::new);
     }
 }
