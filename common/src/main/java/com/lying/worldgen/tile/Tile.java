@@ -46,11 +46,12 @@ public abstract class Tile
 			Identifier.CODEC.fieldOf("id").forGetter(Tile::registryName),
 			TilePredicate.CODEC.fieldOf("conditions").forGetter(t -> t.predicate),
 			Identifier.CODEC.listOf().optionalFieldOf("tags").forGetter(t -> ((Tile)t).tileTags.isEmpty() ? Optional.empty() : Optional.of(((Tile)t).tileTags)),
+			Codec.INT.optionalFieldOf("priority").forGetter(t -> t.priority == 0 ? Optional.empty() : Optional.of(t.priority)),
 			GenStyle.CODEC.fieldOf("generation").forGetter(t -> ((Tile)t).type),
 			BlockState.CODEC.listOf().optionalFieldOf("blocks").forGetter(t -> ((Tile)t).states),
 			RotationSupplier.CODEC.fieldOf("rotation").forGetter(t -> t.rotator)
 			)
-			.apply(instance, (id,conditions,tags,generation,blocks,rotation) -> 
+			.apply(instance, (id,conditions,tags,priority,generation,blocks,rotation) -> 
 			{
 				Tile.Builder builder = Tile.Builder.of(conditions);
 				switch(generation)
@@ -66,7 +67,8 @@ public abstract class Tile
 						break;
 				}
 				builder.withRotation(rotation);
-				tags.ifPresent(set -> builder.tags(set));
+				tags.ifPresent(builder::tags);
+				priority.ifPresent(builder::priority);
 				return builder.build().apply(id);
 			}));
 	
@@ -77,15 +79,17 @@ public abstract class Tile
 	private final Identifier registryName;
 	private final TilePredicate predicate;
 	private final List<Identifier> tileTags = Lists.newArrayList();
+	private final int priority;
 	
 	private final GenStyle type;
 	private final Optional<List<BlockState>> states;
 	private final RotationSupplier rotator;
 	
-	public Tile(Identifier id, List<Identifier> tagsIn, GenStyle style, Optional<List<BlockState>> states, TilePredicate predicateIn, RotationSupplier rotatorIn)
+	public Tile(Identifier id, List<Identifier> tagsIn, int priority, GenStyle style, Optional<List<BlockState>> states, TilePredicate predicateIn, RotationSupplier rotatorIn)
 	{
 		this.registryName = id;
 		tileTags.addAll(tagsIn);
+		this.priority = priority;
 		this.type = style;
 		this.states = states;
 		this.predicate = predicateIn;
@@ -120,6 +124,22 @@ public abstract class Tile
 	public final boolean canExistAt(BlockPos pos, BlueprintTileGrid set)
 	{
 		return predicate.test(this, pos, set);
+	}
+	
+	public final int priority() { return priority; }
+	
+	/** Returns true if this tile has a higher priority value than the given tile */
+	public final boolean isHigherPriorityThan(Tile tile)
+	{
+		int priorityA = priority;
+		int priorityB = tile.priority;
+		if(priorityA == priorityB)
+			return false;
+		else if(priorityA == -1)
+			return true;
+		else if(priorityB == -1)
+			return false;
+		return priorityA > priorityB;
 	}
 	
 	/** Returns a valid rotation for an instance of this tile at the given coordinates in the tile set */
@@ -167,6 +187,7 @@ public abstract class Tile
 		private Optional<List<BlockState>> states = Optional.empty();
 		private RotationSupplier rotationFunc = RotationSupplier.NONE.get();
 		private List<Identifier> tileTags = Lists.newArrayList();
+		private int priority = 0;
 		
 		private Builder(TilePredicate predicateIn)
 		{
@@ -174,6 +195,12 @@ public abstract class Tile
 		}
 		
 		public static Builder of(TilePredicate predicate) { return new Builder(predicate); }
+		
+		public Builder priority(int val)
+		{
+			priority = val;
+			return this;
+		}
 		
 		public Builder tags(List<Identifier> tags)
 		{
@@ -239,7 +266,7 @@ public abstract class Tile
 				default:
 				case FLAG:
 				case AIR:
-					return id -> new Tile(id, tileTags, style, states, predicate, RotationSupplier.NONE.get())
+					return id -> new Tile(id, tileTags, priority, style, states, predicate, RotationSupplier.NONE.get())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{
@@ -248,7 +275,7 @@ public abstract class Tile
 						}
 					};
 				case BLOCK:
-					return id -> new Tile(id, tileTags, style, states, predicate, RotationSupplier.NONE.get())
+					return id -> new Tile(id, tileTags, priority, style, states, predicate, RotationSupplier.NONE.get())
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{
@@ -260,7 +287,7 @@ public abstract class Tile
 						}
 					};
 				case STRUCTURE:
-					return id -> new Tile(id, tileTags, style, Optional.empty(), predicate, rotationFunc)
+					return id -> new Tile(id, tileTags, priority, style, Optional.empty(), predicate, rotationFunc)
 					{
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{

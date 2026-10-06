@@ -8,12 +8,14 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.lying.block.entity.IRoomTaggedBlock;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.Tile;
 
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
@@ -29,6 +31,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	private BlockPos 
 		min = null, 
 		max = null;
+	private Optional<UUID> roomTag = Optional.empty();
 	
 	public static BlueprintTileGrid ofSize(BlockPos size)
 	{
@@ -60,6 +63,12 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 				map.addToVolume(pos.up(i));
 		});
 		return map;
+	}
+	
+	public BlueprintTileGrid setRoom(UUID idIn)
+	{
+		this.roomTag = Optional.of(idIn);
+		return this;
 	}
 	
 	public BlueprintTileGrid addToVolume(BlockPos from, BlockPos to)
@@ -196,7 +205,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			
 			BlockPos pos = entry.getKey();
 			BlockRotation rotation = tile.assignRotation(pos, this, this::get, rand);
-			finalised.add(TileInstance.of(pos, tile, theme, rotation));
+			finalised.add(new TileInstance(pos, tile, theme, rotation, roomTag));
 		});
 		if(!finalised.isEmpty())
 			LOGGER.info("Tile set finalised");
@@ -231,14 +240,17 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	
 	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation, Optional<UUID> room)
 	{
-		public static TileInstance of(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation)
-		{
-			return new TileInstance(pos, tile, theme, rotation, Optional.empty());
-		}
-		
 		public void generate(BlockPos position, ServerWorld world)
 		{
 			tile.generate(this, position, world);
+			room.ifPresent(id -> 
+				BlockPos.Mutable.iterate(position, position.add(1, 1, 1)).forEach(pos -> 
+				{
+					BlockEntity entity = world.getBlockEntity(pos);
+					if(entity != null && entity instanceof IRoomTaggedBlock)
+						((IRoomTaggedBlock)entity).setRoom(id);
+				})
+			);
 		}
 	}
 }

@@ -139,7 +139,7 @@ public class GrammarTerm
 	
 	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, List<BlueprintPassage> passages, Random rand)
 	{
-		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT);
+		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT).setRoom(node.uuid());
 		RoomMetadata meta = node.metadata();
 		
 		List<DoorData> doors = List.of();
@@ -169,7 +169,7 @@ public class GrammarTerm
 			for(int j=1; j<3; j++)
 			{
 				final BlockPos point = tile.withY(j);
-				map.get(point).ifPresent(t -> map.finalise(TileInstance.of(point, t, theme, rotation)));
+				map.get(point).ifPresent(t -> map.finalise(new TileInstance(point, t, theme, rotation, Optional.of(node.uuid()))));
 			}
 		}
 		
@@ -181,7 +181,7 @@ public class GrammarTerm
 			
 			contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
 			
-			// Assign room ID to room-tagged blocks
+			// Assign room ID to room-tagged blocks post-tile generation
 			BlockPos.Mutable.iterate(min, max).forEach(p -> 
 			{
 				BlockEntity e = world.getBlockEntity(p);
@@ -189,7 +189,6 @@ public class GrammarTerm
 					((IRoomTaggedBlock)e).setRoom(node.uuid());
 			});
 			
-			// FIXME Tag blocks in doorways
 			return true;
 		}
 		
@@ -232,7 +231,7 @@ public class GrammarTerm
 					entrySet;
 			
 			doorways.add(data);
-			data.placeInMap(map, tileSet);
+			data.placeInMap(map, tileSet);	// FIXME Prevent entryway doors generating over-top of exit doors
 		}
 		
 		return doorways;
@@ -255,9 +254,10 @@ public class GrammarTerm
 			{
 				// Door
 				final BlockPos door = tile.withY(1);
-				tileSet.doorTile().ifPresentOrElse(
-					t -> map.put(door, CDTiles.instance().getElse(t, CDTiles.DOORWAY)), 
-					() -> map.put(door, CDTiles.DOORWAY.get()));
+				tileSet.doorTile().ifPresent(t -> map.put(door, CDTiles.instance().get(t).get()));
+//				tileSet.doorTile().ifPresentOrElse(
+//					t -> map.put(door, CDTiles.instance().getElse(t, CDTiles.DOORWAY)), 
+//					() -> map.put(door, CDTiles.DOORWAY.get()));
 				
 				// Lintel
 				final BlockPos lintel = tile.withY(2);
@@ -294,14 +294,14 @@ public class GrammarTerm
 		return contentID.isEmpty() ? Optional.empty() : contentBuilder.tryGetContents(contentID.get());
 	}
 	
-	public DoorWaySet getEntryDoors(Theme theme)
+	public DoorWaySet getEntryDoors()
 	{
-		return theme.getTileSet(this).entryDoorTiles().orElse(DoorWaySet.BLANK);
+		return DoorWaySet.BLANK;
 	}
 	
-	public DoorWaySet getExitDoors(Theme theme)
+	public DoorWaySet getExitDoors()
 	{
-		return theme.getTileSet(this).entryDoorTiles().orElse(DoorWaySet.BLANK);
+		return DoorWaySet.BLANK;
 	}
 	
 	public static class Builder

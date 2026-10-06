@@ -178,6 +178,7 @@ public record Theme(
 		return CDTileSets.instance().get(passageTileSet).orElse(CDTileSets.DEFAULT);
 	}
 	
+	// FIXME Implement data storage of DoorWaySet for theme usage
 	public DoorWaySet getStandardDoors() { return DoorWaySet.DEFAULTS; }
 	
 	public int collapseIterationCap() { return collapseIterations.orElse(1000); }

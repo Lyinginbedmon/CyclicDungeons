@@ -179,6 +179,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		// Enable rooms to select their contents, as this may affect passageway generation
 		this.forEach(room -> room.metadata().type().prePassageProcessing(room, world, rand));
 		
+		// FIXME Refactor to use unified tile grid populated individually by different elements, accounting for tile priority & occupancy
+		
 		buildExteriorPaths(position, world, rand);
 		
 		buildRooms(position, world, rand);

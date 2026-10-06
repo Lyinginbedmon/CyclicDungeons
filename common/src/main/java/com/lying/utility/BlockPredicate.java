@@ -140,6 +140,21 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 		return ops == JsonOps.INSTANCE ? DataResult.success(Pair.of(fromJson(JsonOps.INSTANCE, (JsonObject)input), input)) : DataResult.error(() -> "Loading battle entry from NBT is not supported");
 	}
 	
+	public boolean isBlank()
+	{
+		return !inverted && List.of(
+				blocks,
+				fluids,
+				blockStates,
+				blockTags,
+				fluidTags,
+				blockProperties,
+				blockValues,
+				flags,
+				children
+				).stream().noneMatch(Optional::isPresent);
+	}
+	
 	public boolean applyTo(BlockPos pos, ServerWorld world)
 	{
 		boolean result = true;

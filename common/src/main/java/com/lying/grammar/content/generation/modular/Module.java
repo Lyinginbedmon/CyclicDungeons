@@ -8,15 +8,23 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
+import com.lying.block.entity.ModularLogicBlockEntity;
+import com.lying.init.CDBlockEntityTypes;
+import com.lying.init.CDBlocks;
+import com.lying.init.CDDataComponentTypes;
+import com.lying.init.CDItems;
+import com.lying.init.CDLogicCircuits;
 import com.lying.utility.BlockPredicate;
 import com.lying.utility.CDUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -30,26 +38,28 @@ public record Module(
 		Optional<List<Relation>> relations, 
 		BlockState state, 
 		Optional<NbtCompound> tileNbt,
+		Optional<Identifier> logic,
 		Optional<ModuleWiring> inputs,
 		Optional<Boolean> isVital)
 {
 	public static final Codec<Module> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 			Identifier.CODEC.fieldOf("id").forGetter(Module::name),
 			Codec.INT.optionalFieldOf("count").forGetter(m -> m.count > 1 ? Optional.of(m.count) : Optional.empty()),
-			BlockPredicate.CODEC.fieldOf("condition").forGetter(Module::predicate),
+			BlockPredicate.CODEC.optionalFieldOf("condition").forGetter(m -> m.predicate.isBlank() ? Optional.empty() : Optional.of(m.predicate)),
 			Relation.CODEC.listOf().optionalFieldOf("relations").forGetter(Module::relations),
 			BlockState.CODEC.fieldOf("blockstate").forGetter(Module::state),
 			NbtCompound.CODEC.optionalFieldOf("tiledata").forGetter(Module::tileNbt),
+			Identifier.CODEC.optionalFieldOf("logic").forGetter(Module::logic),
 			ModuleWiring.CODEC.optionalFieldOf("connections").forGetter(Module::inputs),
 			Codec.BOOL.optionalFieldOf("vital").forGetter(Module::isVital)
-			).apply(instance, (name,count,condition,relations,state,tileNbt,inputs,vital) -> 
+			).apply(instance, (name,count,condition,relations,state,tileNbt,logic,inputs,vital) -> 
 			{
 				Module.Builder builder = Builder.of(name);
 				builder.count(count.orElse(1));
-//				condition.ifPresent(c -> builder.positioned(c));
-				builder.positioned(condition);
+				builder.positioned(condition.orElse(BlockPredicate.Builder.create().build()));
 				builder.blockState(state);
 				tileNbt.ifPresent(builder::tileNbt);
+				logic.ifPresent(builder::logicModule);
 				
 				relations.ifPresent(set -> set.forEach(builder::relation));
 				inputs.ifPresent(builder::wiring);
@@ -94,6 +104,14 @@ public record Module(
 			BlockEntity tile = world.getBlockEntity(pos);
 			tile.read(tileNbt().get(), world.getRegistryManager());
 		}
+		if(state().isOf(CDBlocks.MODULAR_LOGIC.get()) && logic.isPresent())
+			CDLogicCircuits.get(logic.get()).ifPresent(comp -> 
+			{
+				ModularLogicBlockEntity module = world.getBlockEntity(pos, CDBlockEntityTypes.MODULAR_LOGIC.get()).get();
+				ItemStack card = new ItemStack(CDItems.LOGIC_CARD.get());
+				card.set(CDDataComponentTypes.CIRCUIT.get(), comp);
+				module.setCard(card);
+			});
 	}
 	
 	public boolean isWireable() { return state.getBlock() instanceof IWireableBlock; }
@@ -163,6 +181,7 @@ public record Module(
 		private List<Relation> relations = Lists.newArrayList(); 
 		private BlockState state = Blocks.STONE.getDefaultState();
 		private NbtCompound tileData = new NbtCompound();
+		private Optional<Identifier> logicModule = Optional.empty();
 		private ModuleWiring wiring = ModuleWiring.Simple.of(List.of());
 		private boolean isVital = false;
 		
@@ -199,6 +218,11 @@ public record Module(
 			return this;
 		}
 		
+		public Builder block(Block blockIn)
+		{
+			return blockState(blockIn.getDefaultState());
+		}
+		
 		public Builder blockState(BlockState stateIn)
 		{
 			state = stateIn;
@@ -215,6 +239,13 @@ public record Module(
 		public Builder tileNbt(NbtCompound nbt)
 		{
 			tileData = nbt;
+			return this;
+		}
+		
+		public Builder logicModule(Identifier idIn)
+		{
+			if(state.isOf(CDBlocks.MODULAR_LOGIC.get()))
+				logicModule = Optional.of(idIn);
 			return this;
 		}
 		
@@ -239,6 +270,7 @@ public record Module(
 					relations.isEmpty() ? Optional.empty() : Optional.of(relations), 
 					state,
 					tileData.isEmpty() ? Optional.empty() : Optional.of(tileData),
+					logicModule,
 					wiring.isEmpty() ? Optional.empty() : Optional.of(wiring), 
 					isVital ? Optional.of(isVital) : Optional.empty());
 		}

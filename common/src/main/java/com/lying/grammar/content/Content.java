@@ -67,7 +67,7 @@ public abstract class Content
 	public List<DoorWaySet> getExitDoorTiles(Random rand, int count)
 	{
 		if(exitDoors.isEmpty() || exitDoors.get().isEmpty())
-			return List.of(DoorWaySet.BLANK);
+			return List.of();
 		
 		List<DoorWaySet> set = exitDoors.get();
 		if(set.size() == 1)

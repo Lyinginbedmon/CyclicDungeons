@@ -172,7 +172,7 @@ public class RoomMetadata
 		GrammarTerm type = type();
 		Optional<IContentEntry> content = type.getContentEntry(processorID);
 		return buildCompoundDoorSet(
-				type.getEntryDoors(theme()), 
+				type.getEntryDoors(), 
 				content.isPresent() ? content.get().getEntryDoorTiles() : DoorWaySet.BLANK);
 	}
 	
@@ -181,10 +181,10 @@ public class RoomMetadata
 		List<DoorWaySet> set;
 		Optional<IContentEntry> content = type.getContentEntry(processorID);
 		if(content.isPresent() && !(set = content.get().getExitDoorTiles(rand, count)).isEmpty())
-				return set;
+			return set;
 		
 		return List.of(buildCompoundDoorSet(
-				type().getExitDoors(theme()), 
+				type().getExitDoors(), 
 				DoorWaySet.BLANK));
 	}
 	
@@ -204,6 +204,10 @@ public class RoomMetadata
 			return Optional.empty();
 		};
 		
-		return new DoorWaySet(retrieval.apply(DoorWaySet::doorTile), retrieval.apply(DoorWaySet::lintelTile), retrieval.apply(DoorWaySet::flooringTile));
+		return new DoorWaySet(
+				retrieval.apply(DoorWaySet::doorTile), 
+				retrieval.apply(DoorWaySet::lintelTile), 
+				retrieval.apply(DoorWaySet::flooringTile)
+				);
 	}
 }

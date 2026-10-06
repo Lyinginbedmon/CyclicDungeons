@@ -8,9 +8,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.joml.Vector2i;
-
-import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.grammar.content.Content;
 import com.lying.grammar.content.generation.ModularContent;
@@ -21,6 +18,7 @@ import com.lying.init.CDBlocks;
 import com.lying.init.CDContentTypes.ContentEntry;
 import com.lying.init.CDDataComponentTypes;
 import com.lying.init.CDItems;
+import com.lying.init.CDLogicCircuits;
 import com.lying.init.CDLogicGates;
 import com.lying.item.component.CircuitComponent;
 import com.lying.item.component.CircuitComponent.CircuitPart;
@@ -61,7 +59,7 @@ public class DefaultPuzzles
 			.module(Module.Builder
 					.of(prefix("emitter"))
 					.positioned(ON_SOLID_GROUND)
-					.blockState(CDBlocks.PUZZLE_TRIGGER.get().getDefaultState())
+					.block(CDBlocks.PUZZLE_TRIGGER.get())
 					.wiring(ModuleWiring.Complex.create()
 							.attach(CDLogicGates.INPUT, Output.of(Port.of("result"), prefix("logic")))
 						)
@@ -71,43 +69,8 @@ public class DefaultPuzzles
 			.module(Module.Builder
 					.of(prefix("logic"))
 					.positioned(IN_FLOOR)
-					.blockState(CDBlocks.MODULAR_LOGIC.get().getDefaultState())
-					.tileNbt(DefaultPuzzles.encodeCircuit(Lists.newArrayList
-							(
-								CircuitPart.of(CDLogicGates.TRUE.get().create()
-										.addOutput(CDLogicGates.OUTPUT, "set"), new Vector2i(-1,3)),
-								
-								CircuitPart.of(CDLogicGates.ENTRY.get().create("in1").addOutput(CDLogicGates.OUTPUT, "aI"), new Vector2i(0,0)),
-								CircuitPart.of(CDLogicGates.RAND.get().create("bit1").addInput("set").addOutput(CDLogicGates.OUTPUT, "aR"), new Vector2i(0,1)),
-								CircuitPart.of(CDLogicGates.XNOR.get().create("mask1")
-										.addInput(CDLogicGates.makeInput(0), "aI")
-										.addInput(CDLogicGates.makeInput(1), "aR")
-										.addOutput(CDLogicGates.OUTPUT, "out1"), new Vector2i(2,1)),
-								
-								CircuitPart.of(CDLogicGates.ENTRY.get().create("in2").addOutput(CDLogicGates.OUTPUT, "bI"), new Vector2i(0,2)),
-								CircuitPart.of(CDLogicGates.RAND.get().create("bit2").addInput("set").addOutput(CDLogicGates.OUTPUT, "bR"), new Vector2i(0,3)),
-								CircuitPart.of(CDLogicGates.XNOR.get().create("mask2")
-										.addInput(CDLogicGates.makeInput(0), "bI")
-										.addInput(CDLogicGates.makeInput(1), "bR")
-										.addOutput(CDLogicGates.OUTPUT, "out2"), new Vector2i(2,3)),
-								
-								CircuitPart.of(CDLogicGates.ENTRY.get().create("in3").addOutput(CDLogicGates.OUTPUT, "cI"), new Vector2i(0,4)),
-								CircuitPart.of(CDLogicGates.RAND.get().create("bit3").addInput("set").addOutput(CDLogicGates.OUTPUT, "cR"), new Vector2i(0,5)),
-								CircuitPart.of(CDLogicGates.XNOR.get().create("mask3")
-										.addInput(CDLogicGates.makeInput(0), "cI")
-										.addInput(CDLogicGates.makeInput(1), "cR")
-										.addOutput(CDLogicGates.OUTPUT, "out3"), new Vector2i(2,5)),
-								
-								CircuitPart.of(CDLogicGates.AND.get().create()
-										.addInput(CDLogicGates.makeInput(0), "out1")
-										.addInput(CDLogicGates.makeInput(1), "out2")
-										.addInput(CDLogicGates.makeInput(2), "out3")
-										.addOutput(CDLogicGates.OUTPUT, "out"), new Vector2i(4,3)),
-								CircuitPart.of(CDLogicGates.EXIT.get().create("result")
-										.addInput(CDLogicGates.INPUT, "out"), new Vector2i(5,3))
-							)
-						)
-					)
+					.block(CDBlocks.MODULAR_LOGIC.get())
+					.logicModule(CDLogicCircuits.ID_BIT3_COMBO_LOCK)
 					.wiring(ModuleWiring.Complex.create()
 							.attach(Port.of("in1"), Output.of(CDLogicGates.OUTPUT, prefix("sensor_1")))
 							.attach(Port.of("in2"), Output.of(CDLogicGates.OUTPUT, prefix("sensor_2")))
@@ -119,7 +82,7 @@ public class DefaultPuzzles
 			.module(Module.Builder
 					.of(prefix("sensor_1"))
 					.positioned(ON_SOLID_GROUND)
-					.blockState(CDBlocks.SENSOR_REDSTONE.get().getDefaultState())
+					.block(CDBlocks.SENSOR_REDSTONE.get())
 					.markVital()
 					.build())
 			.module(Module.Builder
@@ -132,7 +95,7 @@ public class DefaultPuzzles
 			.module(Module.Builder
 					.of(prefix("sensor_2"))
 					.positioned(ON_SOLID_GROUND)
-					.blockState(CDBlocks.SENSOR_REDSTONE.get().getDefaultState())
+					.block(CDBlocks.SENSOR_REDSTONE.get())
 					.markVital()
 					.build())
 			.module(Module.Builder
@@ -145,7 +108,7 @@ public class DefaultPuzzles
 			.module(Module.Builder
 					.of(prefix("sensor_3"))
 					.positioned(ON_SOLID_GROUND)
-					.blockState(CDBlocks.SENSOR_REDSTONE.get().getDefaultState())
+					.block(CDBlocks.SENSOR_REDSTONE.get())
 					.markVital()
 					.build())
 			.module(Module.Builder

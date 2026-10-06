@@ -92,198 +92,7 @@
           "style": "complex"
         },
         "id": "cydun:logic",
-        "tiledata": {
-          "Card": {
-            "components": {
-              "cydun:logic_circuit": {
-                "circuit": [
-                  {
-                    "gate": {
-                      "logic": "true",
-                      "output_wires": {
-                        "out": "set"
-                      }
-                    },
-                    "grid": [
-                      -1,
-                      3
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "logic": "input",
-                      "name": "in1",
-                      "output_wires": {
-                        "out": "aI"
-                      }
-                    },
-                    "grid": [
-                      0,
-                      0
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in": "set"
-                      },
-                      "logic": "random",
-                      "name": "bit1",
-                      "output_wires": {
-                        "out": "aR"
-                      }
-                    },
-                    "grid": [
-                      0,
-                      1
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in_0": "aI",
-                        "in_1": "aR"
-                      },
-                      "logic": "xnor",
-                      "name": "mask1",
-                      "output_wires": {
-                        "out": "out1"
-                      }
-                    },
-                    "grid": [
-                      2,
-                      1
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "logic": "input",
-                      "name": "in2",
-                      "output_wires": {
-                        "out": "bI"
-                      }
-                    },
-                    "grid": [
-                      0,
-                      2
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in": "set"
-                      },
-                      "logic": "random",
-                      "name": "bit2",
-                      "output_wires": {
-                        "out": "bR"
-                      }
-                    },
-                    "grid": [
-                      0,
-                      3
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in_0": "bI",
-                        "in_1": "bR"
-                      },
-                      "logic": "xnor",
-                      "name": "mask2",
-                      "output_wires": {
-                        "out": "out2"
-                      }
-                    },
-                    "grid": [
-                      2,
-                      3
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "logic": "input",
-                      "name": "in3",
-                      "output_wires": {
-                        "out": "cI"
-                      }
-                    },
-                    "grid": [
-                      0,
-                      4
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in": "set"
-                      },
-                      "logic": "random",
-                      "name": "bit3",
-                      "output_wires": {
-                        "out": "cR"
-                      }
-                    },
-                    "grid": [
-                      0,
-                      5
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in_0": "cI",
-                        "in_1": "cR"
-                      },
-                      "logic": "xnor",
-                      "name": "mask3",
-                      "output_wires": {
-                        "out": "out3"
-                      }
-                    },
-                    "grid": [
-                      2,
-                      5
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in_0": "out1",
-                        "in_1": "out2",
-                        "in_2": "out3"
-                      },
-                      "logic": "and",
-                      "output_wires": {
-                        "out": "out"
-                      }
-                    },
-                    "grid": [
-                      4,
-                      3
-                    ]
-                  },
-                  {
-                    "gate": {
-                      "input_wires": {
-                        "in": "out"
-                      },
-                      "logic": "output",
-                      "name": "result"
-                    },
-                    "grid": [
-                      5,
-                      3
-                    ]
-                  }
-                ]
-              }
-            },
-            "count": 1,
-            "id": "cydun:logic_card"
-          }
-        },
+        "logic": "cydun:3bit_combo_lock",
         "vital": true
       },
       {
@@ -320,7 +129,6 @@
             "powered": "false"
           }
         },
-        "condition": {},
         "id": "cydun:switch_1",
         "relations": [
           {
@@ -364,7 +172,6 @@
             "powered": "false"
           }
         },
-        "condition": {},
         "id": "cydun:switch_2",
         "relations": [
           {
@@ -408,7 +215,6 @@
             "powered": "false"
           }
         },
-        "condition": {},
         "id": "cydun:switch_3",
         "relations": [
           {
