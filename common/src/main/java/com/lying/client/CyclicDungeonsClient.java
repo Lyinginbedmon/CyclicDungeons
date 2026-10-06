@@ -64,7 +64,9 @@ public class CyclicDungeonsClient
 				CDBlocks.DART_TRAP.get(),
 				CDBlocks.SPIKES.get(),
 				CDBlocks.SPAWNER.get(),
-				CDBlocks.MODULAR_LOGIC.get());
+				CDBlocks.MODULAR_LOGIC.get(),
+				CDBlocks.PUZZLE_DOOR.get(),
+				CDBlocks.PUZZLE_LOCKED_DOOR.get());
 	}
 	
 	public static void registerColorHandlers(BiConsumer<BlockColorProvider, Block[]> function)

@@ -16,14 +16,11 @@ import com.lying.client.renderer.block.TrapSpawnerBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDBlocks;
 import com.lying.init.CDParticleTypes;
 import com.lying.init.CDScreenHandlerTypes;
 import com.lying.reference.Reference;
 
-import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -40,8 +37,6 @@ public class CyclicDungeonsNeoForgeClient
 		CyclicDungeonsClient.clientInit();
     	
     	registerBlockColors();
-    	
-    	RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.PUZZLE_DOOR.get());
     	
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_LOGIC.get(), WireableBlockEntityRenderer<TrapLogicBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_ACTOR.get(), WireableBlockEntityRenderer<TrapActorBlockEntity<?>>::new);

@@ -696,7 +696,9 @@ public class CDModelProvider extends FabricModelProvider
 		{
 			TextureMap textures = new TextureMap()
 					.put(TextureKey.TOP, TextureMap.getSubId(block, "_top"))
-					.put(TextureKey.BOTTOM, TextureMap.getSubId(block, "_bottom"));
+					.put(TextureKey.BOTTOM, TextureMap.getSubId(block, "_bottom"))
+//					.put(TextureKey.PARTICLE, )
+					;
 			
 			Identifier topRightClosed	= Models.DOOR_TOP_RIGHT.upload(block, textures, generator.modelCollector);
 			Identifier bottomRightClosed	= Models.DOOR_BOTTOM_RIGHT.upload(block, textures, generator.modelCollector);

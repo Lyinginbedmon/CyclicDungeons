@@ -89,23 +89,36 @@ public class OneWayDoorBlock extends BlockWithEntity
 			return getOutlineShape(state, world, pos, context);
 		
 		EntityShapeContext ctx = (EntityShapeContext)context;
-		if(ctx.getEntity() == null)
+		final Entity ent = ctx.getEntity();
+		if(ent == null)
 			return getOutlineShape(state, world, pos, context);
 		
-		Direction facing = state.get(FACING);
-		BlockPos entPos = ctx.getEntity().getBlockPos();
-		if(entPos.getManhattanDistance(pos) == 0 || entPos.getY() != pos.getY())
-			return VoxelShapes.empty();
+		final Direction facing = state.get(FACING);
+		final Vec3d blockPos = new Vec3d(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
 		
-		BlockPos offset = pos.subtract(entPos);
-		Vec3i target = facing.getVector();
-		
-		int valE = facing.getAxis() == Axis.X ? offset.getX() : offset.getZ();
-		int valB = facing.getAxis() == Axis.X ? target.getX() : target.getZ();
-		if(Math.signum(valE) == Math.signum(valB))
-			return VoxelShapes.empty();
+		// If player is passing through the block in the proper direction, return an empty collision
+		if(
+				shouldCollide(blockPos.subtract(ent.getPos()), facing) ||
+				shouldCollide(blockPos.subtract(ent.getEyePos()), facing)
+				)
+			return getOutlineShape(state, world, pos, context);
+		// Otherwise, treat it as its solid shape
 		else
-			return getOutlineShape(state, world, pos, context);
+			return VoxelShapes.empty();
+	}
+	
+	private static boolean shouldCollide(Vec3d offset, Direction facing)
+	{
+		final Vec3i target = facing.getVector();
+		switch(facing.getAxis())
+		{
+			case X:
+				return Math.signum(offset.getX()) != target.getX();
+			case Z:
+				return Math.signum(offset.getZ()) != target.getZ();
+			default:
+				return false;
+		}
 	}
 	
 	protected void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity)
@@ -175,12 +188,18 @@ public class OneWayDoorBlock extends BlockWithEntity
 		if(state.get(HALF) != DoubleBlockHalf.LOWER)
 			return;
 		
+		for(int i=random.nextInt(4); i>0; i--)
+			spawnMistParticle(state, pos, world, random);
+	}
+	
+	protected static void spawnMistParticle(BlockState state, BlockPos pos, World world, Random random)
+	{
 		final double pix = 1 / 16D;
 		final double offset = 13 * pix;
 		final double offset2 = random.nextDouble() * pix * 3D;
 		
 		double posX = 0D;
-		double posY = (double)pos.getY() + random.nextDouble();
+		double posY = (double)pos.getY() + random.nextDouble() * 0.3D;
 		double posZ = 0D;
 		
 		if(state.get(FACING).getAxis() == Axis.X)

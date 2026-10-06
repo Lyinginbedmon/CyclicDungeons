@@ -16,16 +16,13 @@ import com.lying.client.renderer.block.TrapSpawnerBlockEntityRenderer;
 import com.lying.client.renderer.block.WireableBlockEntityRenderer;
 import com.lying.client.screen.DungeonScreen;
 import com.lying.init.CDBlockEntityTypes;
-import com.lying.init.CDBlocks;
 import com.lying.init.CDParticleTypes;
 import com.lying.init.CDScreenHandlerTypes;
 
-import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 
 public final class CyclicDungeonsFabricClient implements ClientModInitializer
@@ -37,8 +34,6 @@ public final class CyclicDungeonsFabricClient implements ClientModInitializer
     	registerScreens();
     	registerBlockColors();
     	registerParticleFactories();
-    	
-    	RenderTypeRegistry.register(RenderLayer.getCutout(), CDBlocks.PUZZLE_DOOR.get());
     	
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.TRAP_LOGIC.get(), WireableBlockEntityRenderer<TrapLogicBlockEntity>::new);
     	BlockEntityRendererFactories.register(CDBlockEntityTypes.MODULAR_LOGIC.get(), WireableBlockEntityRenderer<ModularLogicBlockEntity>::new);

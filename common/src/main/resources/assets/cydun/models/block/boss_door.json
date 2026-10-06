@@ -1,6 +1,9 @@
 {
-	"format_version": "1.21.6",
 	"parent": "minecraft:block/block",
+	"textures": {
+		"layer0": "cydun:block/boss_door",
+		"particle": "#layer0"
+	},
 	"elements": [
 		{
 			"from": [3, 0, 0],
@@ -8,12 +11,12 @@
 			"rotation": {"angle": 0, "axis": "y", "origin": [7, 0, 7]},
 			"color": 5,
 			"faces": {
-				"north": {"uv": [0, 0, 10, 16], "texture": "#missing", "cullface": "north"},
-				"east": {"uv": [0, 0, 16, 16], "texture": "#missing"},
-				"south": {"uv": [0, 0, 10, 16], "texture": "#missing", "cullface": "south"},
-				"west": {"uv": [0, 0, 16, 16], "texture": "#missing"},
-				"up": {"uv": [0, 0, 10, 16], "texture": "#missing", "cullface": "up"},
-				"down": {"uv": [0, 0, 10, 16], "texture": "#missing", "cullface": "down"}
+				"north": {"uv": [0, 0, 10, 16], "texture": "#layer0", "cullface": "north"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#layer0"},
+				"south": {"uv": [0, 0, 10, 16], "texture": "#layer0", "cullface": "south"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#layer0"},
+				"up": {"uv": [0, 0, 10, 16], "texture": "#layer0", "cullface": "up"},
+				"down": {"uv": [0, 0, 10, 16], "texture": "#layer0", "cullface": "down"}
 			}
 		}
 	]
