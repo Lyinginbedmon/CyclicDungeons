@@ -50,11 +50,11 @@ public class Adjacent extends Condition
 		faces.addAll(facesIn);
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
 		BlockPos offset;
 		for(Direction face : faces)
-			if(set.contains(offset = pos.offset(face)) && child.test(set.get(offset).get(), offset, set))
+			if(grid.contains(offset = pos.offset(face)) && child.test(grid.get(offset).get(), offset, grid))
 				return true;
 		return false;
 	}
@@ -107,9 +107,9 @@ public class Adjacent extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 		{
-			return !super.test(tileIn, pos, set);
+			return !super.test(tileIn, pos, grid);
 		}
 	}
 	
@@ -136,13 +136,13 @@ public class Adjacent extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 		{
 			int tally = 0;
 			BlockPos offset;
 			Tile tileAt;
 			for(Direction face : faces)
-				if(set.contains(offset = pos.offset(face)) && !(tileAt = set.get(offset).get()).isBlank() && child.test(tileAt, offset, set))
+				if(grid.contains(offset = pos.offset(face)) && !(tileAt = grid.get(offset).get()).isBlank() && child.test(tileAt, offset, grid))
 					if(++tally >= i)
 						return false;
 			return true;

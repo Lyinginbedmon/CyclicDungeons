@@ -26,7 +26,7 @@ public class Not extends Condition
 		return not;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return !child.test(tileIn, pos, set); }
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return !child.test(tileIn, pos, grid); }
 	
 	public JsonElement toJson(JsonOps ops)
 	{

@@ -30,9 +30,9 @@ public class TilePredicate
 		return Builder.create().condition(condition).build();
 	}
 	
-	public boolean test(Tile tile, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
-		return primitives.isEmpty() || primitives.stream().allMatch(p -> p.test(tile, pos, set));
+		return primitives.isEmpty() || primitives.stream().allMatch(p -> p.test(tileIn, pos, grid));
 	}
 	
 	public static class Builder

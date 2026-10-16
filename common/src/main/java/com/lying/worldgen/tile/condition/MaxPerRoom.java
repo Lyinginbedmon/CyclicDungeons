@@ -26,9 +26,9 @@ public class MaxPerRoom extends Condition
 		return condition;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
-		return set.tallyOf(tileIn) < i;
+		return grid.tallyOf(tileIn) < i;
 	}
 	
 	public JsonElement toJson(JsonOps ops)

@@ -30,14 +30,14 @@ public class NearBox extends Condition
 		return condition;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
 		for(int x=(int)bounds.minX; x<bounds.maxX; x++)
 			for(int z=-(int)bounds.minZ; z<bounds.maxZ; z++)
 				for(int y=-(int)bounds.minY; y<bounds.maxY; y++)
 				{
 					BlockPos offset = pos.add(x, y, z);
-					if(set.contains(offset) && child.test(set.get(offset).get(), offset, set))
+					if(grid.contains(offset) && child.test(grid.get(offset).get(), offset, grid))
 						return true;
 				}
 		return false;
@@ -74,12 +74,12 @@ public class NearBox extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 		{
 			final Box box = bounds.offset(pos);
-			return set.getMatchingTiles((p2,t2) -> 
+			return grid.getMatchingTiles((p2,t2) -> 
 				box.contains(new Vec3d(p2.getX() + 0.5D, p2.getY() + 0.5D, p2.getZ() + 0.5D)) && 
-				child.test(t2, p2, set)).isEmpty();
+				child.test(t2, p2, grid)).isEmpty();
 		}
 	}
 }

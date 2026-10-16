@@ -9,7 +9,6 @@ import com.lying.grammar.content.Content;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.init.CDTileSets;
 import com.lying.reference.Reference;
-import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tileset.TileSet;
 import com.mojang.serialization.JsonOps;
@@ -67,7 +66,7 @@ public class TileSetContent extends Content
 	{
 		Random random = Random.create(room.position().x() ^ room.position().x + room.position().y() ^ room.position().y);
 		TileSet tileSet = getTileSet().get();
-		TileGenerator.generate(tileMap, tileSet, () -> null, random);
+//		TileGenerator.generate(tileMap, tileSet, () -> null, random);	// FIXME
 	}
 	
 	protected Optional<TileSet> getTileSet() { return tileSetID == null ? Optional.empty() : CDTileSets.instance().get(tileSetID); }

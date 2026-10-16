@@ -31,14 +31,14 @@ public class Consecutive extends Condition
 		return condition;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
 		for(Direction face : faces)
 		{
 			BlockPos offset = pos.offset(face);
-			if(!set.contains(offset))
+			if(!grid.contains(offset))
 				continue;
-			Tile tileAt = set.get(offset).get();
+			Tile tileAt = grid.get(offset).get();
 			if(!tileAt.isBlank() && tileIn.is(tileAt))
 				return true;
 		}
@@ -82,9 +82,9 @@ public class Consecutive extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 		{
-			return !super.test(tileIn, pos, set);
+			return !super.test(tileIn, pos, grid);
 		}
 	}
 }

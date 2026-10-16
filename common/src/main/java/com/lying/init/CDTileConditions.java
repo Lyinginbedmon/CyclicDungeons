@@ -37,11 +37,11 @@ public class CDTileConditions
 	// Static yes/no conditions
 	public static final Supplier<Condition> NEVER			= register("never", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return false; }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return false; }
 	});
 	public static final Supplier<Condition> ALWAYS			= register("always", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return true; }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return true; }
 	});
 	
 	// Conditions for boolean logic applications
@@ -57,23 +57,23 @@ public class CDTileConditions
 	
 	public static final Supplier<Condition> ON_FLOOR		= register("on_solid_floor", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 		{
 			BlockPos down = pos.down();
 			Optional<Tile> tile;
 			return 
-				set.contains(down) && 
-				(tile = set.get(down)).isPresent() &&
+				grid.contains(down) && 
+				(tile = grid.get(down)).isPresent() &&
 				CDTileTags.get(CDTileTags.ID_SOLID_FLOORING).get().contains(tile.get());
 		}
 	});
 	public static final Supplier<Condition> ON_BOTTOM		= register("on_bottom", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return set.isBoundary(pos, Direction.DOWN); }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return grid.isBoundary(pos, Direction.DOWN); }
 	});
 	public static final Supplier<Condition> ON_TOP			= register("on_top", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return set.isBoundary(pos, Direction.UP); }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return grid.isBoundary(pos, Direction.UP); }
 	});
 	public static final Supplier<Condition> BOUNDARY		= register("boundary", Boundary::new);
 	public static final Supplier<Condition> NON_BOUNDARY	= register("non_boundary", Boundary.Inverse::new);

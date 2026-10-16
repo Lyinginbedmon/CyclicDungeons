@@ -22,6 +22,7 @@ import com.lying.graph.GraphOrganiser;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
@@ -174,18 +175,28 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Beginning blueprint generation");
 		
-		buildExteriorShell(position, world);
+//		buildExteriorShell(position, world);
 		
 		// Enable rooms to select their contents, as this may affect passageway generation
 		this.forEach(room -> room.metadata().type().prePassageProcessing(room, world, rand));
 		
 		// FIXME Refactor to use unified tile grid populated individually by different elements, accounting for tile priority & occupancy
 		
-		buildExteriorPaths(position, world, rand);
+		BlueprintTileGrid mainGrid = new BlueprintTileGrid();
 		
-		buildRooms(position, world, rand);
+		buildExteriorPaths(mainGrid, position, world, rand);
 		
-		buildEntrance(position, world, rand);
+		buildRooms(mainGrid, position, world, rand);
+		
+		buildEntrance(mainGrid, position, world, rand);
+		
+		mainGrid.finalise(theme(), rand);
+		
+		// Apply door orientation finalisation
+		
+		mainGrid.generate(position, world);
+		
+		// Apply room post-processing
 		
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);
 		return true;
@@ -217,7 +228,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		LOGGER.info(" ## Exterior shell completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
-	public void buildRooms(BlockPos position, ServerWorld world, Random rand)
+	public void buildRooms(BlueprintTileGrid grid, BlockPos position, ServerWorld world, Random rand)
 	{
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating rooms");
@@ -229,7 +240,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			RoomMetadata meta = node.metadata();
 			GrammarTerm type = meta.type();
 			LOGGER.info(" # Room {} of {}: {}x{} {}", ++tally, size(), meta.size().x(), meta.size().y(), type.registryName().getPath());
-			if(type.generate(position, world, node, passages, rand))
+			if(type.generate(position, world, node, grid, passages, rand))
 				LOGGER.info(" ## Finished");
 			else
 				LOGGER.error(" ## Error during room generation");
@@ -238,17 +249,17 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		LOGGER.info(" ## Rooms completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
-	public void buildExteriorPaths(BlockPos position, ServerWorld world, Random rand)
+	public void buildExteriorPaths(BlueprintTileGrid superGrid, BlockPos position, ServerWorld world, Random rand)
 	{
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior passages");
 		
-		passages().forEach(p -> p.generate(position, world, rand));
+		passages().forEach(p -> p.generate(superGrid, position, world, rand));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
-	public void buildEntrance(BlockPos position, ServerWorld world, Random rand)
+	public void buildEntrance(BlueprintTileGrid grid, BlockPos position, ServerWorld world, Random rand)
 	{
 		// The initial room of the dungeon
 		BlueprintRoom start = stream().filter(r -> r.metadata().is(CDTerms.instance().start())).findFirst().get();
@@ -262,12 +273,12 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		// Create a tile grid for generation with only the doorway tile
 		GraphTileGrid graph = new GraphTileGrid();
 		graph.addToVolume(entrywayTile);
-		BlueprintTileGrid grid = BlueprintTileGrid.fromGraphGrid(graph, 2);
+		final GridVolume vol = GridVolume.fromGraphGrid(graph, 2);
 		
 		// Generate the entryway
-		TileGenerator.generate(grid, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), rand);
+		TileGenerator.generate(grid.addTilesFor(vol), vol, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), rand);
 		grid.finalise(start.metadata().theme(), rand);
-		grid.generate(position, world);
+//		grid.generate(position, world);
 	}
 	
 	public List<BlueprintPassage> passages()

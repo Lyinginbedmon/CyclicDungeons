@@ -43,11 +43,11 @@ public class MaxAdjacentBoundaries extends Condition
 		faces.addAll(facesIn);
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
 		int tally = 0;
 		for(Direction face : faces)
-			if(set.contains(pos.offset(face)) && set.isBoundary(pos.offset(face), face))
+			if(grid.contains(pos.offset(face)) && grid.isBoundary(pos.offset(face), face))
 				if(++tally >= i)
 					return false;
 		return true;

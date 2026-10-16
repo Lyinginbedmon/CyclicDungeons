@@ -1,9 +1,7 @@
 package com.lying.blueprint;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -11,22 +9,20 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridPathing;
 import com.lying.grid.GridPathing.BoundTilePair;
 import com.lying.grid.GridTile;
+import com.lying.grid.GridVolume;
 import com.lying.grid.PathingResult;
-import com.lying.init.CDTiles;
 import com.lying.utility.geometry.AbstractBox2f;
 import com.lying.utility.geometry.Box2f;
 import com.lying.utility.geometry.LineSegment2f;
 import com.lying.utility.logging.DataLog;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
-import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.server.world.ServerWorld;
@@ -44,10 +40,12 @@ public class BlueprintPassage
 	public static final int PASSAGE_WIDTH = 3 * TILE_SIZE;
 	
 	private final BlueprintRoom parent;
-	private final List<BlueprintRoom> children = Lists.newArrayList();
+	private final List<BlueprintRoom> children = new ArrayList<BlueprintRoom>();
+	/** List of all rooms this passage accesses */
+	private final List<BlueprintRoom> connectedTo = new ArrayList<BlueprintRoom>();
 	private Box2f box;
 	
-	private List<GridTile> tilesCached = Lists.newArrayList();
+	private List<GridTile> tilesCached = new ArrayList<GridTile>();
 	private Optional<GridTile> startTile = Optional.empty();
 	
 	private boolean hasFailures = false;
@@ -67,6 +65,8 @@ public class BlueprintPassage
 	{
 		parent = a;
 		children.add(b);
+		connectedTo.add(parent);
+		connectedTo.add(b);
 	}
 	
 	public BlueprintRoom parent() { return parent; }
@@ -101,8 +101,6 @@ public class BlueprintPassage
 		errorLog.info(" # Exit tile: {}", originExit.shortString());
 		box = new Box2f(originExit.x, originExit.x, originExit.y, originExit.y);
 		
-		final List<BlueprintRoom> roomsInvolved = Lists.newArrayList(parent);
-		roomsInvolved.addAll(children);
 		final Predicate<GridTile> validityCheck = parent.getExclusionCheck();
 		
 		// Step 2: Build network of tiles from starting doorway to all child rooms
@@ -155,7 +153,7 @@ public class BlueprintPassage
 	@Nullable
 	public GridTile getTileAdjacentTo(BlueprintRoom room)
 	{
-		if(!room.equals(parent) && children.stream().noneMatch(room::equals))
+		if(!isTerminus(room))
 			return null;
 		else if(room.equals(parent))
 			return getInitialTile();
@@ -167,7 +165,8 @@ public class BlueprintPassage
 	/** Returns the doorway tile in the parent room's tile grid that is closest to all child rooms */
 	protected static GridTile findExitDoorway(BlueprintRoom parent, List<BlueprintRoom> children, @Nullable GridTile grandParentEntry)
 	{
-		List<GridTile> parentDoorways = Lists.newArrayList(parent.getDoorwayTiles());
+		List<GridTile> parentDoorways = new ArrayList<GridTile>();
+		parentDoorways.addAll(parent.getDoorwayTiles());
 		
 		// Exclude the grandparent entryway tile and any tiles immediately adjacent to it
 		if(grandParentEntry != null)
@@ -187,10 +186,12 @@ public class BlueprintPassage
 	protected PathingResult calculateFrom(GridTile start, BlueprintRoom initial, List<BlueprintRoom> successive, Predicate<GridTile> walkable)
 	{
 		/** Set of all tiles within this passageway */
-		List<GridTile> tiles = Lists.newArrayList(start);
+		List<GridTile> tiles = new ArrayList<GridTile>();
+		tiles.add(start);
 		
 		/** Set of all rooms accessed (not exited) from this passage, with the initial always at index 0 */
-		List<BlueprintRoom> rooms = Lists.newArrayList(initial);
+		List<BlueprintRoom> rooms = new ArrayList<BlueprintRoom>();
+		rooms.add(initial);
 		for(BlueprintRoom room : successive)
 			if(!rooms.contains(room))
 				rooms.add(room);
@@ -256,7 +257,7 @@ public class BlueprintPassage
 	
 	public List<Box> worldBox()
 	{
-		List<Box> boxes = Lists.newArrayList();
+		List<Box> boxes = new ArrayList<Box>();
 		for(GridTile tile : tiles())
 			boxes.add(GridTile.BOX.offset(tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE).withMaxY(PASSAGE_HEIGHT * TILE_SIZE));
 		return boxes;
@@ -265,7 +266,7 @@ public class BlueprintPassage
 	/** Returns true if the given room is any intended end of this passage */
 	public boolean isTerminus(BlueprintRoom room)
 	{
-		return room.equals(parent) || isEndOf(room);
+		return connectedTo.stream().anyMatch(room::equals);
 	}
 	
 	/** Returns true if the given is one of the descendant rooms connected to this passage */
@@ -316,7 +317,10 @@ public class BlueprintPassage
 		int previous = children.size();
 		for(BlueprintRoom child : b.children)
 			if(children.stream().noneMatch(child::equals))
+			{
 				children.add(child);
+				connectedTo.add(child);
+			}
 		
 		if(children.size() != previous)
 			cacheTiles();
@@ -349,73 +353,56 @@ public class BlueprintPassage
 		return false;
 	}
 	
+	/** Returns true if tile generation should build a door for this terminus */
 	public boolean shouldGenerateDoorTo(BlueprintRoom node)
 	{
-		if(!isTerminus(node))
+		// Always generate a door from the parent room
+		if(parent.equals(node) || !isTerminus(node))
 			return true;
 		
-		// List of all rooms this passage accesses
-		final List<BlueprintRoom> rooms = new ArrayList<>();
-		rooms.add(parent);
-		rooms.addAll(children);
+		// Always generate a door if the descendant room has a custom one
+		// TODO
 		
-		List<GridTile> doorTiles = new ArrayList<GridTile>();
-		GridTile target = null;
-		for(BlueprintRoom terminus : rooms)
+		// Don't generate another door if there's only 2 rooms in this passage (one parent and one descendant)
+		if(connectedTo.size() > 2)
 		{
-			GridTile doorGrid = getTileAdjacentTo(terminus);
-			if(terminus.equals(node))
-				target = doorGrid;
-			if(doorGrid == null || doorTiles.contains(doorGrid))
-				continue;
-			else
-				doorTiles.add(doorGrid);
+			// Otherwise only generate a door if it is sufficiently removed from another door in this passage
+			final GridTile target = getTileAdjacentTo(node);
+			GridTile door;
+			for(BlueprintRoom terminus : connectedTo)
+				if(
+					!terminus.equals(node) && 
+					(door = getTileAdjacentTo(terminus)) != null && 
+					door.manhattanDistance(target) == 1)
+					return false;
+			return true;
 		}
 		
-		final GridTile door = target;
-		return door == null || doorTiles.stream().noneMatch(t -> t.manhattanDistance(door) == 1);
+		return false;
 	}
 	
-	public void generate(BlockPos origin, ServerWorld world, Random rand)
+	public void generate(BlueprintTileGrid grid, BlockPos origin, ServerWorld world, Random rand)
 	{
-		// List of all rooms this passage accesses
-		final List<BlueprintRoom> rooms = new ArrayList<>();
-		rooms.add(parent);
-		rooms.addAll(children);
-		final Map<BlueprintRoom, GridTile> doorways = new HashMap<>();
-		
 		final Theme theme = parent().metadata().theme();
-		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(asTiles(), PASSAGE_HEIGHT);
+		GridVolume vol = GridVolume.fromGraphGrid(asTiles(), PASSAGE_HEIGHT);
+		grid.addTilesFor(vol);
 		
-		// Pre-seed doorway from parent room before generating
-		List<GridTile> doorTiles = new ArrayList<GridTile>();
-		for(BlueprintRoom terminus : rooms)
+		// Complete doorways, as they are generated by rooms
+		for(BlueprintRoom terminus : connectedTo)
 		{
 			GridTile doorGrid = getTileAdjacentTo(terminus);
-			if(doorGrid == null || doorTiles.contains(doorGrid))
-				continue;
-			else
-			{
-				doorTiles.add(doorGrid);
-				doorways.put(terminus, doorGrid);
-			}
+			if(doorGrid != null)
+				for(int i=0; i<3; i++)
+					vol.set(doorGrid.toPos(i));
 		}
 		
-		for(BlueprintRoom terminus : rooms)
+		if(!vol.isComplete())
 		{
-			GridTile doorGrid = doorways.get(terminus);
-			if(doorGrid == null)
-				continue;
-			
-			final Tile flag = CDTiles.instance().get(CDTiles.ID_PASSAGE_FLAG).get();
-			BlockPos doorPos = new BlockPos(doorGrid.x, 0, doorGrid.y);
-			for(int i=0; i<PASSAGE_HEIGHT; i++)
-				map.put(doorPos.withY(i), i < 3 ? flag : CDTiles.instance().getElse(DefaultTiles.ID_PASSAGE_BOUNDARY, CDTiles.AIR));
+			TileGenerator.generate(grid, vol, theme.passageTileSet(), rand);
+			grid.finalise(theme, rand);
+//			map.
+//				finalise(theme, rand).
+//				generate(origin, world);
 		}
-		
-		TileGenerator.generate(map, theme.passageTileSet(), rand);
-		map.
-			finalise(theme, rand).
-			generate(origin, world);
 	}
 }

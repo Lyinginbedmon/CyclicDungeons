@@ -36,9 +36,9 @@ public class Boundary extends Condition
 		return condition;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
-		return faces.stream().anyMatch(d -> set.isBoundary(pos, d));
+		return faces.stream().anyMatch(d -> grid.isBoundary(pos, d));
 	}
 	
 	public JsonElement toJson(JsonOps ops)

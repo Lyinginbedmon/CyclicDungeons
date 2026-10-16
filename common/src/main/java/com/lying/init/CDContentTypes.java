@@ -55,10 +55,10 @@ public class CDContentTypes
 	// Configurable
 	public static final Supplier<Content> STRUCTURE_PLACER		= register(StructurePlacerContent.ID, StructurePlacerContent::new);
 	public static final Supplier<Content> ADJACENT_PLACER		= register(SatelliteStructurePlacerContent.ID, SatelliteStructurePlacerContent::new);
-	public static final Supplier<Content> SIMPLE_JUMPER		= register(SimpleJumpingContent.ID, SimpleJumpingContent::new);
+	public static final Supplier<Content> SIMPLE_JUMPER			= register(SimpleJumpingContent.ID, SimpleJumpingContent::new);
 	public static final Supplier<Content> TILE_PREGEN			= register(TileContent.ID, TileContent::new);
 	public static final Supplier<Content> TILE_SET_PREGEN		= register(TileSetContent.ID, TileSetContent::new);
-	public static final Supplier<Content> TILE_TO_BLOCK		= register(TileToBlockContent.ID, TileToBlockContent::new);
+	public static final Supplier<Content> TILE_TO_BLOCK			= register(TileToBlockContent.ID, TileToBlockContent::new);
 	public static final Supplier<Content> MODULAR				= register(ModularContent.ID, ModularContent::new);
 	
 	public static Supplier<Content> register(Identifier name, Function<Identifier, Content> func)

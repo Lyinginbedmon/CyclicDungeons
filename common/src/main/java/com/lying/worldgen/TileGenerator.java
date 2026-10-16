@@ -11,6 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.utility.CDUtils;
@@ -26,14 +27,14 @@ public class TileGenerator
 	public static final DebugLogger LOGGER = CDLoggers.WFC;
 	public static boolean DEBUG = false;
 	
-	public static void generate(BlueprintTileGrid map, TileSet tiles, Random rand)
+	public static void generate(BlueprintTileGrid map, GridVolume vol, TileSet tiles, Random rand)
 	{
-		generate(map, tiles, CDTiles.AIR, rand);
+		generate(map, vol, tiles, CDTiles.AIR, rand);
 	}
 	
-	public static void generate(BlueprintTileGrid map, TileSet tiles, Supplier<Tile> fallback, Random rand)
+	public static void generate(BlueprintTileGrid map, GridVolume vol, TileSet tiles, Supplier<Tile> fallback, Random rand)
 	{
-		if(map.isEmpty())
+		if(map.isEmpty() || vol.isEmpty())
 		{
 			LOGGER.error("Attempted to apply WFC to blank tile set");
 			return;
@@ -41,7 +42,7 @@ public class TileGenerator
 		
 		LOGGER.info("Apply WFC to tile set of {} positions", map.volume());
 		
-		List<BlockPos> positionsToGenerate = map.getBlanks();
+		List<BlockPos> positionsToGenerate = vol.unsetPoints();
 		Map<Integer,List<BlockPos>> positionsPerY = new HashMap<>();
 		positionsToGenerate.forEach(p -> 
 		{

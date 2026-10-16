@@ -12,8 +12,8 @@ import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTileTags.TileTag;
-import com.lying.utility.logging.DebugLogger;
 import com.lying.init.CDTiles;
+import com.lying.utility.logging.DebugLogger;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -126,7 +126,7 @@ public abstract class Tile
 		return predicate.test(this, pos, set);
 	}
 	
-	public final int priority() { return priority; }
+	public final int priority() { return isFlag() ? -1 : priority; }
 	
 	/** Returns true if this tile has a higher priority value than the given tile */
 	public final boolean isHigherPriorityThan(Tile tile)

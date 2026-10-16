@@ -34,7 +34,7 @@ public class IsAnyOf extends Condition
 		return condition;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return ids.stream().anyMatch(tileIn.registryName()::equals); }
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return ids.stream().anyMatch(tileIn.registryName()::equals); }
 	
 	public JsonElement toJson(JsonOps ops)
 	{

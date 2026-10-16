@@ -1,6 +1,5 @@
 package com.lying.grid;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,27 +30,6 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	private BlockPos 
 		min = null, 
 		max = null;
-	private Optional<UUID> roomTag = Optional.empty();
-	
-	public static BlueprintTileGrid ofSize(BlockPos size)
-	{
-		BlueprintTileGrid map = new BlueprintTileGrid();
-		
-		int sizeX = Math.abs(size.getX());
-		sizeX = sizeX == 0 ? 1 : sizeX;
-		
-		int sizeY = Math.abs(size.getY());
-		sizeY = sizeY == 0 ? 1 : sizeY;
-		
-		int sizeZ = Math.abs(size.getZ());
-		sizeZ = sizeZ == 0 ? 1 : sizeZ;
-		
-		for(int x=0; x<sizeX; x++)
-			for(int z=0; z<sizeZ; z++)
-				for(int y=0; y<sizeY; y++)
-					map.addToVolume(new BlockPos(x, y, z));
-		return map;
-	}
 	
 	public static BlueprintTileGrid fromGraphGrid(GraphTileGrid graph, int height)
 	{
@@ -65,15 +43,9 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return map;
 	}
 	
-	public BlueprintTileGrid setRoom(UUID idIn)
+	public BlueprintTileGrid addTilesFor(GridVolume vol)
 	{
-		this.roomTag = Optional.of(idIn);
-		return this;
-	}
-	
-	public BlueprintTileGrid addToVolume(BlockPos from, BlockPos to)
-	{
-		BlockPos.Mutable.iterate(from, to).forEach(p -> addToVolume(p.toImmutable()));
+		vol.contents().forEach(this::addToVolume);
 		return this;
 	}
 	
@@ -134,44 +106,11 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return super.contains(pos);
 	}
 	
-	/** Expands the map in the given direction from all pre-existing positions */
-	public void grow(Direction direction, int size)
-	{
-		getBoundaries(List.of(direction)).forEach(p -> 
-		{
-			for(int i=0; i<size; i++)
-				addToVolume(p.offset(direction));
-		});
-	}
-	
-	public BlockPos size()
-	{
-		int x = Integer.MIN_VALUE, y = Integer.MIN_VALUE, z = Integer.MIN_VALUE;
-		for(BlockPos pos : set.keySet())
-		{
-			if(pos.getX() > x)
-				x = pos.getX();
-			if(pos.getY() > y)
-				y = pos.getY();
-			if(pos.getZ() > z)
-				z = pos.getZ();
-		}
-		return new BlockPos(x, y, z).add(1, 1, 1);
-	}
-	
 	public boolean isBoundary(BlockPos pos, Direction side) { return !contains(pos.offset(side)); }
 	
 	public List<BlockPos> getBoundaries(List<Direction> faces)
 	{
 		return set.keySet().stream().filter(p -> faces.stream().anyMatch(f -> isBoundary(p, f))).toList();
-	}
-	
-	public void applyToAllValid(Tile tile)
-	{
-		Collection<BlockPos> points = set.keySet();
-		points.stream()
-			.filter(p -> get(p).get().isBlank() && tile.canExistAt(p, this))
-			.forEach(p -> put(p, tile));
 	}
 	
 	public List<Tile> getOptionsFor(BlockPos pos, List<Tile> useable)
@@ -188,6 +127,18 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	
 	public void put(BlockPos pos, @Nullable Tile tile)
 	{
+//		if(tile != null && !tile.isBlank())
+//		{
+//			Optional<Tile> existing;
+//			if(tile != null && (existing = get(pos)).isPresent() && !existing.get().isBlank())
+//			{
+//				// Avoid setting tiles when the new tile is lower priority than the existing one
+//				final int priorityEx = existing.get().priority();
+//				final int priorityIn = tile.priority();
+//				if(priorityEx != priorityIn && (priorityEx < 0 || priorityEx > priorityIn))
+//					return;
+//			}
+//		}
 		super.put(pos, tile);
 		finalised.clear();
 	}
@@ -205,7 +156,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			
 			BlockPos pos = entry.getKey();
 			BlockRotation rotation = tile.assignRotation(pos, this, this::get, rand);
-			finalised.add(new TileInstance(pos, tile, theme, rotation, roomTag));
+			finalised.add(new TileInstance(pos, tile, theme, rotation, Optional.empty()));	// FIXME Add room tag
 		});
 		if(!finalised.isEmpty())
 			LOGGER.info("Tile set finalised");
@@ -220,9 +171,6 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		finalised.removeIf(i -> i.pos().getManhattanDistance(instance.pos()) == 0);
 		finalised.add(instance);
 	}
-	
-	/** Returns the finalised contents of this tile set */
-	public List<TileInstance> getTiles() { return finalised; }
 	
 	/** Generates the finalised map into the world at the given position */
 	public boolean generate(BlockPos origin, ServerWorld world)

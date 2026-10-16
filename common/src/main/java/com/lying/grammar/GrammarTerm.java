@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 
 import com.google.gson.JsonElement;
-import com.lying.block.entity.IRoomTaggedBlock;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
@@ -16,29 +15,22 @@ import com.lying.grammar.content.IContentEntry;
 import com.lying.grammar.content.RoomContent;
 import com.lying.grammar.modifier.PhraseModifier;
 import com.lying.grid.BlueprintTileGrid;
-import com.lying.grid.BlueprintTileGrid.TileInstance;
-import com.lying.grid.GraphTileGrid;
-import com.lying.grid.GridTile;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTerms;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.TileGenerator;
-import com.lying.worldgen.theme.Theme;
-import com.lying.worldgen.tile.RotationSupplier;
+import com.lying.worldgen.tile.Tile;
 import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
 
 public class GrammarTerm
@@ -137,65 +129,65 @@ public class GrammarTerm
 		contentBuilder.applyPrePassageProcessing(node, node.metadata(), world, rand);
 	}
 	
-	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, List<BlueprintPassage> passages, Random rand)
+	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, BlueprintTileGrid grid, List<BlueprintPassage> passages, Random rand)
 	{
-		BlueprintTileGrid map = BlueprintTileGrid.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT).setRoom(node.uuid());
-		RoomMetadata meta = node.metadata();
+		GridVolume vol = GridVolume.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT).setRoom(node.uuid());
+		final RoomMetadata meta = node.metadata();
 		
-		List<DoorData> doors = List.of();
 		try
 		{
 			// Pre-seed doorways to connecting rooms
-			doors = preseedDoorways(node, map, passages, rand);
+			preseedDoorways(node, grid, vol, passages, rand);
+			grid.addTilesFor(vol);
 			
-			contentBuilder.applyPreProcessing(node, meta, map, world, rand);
+			contentBuilder.applyPreProcessing(node, meta, grid, world, rand);
 			
 			// Fill rest of tileset with WFC generation
-			TileGenerator.generate(map, node.metadata().theme().getTileSet(this), rand);
+			TileGenerator.generate(grid, vol, node.metadata().theme().getTileSet(this), rand);
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		
-		map.finalise(meta.theme(), rand);
-		
-		// Finalise rotation of doorway blocks
-		final Theme theme = node.metadata().theme();
-		for(DoorData door : doors)
-		{
-			BlockPos tile = door.tile;
-			
-			final BlockRotation rotation = 
-					RotationSupplier.faceToRotationMap.get(HORIZONTALS.stream().filter(f -> map.contains(tile.offset(f))).findFirst().orElse(Direction.NORTH))
-					.rotate(door.shouldFaceOut ? BlockRotation.CLOCKWISE_180 : BlockRotation.NONE);
-			for(int j=1; j<3; j++)
-			{
-				final BlockPos point = tile.withY(j);
-				map.get(point).ifPresent(t -> map.finalise(new TileInstance(point, t, theme, rotation, Optional.of(node.uuid()))));
-			}
-		}
-		
-		if(map.generate(position, world))
-		{
-			Box box = node.worldBox().offset(position);
-			BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
-			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
-			
-			contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
-			
-			// Assign room ID to room-tagged blocks post-tile generation
-			BlockPos.Mutable.iterate(min, max).forEach(p -> 
-			{
-				BlockEntity e = world.getBlockEntity(p);
-				if(e != null && e instanceof IRoomTaggedBlock)
-					((IRoomTaggedBlock)e).setRoom(node.uuid());
-			});
-			
+//		grid.finalise(meta.theme(), rand);
+//		
+//		// Finalise rotation of doorway blocks
+//		final Theme theme = node.metadata().theme();
+//		for(DoorData door : doors)
+//		{
+//			BlockPos tile = door.tile;
+//			
+//			final BlockRotation rotation = 
+//					RotationSupplier.faceToRotationMap.get(HORIZONTALS.stream().filter(f -> grid.contains(tile.offset(f))).findFirst().orElse(Direction.NORTH))
+//					.rotate(door.shouldFaceOut ? BlockRotation.CLOCKWISE_180 : BlockRotation.NONE);
+//			for(int j=1; j<3; j++)
+//			{
+//				final BlockPos point = tile.withY(j);
+//				grid.get(point).ifPresent(t -> grid.finalise(new TileInstance(point, t, theme, rotation, vol.roomId())));
+//			}
+//		}
+//		
+//		if(grid.generate(position, world))
+//		{
+//			Box box = node.worldBox().offset(position);
+//			BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
+//			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
+//			
+//			contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
+//			
+//			// Assign room ID to room-tagged blocks post-tile generation
+//			BlockPos.Mutable.iterate(min, max).forEach(p -> 
+//			{
+//				BlockEntity e = world.getBlockEntity(p);
+//				if(e != null && e instanceof IRoomTaggedBlock)
+//					((IRoomTaggedBlock)e).setRoom(node.uuid());
+//			});
+//			
 			return true;
-		}
-		
-		return false;
+//		}
+//		
+//		return false;
 	}
 	
-	protected static List<DoorData> preseedDoorways(BlueprintRoom node, BlueprintTileGrid map, List<BlueprintPassage> passages, Random rand)
+	protected static List<DoorData> preseedDoorways(BlueprintRoom node, BlueprintTileGrid map, GridVolume vol, List<BlueprintPassage> passages, Random rand)
 	{
 		/**
 		 * Find all passages that connect to the given room
@@ -204,34 +196,34 @@ public class GrammarTerm
 		 * 
 		 * This improves room navigability by reducing occlusion of doorways
 		 */
-		final List<BlueprintPassage> connecting = passages.stream().filter(p -> p.isTerminus(node)).toList();
-		final List<BlockPos> boundaries = map.getBoundaries(HORIZONTALS);
 		final DoorWaySet entrySet = node.metadata().getEntryDoorTiles();
 		List<DoorWaySet> exitSets = node.metadata().getExitDoorTiles(rand, node.childrenCount());
 		
 		List<DoorData> doorways = new ArrayList<DoorData>();
-		for(BlueprintPassage passage : connecting)
+		for(BlueprintPassage passage : passages.stream().filter(p -> p.isTerminus(node)).toList())
 		{
-			// Passage tile grid
-			final GraphTileGrid passageTiles = passage.asTiles();
+			// Door position within passage
+			final BlockPos door = passage.getTileAdjacentTo(node).toPos(1);
+			if(door == null)
+				continue;
 			
-			// Doorway in room
-			final BlockPos pos = boundaries.stream().filter(p -> passageTiles.containsAdjacent(new GridTile(p.getX(), p.getZ()))).findFirst().get();
-			map.put(pos.withY(1), CDTiles.PASSAGE_FLAG.get());	// Flag tile infront of door to prevent obstruction
-			
-			// Doorway in passage
-			final BlockPos doorway = passageTiles.getBoundaries(HORIZONTALS).stream().filter(t -> map.containsAdjacent(t.toPos(0))).findFirst().get().toPos(0);
+			// Flag adjacent tiles to door in room to prevent obstruction
+			BlockPos offset;
+			for(Direction face : Direction.Type.HORIZONTAL)
+				if(vol.contains(offset = door.offset(face)))
+					setTile(offset, CDTiles.PASSAGE_FLAG.get(), map, vol);
 			
 			final boolean isParent = node.equals(passage.parent());
+			// Always generate door from parent, otherwise only generate if door isn't adjacent to another door
 			DoorData data = isParent ? 
-					new DoorData(doorway, false, true) : 
-					new DoorData(doorway, true, passage.shouldGenerateDoorTo(node));
+					new DoorData(door, false, true) : 
+					new DoorData(door, true, passage.shouldGenerateDoorTo(node));
 			DoorWaySet tileSet = isParent ? 
 					(exitSets.size() > 1 ? exitSets.removeFirst() : exitSets.getFirst()) : 
 					entrySet;
 			
 			doorways.add(data);
-			data.placeInMap(map, tileSet);	// FIXME Prevent entryway doors generating over-top of exit doors
+			data.placeInMap(map, vol, tileSet);
 		}
 		
 		return doorways;
@@ -239,38 +231,35 @@ public class GrammarTerm
 	
 	private static record DoorData(BlockPos tile, boolean shouldFaceOut, boolean shouldPlaceDoor)
 	{
-		public void placeInMap(BlueprintTileGrid map, DoorWaySet tileSet)
+		public void placeInMap(BlueprintTileGrid map, GridVolume vol, DoorWaySet tileSet)
 		{
 			// Add doorway tiles to the room's volume
 			for(int i=0; i<3; i++)
-				map.addToVolume(tile.withY(i));
+			{
+				BlockPos p = tile.withY(i);
+				vol.add(p);
+				map.addToVolume(p);
+			}
 			
 			// Flooring
-			tileSet.flooringTile().ifPresentOrElse(
-					t -> map.put(tile.withY(0), CDTiles.instance().getElse(t, CDTiles.STONE)), 
-					() -> map.put(tile.withY(0), CDTiles.STONE.get()));
+			setTile(tile.withY(0), CDTiles.instance().get(tileSet.flooringTile().orElse(CDTiles.ID_STONE)).get(), map, vol);
 			
+			// Doorway
 			if(shouldPlaceDoor)
-			{
-				// Door
-				final BlockPos door = tile.withY(1);
-				tileSet.doorTile().ifPresent(t -> map.put(door, CDTiles.instance().get(t).get()));
-//				tileSet.doorTile().ifPresentOrElse(
-//					t -> map.put(door, CDTiles.instance().getElse(t, CDTiles.DOORWAY)), 
-//					() -> map.put(door, CDTiles.DOORWAY.get()));
-				
-				// Lintel
-				final BlockPos lintel = tile.withY(2);
-				tileSet.lintelTile().ifPresentOrElse(
-						t -> map.put(lintel, CDTiles.instance().getElse(t, CDTiles.DOORWAY_LINTEL)), 
-						() -> map.put(lintel, CDTiles.DOORWAY_LINTEL.get()));
-			}
+				setTile(tile.withY(1), CDTiles.instance().get(tileSet.doorTile().orElse(CDTiles.ID_DOORWAY)).get(), map, vol);
 			else
-			{
-				map.put(tile.withY(1), CDTiles.AIR.get());
-				map.put(tile.withY(2), CDTiles.BLANK.get());
-			}
+				vol.set(tile.withY(1));
+			
+			// Lintel
+			setTile(tile.withY(2), CDTiles.instance().get(tileSet.lintelTile().orElse(CDTiles.ID_DOORWAY_LINTEL)).get(), map, vol);
 		}
+	}
+	
+	protected static void setTile(BlockPos pos, Tile tile, BlueprintTileGrid grid, GridVolume vol)
+	{
+		grid.put(pos, tile);
+		if(!tile.isBlank())
+			vol.set(pos);
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)

@@ -53,7 +53,7 @@ public abstract class Boolean extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return children.stream().allMatch(c -> c.test(tileIn, pos, set)); }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return children.stream().allMatch(c -> c.test(tileIn, pos, grid)); }
 	}
 	
 	public static class Or extends Boolean
@@ -71,6 +71,6 @@ public abstract class Boolean extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set) { return children.stream().anyMatch(c -> c.test(tileIn, pos, set)); }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return children.stream().anyMatch(c -> c.test(tileIn, pos, grid)); }
 	}
 }

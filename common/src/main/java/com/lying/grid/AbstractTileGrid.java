@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,8 @@ public abstract class AbstractTileGrid<T extends Object>
 	
 	public AbstractTileGrid<T> addToVolume(T pos)
 	{
-		setTile(pos, BLANK);
+		if(!contains(pos))
+			setTile(pos, BLANK);
 		return this;
 	}
 	
@@ -45,33 +45,15 @@ public abstract class AbstractTileGrid<T extends Object>
 		return this;
 	}
 	
-	public abstract AbstractTileGrid<T> addToVolume(T from, T to);
-	
 	public final AbstractTileGrid<T> removeFromVolume(T pos)
 	{
 		set.remove(pos);
 		return this;
 	}
 	
-	/** Expands the map in the given direction from all pre-existing positions */
-	public final void grow(Direction direction)
-	{
-		grow(direction, 1);
-	}
-	
-	/** Expands the map in the given direction from all pre-existing positions */
-	public abstract void grow(Direction direction, int size);
-	
 	public boolean contains(T pos)
 	{
 		return set.keySet().stream().anyMatch(pos::equals);
-	}
-	
-	public abstract boolean containsAdjacent(T pos);
-	
-	public final boolean containsOrAdjacent(T pos)
-	{
-		return contains(pos) || containsAdjacent(pos);
 	}
 	
 	public final Optional<Tile> get(T pos)
@@ -110,25 +92,9 @@ public abstract class AbstractTileGrid<T extends Object>
 	
 	public final Collection<T> contents() { return set.keySet(); }
 	
-	public final List<T> getBoundaries()
-	{
-		return getBoundaries(Direction.Type.HORIZONTAL.stream().toList());
-	}
-	
 	public abstract List<T> getBoundaries(List<Direction> faces);
 	
-	public final boolean hasBlanks() { return tallyOf(BLANK) > 0; }
-	
 	public final int tallyOf(Tile tile) { return tally.getOrDefault(tile, 0); }
-	
-	public final int tallyMatching(Predicate<Tile> predicate)
-	{
-		int val = 0;
-		for(Entry<Tile,Integer> entry : tally.entrySet())
-			if(predicate.test(entry.getKey()))
-				val += entry.getValue();
-		return val;
-	}
 	
 	public final List<T> getBlanks()
 	{

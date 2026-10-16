@@ -34,7 +34,7 @@ public abstract class Condition
 	public final Identifier registryName() { return id; }
 	
 	/** Evaluates if the given tile at the given position evaluates correctly with this condition */
-	public abstract boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set);
+	public abstract boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid);
 	
 	public JsonElement toJson(JsonOps ops)
 	{

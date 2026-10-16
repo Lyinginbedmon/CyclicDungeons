@@ -28,7 +28,7 @@ public class Near extends Condition
 		return condition;
 	}
 
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 	{
 		for(int x=-(int)d; x<d; x++)
 			for(int z=-(int)d; z<d; z++)
@@ -39,11 +39,11 @@ public class Near extends Condition
 						continue;
 					
 					BlockPos offset = pos.add(x, y, z);
-					if(!set.contains(offset) || !offset.isWithinDistance(pos, d))
+					if(!grid.contains(offset) || !offset.isWithinDistance(pos, d))
 						continue;
 					
-					Tile tileAt = set.get(offset).get();
-					if(child.test(tileAt, offset, set))
+					Tile tileAt = grid.get(offset).get();
+					if(child.test(tileAt, offset, grid))
 						return true;
 				}
 		
@@ -80,9 +80,9 @@ public class Near extends Condition
 			return condition;
 		}
 
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
 		{
-			return !super.test(tileIn, pos, set);
+			return !super.test(tileIn, pos, grid);
 		}
 	}
 }
