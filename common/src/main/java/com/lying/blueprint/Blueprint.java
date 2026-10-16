@@ -190,7 +190,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		buildEntrance(mainGrid, position, world, rand);
 		
-		mainGrid.finalise(theme(), rand);
+		mainGrid.finaliseGrid(theme(), rand);
 		
 		// Apply door orientation finalisation
 		
@@ -277,7 +277,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		
 		// Generate the entryway
 		TileGenerator.generate(grid.addTilesFor(vol), vol, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), rand);
-		grid.finalise(start.metadata().theme(), rand);
+		grid.finaliseGrid(start.metadata().theme(), rand);
 //		grid.generate(position, world);
 	}
 	

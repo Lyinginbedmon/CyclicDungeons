@@ -1,6 +1,9 @@
 package com.lying.grid;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,7 +28,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 {
 	public static final DebugLogger LOGGER = CDLoggers.WFC;
 	public static final Tile BLANK	= CDTiles.BLANK.get();
-	private final List<TileInstance> finalised = Lists.newArrayList();
+	private final Map<BlockPos, TileInstance> finalised = new HashMap<>();
 	
 	private BlockPos 
 		min = null, 
@@ -127,6 +130,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	
 	public void put(BlockPos pos, @Nullable Tile tile)
 	{
+		// FIXME Check tile priority to prevent overwriting
 //		if(tile != null && !tile.isBlank())
 //		{
 //			Optional<Tile> existing;
@@ -140,36 +144,47 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 //			}
 //		}
 		super.put(pos, tile);
-		finalised.clear();
+		if(finalised.containsKey(pos))
+			finalised.remove(pos);
+	}
+	
+	public BlueprintTileGrid finaliseRegion(GridVolume vol, Theme theme, Random rand)
+	{
+		LOGGER.info("Finalising tile set region...");
+		return finaliseRegion(vol.contents(), theme, rand);
 	}
 	
 	/** Populates the finalised map with tile instances with appropriate orientations */
-	public BlueprintTileGrid finalise(Theme theme, Random rand)
+	public BlueprintTileGrid finaliseGrid(Theme theme, Random rand)
 	{
-		LOGGER.info("Finalising tile set...");
-		finalised.clear();
-		set.entrySet().forEach(entry -> 
+		LOGGER.info("Finalising total tile set...");
+		return finaliseRegion(this.contents(), theme, rand);
+	}
+	
+	protected BlueprintTileGrid finaliseRegion(Collection<BlockPos> set, Theme theme, Random rand)
+	{
+		for(BlockPos pos : set)
 		{
-			Tile tile = entry.getValue();
-			if(tile == null || tile.isFlag())
-				return;
+			if(finalised.containsKey(pos))
+				continue;
 			
-			BlockPos pos = entry.getKey();
-			BlockRotation rotation = tile.assignRotation(pos, this, this::get, rand);
-			finalised.add(new TileInstance(pos, tile, theme, rotation, Optional.empty()));	// FIXME Add room tag
-		});
-		if(!finalised.isEmpty())
-			LOGGER.info("Tile set finalised");
-		else
-			LOGGER.warn("Error while finalising tile set");
-		
+			Tile tile = get(pos).orElse(null);
+			if(tile == null || tile.isFlag())
+				continue;
+			
+			finalise(new TileInstance(
+					pos, 
+					tile, 
+					theme, 
+					tile.assignRotation(pos, this, this::get, rand), 
+					Optional.empty()));	// FIXME Add room tag
+		}
 		return this;
 	}
 	
 	public void finalise(TileInstance instance)
 	{
-		finalised.removeIf(i -> i.pos().getManhattanDistance(instance.pos()) == 0);
-		finalised.add(instance);
+		finalised.put(instance.pos(), instance);
 	}
 	
 	/** Generates the finalised map into the world at the given position */
@@ -181,7 +196,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			return false;
 		}
 		
-		finalised.forEach(entry -> entry.generate(origin.add(entry.pos().multiply(Tile.TILE_SIZE)), world));
+		finalised.values().forEach(entry -> entry.generate(origin.add(entry.pos().multiply(Tile.TILE_SIZE)), world));
 		LOGGER.info("Tile set generated successfully");
 		return true;
 	}
