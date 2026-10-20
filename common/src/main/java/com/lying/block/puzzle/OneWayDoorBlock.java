@@ -32,6 +32,7 @@ import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
+import net.minecraft.util.math.Direction.AxisDirection;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
@@ -39,6 +40,8 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
+import net.minecraft.world.tick.ScheduledTickView;
 
 public class OneWayDoorBlock extends BlockWithEntity
 {
@@ -154,6 +157,38 @@ public class OneWayDoorBlock extends BlockWithEntity
 		return super.onBreak(world, pos, state, player);
 	}
 	
+	protected BlockState getStateForNeighborUpdate(
+			BlockState state,
+			WorldView world,
+			ScheduledTickView tickView,
+			BlockPos pos,
+			Direction direction,
+			BlockPos neighborPos,
+			BlockState neighborState,
+			Random random
+		)
+	{
+		if(direction.getAxis() != Direction.Axis.Y)
+			return super.getStateForNeighborUpdate(state, world, tickView, pos, direction, neighborPos, neighborState, random);
+		
+		// If one end is gone, destroy this one too
+		if(!neighborState.isOf(this))
+			return Blocks.AIR.getDefaultState();
+		
+		final DoubleBlockHalf half = state.get(HALF);
+		if(neighborState.get(HALF) != half)
+		{
+			// If one end is modified, clone the modification if it originates in the other half of this instance
+			if(
+				(half == DoubleBlockHalf.LOWER && direction.getDirection() == AxisDirection.POSITIVE) ||
+				(half == DoubleBlockHalf.UPPER && direction.getDirection() == AxisDirection.NEGATIVE)
+			)
+				return neighborState.cycle(HALF);
+		}
+		
+		return super.getStateForNeighborUpdate(state, world, tickView, pos, direction, neighborPos, neighborState, random);
+	}
+	
 	public BlockEntity createBlockEntity(BlockPos pos, BlockState state)
 	{
 		return state.get(HALF) == DoubleBlockHalf.UPPER ? null : new OneWayDoorBlockEntity(pos, state);
@@ -230,5 +265,6 @@ public class OneWayDoorBlock extends BlockWithEntity
 			return;
 		
 		// FIXME Break instantly when OPEN, incl. second block
+		world.breakBlock(pos, false, player);
 	}
 }

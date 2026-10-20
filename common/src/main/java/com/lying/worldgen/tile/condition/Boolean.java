@@ -1,8 +1,8 @@
 package com.lying.worldgen.tile.condition;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -16,7 +16,7 @@ import net.minecraft.util.math.BlockPos;
 
 public abstract class Boolean extends Condition
 {
-	protected List<Condition> children = Lists.newArrayList();
+	protected List<Condition> children = new ArrayList<>();
 	
 	protected Boolean(Identifier idIn)
 	{

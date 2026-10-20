@@ -1,5 +1,6 @@
 package com.lying.grammar;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
 import com.mojang.serialization.Codec;
@@ -32,7 +32,7 @@ public class GrammarPhrase
 			GrammarRoom.CODEC.listOf().fieldOf("Rooms").forGetter(GrammarPhrase::rooms)
 			).apply(instance, GrammarPhrase::new));
 	private final Identifier theme;
-	private List<GrammarRoom> rooms = Lists.newArrayList();
+	private List<GrammarRoom> rooms = new ArrayList<>();
 	
 	public GrammarPhrase(Identifier themeIn)
 	{
@@ -109,7 +109,7 @@ public class GrammarPhrase
 	@NotNull
 	public List<GrammarRoom> getLinksTo(UUID uuid)
 	{
-		List<GrammarRoom> links = Lists.newArrayList();
+		List<GrammarRoom> links = new ArrayList<>();
 		links.addAll(rooms.stream().filter(r -> r.hasLinkTo(uuid)).toList());
 		return links;
 	}

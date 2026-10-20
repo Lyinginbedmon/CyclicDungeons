@@ -1,12 +1,12 @@
 package com.lying.utility.logging;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
 import com.lying.reference.Reference;
 
 /** Used during debug operations to only print results when an error occurs at the end of a calculation */
@@ -14,7 +14,7 @@ public class QueuedLogger extends DebugLogger
 {
 	public static final QueuedLogger INSTANCE = new QueuedLogger("debug_queue");
 	
-	private List<Consumer<QueuedLogger>> queue = Lists.newArrayList();
+	private List<Consumer<QueuedLogger>> queue = new ArrayList<>();
 	private final Logger logger;
 	
 	public QueuedLogger(String sub)

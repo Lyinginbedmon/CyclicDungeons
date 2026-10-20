@@ -1,9 +1,9 @@
 package com.lying.fabric.data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Lists;
 import com.lying.reference.Reference;
 import com.lying.worldgen.theme.DefaultPhrases;
 import com.lying.worldgen.theme.InitialPhrase;
@@ -30,7 +30,7 @@ public class CDPhraseProvider implements DataProvider
 	public CompletableFuture<?> run(DataWriter dataWriter)
 	{
 		return wrapperLookup.thenCompose(lookup -> {
-			List<CompletableFuture<?>> futures = Lists.newArrayList();
+			List<CompletableFuture<?>> futures = new ArrayList<>();
 			DefaultPhrases.getDefaults().forEach(phrase ->
 				futures.add(DataProvider.writeToPath(dataWriter, InitialPhrase.CODEC.encodeStart(JsonOps.INSTANCE, phrase).getOrThrow(), this.path.resolveJson(phrase.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));

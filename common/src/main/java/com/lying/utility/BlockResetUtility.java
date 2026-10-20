@@ -1,10 +1,10 @@
 package com.lying.utility;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
 import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -40,7 +40,7 @@ public class BlockResetUtility extends PersistentState
 	},
 	u -> 
 	{
-		List<ResetRecord> records = Lists.newArrayList();
+		List<ResetRecord> records = new ArrayList<>();
 		u.resetLog.values().forEach(records::addAll);
 		return records;
 	});
@@ -67,7 +67,7 @@ public class BlockResetUtility extends PersistentState
 	
 	public List<ResetRecord> getRecordsFor(RegistryKey<World> keyIn)
 	{
-		return resetLog.getOrDefault(keyIn, Lists.newArrayList());
+		return resetLog.getOrDefault(keyIn, new ArrayList<>());
 	}
 	
 	public void logBlockToReset(BlockState blockIn, BlockPos posIn, RegistryKey<World> worldIn, boolean ifPlaceable)

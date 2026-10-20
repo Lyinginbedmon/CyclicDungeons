@@ -1,12 +1,12 @@
 package com.lying.grammar;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.joml.Vector2i;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import com.lying.grammar.content.IContentEntry;
 import com.lying.grammar.content.RoomContent;
 import com.lying.grid.GridTile;
@@ -52,7 +52,7 @@ public class RoomMetadata
 	
 	private GrammarTerm type = CDTerms.instance().blank();
 	private Vector2i tileSize = new Vector2i(3, 3);
-	private List<GridTile> tileFootprint = Lists.newArrayList();
+	private List<GridTile> tileFootprint = new ArrayList<>();
 	private int depth = 0;
 	private Identifier themeId = CDThemes.ID_GENERIC;
 	private Optional<Identifier> processorID = Optional.empty();
@@ -159,7 +159,9 @@ public class RoomMetadata
 	{
 		return setType(CDTerms.instance().get(idIn).orElse(CDTerms.instance().blank()));
 	}
+	
 	public RoomMetadata setType(GrammarTerm term){ type = term; return this; }
+	
 	public GrammarTerm type() { return type; }
 	
 	public boolean is(GrammarTerm term) { return type.matches(term); }

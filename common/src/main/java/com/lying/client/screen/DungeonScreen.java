@@ -1,5 +1,6 @@
 package com.lying.client.screen;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,13 +12,12 @@ import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.Blueprint.ErrorType;
-import com.lying.graph.GraphOrganiser;
-import com.lying.graph.GraphScruncher;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
+import com.lying.graph.GraphOrganiser;
+import com.lying.graph.GraphScruncher;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
 import com.lying.utility.geometry.Box2f;
@@ -48,8 +48,8 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	
 	public static int renderScale = 1;
 	static boolean showCriticalPath = false;
-	public static List<BlueprintPassage> criticalPath = Lists.newArrayList();
-	public static List<BlueprintPassage> totalPassages = Lists.newArrayList();
+	public static List<BlueprintPassage> criticalPath = new ArrayList<>();
+	public static List<BlueprintPassage> totalPassages = new ArrayList<>();
 	
 	private final Long randSeed;
 	private Vector2i displayOffset = new Vector2i(0,0);
@@ -62,7 +62,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	private Map<ErrorType,Integer> errorCache = new HashMap<>();
 	
 	private Box2f originBox = null;
-	private List<LineSegment2f> originLines = Lists.newArrayList();
+	private List<LineSegment2f> originLines = new ArrayList<>();
 	
 	private static final ExecutorService THREAD = new ThreadPoolExecutor(0, 16, 60L, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 	
@@ -224,7 +224,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				Vec2f textPoint = lineStart.add(lineEnd.add(lineStart.negate()).multiply(0.5F));
 				
 				// Test boundary box
-				List<Pair<LineSegment2f,Vec2f>> intercepts = Lists.newArrayList();
+				List<Pair<LineSegment2f,Vec2f>> intercepts = new ArrayList<>();
 				for(LineSegment2f edge : originLines)
 				{
 					Vec2f intercept = LineSegment2f.segmentIntercept(edge, line);

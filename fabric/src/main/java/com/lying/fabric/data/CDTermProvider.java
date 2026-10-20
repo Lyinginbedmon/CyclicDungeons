@@ -1,9 +1,9 @@
 package com.lying.fabric.data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Lists;
 import com.lying.grammar.DefaultTerms;
 import com.lying.reference.Reference;
 import com.mojang.serialization.JsonOps;
@@ -29,7 +29,7 @@ public class CDTermProvider implements DataProvider
 	public CompletableFuture<?> run(DataWriter dataWriter)
 	{
 		return wrapperLookup.thenCompose(lookup -> {
-			List<CompletableFuture<?>> futures = Lists.newArrayList();
+			List<CompletableFuture<?>> futures = new ArrayList<>();
 			DefaultTerms.getDefaults().forEach(term ->
 				futures.add(DataProvider.writeToPath(dataWriter, term.writeToJson(JsonOps.INSTANCE), this.path.resolveJson(term.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));

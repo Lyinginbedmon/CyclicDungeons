@@ -1,5 +1,6 @@
 package com.lying.block.entity.logic;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.init.CDLogicGates;
@@ -95,7 +95,7 @@ public class LogicModule
 			}, 
 			buf -> 
 			{
-				List<LogicModule> set = Lists.newArrayList();
+				List<LogicModule> set = new ArrayList<>();
 				int size = buf.readInt();
 				while(size-- > 0)
 					set.add(LogicModule.PACKET_CODEC.decode(buf));

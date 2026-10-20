@@ -1,14 +1,15 @@
 package com.lying.grammar.content;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.serialization.JsonOps;
@@ -31,7 +32,7 @@ public interface IContentEntry
 	public default boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return true; }
 	
 	/** Applied when the entry is selected, before the room goes through tile generation */
-	public default void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { }
+	public default void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
 	
 	/** Applied after tile generation */
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
@@ -42,7 +43,7 @@ public interface IContentEntry
 	
 	public static <T extends BlockEntity> List<T> getTileEntities(BlockPos min, BlockPos max, ServerWorld world, BlockEntityType<T> type)
 	{
-		List<T> tiles = Lists.newArrayList();
+		List<T> tiles = new ArrayList<>();
 		for(int x=min.getX(); x<max.getX(); x++)
 			for(int z=min.getZ(); z<max.getZ(); z++)
 				for(int y=min.getY(); y<max.getY(); y++)

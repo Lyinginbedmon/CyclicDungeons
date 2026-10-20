@@ -1,14 +1,13 @@
 package com.lying.utility.geometry;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 import net.minecraft.util.math.Vec2f;
 
 public class CompoundBox2f extends AbstractBox2f
 {
-	private List<AbstractBox2f> boxes = Lists.newArrayList();
+	private List<AbstractBox2f> boxes = new ArrayList<>();
 	
 	public String toString() { return "CompBox["+boxes.size()+"]"; }
 	
@@ -61,14 +60,14 @@ public class CompoundBox2f extends AbstractBox2f
 	
 	public List<LineSegment2f> asEdges()
 	{
-		List<LineSegment2f> edges = Lists.newArrayList();
+		List<LineSegment2f> edges = new ArrayList<>();
 		boxes.forEach(b -> edges.addAll(b.asEdges()));
 		return edges;
 	}
 	
 	public List<Vec2f> asPoints()
 	{
-		List<Vec2f> points = Lists.newArrayList();
+		List<Vec2f> points = new ArrayList<>();
 		boxes.stream().map(AbstractBox2f::asPoints).forEach(points::addAll);
 		return points;
 	}

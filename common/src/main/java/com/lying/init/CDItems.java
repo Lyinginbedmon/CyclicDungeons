@@ -2,6 +2,7 @@ package com.lying.init;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,6 @@ import java.util.function.UnaryOperator;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.item.LogicCardItem;
 import com.lying.item.WiringGunItem;
@@ -43,7 +43,7 @@ public class CDItems
 	public static final DeferredRegister<ItemGroup> TABS = DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.ITEM_GROUP);
 	private static int itemTally = 0, blockTally = 0;
 	
-	public static final List<RegistrySupplier<Item>> BASIC_BLOCK_ITEMS = Lists.newArrayList(), ALL_BLOCKS = Lists.newArrayList();
+	public static final List<RegistrySupplier<Item>> BASIC_BLOCK_ITEMS = new ArrayList<>(), ALL_BLOCKS = new ArrayList<>();
 	
 	public static final RegistrySupplier<ItemGroup> CYDUN_TAB = TABS.register(Reference.ModInfo.MOD_ID, () -> CreativeTabRegistry.create(
 			Text.translatable("itemGroup."+Reference.ModInfo.MOD_ID+".item_group"), 

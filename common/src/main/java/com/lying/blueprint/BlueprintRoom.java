@@ -1,5 +1,6 @@
 package com.lying.blueprint;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +28,7 @@ public class BlueprintRoom
 	
 	private final UUID id;
 	private final RoomMetadata metadata;
-	private List<UUID> childLinks = Lists.newArrayList();
+	private List<UUID> childLinks = new ArrayList<>();
 	private Optional<UUID> parentId = Optional.empty();
 	private GridTile tilePosition = GridTile.ZERO.copy();
 	private Optional<GridTile> entryTile = Optional.empty();
@@ -248,7 +249,7 @@ public class BlueprintRoom
 	/** Returns a list of all tiles adjacent to this grid that can be used as doorways */
 	public List<GridTile> getDoorwayTiles()
 	{
-		List<GridTile> doors = Lists.newArrayList();
+		List<GridTile> doors = new ArrayList<>();
 		
 		final GridTile min = tileMin();
 		final GridTile max = tileMax();
@@ -331,7 +332,7 @@ public class BlueprintRoom
 	/** Collects all nodes down-stream of the given node */
 	public static List<BlueprintRoom> getDescendants(BlueprintRoom node, Blueprint graph)
 	{
-		List<BlueprintRoom> children = Lists.newArrayList();
+		List<BlueprintRoom> children = new ArrayList<>();
 		node.getChildren(graph).forEach(child -> 
 		{
 			if(children.contains(child))

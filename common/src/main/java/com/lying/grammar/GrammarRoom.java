@@ -1,5 +1,6 @@
 package com.lying.grammar;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +43,7 @@ public class GrammarRoom
 	private final UUID id;
 	private RoomMetadata metadata = new RoomMetadata();
 	private Optional<UUID> parentId = Optional.empty();
-	private List<UUID> childLinks = Lists.newArrayList();
+	private List<UUID> childLinks = new ArrayList<>();
 	
 	public GrammarRoom(UUID idIn)
 	{

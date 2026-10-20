@@ -1,5 +1,6 @@
 package com.lying.grid;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -171,8 +172,8 @@ public class GridPathing
 			return PathingResult.success(List.of(start));
 		
 		// Nodes we've already visited
-		List<AStarNode> closed = Lists.newArrayList();
-		List<GridTile> closedTiles = Lists.newArrayList();
+		List<AStarNode> closed = new ArrayList<>();
+		List<GridTile> closedTiles = new ArrayList<>();
 		
 		// Nodes we've yet to investigate
 		List<AStarNode> open = Lists.newArrayList(new AStarNode(start, end));
@@ -210,7 +211,7 @@ public class GridPathing
 	
 	public static List<AStarNode> getAStarCandidates(AStarNode node, List<GridTile> ignore, Predicate<GridTile> walkable)
 	{
-		List<AStarNode> candidates = Lists.newArrayList();
+		List<AStarNode> candidates = new ArrayList<>();
 		for(AStarMove move : MOVE_SET)
 		{
 			// Always prohibit moving back against the current direction of travel
@@ -228,7 +229,7 @@ public class GridPathing
 	
 	private static class AStarNode
 	{
-		private final List<AStarNode> history = Lists.newArrayList();
+		private final List<AStarNode> history = new ArrayList<>();
 		private final Optional<AStarMove> moveTaken;
 		private final GridTile pos, destination;
 		private final float totalCost;

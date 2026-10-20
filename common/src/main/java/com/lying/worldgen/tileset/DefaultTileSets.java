@@ -2,6 +2,7 @@ package com.lying.worldgen.tileset;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -87,7 +88,7 @@ public class DefaultTileSets
 					))
 			);
 	
-	private static final List<TileSet> DEFAULTS = Lists.newArrayList();
+	private static final List<TileSet> DEFAULTS = new ArrayList<>();
 	
 	static
 	{

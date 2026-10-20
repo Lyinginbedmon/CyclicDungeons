@@ -23,6 +23,7 @@ import com.lying.grammar.content.generation.TileContent;
 import com.lying.grammar.content.generation.TileSetContent;
 import com.lying.grammar.content.generation.TileToBlockContent;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.datafixers.util.Pair;
@@ -106,7 +107,7 @@ public class CDContentTypes
 		public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return type.isApplicableTo(room, meta, theme); }
 		
 		/** Applied when the entry is selected, before the room goes through tile generation */
-		public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { type.prepare(room, tileMap, world, rand); }
+		public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { type.prepare(room, tileMap, volume, world, rand); }
 		
 		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { type.apply(min, max, world, meta, rand); }
 		

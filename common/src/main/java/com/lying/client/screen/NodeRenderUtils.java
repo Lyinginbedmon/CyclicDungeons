@@ -1,5 +1,6 @@
 package com.lying.client.screen;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -8,7 +9,6 @@ import java.util.function.Predicate;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintPassage;
@@ -90,7 +90,7 @@ public class NodeRenderUtils
 		final Predicate<BlueprintPassage> showBounds = p -> 
 		{
 			Box2f box = (Box2f)p.tileBounds();
-			List<Vec2f> points = Lists.newArrayList();
+			List<Vec2f> points = new ArrayList<>();
 			points.addAll(box.asPoints());
 			
 			Vec2f 

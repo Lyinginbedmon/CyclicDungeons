@@ -9,6 +9,7 @@ import java.util.Optional;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDLoggers;
 import com.lying.reference.Reference;
 import com.lying.worldgen.theme.Theme;
@@ -60,12 +61,14 @@ public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomC
 			CDLoggers.WORLDGEN.warn("# Processor failed to find a registry entry to select");
 	}
 	
-	public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
+	public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{
 		registry.clear();
 		buildRegistry(meta.theme());
 		
-		meta.processorID().ifPresent(id -> getEntry(id).ifPresent(entry -> entry.prepare(room, tileMap, world, rand)));
+		meta.processorID().ifPresent(id -> 
+			getEntry(id).ifPresent(entry -> 
+				entry.prepare(room, tileMap, volume, world, rand)));
 	}
 	
 	public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand)

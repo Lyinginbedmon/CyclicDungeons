@@ -1,9 +1,9 @@
 package com.lying.worldgen.tile.condition;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,7 +18,7 @@ import net.minecraft.util.math.BlockPos;
 
 public class IsAnyOf extends Condition
 {
-	protected final List<Identifier> ids = Lists.newArrayList();
+	protected final List<Identifier> ids = new ArrayList<>();
 	
 	public IsAnyOf(Identifier idIn)
 	{

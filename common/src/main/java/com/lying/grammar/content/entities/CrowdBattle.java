@@ -1,9 +1,9 @@
 package com.lying.grammar.content.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.grammar.RoomMetadata;
 import com.lying.reference.Reference;
@@ -75,7 +75,7 @@ public class CrowdBattle<T extends Entity> extends Battle
 		if(mobs <= 0)
 			return;
 		
-		List<BlockPos> positions = Lists.newArrayList();
+		List<BlockPos> positions = new ArrayList<>();
 		BlockPos.Mutable.iterate(min, max).forEach(p -> 
 		{
 			if(canPlaceAt(p, world, type))

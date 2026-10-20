@@ -1,9 +1,9 @@
 package com.lying.fabric.data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Lists;
 import com.lying.grammar.content.defaults.DefaultPuzzles;
 import com.lying.init.CDContentTypes.ContentEntry;
 import com.lying.reference.Reference;
@@ -30,7 +30,7 @@ public class CDPuzzleProvider implements DataProvider
 	public CompletableFuture<?> run(DataWriter dataWriter)
 	{
 		return wrapperLookup.thenCompose(lookup -> {
-			List<CompletableFuture<?>> futures = Lists.newArrayList();
+			List<CompletableFuture<?>> futures = new ArrayList<>();
 			DefaultPuzzles.getAll().forEach(trap ->
 				futures.add(DataProvider.writeToPath(dataWriter, ContentEntry.CODEC.encodeStart(JsonOps.INSTANCE, trap).getOrThrow(), this.path.resolveJson(trap.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));

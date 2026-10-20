@@ -1,9 +1,9 @@
 package com.lying.grammar.content.generation;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.block.entity.TrapLogicBlockEntity;
@@ -80,7 +80,7 @@ public abstract class LogicControlledTrap extends Content
 		final TrapLogicBlockEntity logic = world.getBlockEntity(logicPos, CDBlockEntityTypes.TRAP_LOGIC.get()).get();
 		logic.setLogic(logicManifest.handlerID());
 		
-		List<BlockPos> sensors = Lists.newArrayList(), actors = Lists.newArrayList();
+		List<BlockPos> sensors = new ArrayList<>(), actors = new ArrayList<>();
 		BlockPos.Mutable.iterate(min, max).forEach(p -> 
 		{
 			BlockPos pos = p.toImmutable();

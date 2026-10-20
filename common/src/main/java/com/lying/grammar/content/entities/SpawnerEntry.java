@@ -1,9 +1,9 @@
 package com.lying.grammar.content.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import com.lying.block.entity.EncounterSpawnerBlockEntity;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.IContentEntry;
@@ -41,7 +41,7 @@ public record SpawnerEntry(Identifier registryName, Battle encounter) implements
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
-		List<BlockPos> positions = Lists.newArrayList();
+		List<BlockPos> positions = new ArrayList<>();
 		BlockPos.Mutable.iterate(min, max).forEach(p -> 
 		{
 			if(PREDICATE.applyTo(p, world))

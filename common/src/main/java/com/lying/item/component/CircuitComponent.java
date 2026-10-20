@@ -2,6 +2,7 @@ package com.lying.item.component;
 
 import static com.lying.reference.Reference.ModInfo.translate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -9,7 +10,6 @@ import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.utility.CDUtils;
 import com.mojang.serialization.Codec;
@@ -81,7 +81,7 @@ public record CircuitComponent(
 			val.forEach(v -> PACKET_CODEC.encode(buf, v));
 		}, buf -> 
 		{
-			List<CircuitPart> set = Lists.newArrayList();
+			List<CircuitPart> set = new ArrayList<>();
 			int size = buf.readInt();
 			while(size-- > 0)
 				set.add(PACKET_CODEC.decode(buf));

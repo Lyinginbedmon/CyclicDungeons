@@ -1,12 +1,11 @@
 package com.lying.blueprint;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import com.google.common.collect.Lists;
 
 public class BlueprintPathing
 {
@@ -14,7 +13,7 @@ public class BlueprintPathing
 	{
 		Optional<BlueprintRoom> start = chart.start();
 		Optional<BlueprintRoom> end = chart.end();
-		return start.isPresent() && end.isPresent() ? calculatePathBetween(start.get(), end.get(), chart) : Lists.newArrayList();
+		return start.isPresent() && end.isPresent() ? calculatePathBetween(start.get(), end.get(), chart) : new ArrayList<>();
 	}
 	
 	public static List<BlueprintRoom> calculatePathBetween(BlueprintRoom start, BlueprintRoom end, Blueprint chart)
@@ -23,11 +22,11 @@ public class BlueprintPathing
 		Map<BlueprintRoom, BlueprintRoom> pathMap = new HashMap<>();
 		
 		// Nodes available to check
-		List<BlueprintRoom> checkList = Lists.newArrayList();
+		List<BlueprintRoom> checkList = new ArrayList<>();
 		checkList.add(start);
 		
 		// Nodes already checked
-		List<BlueprintRoom> checkedList = Lists.newArrayList();
+		List<BlueprintRoom> checkedList = new ArrayList<>();
 		final Comparator<BlueprintRoom> distSort = (a,b) -> 
 		{
 			double distA = a.position().distance(end.position());
@@ -46,7 +45,7 @@ public class BlueprintPathing
 			if(node.equals(end))
 			{
 				// Work backwards through the pathMap to identify the route
-				List<BlueprintRoom> finalPath = Lists.newArrayList();
+				List<BlueprintRoom> finalPath = new ArrayList<>();
 				BlueprintRoom point = node;
 				finalPath.add(point);
 				while(pathMap.containsKey(point))
@@ -65,6 +64,6 @@ public class BlueprintPathing
 			}
 		}
 		
-		return Lists.newArrayList();
+		return new ArrayList<>();
 	}
 }

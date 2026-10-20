@@ -1,5 +1,6 @@
 package com.lying.block.entity.logic;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +48,7 @@ public class PortSet
 		while(size-- > 0)
 		{
 			Port port = Port.PACKET_CODEC.decode(buf);
-			List<String> set = Lists.newArrayList();
+			List<String> set = new ArrayList<>();
 			int scale = buf.readInt();
 			while(scale-- > 0)
 				set.add(PacketCodecs.STRING.decode(buf));
@@ -59,7 +60,7 @@ public class PortSet
 	
 	public void put(Port key, String... value)
 	{
-		List<String> set = values.getOrDefault(key, Lists.newArrayList());
+		List<String> set = values.getOrDefault(key, new ArrayList<>());
 		for(String wire : value)
 			if(!set.contains(wire))
 				set.add(wire);
@@ -99,7 +100,7 @@ public class PortSet
 	/** Returns a list of all wires that this set contacts */
 	public List<String> wires()
 	{
-		List<String> wires = Lists.newArrayList();
+		List<String> wires = new ArrayList<>();
 		for(List<String> value : values.values())
 			for(String wire : value)
 				if(!wires.contains(wire))

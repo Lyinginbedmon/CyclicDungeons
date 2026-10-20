@@ -9,6 +9,7 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.Content;
 import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTiles;
 import com.lying.reference.Reference;
 import com.lying.utility.BlockPredicate;
@@ -105,9 +106,9 @@ public class TileToBlockContent extends LogicControlledTrap
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return tileApplier.isApplicableTo(room, meta, theme) && structureApplier.isApplicableTo(room, meta, theme); }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{
-		tileApplier.prepare(room, tileMap, world, rand);
+		tileApplier.prepare(room, tileMap, volume, world, rand);
 	}
 	
 	protected void installSensors(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -28,7 +29,9 @@ public abstract class RoomContent
 	/** Default room content, does nothing */
 	public static final Supplier<RoomContent> NOOP = register(() -> new RoomContent(prefix("none")) 
 	{
-		public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { }
+		public void applyPrePassageProcessing(BlueprintRoom node, RoomMetadata meta, ServerWorld world, Random rand) { }
+		
+		public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
 		
 		public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand) { }
 	});
@@ -58,10 +61,10 @@ public abstract class RoomContent
 	public final Identifier registryName() { return id; }
 	
 	/** Applied before passage generation */
-	public void applyPrePassageProcessing(BlueprintRoom node, RoomMetadata meta, ServerWorld world, Random rand) { }
+	public abstract void applyPrePassageProcessing(BlueprintRoom node, RoomMetadata meta, ServerWorld world, Random rand);
 	
 	/** Applied before room tile generation */
-	public abstract void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, ServerWorld world, Random rand);
+	public abstract void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand);
 	
 	/** Applied after all other room generation */
 	public abstract void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand);

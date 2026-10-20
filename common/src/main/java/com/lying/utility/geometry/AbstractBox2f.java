@@ -1,9 +1,8 @@
 package com.lying.utility.geometry;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-
-import com.google.common.collect.Lists;
 
 import net.minecraft.util.math.Vec2f;
 
@@ -91,7 +90,7 @@ public abstract class AbstractBox2f
 	/** Returns a list of all 2D positions enclosed by this box */
 	public final List<Vec2f> enclosedPositions()
 	{
-		List<Vec2f> points = Lists.newArrayList();
+		List<Vec2f> points = new ArrayList<>();
 		for(float x=minX(); x<maxX(); x++)
 			for(float y=minY(); y<maxY(); y++)
 			{

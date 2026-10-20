@@ -1,16 +1,17 @@
 package com.lying.grammar.content.generation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.Content;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileConditions;
 import com.lying.init.CDTileTags;
 import com.lying.init.CDTiles;
@@ -70,7 +71,7 @@ public class SimpleJumpingContent extends Content
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return CDTiles.instance().get(fillTile).isPresent() && FLOOR.isPresent(); }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{
 		final Tile flooring = FLOOR.get();
 		
@@ -88,7 +89,7 @@ public class SimpleJumpingContent extends Content
 		
 		// TODO Implement platform height offsets
 		
-		List<BlockPos> platforms = Lists.newArrayList();
+		List<BlockPos> platforms = new ArrayList<>();
 		List<BlockPos> options;
 		while(!(options = tileMap.getMatchingTiles((p,t) -> spacingPredicate.test(t, p, tileMap))).isEmpty())
 		{

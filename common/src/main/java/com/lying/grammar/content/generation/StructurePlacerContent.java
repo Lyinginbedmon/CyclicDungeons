@@ -5,8 +5,11 @@ import java.util.Optional;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.content.Content;
 import com.lying.grammar.content.RoomNumberProvider;
+import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDLoggers;
 import com.lying.reference.Reference;
 import com.lying.utility.BlockPredicate;
@@ -78,6 +81,9 @@ public class StructurePlacerContent extends AbstractPlacerContent
 		
 		return this;
 	}
+	
+	@Override
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
 	
 	protected void placeTrap(BlockPos pos, ServerWorld world, Random rand)
 	{

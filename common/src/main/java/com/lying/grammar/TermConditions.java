@@ -1,10 +1,10 @@
 package com.lying.grammar;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -40,8 +40,8 @@ public class TermConditions
 	private boolean deadEnds = true;
 	private int maxPop = -1, sizeCap = -1;
 	private int depthMin = -1;
-	private List<Identifier> after = Lists.newArrayList(), before = Lists.newArrayList();
-	private List<Identifier> notAfter = Lists.newArrayList(), notBefore = Lists.newArrayList();
+	private List<Identifier> after = new ArrayList<>(), before = new ArrayList<>();
+	private List<Identifier> notAfter = new ArrayList<>(), notBefore = new ArrayList<>();
 	
 	protected TermConditions() { }
 	

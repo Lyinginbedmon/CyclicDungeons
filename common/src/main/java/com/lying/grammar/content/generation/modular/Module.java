@@ -1,12 +1,12 @@
 package com.lying.grammar.content.generation.modular;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.entity.ModularLogicBlockEntity;
 import com.lying.init.CDBlockEntityTypes;
@@ -130,7 +130,7 @@ public record Module(
 		
 		for(Relation neighbour : relations.get())
 		{
-			List<BlockPos> points = componentMap.getOrDefault(neighbour.name(), Lists.newArrayList());
+			List<BlockPos> points = componentMap.getOrDefault(neighbour.name(), new ArrayList<>());
 			if(points.isEmpty() || points.stream().noneMatch(p -> neighbour.test(pos, p)))
 				return false;
 		}
@@ -178,7 +178,7 @@ public record Module(
 		private final Identifier name;
 		private int count = 1;
 		private BlockPredicate positioning = null; 
-		private List<Relation> relations = Lists.newArrayList(); 
+		private List<Relation> relations = new ArrayList<>(); 
 		private BlockState state = Blocks.STONE.getDefaultState();
 		private NbtCompound tileData = new NbtCompound();
 		private Optional<Identifier> logicModule = Optional.empty();

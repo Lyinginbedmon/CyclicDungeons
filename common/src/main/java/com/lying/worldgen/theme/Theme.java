@@ -1,5 +1,6 @@
 package com.lying.worldgen.theme;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,7 +8,6 @@ import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarTerm;
@@ -94,7 +94,7 @@ public record Theme(
 	@Nullable
 	public GrammarPhrase chooseInitialPhrase(Random rand)
 	{
-		List<GrammarPhrase> phraseSet = Lists.newArrayList();
+		List<GrammarPhrase> phraseSet = new ArrayList<>();
 		for(InitialPhrase phrase : phrases)
 		{
 			GrammarPhrase result = null;

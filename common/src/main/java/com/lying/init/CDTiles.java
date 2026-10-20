@@ -3,6 +3,7 @@ package com.lying.init;
 import static com.lying.reference.Reference.ModInfo.prefix;
 
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,6 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -47,7 +47,8 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 		ID_STONE			= prefix("stone"),
 		ID_PASSAGE_FLAG		= prefix("passage_flag"),
 		ID_DOORWAY			= prefix("doorway"),
-		ID_DOORWAY_LINTEL	= prefix("doorway_lintel");
+		ID_DOORWAY_LINTEL	= prefix("doorway_lintel"),
+		ID_SHELL			= prefix("shell");
 	
 	/** Blank tile, used during generation */
 	public static final Supplier<Tile> BLANK	= () -> Tile.Builder
@@ -78,6 +79,11 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 			.of(TilePredicate.fromCondition(Boundary.of(Direction.Type.HORIZONTAL)))
 			.asStructure()
 			.build().apply(ID_DOORWAY_LINTEL);
+	
+	public static final Supplier<Tile> SHELL	= () -> Tile.Builder
+			.of(TilePredicate.fromCondition(CDTileConditions.ALWAYS.get()))
+			.asBlock(CDBlocks.CYLICIUM_BLOCK.get().getDefaultState())
+			.build().apply(ID_SHELL);
 	
 	public static CDTiles instance() { return INSTANCE; }
 	
@@ -129,7 +135,7 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 	{
 		return CompletableFuture.supplyAsync(() -> 
 		{
-			List<JsonObject> objects = Lists.newArrayList();
+			List<JsonObject> objects = new ArrayList<>();
 			manager.findAllResources(FILE_PATH, Predicates.alwaysTrue()).forEach((fileName,fileSet) -> 
 			{
 				Resource file = fileSet.getFirst();

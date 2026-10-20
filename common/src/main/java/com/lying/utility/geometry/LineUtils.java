@@ -1,12 +1,12 @@
 package com.lying.utility.geometry;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDLoggers;
 import com.lying.utility.logging.DebugLogger;
@@ -25,7 +25,7 @@ public class LineUtils
 		if(linesIn.size() <= 1)
 			return linesIn;
 		
-		List<LineSegment2f> output = Lists.newArrayList();
+		List<LineSegment2f> output = new ArrayList<>();
 		boolean anyMerged = false;
 		for(int i=1; i<linesIn.size(); i++)
 		{
@@ -50,7 +50,7 @@ public class LineUtils
 		if(!a.linksTo(b) || !a.alignsWith(b))
 			return null;
 		
-		List<Vec2f> points = Lists.newArrayList();
+		List<Vec2f> points = new ArrayList<>();
 		for(Vec2f point : new Vec2f[] {a.getLeft(), a.getRight(), b.getLeft(), b.getRight()})
 		{
 			if(points.contains(point))

@@ -75,6 +75,11 @@ public class GridVolume
 		set.put(pos, true);
 	}
 	
+	public void remove(BlockPos pos)
+	{
+		set.remove(pos);
+	}
+	
 	public boolean isComplete()
 	{
 		return set.values().stream().allMatch(Boolean::booleanValue);

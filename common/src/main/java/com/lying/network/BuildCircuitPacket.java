@@ -1,8 +1,8 @@
 package com.lying.network;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lying.item.component.CircuitComponent.CircuitPart;
 
 import dev.architectury.networking.NetworkManager;
@@ -24,7 +24,7 @@ public class BuildCircuitPacket
 	
 	public static class Payload implements CustomPayload
 	{
-		private List<CircuitPart> circuit = Lists.newArrayList();
+		private List<CircuitPart> circuit = new ArrayList<>();
 		
 		public Payload(List<CircuitPart> list)
 		{

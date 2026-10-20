@@ -1,8 +1,8 @@
 package com.lying.worldgen.tile;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.worldgen.tile.condition.Condition;
 import com.mojang.serialization.Codec;
@@ -16,7 +16,7 @@ public class TilePredicate
 			conditions -> DataResult.success(new TilePredicate(conditions)),
 			TilePredicate::contents);
 	
-	private final List<Condition> primitives = Lists.newArrayList();
+	private final List<Condition> primitives = new ArrayList<>();
 	
 	protected TilePredicate(List<Condition> conditionsIn)
 	{
@@ -37,7 +37,7 @@ public class TilePredicate
 	
 	public static class Builder
 	{
-		private final List<Condition> conditions = Lists.newArrayList();
+		private final List<Condition> conditions = new ArrayList<>();
 		
 		protected Builder() { }
 		

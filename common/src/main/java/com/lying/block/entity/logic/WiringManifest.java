@@ -1,5 +1,6 @@
 package com.lying.block.entity.logic;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -148,7 +149,7 @@ public class WiringManifest
 		public static final Codec<List<ManifestEntry>> LIST_CODEC	= Codec.of(ManifestEntry::encodeSet, ManifestEntry::decodeSet);
 		
 		private final Port port;
-		private final List<PortEntry> positions = Lists.newArrayList();
+		private final List<PortEntry> positions = new ArrayList<>();
 		
 		public ManifestEntry(Port name)
 		{
@@ -234,7 +235,7 @@ public class WiringManifest
 		
 		private static <T> DataResult<Pair<List<ManifestEntry>, T>> decodeSet(final DynamicOps<T> ops, final T input)
 		{
-			List<ManifestEntry> wires = Lists.newArrayList();
+			List<ManifestEntry> wires = new ArrayList<>();
 			MapLike<T> map = ops.getMap(input).result().get();
 			map.entries().forEach(entry -> 
 			{

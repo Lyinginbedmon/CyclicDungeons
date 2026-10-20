@@ -1,9 +1,9 @@
 package com.lying.init;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.BladeBlock;
 import com.lying.block.CrumblingBlock;
@@ -55,7 +55,7 @@ public class CDBlocks
 {
 	public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Reference.ModInfo.MOD_ID, RegistryKeys.BLOCK);
 	
-	public static final List<RegistrySupplier<Block>> ALL_BLOCKS = Lists.newArrayList(), SOLID_CUBES = Lists.newArrayList();
+	public static final List<RegistrySupplier<Block>> ALL_BLOCKS = new ArrayList<>(), SOLID_CUBES = new ArrayList<>();
 	
 	/*
 	 * TODO Implement missing blocks

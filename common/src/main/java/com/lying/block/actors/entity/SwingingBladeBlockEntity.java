@@ -1,8 +1,8 @@
 package com.lying.block.actors.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lying.block.actors.SwingingBladeBlock;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
@@ -131,7 +131,7 @@ public class SwingingBladeBlockEntity extends TrapActorBlockEntity<SwingingBlade
 		// Calculate direction to blade
 		final float bladeAngle = (float)tile.getBladeAngle();
 		
-		List<LivingEntity> hits = Lists.newArrayList();
+		List<LivingEntity> hits = new ArrayList<>();
 		for(Vec3d point : new Vec3d[] 
 					{
 						getBladeOffset(state, bladeAngle + BLADE_ARC), 

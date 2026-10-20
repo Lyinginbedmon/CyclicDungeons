@@ -1,9 +1,9 @@
 package com.lying.fabric.data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Lists;
 import com.lying.reference.Reference;
 import com.lying.worldgen.theme.DefaultThemes;
 import com.mojang.serialization.JsonOps;
@@ -29,7 +29,7 @@ public class CDThemeProvider implements DataProvider
 	public CompletableFuture<?> run(DataWriter dataWriter)
 	{
 		return wrapperLookup.thenCompose(lookup -> {
-			List<CompletableFuture<?>> futures = Lists.newArrayList();
+			List<CompletableFuture<?>> futures = new ArrayList<>();
 			DefaultThemes.getDefaults().forEach(set -> 
 				futures.add(DataProvider.writeToPath(dataWriter, set.toJson(JsonOps.INSTANCE), this.path.resolveJson(set.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));

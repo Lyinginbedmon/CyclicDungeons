@@ -3,6 +3,7 @@ package com.lying.utility;
 import static com.lying.utility.CDUtils.listOrSolo;
 import static com.lying.utility.CDUtils.orEmpty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -11,7 +12,6 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
@@ -296,15 +296,15 @@ public class BlockPredicate extends AbstractMatcherPredicate<BlockState>
 	public static class Builder
 	{
 		boolean inverted = false;
-		List<Block> blocks = Lists.newArrayList();
-		List<Fluid> fluids = Lists.newArrayList();
-		List<BlockState> states = Lists.newArrayList();
-		List<TagKey<Block>> blockTags = Lists.newArrayList();
-		List<TagKey<Fluid>> fluidTags = Lists.newArrayList();
-		List<String> blockProperties = Lists.newArrayList();
-		List<PropertyMap> blockValues = Lists.newArrayList();
-		List<BlockFlags> flags = Lists.newArrayList();
-		List<SubPredicate> children = Lists.newArrayList();
+		List<Block> blocks = new ArrayList<>();
+		List<Fluid> fluids = new ArrayList<>();
+		List<BlockState> states = new ArrayList<>();
+		List<TagKey<Block>> blockTags = new ArrayList<>();
+		List<TagKey<Fluid>> fluidTags = new ArrayList<>();
+		List<String> blockProperties = new ArrayList<>();
+		List<PropertyMap> blockValues = new ArrayList<>();
+		List<BlockFlags> flags = new ArrayList<>();
+		List<SubPredicate> children = new ArrayList<>();
 		Optional<ChildLogic> childLogic = Optional.empty();
 		
 		protected Builder() { }

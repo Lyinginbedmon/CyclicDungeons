@@ -1,5 +1,6 @@
 package com.lying.block.entity.logic;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -8,7 +9,6 @@ import java.util.function.Predicate;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3i;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.init.CDBlocks;
 import com.lying.init.CDSoundEvents;
@@ -209,7 +209,7 @@ public class TrapSpawnerLogic
 			return;
 		
 		// Build map of spawnable positions within spawn area
-		List<BlockPos> positions = Lists.newArrayList();
+		List<BlockPos> positions = new ArrayList<>();
 		forcePos.ifPresentOrElse(p -> positions.add(spawnerPos.add(p)), () -> 
 		{
 			// Scan spawn area for useable positions

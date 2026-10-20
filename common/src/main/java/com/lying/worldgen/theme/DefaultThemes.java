@@ -2,6 +2,7 @@ package com.lying.worldgen.theme;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,7 +23,7 @@ import net.minecraft.util.Identifier;
 
 public class DefaultThemes
 {
-	private static final List<Supplier<Theme>> THEMES = Lists.newArrayList();
+	private static final List<Supplier<Theme>> THEMES = new ArrayList<>();
 	
 	public static final Identifier
 		ID_GENERIC	= prefix("generic"),

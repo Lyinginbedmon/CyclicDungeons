@@ -1,10 +1,10 @@
 package com.lying.grammar.content.generation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
@@ -12,6 +12,8 @@ import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.Content;
 import com.lying.grammar.content.generation.modular.Module;
 import com.lying.grammar.content.generation.modular.ModuleWiring;
+import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDContentTypes;
 import com.lying.reference.Reference;
 import com.lying.worldgen.theme.Theme;
@@ -26,7 +28,7 @@ public class ModularContent extends Content
 {
 	public static final Identifier ID	= Reference.ModInfo.prefix("modular");
 	
-	protected List<Module> modules = Lists.newArrayList();
+	protected List<Module> modules = new ArrayList<>();
 	
 	public ModularContent(Identifier name)
 	{
@@ -64,6 +66,9 @@ public class ModularContent extends Content
 		return super.isApplicableTo(room, meta, theme) && !modules.isEmpty() && modules.stream().map(Module::name).distinct().count() == modules.size();
 	}
 	
+	@Override
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
+	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		// Sort modules by necessary order of placement
@@ -77,7 +82,7 @@ public class ModularContent extends Content
 				.map(Module::name)
 				.forEach(m -> 
 				{
-					List<BlockPos> set = viabilityMap.getOrDefault(m, Lists.newArrayList());
+					List<BlockPos> set = viabilityMap.getOrDefault(m, new ArrayList<>());
 					set.add(p.toImmutable());
 					viabilityMap.put(m, set);
 				})
@@ -85,11 +90,11 @@ public class ModularContent extends Content
 		
 		// Build map of all components to be placed and where
 		Map<Identifier, List<BlockPos>> componentMap = new HashMap<>();
-		List<BlockPos> allComponents = Lists.newArrayList();
+		List<BlockPos> allComponents = new ArrayList<>();
 		for(Module component : modules)
 		{
 			final Identifier name = component.name();
-			List<BlockPos> viable = viabilityMap.getOrDefault(name, Lists.newArrayList());
+			List<BlockPos> viable = viabilityMap.getOrDefault(name, new ArrayList<>());
 			
 			viable.removeAll(allComponents);
 			
@@ -100,7 +105,7 @@ public class ModularContent extends Content
 			if(viable.isEmpty() && (component.isVitalComponent() || component.isWiringElement(modules)))
 				return;
 			
-			List<BlockPos> set = Lists.newArrayList();
+			List<BlockPos> set = new ArrayList<>();
 			for(int i=0; i<component.count(); i++)
 			{
 				if(viable.isEmpty())

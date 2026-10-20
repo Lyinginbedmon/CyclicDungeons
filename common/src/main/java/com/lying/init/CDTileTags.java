@@ -2,13 +2,13 @@ package com.lying.init;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.worldgen.tile.Tile;
 import com.mojang.serialization.Codec;
@@ -64,7 +64,7 @@ public class CDTileTags
 				TileTag::id);
 		
 		private final Identifier id;
-		private final List<Identifier> contents = Lists.newArrayList();
+		private final List<Identifier> contents = new ArrayList<>();
 		
 		public TileTag(Identifier id)
 		{

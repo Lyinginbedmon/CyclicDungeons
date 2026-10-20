@@ -1,5 +1,6 @@
 package com.lying.graph;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -125,7 +126,7 @@ public class GraphScruncher
 				PathingResult route = (new GridPathing(walkable)).findPathBetween(end, start);
 				
 				// Collection unique course changes along passage towards parent
-				List<Direction> courseChanges = Lists.newArrayList();
+				List<Direction> courseChanges = new ArrayList<>();
 				List<GridTile> path = Lists.newArrayList(route.result());
 				GridTile prev = path.removeFirst();
 				while(!path.isEmpty())
@@ -205,7 +206,7 @@ public class GraphScruncher
 		// Clone blueprint and simulate movement
 		// Apply movement to all descendants as well to minimise overall processing time
 		Blueprint sim = chart.clone();
-		List<BlueprintRoom> simNodes = Lists.newArrayList();
+		List<BlueprintRoom> simNodes = new ArrayList<>();
 		simNodes.add(sim.getRoom(node.uuid()).get());
 		simNodes.addAll(BlueprintRoom.getDescendants(simNodes.getFirst(), sim));
 		

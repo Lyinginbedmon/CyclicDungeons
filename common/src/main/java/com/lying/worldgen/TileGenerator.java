@@ -1,5 +1,6 @@
 package com.lying.worldgen;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -9,7 +10,6 @@ import java.util.function.Supplier;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GridVolume;
 import com.lying.init.CDLoggers;
@@ -47,12 +47,12 @@ public class TileGenerator
 		positionsToGenerate.forEach(p -> 
 		{
 			int y = p.getY();
-			List<BlockPos> set = positionsPerY.getOrDefault(y, Lists.newArrayList());
+			List<BlockPos> set = positionsPerY.getOrDefault(y, new ArrayList<>());
 			set.add(p);
 			positionsPerY.put(y, set);
 		});
 		
-		List<Integer> levels = Lists.newArrayList();
+		List<Integer> levels = new ArrayList<>();
 		levels.addAll(positionsPerY.keySet());
 		Collections.sort(levels);
 		
@@ -61,7 +61,7 @@ public class TileGenerator
 		{
 			List<BlockPos> positions = positionsPerY.get(level);
 			int size = positions.size();
-			processSet(positions, map, tiles, fallback, rand);
+			processSet(positions, map, vol, tiles, fallback, rand);
 			
 			LOGGER.info(" ## Generated set {} of {}, {} positions", ++index, levels.size(), size);
 		}
@@ -69,7 +69,7 @@ public class TileGenerator
 		LOGGER.info("WFC complete");
 	}
 	
-	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, TileSet tiles, Supplier<Tile> fallback, Random rand)
+	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, GridVolume vol, TileSet tiles, Supplier<Tile> fallback, Random rand)
 	{
 		if(slots.isEmpty() || tiles.isEmpty())
 		{
@@ -104,7 +104,7 @@ public class TileGenerator
 			}
 			
 			if(tile != null)
-				map.put(entry.pos(), tile);
+				setTile(entry.pos(), tile, map, vol);
 			slots.remove(entry.index());
 		}
 	}
@@ -125,10 +125,23 @@ public class TileGenerator
 	
 	public static Tile selectTile(List<Tile> options, TileSet weights, Random rand)
 	{
-		List<Pair<Tile,Float>> weightedList = Lists.newArrayList();
+		List<Pair<Tile,Float>> weightedList = new ArrayList<>();
 		options.forEach(tile -> weightedList.add(Pair.of(tile, (float)weights.get(tile))));
 		
 		return CDUtils.selectFromWeightedList(weightedList, rand.nextFloat());
+	}
+	
+	/** Sets the tile in the grid and marks it as checked within the volume */
+	public static void setTile(BlockPos pos, Tile tile, BlueprintTileGrid map, GridVolume vol)
+	{
+		if(!map.contains(pos))
+		{
+			map.addToVolume(pos);
+			vol.add(pos);
+		}
+		map.put(pos, tile);
+		if(!tile.isBlank())
+			vol.set(pos);
 	}
 	
 	protected record MapEntry(int index, BlockPos pos, List<Tile> options)

@@ -1,5 +1,6 @@
 package com.lying.grid;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,6 @@ import java.util.function.BiPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.utility.logging.DebugLogger;
@@ -98,7 +98,7 @@ public abstract class AbstractTileGrid<T extends Object>
 	
 	public final List<T> getBlanks()
 	{
-		List<T> blanks = Lists.newArrayList();
+		List<T> blanks = new ArrayList<>();
 		set.entrySet().stream().filter(entry -> entry.getValue().isBlank()).map(Entry::getKey).forEach(blanks::add);
 		return blanks;
 	}

@@ -1,5 +1,6 @@
 package com.lying.graph;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -92,7 +93,7 @@ public abstract class GraphOrganiser
 	/** Returns a list of all paths between the given nodes, without post-processing */
 	public static List<BlueprintPassage> getPassages(Collection<BlueprintRoom> chart)
 	{
-		List<BlueprintPassage> paths = Lists.newArrayList();
+		List<BlueprintPassage> paths = new ArrayList<>();
 		List<BlueprintRoom> rooms = Lists.newArrayList(chart);
 		rooms.sort((a,b) -> a.metadata().depth() < b.metadata().depth() ? -1 : a.metadata().depth() > b.metadata().depth() ? 1 : 0);
 		
@@ -105,13 +106,13 @@ public abstract class GraphOrganiser
 	{
 		LOGGER.info(" # Merging entwining paths");
 		
-		List<BlueprintPassage> pathsToMerge = Lists.newArrayList();
+		List<BlueprintPassage> pathsToMerge = new ArrayList<>();
 		
 		// Subtract the bounds from all paths to limit to outside of rooms
 		pathsToMerge.addAll(pathsIn.stream().filter(Objects::nonNull).toList());
 		
 		// Merge all paths together with applicable paths
-		List<BlueprintPassage> mergedPaths = Lists.newArrayList();
+		List<BlueprintPassage> mergedPaths = new ArrayList<>();
 		while(!pathsToMerge.isEmpty())
 		{
 			BlueprintPassage path = pathsToMerge.removeFirst();
@@ -342,12 +343,12 @@ public abstract class GraphOrganiser
 			
 			for(int depth=0; depth<=chart.maxDepth(); depth++)
 			{
-				List<BlueprintRoom> nodes = Lists.newArrayList();
+				List<BlueprintRoom> nodes = new ArrayList<>();
 				nodes.addAll(chart.byDepth(depth));
 				nodes.sort(descSort);
 				
 				// Identify parents in previous tier and sort by number of children in this tier
-				List<BlueprintRoom> prevTierParents = Lists.newArrayList();
+				List<BlueprintRoom> prevTierParents = new ArrayList<>();
 				nodes.stream().map(r -> r.getParent(chart)).filter(Optional::isPresent).map(Optional::get).forEach(prevTierParents::add);
 				prevTierParents = prevTierParents.stream().distinct().sorted(childSort).toList();
 				
@@ -355,7 +356,7 @@ public abstract class GraphOrganiser
 				int y = depth * GRID_SIZE;
 				int rowWidth = (nodes.size() - 1) * GRID_SIZE;
 				int x = -rowWidth / 2;
-				List<Vector2i> slots = Lists.newArrayList();
+				List<Vector2i> slots = new ArrayList<>();
 				for(int i=0; i<nodes.size(); i++)
 				{
 					slots.add(new Vector2i(x, y));
@@ -404,7 +405,7 @@ public abstract class GraphOrganiser
 			for(int step = 1; step <= chart.maxDepth(); step++)
 			{
 				// Rooms at this radius
-				List<BlueprintRoom> set = Lists.newArrayList();
+				List<BlueprintRoom> set = new ArrayList<>();
 				set.addAll(chart.byDepth(step));
 				set.sort(descSort);
 				
@@ -421,7 +422,7 @@ public abstract class GraphOrganiser
 				double cos = Math.cos(rot), sin = Math.sin(rot);
 				
 				GridTile point = new GridTile(radius, 0);
-				List<GridTile> positions = Lists.newArrayList();
+				List<GridTile> positions = new ArrayList<>();
 				for(int i=0; i<pop; i++)
 				{
 					positions.add(point);

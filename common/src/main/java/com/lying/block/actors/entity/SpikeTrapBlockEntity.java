@@ -1,8 +1,8 @@
 package com.lying.block.actors.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.SpikesBlock;
 import com.lying.block.SpikesBlock.SpikePart;
@@ -149,7 +149,7 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity<SpikeTrapBlock>
 			final BlockState tipState = CDBlocks.SPIKES.get().getDefaultState().with(SpikesBlock.FACING, facing);
 			final VoxelShape tipShape = tipState.getCollisionShape(world, pos).offset(offset.multiply(length));
 			
-			List<VoxelShape> subShapes = Lists.newArrayList();
+			List<VoxelShape> subShapes = new ArrayList<>();
 			final BlockState poleState = tipState.with(SpikesBlock.PART, SpikePart.POLE);
 			final VoxelShape poleShape = poleState.getCollisionShape(world, pos);
 			while(length-- > 0F)

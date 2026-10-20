@@ -1,16 +1,17 @@
 package com.lying.grammar.content.generation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.Content;
 import com.lying.grammar.content.RoomNumberProvider;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTiles;
 import com.lying.reference.Reference;
 import com.lying.worldgen.theme.Theme;
@@ -65,12 +66,12 @@ public class TileContent extends Content
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return super.isApplicableTo(room, meta, theme) && getTile().isPresent(); }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{
 		final Tile tile = getTile().get();
 		final Predicate<BlockPos> canExistAt = p -> tile.canExistAt(p, tileMap);
-		List<BlockPos> blanks = Lists.newArrayList();
-		blanks.addAll(tileMap.getBoundaries(List.of(Direction.DOWN)).stream()
+		List<BlockPos> blanks = new ArrayList<>();
+		blanks.addAll(volume.getBoundaries(List.of(Direction.DOWN)).stream()
 				.filter(canExistAt)
 				.filter(pos -> 
 				{

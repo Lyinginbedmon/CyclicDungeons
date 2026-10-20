@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -14,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.lying.config.ServerConfig;
+import com.lying.config.ServerConfig.ShellType;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.grammar.GrammarTerm;
@@ -42,7 +46,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 
 @SuppressWarnings("serial")
@@ -56,8 +59,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	protected boolean isOrganised = false;
 	protected int maxDepth = 0;
 	protected Map<Integer, List<BlueprintRoom>> byDepth = new HashMap<>();
-	protected List<BlueprintPassage> passageCache = Lists.newArrayList();
-	private List<BlueprintRoom> criticalPath = Lists.newArrayList();
+	protected List<BlueprintPassage> passageCache = new ArrayList<>();
+	private List<BlueprintRoom> criticalPath = new ArrayList<>();
 	private Optional<Identifier> themeId = Optional.empty();
 	
 	public static Blueprint fromGraph(GrammarPhrase graphIn)
@@ -146,7 +149,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	public List<BlueprintRoom> getCriticalPath() { return this.criticalPath; }
 	
 	@NotNull
-	public List<BlueprintRoom> byDepth(int depth) { return byDepth.getOrDefault(depth, Lists.newArrayList()); }
+	public List<BlueprintRoom> byDepth(int depth) { return byDepth.getOrDefault(depth, new ArrayList<>()); }
 	
 	/** Returns true if this blueprint contains any errors that may interfere with generation */
 	public boolean hasErrors() { return hasErrors(this); }
@@ -175,18 +178,16 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Beginning blueprint generation");
 		
-//		buildExteriorShell(position, world);
+		buildExteriorShell(position, world);
 		
 		// Enable rooms to select their contents, as this may affect passageway generation
-		this.forEach(room -> room.metadata().type().prePassageProcessing(room, world, rand));
-		
-		// FIXME Refactor to use unified tile grid populated individually by different elements, accounting for tile priority & occupancy
+		forEach(room -> room.metadata().type().prePassageProcessing(room, world, rand));
 		
 		BlueprintTileGrid mainGrid = new BlueprintTileGrid();
 		
 		buildExteriorPaths(mainGrid, position, world, rand);
 		
-		buildRooms(mainGrid, position, world, rand);
+		Map<BlueprintRoom,GridVolume> volumes = buildRooms(mainGrid, position, world, rand);
 		
 		buildEntrance(mainGrid, position, world, rand);
 		
@@ -197,6 +198,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		mainGrid.generate(position, world);
 		
 		// Apply room post-processing
+		buildFinishedRooms(volumes, position, world, rand);
 		
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);
 		return true;
@@ -207,29 +209,39 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating exterior shell");
 		
+		if(ServerConfig.shellGenerationType == ShellType.NONE)
+		{
+			LOGGER.info(" ## Exterior shell disabled in config, skipping");
+			return;
+		}
+		
 		// Collect all bounding boxes
-		List<Box> bounds = Lists.newArrayList();
-		stream().map(BlueprintRoom::worldBox).forEach(bounds::add);
-		passages().stream().map(BlueprintPassage::worldBox).map(b -> b.stream().toList()).forEach(bounds::addAll);
+		List<Box> bounds = new ArrayList<>();
+		for(BlueprintRoom r : this)
+			bounds.add(r.worldBox());
+		for(BlueprintPassage p : passages())
+			bounds.addAll(p.worldBox());
+		
+		// FIXME Refine to not flood-fill area, only place at exterior positions
 		
 		// Expand the bounding boxes 1 block in all directions
-		final Predicate<BlockPos> isExterior = p -> bounds.stream().noneMatch(b -> b.contains(new Vec3d(p.getX(), p.getY(), p.getZ()).add(0.5D)));
-		bounds.stream().map(b -> b.offset(position).expand(1)).forEach(b -> 
-			BlockPos.Mutable.iterate(
-					new BlockPos((int)b.minX, (int)b.minY, (int)b.minZ), 
-					new BlockPos((int)b.maxX, (int)b.maxY, (int)b.maxZ).add(-1, -1, -1))
-				.forEach(p -> 
-				{
-					// Place walling at any position outside the original boundaries
-					if(isExterior.test(p))
-						Tile.tryPlace(SHELL, p, world);
-				}));
+		final Predicate<BlockPos> isExterior = p -> bounds.stream().noneMatch(b -> b.contains(p.toCenterPos()));
+		final Consumer<BlockPos> placeShell = p -> 
+		{
+			// Place walling at any position outside the original boundaries
+			if(isExterior.test(p))
+				Tile.tryPlace(SHELL, p, world);
+		};
+		final Consumer<Box> builder = b -> ServerConfig.shellGenerationType.build(b, placeShell);
+		
+		bounds.stream().map(b -> b.offset(position).expand(1)).forEach(builder::accept);
 		
 		LOGGER.info(" ## Exterior shell completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
 	
-	public void buildRooms(BlueprintTileGrid grid, BlockPos position, ServerWorld world, Random rand)
+	public Map<BlueprintRoom,GridVolume> buildRooms(BlueprintTileGrid grid, BlockPos position, ServerWorld world, Random rand)
 	{
+		Map<BlueprintRoom,GridVolume> volumes = new HashMap<>();
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating rooms");
 		
@@ -240,13 +252,18 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			RoomMetadata meta = node.metadata();
 			GrammarTerm type = meta.type();
 			LOGGER.info(" # Room {} of {}: {}x{} {}", ++tally, size(), meta.size().x(), meta.size().y(), type.registryName().getPath());
-			if(type.generate(position, world, node, grid, passages, rand))
+			GridVolume v;
+			if((v = type.generate(position, world, node, grid, passages, rand)) != null)
+			{
 				LOGGER.info(" ## Finished");
+				volumes.put(node, v);
+			}
 			else
 				LOGGER.error(" ## Error during room generation");
 		};
 		
 		LOGGER.info(" ## Rooms completed in {}ms", System.currentTimeMillis() - timeMillis);
+		return volumes;
 	}
 	
 	public void buildExteriorPaths(BlueprintTileGrid superGrid, BlockPos position, ServerWorld world, Random rand)
@@ -257,6 +274,15 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		passages().forEach(p -> p.generate(superGrid, position, world, rand));
 		
 		LOGGER.info(" ## Passages completed in {}ms", System.currentTimeMillis() - timeMillis);
+	}
+	
+	public void buildFinishedRooms(Map<BlueprintRoom,GridVolume> volumes, BlockPos position, ServerWorld world, Random rand)
+	{
+		for(Entry<BlueprintRoom, GridVolume> entry : volumes.entrySet())
+		{
+			final BlueprintRoom node = entry.getKey();
+			node.metadata().type().postProcess(position, entry.getValue(), world, node, rand);
+		}
 	}
 	
 	public void buildEntrance(BlueprintTileGrid grid, BlockPos position, ServerWorld world, Random rand)
@@ -322,7 +348,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		if(!chart.isOrganised())
 			return List.of();
 		
-		List<BlueprintPassage> set = Lists.newArrayList();
+		List<BlueprintPassage> set = new ArrayList<>();
 		for(BlueprintPassage passage : chart.passages())
 			if(qualifier.test(passage))
 				set.add(passage);

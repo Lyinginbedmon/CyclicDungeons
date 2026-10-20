@@ -1,10 +1,10 @@
 package com.lying.grammar;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.collect.Lists;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
 import com.lying.init.CDThemes;
@@ -85,7 +85,7 @@ public class CDGrammar
 			else
 			{
 				// Run weight calculation and select term accordingly
-				List<Pair<GrammarTerm,Float>> weights = Lists.newArrayList();
+				List<Pair<GrammarTerm,Float>> weights = new ArrayList<>();
 				for(GrammarTerm candidate : candidates)
 					weights.add(Pair.of(candidate, (float)candidate.weight()));
 				

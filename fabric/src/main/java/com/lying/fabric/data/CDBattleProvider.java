@@ -1,9 +1,9 @@
 package com.lying.fabric.data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Lists;
 import com.lying.grammar.content.defaults.DefaultBattles;
 import com.lying.grammar.content.entities.SpawnerEntry;
 import com.lying.reference.Reference;
@@ -30,7 +30,7 @@ public class CDBattleProvider implements DataProvider
 	public CompletableFuture<?> run(DataWriter dataWriter)
 	{
 		return wrapperLookup.thenCompose(lookup -> {
-			List<CompletableFuture<?>> futures = Lists.newArrayList();
+			List<CompletableFuture<?>> futures = new ArrayList<>();
 			DefaultBattles.getAll().forEach(battle ->
 				futures.add(DataProvider.writeToPath(dataWriter, SpawnerEntry.CODEC.encodeStart(JsonOps.INSTANCE, battle).getOrThrow(), this.path.resolveJson(battle.registryName()))));
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));

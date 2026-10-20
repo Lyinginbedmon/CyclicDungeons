@@ -1,23 +1,19 @@
 package com.lying.grid;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
-import com.lying.block.entity.IRoomTaggedBlock;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTiles;
 import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.Tile;
 
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
@@ -118,7 +114,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	
 	public List<Tile> getOptionsFor(BlockPos pos, List<Tile> useable)
 	{
-		List<Tile> options = Lists.newArrayList();
+		List<Tile> options = new ArrayList<>();
 		
 		// Cache the result so we don't have to recalculate it every single step of tile generation
 		options.addAll(optionCache.getOrDefault(pos, useable.stream().filter(t -> t.canExistAt(pos, this)).toList()));
@@ -158,7 +154,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	public BlueprintTileGrid finaliseGrid(Theme theme, Random rand)
 	{
 		LOGGER.info("Finalising total tile set...");
-		return finaliseRegion(this.contents(), theme, rand);
+		return finaliseRegion(contents(), theme, rand);
 	}
 	
 	protected BlueprintTileGrid finaliseRegion(Collection<BlockPos> set, Theme theme, Random rand)
@@ -169,15 +165,14 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 				continue;
 			
 			Tile tile = get(pos).orElse(null);
-			if(tile == null || tile.isFlag())
+			if(tile == null)
 				continue;
 			
 			finalise(new TileInstance(
 					pos, 
 					tile, 
 					theme, 
-					tile.assignRotation(pos, this, this::get, rand), 
-					Optional.empty()));	// FIXME Add room tag
+					tile.assignRotation(pos, this, this::get, rand)));	// FIXME Add room tag
 		}
 		return this;
 	}
@@ -201,19 +196,11 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return true;
 	}
 	
-	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation, Optional<UUID> room)
+	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation)
 	{
 		public void generate(BlockPos position, ServerWorld world)
 		{
 			tile.generate(this, position, world);
-			room.ifPresent(id -> 
-				BlockPos.Mutable.iterate(position, position.add(1, 1, 1)).forEach(pos -> 
-				{
-					BlockEntity entity = world.getBlockEntity(pos);
-					if(entity != null && entity instanceof IRoomTaggedBlock)
-						((IRoomTaggedBlock)entity).setRoom(id);
-				})
-			);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package com.lying.worldgen.tile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -78,7 +79,7 @@ public abstract class Tile
 	
 	private final Identifier registryName;
 	private final TilePredicate predicate;
-	private final List<Identifier> tileTags = Lists.newArrayList();
+	private final List<Identifier> tileTags = new ArrayList<>();
 	private final int priority;
 	
 	private final GenStyle type;
@@ -186,7 +187,7 @@ public abstract class Tile
 		private GenStyle style = GenStyle.FLAG;
 		private Optional<List<BlockState>> states = Optional.empty();
 		private RotationSupplier rotationFunc = RotationSupplier.NONE.get();
-		private List<Identifier> tileTags = Lists.newArrayList();
+		private List<Identifier> tileTags = new ArrayList<>();
 		private int priority = 0;
 		
 		private Builder(TilePredicate predicateIn)

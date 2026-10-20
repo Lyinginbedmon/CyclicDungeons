@@ -1,5 +1,6 @@
 package com.lying.grammar.content.generation.modular;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,6 @@ import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.block.IWireableBlock;
@@ -121,7 +121,7 @@ public abstract class ModuleWiring
 	public static class Simple extends ModuleWiring
 	{
 		public static final Codec<Simple> CODEC	= Identifier.CODEC.listOf().comapFlatMap(set -> DataResult.success(Simple.of(set)), obj -> obj.inputs);
-		private List<Identifier> inputs = Lists.newArrayList();
+		private List<Identifier> inputs = new ArrayList<>();
 		
 		public static Simple of(List<Identifier> setIn)
 		{
@@ -152,7 +152,7 @@ public abstract class ModuleWiring
 		public void wire(BlockPos modulePos, final IWireableBlock wireable, Map<Identifier, List<BlockPos>> componentMap, ServerWorld world)
 		{
 			final Consumer<BlockPos> wireTo = p -> wireable.acceptWireFrom(CDLogicGates.INPUT, modulePos, WireMode.GLOBAL, new PortEntry(p, CDLogicGates.OUTPUT), world);
-			inputs.forEach(id -> componentMap.getOrDefault(id, Lists.newArrayList()).forEach(wireTo::accept));
+			inputs.forEach(id -> componentMap.getOrDefault(id, new ArrayList<>()).forEach(wireTo::accept));
 		}
 	}
 	
@@ -166,7 +166,7 @@ public abstract class ModuleWiring
 			return DataResult.success(obj);
 		}, obj -> obj.scheme.entrySet().stream().map(e -> new Wire(e.getKey(), e.getValue())).toList());
 		private Map<Port, List<Output>> scheme = new HashMap<>();
-		private List<Identifier> targets = Lists.newArrayList();
+		private List<Identifier> targets = new ArrayList<>();
 		
 		protected void addWire(Wire wire)
 		{
@@ -193,7 +193,7 @@ public abstract class ModuleWiring
 		
 		public Complex attach(Port input, Output... output)
 		{
-			List<Output> set = scheme.getOrDefault(input, Lists.newArrayList());
+			List<Output> set = scheme.getOrDefault(input, new ArrayList<>());
 			for(Output var : output)
 			{
 				if(!set.isEmpty() && set.removeIf(output::equals))
@@ -269,7 +269,7 @@ public abstract class ModuleWiring
 			
 			public static Output of(Port port, Identifier... partsIn)
 			{
-				List<Identifier> set = Lists.newArrayList();
+				List<Identifier> set = new ArrayList<>();
 				for(Identifier part : partsIn)
 					if(!set.contains(part))
 						set.add(part);

@@ -11,7 +11,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
@@ -114,7 +113,7 @@ public class CDUtils
 			totalWeight += weight;
 		
 		// Step 2 - Use that sum to calculate the percentile of each choice within the set
-		List<Pair<T,Float>> percentileList = Lists.newArrayList();
+		List<Pair<T,Float>> percentileList = new ArrayList<>();
 		for(Pair<T,Float> entry : weightedList)
 			percentileList.add(Pair.of(entry.getLeft(), entry.getRight() / totalWeight));
 		percentileList.sort((a,b) -> a.getRight() < b.getRight() ? -1 : a.getRight() > b.getRight() ? 1 : 0);
@@ -147,7 +146,7 @@ public class CDUtils
 	/** Returns a pair containing an optional for:<br> * the input list (if it is present and greater than size 2)<br>* the only value in that list (if it is present and of size 1) */
 	public static <T extends Object> Pair<Optional<List<T>>, Optional<T>> listOrSolo(Optional<List<T>> primary)
 	{
-		List<T> list = primary.orElse(Lists.newArrayList());
+		List<T> list = primary.orElse(new ArrayList<>());
 		Optional<List<T>> a = list.size() < 2 ? Optional.empty() : primary;
 		Optional<T> b = list.size() == 1 ? Optional.of(list.get(0)) : Optional.empty();
 		return Pair.of(a, b);

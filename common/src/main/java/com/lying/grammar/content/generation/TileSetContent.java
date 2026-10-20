@@ -7,8 +7,10 @@ import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.Content;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileSets;
 import com.lying.reference.Reference;
+import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tileset.TileSet;
 import com.mojang.serialization.JsonOps;
@@ -62,11 +64,15 @@ public class TileSetContent extends Content
 	
 	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { }
 	
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand)
+	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{
 		Random random = Random.create(room.position().x() ^ room.position().x + room.position().y() ^ room.position().y);
-		TileSet tileSet = getTileSet().get();
-//		TileGenerator.generate(tileMap, tileSet, () -> null, random);	// FIXME
+		TileGenerator.generate(
+				tileMap, 
+				volume, 
+				getTileSet().get(), 
+				() -> null, 
+				random);
 	}
 	
 	protected Optional<TileSet> getTileSet() { return tileSetID == null ? Optional.empty() : CDTileSets.instance().get(tileSetID); }

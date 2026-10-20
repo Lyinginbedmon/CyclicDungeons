@@ -1,5 +1,6 @@
 package com.lying.grammar.content.generation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -69,7 +70,7 @@ public abstract class AbstractPlacerContent extends Content
 		int floorY = min.getY() + Tile.TILE_SIZE;
 		
 		// Find all doors
-		List<BlockPos> avoiders = Lists.newArrayList();
+		List<BlockPos> avoiders = new ArrayList<>();
 		BlockPos.Mutable.iterate(min.withY(floorY), max.withY(floorY)).forEach(p -> 
 		{
 			BlockPos next = p.toImmutable();
@@ -80,7 +81,7 @@ public abstract class AbstractPlacerContent extends Content
 		
 		// Find all viable places for trap
 		final Predicate<BlockPos> avoidFunc = minimumAvoiderDistance() == 0 ? Predicates.alwaysTrue() : p -> avoiders.stream().noneMatch(a -> a.getManhattanDistance(p) >= minimumAvoiderDistance());
-		List<BlockPos> viablePoints = Lists.newArrayList();
+		List<BlockPos> viablePoints = new ArrayList<>();
 		BlockPos.Mutable.iterate(min.withY(floorY), max.withY(floorY)).forEach(p -> 
 		{
 			BlockPos next = p.toImmutable();
@@ -95,7 +96,7 @@ public abstract class AbstractPlacerContent extends Content
 		else
 		{
 			// Select N places for traps
-			List<BlockPos> traps = Lists.newArrayList();
+			List<BlockPos> traps = new ArrayList<>();
 			int i = trapCounter.getCount(rand, meta.tileSize());
 			while(!viablePoints.isEmpty() && i-- > 0)
 				traps.add(viablePoints.remove(rand.nextInt(viablePoints.size())));
@@ -108,7 +109,7 @@ public abstract class AbstractPlacerContent extends Content
 	protected final void placeAllTraps(List<BlockPos> positions, ServerWorld world, Random rand)
 	{
 		List<BlockPos> traps = Lists.newArrayList(positions);
-		List<BlockPos> placedTraps = Lists.newArrayList();
+		List<BlockPos> placedTraps = new ArrayList<>();
 		final Predicate<BlockPos> rectifier = p -> 
 			!isPosViableForTrap(p, world) || 
 			(minimumSpacing() > 0 && placedTraps.stream().anyMatch(p2 -> p.getManhattanDistance(p2) < minimumSpacing()));

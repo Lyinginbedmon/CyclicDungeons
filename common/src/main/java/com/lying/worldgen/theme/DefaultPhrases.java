@@ -2,12 +2,12 @@ package com.lying.worldgen.theme;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.google.common.collect.Lists;
 import com.lying.grammar.DefaultTerms;
 import com.lying.init.CDTerms;
 import com.lying.worldgen.theme.InitialPhrase.PhraseTerm;
@@ -16,7 +16,7 @@ import net.minecraft.util.Identifier;
 
 public class DefaultPhrases
 {
-	private static final List<Supplier<InitialPhrase>> PHRASES = Lists.newArrayList();
+	private static final List<Supplier<InitialPhrase>> PHRASES = new ArrayList<>();
 	
 	public static final Identifier
 		ID_LINEAR			= prefix("linear"),

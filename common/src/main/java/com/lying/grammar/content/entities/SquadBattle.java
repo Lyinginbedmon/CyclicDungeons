@@ -2,6 +2,7 @@ package com.lying.grammar.content.entities;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +11,6 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.function.Consumers;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.lying.grammar.RoomMetadata;
 import com.lying.reference.Reference;
@@ -37,7 +37,7 @@ import net.minecraft.util.math.random.Random;
 public class SquadBattle extends Battle
 {
 	public static final Identifier ID	= Reference.ModInfo.prefix("basic_squad");
-	private final List<SquadBattle.SquadEntry> squad = Lists.newArrayList();
+	private final List<SquadBattle.SquadEntry> squad = new ArrayList<>();
 	// TODO Serialise roster handling
 	private Consumer<SquadBattle.Roster> setup = Consumers.nop();
 	
@@ -68,7 +68,7 @@ public class SquadBattle extends Battle
 		SquadBattle.Roster roster = new Roster();
 		for(SquadBattle.SquadEntry entry : squad)
 		{
-			List<Entity> list = roster.getOrDefault(entry.name(), Lists.newArrayList());
+			List<Entity> list = roster.getOrDefault(entry.name(), new ArrayList<>());
 			int count = 
 					entry.min() == entry.max() ? 
 						entry.min() : 

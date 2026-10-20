@@ -1,11 +1,11 @@
 package com.lying.worldgen.theme;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.init.CDTerms;
@@ -21,7 +21,7 @@ public class InitialPhrase
 			PhraseTerm.CODEC.listOf().fieldOf("Rooms").forGetter(InitialPhrase::contents)
 			).apply(instance, InitialPhrase::new));
 	protected final Identifier registryName;
-	protected final List<PhraseTerm> entries = Lists.newArrayList();
+	protected final List<PhraseTerm> entries = new ArrayList<>();
 	
 	public InitialPhrase(Identifier name)
 	{
@@ -81,7 +81,7 @@ public class InitialPhrase
 				Codec.STRING.optionalFieldOf("Connection").forGetter(t -> t.doorCount() == 1 ? Optional.of(t.doors().get().getFirst()) : Optional.empty())
 				).apply(instance, (name,content,doorList,door) -> 
 				{
-					List<String> doors = Lists.newArrayList();
+					List<String> doors = new ArrayList<>();
 					doorList.ifPresent(doors::addAll);
 					door.ifPresent(doors::add);
 					return new PhraseTerm(name,content,Optional.of(doors));

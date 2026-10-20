@@ -1,10 +1,10 @@
 package com.lying.block.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.PortEntry;
@@ -97,7 +97,7 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	
 	public final List<BlockPos> getInputListeners()
 	{
-		List<BlockPos> set = Lists.newArrayList();
+		List<BlockPos> set = new ArrayList<>();
 		final Consumer<BlockPos> registrar = p -> 
 		{
 			if(p != null && set.stream().noneMatch(p2 -> p2.getManhattanDistance(p) == 0))
@@ -115,7 +115,7 @@ public abstract class AbstractWireableBlockEntity extends BlockEntity
 	
 	public final List<BlockPos> getOutputListeners()
 	{
-		List<BlockPos> set = Lists.newArrayList();
+		List<BlockPos> set = new ArrayList<>();
 		final Consumer<BlockPos> registrar = p -> 
 		{
 			if(set.stream().noneMatch(p2 -> p2.getManhattanDistance(p) == 0))

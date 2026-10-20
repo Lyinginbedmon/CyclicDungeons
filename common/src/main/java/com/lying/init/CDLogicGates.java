@@ -1,5 +1,6 @@
 package com.lying.init;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -317,7 +318,7 @@ public class CDLogicGates
 	/** Returns a list of ports one greater than the inport ports currently in use by the module */
 	protected static List<Port> freeInputs(LogicModule module)
 	{
-		List<Port> ports = Lists.newArrayList();
+		List<Port> ports = new ArrayList<>();
 		PortSet inputs = module.inputPortSet();
 		List<Port> activePorts = inputs.ports().stream().filter(inputs::isConnected).toList();
 		for(int i=0; i<activePorts.size() + 1; i++)
@@ -336,7 +337,7 @@ public class CDLogicGates
 		MODULES.put(nameIn, supplier);
 		
 		LogicGate gate = supplier.get();
-		List<String> set = BY_CATEGORY.getOrDefault(gate.category(), Lists.newArrayList());
+		List<String> set = BY_CATEGORY.getOrDefault(gate.category(), new ArrayList<>());
 		set.add(nameIn);
 		BY_CATEGORY.put(gate.category(), set);
 		
@@ -404,7 +405,7 @@ public class CDLogicGates
 		{
 			private final GateLogic logic;
 			private LogicCategory category = LogicCategory.BASIC;
-			private List<Port> inputs = Lists.newArrayList(), outputs = Lists.newArrayList();
+			private List<Port> inputs = new ArrayList<>(), outputs = new ArrayList<>();
 			private Optional<Function<LogicModule,List<Port>>> inputCollector = Optional.empty();
 			private Optional<Function<LogicModule,List<Port>>> outputCollector = Optional.empty();
 			private Vector2i icon = new Vector2i(0, 0);

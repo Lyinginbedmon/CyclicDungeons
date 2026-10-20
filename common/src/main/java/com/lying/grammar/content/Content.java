@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDContentTypes;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tileset.DoorWaySet;
@@ -57,7 +58,7 @@ public abstract class Content
 	}
 	
 	/** Applied when the entry is selected, before the room goes through tile generation */
-	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, ServerWorld world, Random rand) { }
+	public abstract void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand);
 	
 	/** Applied after tile generation */
 	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);

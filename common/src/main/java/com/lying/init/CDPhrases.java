@@ -3,6 +3,7 @@ package com.lying.init;
 import static com.lying.reference.Reference.ModInfo.prefix;
 
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -67,7 +67,7 @@ public class CDPhrases implements ReloadListener<List<JsonObject>>
 	{
 		return CompletableFuture.supplyAsync(() -> 
 		{
-			List<JsonObject> objects = Lists.newArrayList();
+			List<JsonObject> objects = new ArrayList<>();
 			manager.findAllResources(FILE_PATH, Predicates.alwaysTrue()).forEach((fileName,fileSet) -> 
 			{
 				Resource file = fileSet.getFirst();

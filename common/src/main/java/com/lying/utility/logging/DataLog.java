@@ -1,14 +1,13 @@
 package com.lying.utility.logging;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
-
 public class DataLog 
 {
-	private List<LogEntry> entries = Lists.newArrayList();
+	private List<LogEntry> entries = new ArrayList<>();
 	
 	public void clear() { entries.clear(); }
 	

@@ -1,13 +1,17 @@
 package com.lying.grammar;
 
+import static com.lying.worldgen.TileGenerator.setTile;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.gson.JsonElement;
+import com.lying.block.entity.IRoomTaggedBlock;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
@@ -28,12 +32,15 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.random.Random;
 
 public class GrammarTerm
@@ -131,7 +138,8 @@ public class GrammarTerm
 		contentBuilder.applyPrePassageProcessing(node, node.metadata(), world, rand);
 	}
 	
-	public boolean generate(BlockPos position, ServerWorld world, BlueprintRoom node, BlueprintTileGrid grid, List<BlueprintPassage> passages, Random rand)
+	@Nullable
+	public GridVolume generate(BlockPos position, ServerWorld world, BlueprintRoom node, BlueprintTileGrid grid, List<BlueprintPassage> passages, Random rand)
 	{
 		GridVolume vol = GridVolume.fromGraphGrid(node.tileGrid(), Blueprint.ROOM_TILE_HEIGHT).setRoom(node.uuid());
 		final RoomMetadata meta = node.metadata();
@@ -141,35 +149,41 @@ public class GrammarTerm
 			preseedDoorways(node, grid, vol, passages, rand);
 			grid.addTilesFor(vol);
 			
-			contentBuilder.applyPreProcessing(node, meta, grid, world, rand);
+			contentBuilder.applyPreProcessing(node, meta, grid, vol, world, rand);
 			
 			// Fill rest of tileset with WFC generation
 			TileGenerator.generate(grid, vol, node.metadata().theme().getTileSet(this), rand);
 		}
-		catch(Exception e) { e.printStackTrace(); }
+		catch(Exception e) { e.printStackTrace(); return null; }
 		
 		grid.finaliseRegion(vol, meta.theme(), rand);
+		return vol;
+	}
+	
+	public void postProcess(BlockPos position, GridVolume volume, ServerWorld world, BlueprintRoom node, Random rand)
+	{
+		final RoomMetadata meta = node.metadata();
+		Box box = node.worldBox().offset(position);
+		BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
+		BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
 		
-//		if(grid.generate(position, world))
-//		{
-//			Box box = node.worldBox().offset(position);
-//			BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
-//			BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
-//			
-//			contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
-//			
-//			// Assign room ID to room-tagged blocks post-tile generation
-//			BlockPos.Mutable.iterate(min, max).forEach(p -> 
-//			{
-//				BlockEntity e = world.getBlockEntity(p);
-//				if(e != null && e instanceof IRoomTaggedBlock)
-//					((IRoomTaggedBlock)e).setRoom(node.uuid());
-//			});
-//			
-			return true;
-//		}
-//		
-//		return false;
+		contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
+		
+		// Assign room ID to room-tagged blocks post-tile generation
+		volume.contents().stream()
+			.map(p -> p.multiply(Tile.TILE_SIZE).add(position))
+			.forEach(pos -> 
+			{
+				for(int y=0; y<Tile.TILE_SIZE; y++)
+					for(int x=0; x<Tile.TILE_SIZE; x++)
+						for(int z=0; z<Tile.TILE_SIZE; z++)
+						{
+							final BlockPos p = pos.add(x, y, z);
+							BlockEntity e = world.getBlockEntity(p);
+							if(e != null && e instanceof IRoomTaggedBlock)
+								((IRoomTaggedBlock)e).setRoom(node.uuid());
+						}
+			});
 	}
 	
 	protected static List<DoorData> preseedDoorways(BlueprintRoom node, BlueprintTileGrid map, GridVolume vol, List<BlueprintPassage> passages, Random rand)
@@ -200,6 +214,7 @@ public class GrammarTerm
 			for(Direction face : Direction.Type.HORIZONTAL)
 				if(vol.contains(offset = door.offset(faceIn = face)))
 				{
+					map.addToVolume(offset);
 					setTile(offset, CDTiles.PASSAGE_FLAG.get(), map, vol);
 					break;
 				}
@@ -209,9 +224,11 @@ public class GrammarTerm
 			DoorData data = isParent ? 
 					new DoorData(door, faceIn, true) : 
 					new DoorData(door, faceIn.getOpposite(), passage.shouldGenerateDoorTo(node));
+			
 			DoorWaySet tileSet = isParent ? 
 					(exitSets.size() > 1 ? exitSets.removeFirst() : exitSets.getFirst()) : 
 					entrySet;
+			
 			
 			doorways.add(data);
 			data.placeInMap(map, vol, theme, tileSet);
@@ -250,17 +267,13 @@ public class GrammarTerm
 			// Lintel
 			setTile(footprint[2], CDTiles.instance().get(tileSet.lintelTile().orElse(CDTiles.ID_DOORWAY_LINTEL)).get(), map, vol);
 			
+			for(int i=3;i<Blueprint.ROOM_TILE_HEIGHT;i++)
+				setTile(tile.withY(i), CDTiles.SHELL.get(), map, vol);
+			
 			// Finalise rotations
 			for(BlockPos p : footprint)
-				map.finalise(new TileInstance(p, map.get(p).get(), theme, RotationSupplier.faceToRotationMap.get(face), Optional.empty()));
+				map.finalise(new TileInstance(p, map.get(p).get(), theme, RotationSupplier.faceToRotationMap.get(face)));
 		}
-	}
-	
-	protected static void setTile(BlockPos pos, Tile tile, BlueprintTileGrid grid, GridVolume vol)
-	{
-		grid.put(pos, tile);
-		if(!tile.isBlank())
-			vol.set(pos);
 	}
 	
 	public void applyTo(GrammarRoom room, GrammarPhrase graph)

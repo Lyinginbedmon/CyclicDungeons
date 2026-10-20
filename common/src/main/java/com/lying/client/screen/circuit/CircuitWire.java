@@ -1,12 +1,12 @@
 package com.lying.client.screen.circuit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.client.screen.NodeRenderUtils;
 import com.lying.utility.geometry.LineSegment2f;
 
@@ -27,7 +27,7 @@ public class CircuitWire
 	private static final int WIRE_PADDING	= 5;
 	private final String name;
 	private DyeColor color = DyeColor.WHITE;
-	private List<CircuitPort> termini = Lists.newArrayList();
+	private List<CircuitPort> termini = new ArrayList<>();
 	
 	public CircuitWire(String nameIn)
 	{
@@ -128,7 +128,7 @@ public class CircuitWire
 		// Calculate the boundaries of this wire and return false if the mouse is too far outside of it
 		Vector2i boundsMin = new Vector2i(Integer.MAX_VALUE,Integer.MAX_VALUE), boundsMax = new Vector2i(Integer.MIN_VALUE,Integer.MIN_VALUE);
 		Vector2i sum = new Vector2i(0,0);
-		List<Vector2i> terminiMicros = Lists.newArrayList();
+		List<Vector2i> terminiMicros = new ArrayList<>();
 		for(CircuitPort port : termini)
 		{
 			Optional<Vector2i> pos = port.microPosition(circuit);
