@@ -45,6 +45,7 @@ public class CDLogicGates
 	public static final Port SET	= Port.of("set");
 	public static final Port RESET	= Port.of("reset");
 	public static final Port INC	= Port.of("inc");
+	public static final Port DEC	= Port.of("dec");
 	public static final Port CARRY	= Port.of("carry");
 	public static final Port BIT_1	= Port.of("bit1");
 	public static final Port BIT_2	= Port.of("bit2");
@@ -214,38 +215,37 @@ public class CDLogicGates
 				if(isRisingEdge(RESET, ports, pPorts))
 					return LogicResult.create();
 				
-				if(isRisingEdge(INC, ports, pPorts))
+				boolean[] data = new boolean[]
+						{
+							pOut.get(BIT_1),
+							pOut.get(BIT_2),
+							pOut.get(BIT_4),
+							pOut.get(BIT_8)
+						};
+				
+				if(isRisingEdge(INC, ports, pPorts) || isRisingEdge(DEC, ports, pPorts))
 				{
-					boolean[] data = new boolean[]
-							{
-								pOut.get(BIT_1),
-								pOut.get(BIT_2),
-								pOut.get(BIT_4),
-								pOut.get(BIT_8)
-							};
-					// Toggle values from bit 1 to 4 until we encounter a false, set that to true and break
+					final boolean target = isRisingEdge(DEC, ports, pPorts);
 					for(int i=0; i<data.length; i++)
 					{
-						if(!data[i])
-						{
-							data[i] = true;
+						boolean var = data[i];
+						data[i] = !var;
+						if(var == target)
 							break;
-						}
-						else
-							data[i] = false;
 					}
-					return LogicResult.create()
-							.put(BIT_1, data[0])
-							.put(BIT_2, data[1])
-							.put(BIT_4, data[2])
-							.put(BIT_8, data[3]);
 				}
-				// TODO Add decrement function?
-				return pOut;
+				else
+					return pOut;
+				
+				return LogicResult.create()
+						.put(BIT_1, data[0])
+						.put(BIT_2, data[1])
+						.put(BIT_4, data[2])
+						.put(BIT_8, data[3]);
 			})
 			.category(LogicCategory.MATH)
 			.icon(192, 0)
-			.addInput(INC, RESET).addOutput(BIT_1, BIT_2, BIT_4, BIT_8)
+			.addInput(INC, DEC, RESET).addOutput(BIT_1, BIT_2, BIT_4, BIT_8)
 			.build(s));
 	
 	/** Emits a noise from the logic block when triggered */

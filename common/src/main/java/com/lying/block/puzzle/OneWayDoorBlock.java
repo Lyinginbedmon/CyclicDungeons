@@ -157,6 +157,7 @@ public class OneWayDoorBlock extends BlockWithEntity
 		return super.onBreak(world, pos, state, player);
 	}
 	
+	// FIXME Call when counterpart is updated by /setblock
 	protected BlockState getStateForNeighborUpdate(
 			BlockState state,
 			WorldView world,
@@ -264,7 +265,6 @@ public class OneWayDoorBlock extends BlockWithEntity
 		if(!state.get(OPEN) || world.isClient)
 			return;
 		
-		// FIXME Break instantly when OPEN, incl. second block
 		world.breakBlock(pos, false, player);
 	}
 }

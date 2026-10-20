@@ -61,7 +61,6 @@ public class CDBlocks
 	 * TODO Implement missing blocks
 	 * World Guard
 	 * 
-	 * Puzzle Door (to open when puzzle room is completed)
 	 * Locked Door (to open using specific key)
 	 * 
 	 * Trap sensors

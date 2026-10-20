@@ -27,22 +27,6 @@
   ],
   "tilesets": [
     {
-      "term": "cydun:boss",
-      "tile_set": "cydun:boss"
-    },
-    {
-      "term": "cydun:trap",
-      "tile_set": "cydun:trap"
-    },
-    {
-      "term": "cydun:empty",
-      "tile_set": "cydun:empty"
-    },
-    {
-      "term": "cydun:start",
-      "tile_set": "cydun:start"
-    },
-    {
       "term": "cydun:small_puzzle",
       "tile_set": "cydun:puzzle"
     },
@@ -61,11 +45,33 @@
     {
       "term": "cydun:end",
       "tile_set": "cydun:end"
+    },
+    {
+      "term": "cydun:boss",
+      "tile_set": "cydun:boss"
+    },
+    {
+      "term": "cydun:trap",
+      "tile_set": "cydun:trap"
+    },
+    {
+      "term": "cydun:empty",
+      "tile_set": "cydun:empty"
+    },
+    {
+      "term": "cydun:start",
+      "tile_set": "cydun:start"
     }
   ],
   "traps": [
     "cydun:pitfall",
     "cydun:lava_river",
-    "cydun:pit_jumping"
+    "cydun:pit_jumping",
+    "cydun:lava_jumping",
+    "cydun:minefield",
+    "cydun:beartraps",
+    "cydun:bear_traps",
+    "cydun:hatch_pitfall",
+    "cydun:module_test"
   ]
 }

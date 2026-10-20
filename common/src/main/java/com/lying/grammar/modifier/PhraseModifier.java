@@ -17,7 +17,7 @@ import net.minecraft.util.Identifier;
 
 public abstract class PhraseModifier
 {
-	// TODO Add support for configurable phrase modifiers
+	// XXX Add support for configurable phrase modifiers?
 	private static final Map<Identifier, Supplier<PhraseModifier>> REGISTRY = new HashMap<>();
 	public static final Codec<PhraseModifier> CODEC = Identifier.CODEC.comapFlatMap(id -> DataResult.success(PhraseModifier.get(id)), PhraseModifier::registryName);
 	

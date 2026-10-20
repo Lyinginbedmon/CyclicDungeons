@@ -18,6 +18,7 @@ import com.lying.grammar.content.defaults.DefaultTraps;
 import com.lying.graph.GraphScruncher.ScrunchStyle;
 import com.lying.init.CDTerms;
 import com.lying.worldgen.tileset.DefaultTileSets;
+import com.lying.worldgen.tileset.DoorWaySet;
 
 import net.minecraft.util.Identifier;
 
@@ -161,7 +162,8 @@ public class DefaultThemes
 				traps, 
 				puzzles,
 				tileSets, 
-				Optional.empty(), 
+				Optional.empty(),
+				Optional.empty(),
 				Optional.empty(),
 				Optional.empty());
 	}
@@ -175,10 +177,11 @@ public class DefaultThemes
 			List<Identifier> puzzles, 
 			Map<Identifier, Identifier> tileSets, 
 			Optional<Identifier> passageTileSet, 
+			Optional<DoorWaySet> doors,
 			Optional<Integer> iterationCap,
 			Optional<ScrunchStyle> scrunchStyle)
 	{
-		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, puzzles, tileSets, passageTileSet, iterationCap, scrunchStyle);
+		final Supplier<Theme> entry = () -> new Theme(id, dictionary, phrases, combat, traps, puzzles, tileSets, passageTileSet, doors, iterationCap, scrunchStyle);
 		THEMES.add(entry);
 		return entry;
 	}

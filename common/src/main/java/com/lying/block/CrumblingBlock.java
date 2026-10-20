@@ -107,7 +107,6 @@ public class CrumblingBlock extends Block
 	
 	protected void crumble(World world, BlockPos pos)
 	{
-		// FIXME Ensure block only dropped when mined by entity
 		world.breakBlock(pos, false);
 	}
 	

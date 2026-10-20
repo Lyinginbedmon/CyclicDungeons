@@ -2,14 +2,12 @@ package com.lying.config;
 
 import java.io.FileWriter;
 import java.util.Properties;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 
 public class ServerConfig extends Config
 {
@@ -42,34 +40,22 @@ public class ServerConfig extends Config
 	public static enum ShellType implements StringIdentifiable
 	{
 		/** Full enclosure around dungeon */
-		FULL(b -> 
-			BlockPos.Mutable.iterate(
-					new BlockPos((int)b.minX, (int)b.minY, (int)b.minZ), 
-					new BlockPos((int)b.maxX, (int)b.maxY, (int)b.maxZ).add(-1, -1, -1))),
+		FULL((a,b) -> b),
 		/** Bottom-most tile enclosure only, mainly for debugging */
-		MINIMUM(b -> 
-			BlockPos.Mutable.iterate(
-					new BlockPos((int)b.minX, (int)b.minY, (int)b.minZ), 
-					new BlockPos((int)b.maxX, (int)b.minY + Tile.TILE_SIZE + 1, (int)b.maxZ).add(-1, -1, -1))),
+		MINIMUM((a,b) -> b.withY(a.getY() + Tile.TILE_SIZE)),
 		/** Full enclosure sans roof, like an architectural model */
-		LABYRINTH(b ->
-			BlockPos.Mutable.iterate(
-					new BlockPos((int)b.minX, (int)b.minY, (int)b.minZ), 
-					new BlockPos((int)b.maxX, (int)b.maxY, (int)b.maxZ).add(-1, -2, -1))),
+		LABYRINTH((a,b) -> b.down()),
 		/** No enclosure at all */
-		NONE(b -> null);
+		NONE((a,b) -> a);
 		
-		public final Function<Box,Iterable<BlockPos>> buildFunc;
+		public final BiFunction<BlockPos,BlockPos,BlockPos> adjustFunc;
 		
-		private ShellType(Function<Box,Iterable<BlockPos>> funcIn)
+		private ShellType(BiFunction<BlockPos,BlockPos,BlockPos> adjustIn)
 		{
-			buildFunc = funcIn;
+			adjustFunc = adjustIn;
 		}
 		
-		public void build(Box box, Consumer<BlockPos> func)
-		{
-			buildFunc.apply(box).forEach(p -> func.accept(p));
-		}
+		public BlockPos adjust(BlockPos min, BlockPos max) { return adjustFunc.apply(min, max); }
 		
 		public String asString() { return name().toLowerCase(); }
 		

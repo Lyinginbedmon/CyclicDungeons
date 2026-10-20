@@ -57,6 +57,8 @@ public abstract class Content
 		return prerequisites.isViable(room, meta, theme);
 	}
 	
+	// FIXME Update tile-based content to respect grid volume
+	
 	/** Applied when the entry is selected, before the room goes through tile generation */
 	public abstract void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand);
 	

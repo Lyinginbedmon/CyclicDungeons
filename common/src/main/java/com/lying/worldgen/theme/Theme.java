@@ -43,6 +43,7 @@ public record Theme(
 		List<Identifier> puzzleEncounters,
 		Map<Identifier,Identifier> tileSets, 
 		Optional<Identifier> passageTiles,
+		Optional<DoorWaySet> defaultDoors,
 		Optional<Integer> collapseIterations,
 		Optional<ScrunchStyle> collapseStyle)
 {
@@ -55,9 +56,10 @@ public record Theme(
 			Identifier.CODEC.listOf().fieldOf("puzzles").forGetter(Theme::puzzleEncounters),
 			TileSetEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
 			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles),
+			DoorWaySet.CODEC.optionalFieldOf("door_tileset").forGetter(Theme::defaultDoors),
 			Codec.INT.optionalFieldOf("condense_iterations").forGetter(Theme::collapseIterations),
 			ScrunchStyle.CODEC.optionalFieldOf("condense_style").forGetter(Theme::collapseStyle)
-			).apply(instance, (id,terms,phrases,mobs,traps,puzzles,tiles,passage,iterations,style)-> 
+			).apply(instance, (id,terms,phrases,mobs,traps,puzzles,tiles,passage,doors,iterations,style)-> 
 			{
 				Map<Identifier, Identifier> tileSets = new HashMap<>();
 				tiles.forEach(t -> tileSets.put(t.roomId(), t.tilesetId()));
@@ -70,6 +72,7 @@ public record Theme(
 						puzzles,
 						tileSets, 
 						passage,
+						doors,
 						iterations,
 						style);
 			}));
@@ -178,8 +181,7 @@ public record Theme(
 		return CDTileSets.instance().get(passageTileSet).orElse(CDTileSets.DEFAULT);
 	}
 	
-	// FIXME Implement data storage of DoorWaySet for theme usage
-	public DoorWaySet getStandardDoors() { return DoorWaySet.DEFAULTS; }
+	public DoorWaySet getStandardDoors() { return defaultDoors.orElse(DoorWaySet.DEFAULTS); }
 	
 	public int collapseIterationCap() { return collapseIterations.orElse(1000); }
 	

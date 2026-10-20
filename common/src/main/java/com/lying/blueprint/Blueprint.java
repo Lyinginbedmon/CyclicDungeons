@@ -215,26 +215,31 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			return;
 		}
 		
-		// Collect all bounding boxes
-		List<Box> bounds = new ArrayList<>();
-		for(BlueprintRoom r : this)
-			bounds.add(r.worldBox());
-		for(BlueprintPassage p : passages())
-			bounds.addAll(p.worldBox());
-		
-		// FIXME Refine to not flood-fill area, only place at exterior positions
-		
-		// Expand the bounding boxes 1 block in all directions
-		final Predicate<BlockPos> isExterior = p -> bounds.stream().noneMatch(b -> b.contains(p.toCenterPos()));
-		final Consumer<BlockPos> placeShell = p -> 
+		final Consumer<Box> shellBuilder = box -> 
 		{
-			// Place walling at any position outside the original boundaries
-			if(isExterior.test(p))
-				Tile.tryPlace(SHELL, p, world);
+			final BlockPos min = BlockPos.ofFloored(box.minX, box.minY, box.minZ);
+			final BlockPos max = BlockPos.ofFloored(box.maxX, box.maxY, box.maxZ).add(-1, -1, -1);
+			BlockPos.Mutable.iterate(min, ServerConfig.shellGenerationType.adjust(min, max)).forEach(block -> 
+			{
+				boolean isCappedX = block.getX() == min.getX() || block.getX() == max.getX();
+				boolean isCappedY = block.getY() == min.getY() || block.getY() == max.getY();
+				boolean isCappedZ = block.getZ() == min.getZ() || block.getZ() == max.getZ();
+				if(isCappedX || isCappedY || isCappedZ)
+					Tile.tryPlace(SHELL, block, world);
+			});
 		};
-		final Consumer<Box> builder = b -> ServerConfig.shellGenerationType.build(b, placeShell);
 		
-		bounds.stream().map(b -> b.offset(position).expand(1)).forEach(builder::accept);
+		// Create hollow cuboid for each room
+		for(BlueprintRoom r : this)
+		{
+			Box box = r.worldBox().offset(position).expand(1);
+			shellBuilder.accept(box);
+		}
+		
+		// Create hollow cuboids for each passage, ignoring single-tile passages which are entirely embedded in room walls
+		for(BlueprintPassage p : passages())
+			if(p.tiles().size() > 1)
+				p.worldBox().forEach(box -> shellBuilder.accept(box.offset(position).expand(1)));
 		
 		LOGGER.info(" ## Exterior shell completed in {}ms", System.currentTimeMillis() - timeMillis);
 	}
