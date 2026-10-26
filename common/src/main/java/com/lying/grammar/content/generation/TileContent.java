@@ -69,7 +69,7 @@ public class TileContent extends Content
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{
 		final Tile tile = getTile().get();
-		final Predicate<BlockPos> canExistAt = p -> tile.canExistAt(p, tileMap);
+		final Predicate<BlockPos> canExistAt = p -> tile.canExistAt(p, tileMap, volume);
 		List<BlockPos> blanks = new ArrayList<>();
 		blanks.addAll(volume.getBoundaries(List.of(Direction.DOWN)).stream()
 				.filter(canExistAt)

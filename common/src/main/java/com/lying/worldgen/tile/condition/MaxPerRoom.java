@@ -3,8 +3,10 @@ package com.lying.worldgen.tile.condition;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileConditions;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.Tile.GridSensitivity;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;
@@ -26,9 +28,15 @@ public class MaxPerRoom extends Condition
 		return condition;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+	public int cost() { return 5; }
+	
+	public GridSensitivity searchSpace() { return GridSensitivity.REGIONAL; }
+	
+	public boolean affectedBy(BlockPos offset) { return true; }
+	
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 	{
-		return grid.tallyOf(tileIn) < i;
+		return volume.tallyOf(tileIn) < i;
 	}
 	
 	public JsonElement toJson(JsonOps ops)

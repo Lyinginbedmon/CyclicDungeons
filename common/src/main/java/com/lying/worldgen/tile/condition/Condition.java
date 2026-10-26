@@ -1,5 +1,6 @@
 package com.lying.worldgen.tile.condition;
 
+import java.util.Comparator;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,8 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileConditions;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.Tile.GridSensitivity;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -23,6 +26,12 @@ public abstract class Condition
 {
 	public static final Codec<Condition> CODEC = Codec.of(Condition::encode, Condition::decode);
 	protected static final Codec<List<Direction>> FACE_LIST_CODEC	= Direction.CODEC.listOf();
+	public static final Comparator<Condition> COST_SORT	= (a,b) -> 
+	{
+		int cA = a.cost();
+		int cB = b.cost();
+		return cA < cB ? -1 : cA > cB ? 1 : 0;
+	};
 	
 	protected final Identifier id;
 	
@@ -33,8 +42,19 @@ public abstract class Condition
 	
 	public final Identifier registryName() { return id; }
 	
+	/**
+	 * Returns a score representing the CPU load of checking this condition<br>
+	 * This is used in {@link TilePredicate} to reduce CPU load by checking cheap conditions first.
+	 */
+	public abstract int cost();
+	
+	/** Returns the search area of this condition */
+	public abstract GridSensitivity searchSpace();
+	
+	public abstract boolean affectedBy(BlockPos offset);
+	
 	/** Evaluates if the given tile at the given position evaluates correctly with this condition */
-	public abstract boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid);
+	public abstract boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume);
 	
 	public JsonElement toJson(JsonOps ops)
 	{

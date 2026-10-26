@@ -1,16 +1,13 @@
 package com.lying.grid;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiPredicate;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.lying.init.CDLoggers;
-import com.lying.init.CDTiles;
-import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.Tile;
 
@@ -22,9 +19,9 @@ import net.minecraft.util.math.random.Random;
 
 public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 {
-	public static final DebugLogger LOGGER = CDLoggers.WFC;
-	public static final Tile BLANK	= CDTiles.BLANK.get();
+	private final GridVolume volume = new GridVolume();
 	private final Map<BlockPos, TileInstance> finalised = new HashMap<>();
+	protected final Map<BlockPos, List<Tile>> optionCache = new HashMap<>();
 	
 	private BlockPos 
 		min = null, 
@@ -75,6 +72,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 				max = new BlockPos(max.getX(), max.getY(), z);
 		}
 		
+		volume.add(pos);
 		return super.addToVolume(pos);
 	}
 	
@@ -109,15 +107,35 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	
 	public List<BlockPos> getBoundaries(List<Direction> faces)
 	{
-		return set.keySet().stream().filter(p -> faces.stream().anyMatch(f -> isBoundary(p, f))).toList();
+		return volume.getBoundaries(faces);
 	}
 	
-	public List<Tile> getOptionsFor(BlockPos pos, List<Tile> useable)
+	public final List<BlockPos> getMatchingTilesWithin(GridVolume volume, BiPredicate<BlockPos,Tile> predicate)
 	{
+		List<BlockPos> matches = new ArrayList<>();
+		for(BlockPos pos : volume.contents())
+			if(!isEmpty(pos) && predicate.test(pos, get(pos).get()))
+				matches.add(pos);
+		return matches;
+	}
+	
+	public final void clearOptionCache()
+	{
+		optionCache.clear();
+	}
+	
+	public List<Tile> getOptionsFor(BlockPos pos, List<Tile> useable, GridVolume volume)
+	{
+		if(optionCache.containsKey(pos))
+			return optionCache.get(pos);
+		
 		List<Tile> options = new ArrayList<>();
 		
 		// Cache the result so we don't have to recalculate it every single step of tile generation
-		options.addAll(optionCache.getOrDefault(pos, useable.stream().filter(t -> t.canExistAt(pos, this)).toList()));
+		for(Tile option : useable)
+			if(option.canExistAt(pos, this, volume))
+				options.add(option);
+		
 		if(!optionCache.containsKey(pos))
 			optionCache.put(pos, options);
 		
@@ -144,22 +162,17 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 			finalised.remove(pos);
 	}
 	
-	public BlueprintTileGrid finaliseRegion(GridVolume vol, Theme theme, Random rand)
-	{
-		LOGGER.info("Finalising tile set region...");
-		return finaliseRegion(vol.contents(), theme, rand);
-	}
-	
 	/** Populates the finalised map with tile instances with appropriate orientations */
 	public BlueprintTileGrid finaliseGrid(Theme theme, Random rand)
 	{
 		LOGGER.info("Finalising total tile set...");
-		return finaliseRegion(contents(), theme, rand);
+		return finaliseRegion(volume, theme, rand);
 	}
 	
-	protected BlueprintTileGrid finaliseRegion(Collection<BlockPos> set, Theme theme, Random rand)
+	public BlueprintTileGrid finaliseRegion(GridVolume region, Theme theme, Random rand)
 	{
-		for(BlockPos pos : set)
+		LOGGER.info("Finalising tile set region...");
+		for(BlockPos pos : region.contents())
 		{
 			if(finalised.containsKey(pos))
 				continue;
@@ -172,7 +185,7 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 					pos, 
 					tile, 
 					theme, 
-					tile.assignRotation(pos, this, this::get, rand)));	// FIXME Add room tag
+					tile.assignRotation(pos, this, region, this::get, rand)));	// FIXME Add room tag
 		}
 		return this;
 	}

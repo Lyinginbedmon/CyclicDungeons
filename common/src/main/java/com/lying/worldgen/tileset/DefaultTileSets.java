@@ -31,17 +31,17 @@ public class DefaultTileSets
 			new TileSet(ID_DEFAULT)
 				.addPlaceableFlooring()
 				.addAll(Map.of(
-					DefaultTiles.ID_PUDDLE, 1000F,
-					DefaultTiles.ID_WET_FLOOR, 750F,
-					DefaultTiles.ID_POOL, 100F,
-					DefaultTiles.ID_SEAT, 10F,
-					DefaultTiles.ID_FLOOR_LIGHT, 1F,
-					DefaultTiles.ID_TABLE, 1F,
-					DefaultTiles.ID_TABLE_LIGHT, 1F,
-					DefaultTiles.ID_WORKSTATION, 1F)),
+					DefaultTiles.ID_PUDDLE, 1000,
+					DefaultTiles.ID_WET_FLOOR, 750,
+					DefaultTiles.ID_POOL, 100,
+					DefaultTiles.ID_SEAT, 10,
+					DefaultTiles.ID_FLOOR_LIGHT, 1,
+					DefaultTiles.ID_TABLE, 1,
+					DefaultTiles.ID_TABLE_LIGHT, 1,
+					DefaultTiles.ID_WORKSTATION, 1)),
 			new TileSet(ID_DEFAULT_PASSAGE)
-				.add(DefaultTiles.ID_PASSAGE_FLOOR, 10000F)
-				.add(DefaultTiles.ID_FLOOR_LIGHT, 1F),
+				.add(DefaultTiles.ID_PASSAGE_FLOOR, 10000)
+				.add(DefaultTiles.ID_FLOOR_LIGHT, 1),
 			new TileSet(ID_START)
 				.addPlaceableFlooring(),
 			new TileSet(ID_END)
@@ -49,33 +49,33 @@ public class DefaultTileSets
 			new TileSet(ID_EMPTY)
 				.addGenericFlooring()
 				.addAll(Map.of(
-					DefaultTiles.ID_SEAT, 10F,
-					DefaultTiles.ID_FLOOR_LIGHT, 1F,
-					DefaultTiles.ID_TABLE, 1F,
-					DefaultTiles.ID_TABLE_LIGHT, 1F,
-					DefaultTiles.ID_WORKSTATION, 1F)),
+					DefaultTiles.ID_SEAT, 10,
+					DefaultTiles.ID_FLOOR_LIGHT, 1,
+					DefaultTiles.ID_TABLE, 1,
+					DefaultTiles.ID_TABLE_LIGHT, 1,
+					DefaultTiles.ID_WORKSTATION, 1)),
 			new TileSet(ID_TREASURE)
 				.addPlaceableFlooring()
-				.add(DefaultTiles.ID_TREASURE, 3000F),
+				.add(DefaultTiles.ID_TREASURE, 3000),
 			new TileSet(ID_BOSS)
 				.addAll(Map.of(
-					DefaultTiles.ID_PILLAR_BASE, 3000F,
-					DefaultTiles.ID_PILLAR, 3000F,
-					DefaultTiles.ID_PILLAR_CAP, 3000F,
-					DefaultTiles.ID_PRISTINE_FLOOR, 1000F,
-					DefaultTiles.ID_FLOOR, 1000F,
-					DefaultTiles.ID_HOT_FLOOR, 750F,
-					DefaultTiles.ID_LAVA, 750F)),
+					DefaultTiles.ID_PILLAR_BASE, 3000,
+					DefaultTiles.ID_PILLAR, 3000,
+					DefaultTiles.ID_PILLAR_CAP, 3000,
+					DefaultTiles.ID_PRISTINE_FLOOR, 1000,
+					DefaultTiles.ID_FLOOR, 1000,
+					DefaultTiles.ID_HOT_FLOOR, 750,
+					DefaultTiles.ID_LAVA, 750)),
 			new TileSet(ID_BATTLE)
 				.addAll(Map.of(
-					DefaultTiles.ID_PRISTINE_FLOOR, 750F,
-					DefaultTiles.ID_FLOOR, 1000F,
-					DefaultTiles.ID_HOT_FLOOR, 1000F,
-					DefaultTiles.ID_SEAT, 10F,
-					DefaultTiles.ID_FLOOR_LIGHT, 1F,
-					DefaultTiles.ID_TABLE, 1F,
-					DefaultTiles.ID_TABLE_LIGHT, 1F,
-					DefaultTiles.ID_WORKSTATION, 1F)),
+					DefaultTiles.ID_PRISTINE_FLOOR, 750,
+					DefaultTiles.ID_FLOOR, 1000,
+					DefaultTiles.ID_HOT_FLOOR, 1000,
+					DefaultTiles.ID_SEAT, 10,
+					DefaultTiles.ID_FLOOR_LIGHT, 1,
+					DefaultTiles.ID_TABLE, 1,
+					DefaultTiles.ID_TABLE_LIGHT, 1,
+					DefaultTiles.ID_WORKSTATION, 1)),
 			new TileSet(ID_PUZZLE)
 				.addPlaceableFlooring(),
 			new TileSet(ID_TRAP)
@@ -84,7 +84,7 @@ public class DefaultTileSets
 	private static final List<TileSet> TRAP_TILESETS = Lists.newArrayList(
 			new TileSet(ID_PITFALL_TRAP)
 			.addAll(Map.of(
-				DefaultTiles.ID_PITFALL, 30F
+				DefaultTiles.ID_PITFALL, 30
 					))
 			);
 	
@@ -93,7 +93,7 @@ public class DefaultTileSets
 	static
 	{
 		// Adds a low-weight air entry to all default room tile sets, to prevent overcrowding
-		ROOM_TILESETS.forEach(set -> set.add(CDTiles.ID_AIR, 10F));
+		ROOM_TILESETS.forEach(set -> set.add(CDTiles.ID_AIR, 10));
 		
 		DEFAULTS.addAll(ROOM_TILESETS);
 		DEFAULTS.addAll(TRAP_TILESETS);

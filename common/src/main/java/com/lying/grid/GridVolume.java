@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Predicates;
+import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -19,6 +20,8 @@ public class GridVolume
 {
 	private Map<BlockPos,Boolean> set = new HashMap<>();
 	private Optional<UUID> roomID = Optional.empty();
+	
+	private Map<Tile,Integer> tallies = new HashMap<>();
 	
 	public static GridVolume fromGraphGrid(GraphTileGrid graph, int height)
 	{
@@ -73,6 +76,22 @@ public class GridVolume
 	public void set(BlockPos pos)
 	{
 		set.put(pos, true);
+	}
+	
+	public void clearTallies() { tallies.clear(); }
+	
+	public void tally(@Nullable Tile addition, @Nullable Tile removal)
+	{
+		if(addition != null)
+			tallies.put(addition, tallies.getOrDefault(addition, 0) + 1);
+		
+		if(removal != null)
+			tallies.put(removal, Math.max(0, tallies.getOrDefault(removal, 0) - 1));
+	}
+	
+	public int tallyOf(Tile tileIn)
+	{
+		return tallies.getOrDefault(tileIn, 0);
 	}
 	
 	public void remove(BlockPos pos)

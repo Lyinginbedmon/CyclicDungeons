@@ -2,6 +2,7 @@
   "conditions": [
     "cydun:on_solid_floor",
     "cydun:non_boundary",
+    "cydun:nonconsecutive",
     {
       "cap": 2,
       "id": "cydun:min_adjacent_boundaries",
@@ -12,7 +13,6 @@
         "west"
       ]
     },
-    "cydun:nonconsecutive",
     {
       "cap": 4,
       "id": "cydun:max_per_room"

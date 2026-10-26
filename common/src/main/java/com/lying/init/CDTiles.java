@@ -97,7 +97,7 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 	public void register(Tile tileIn)
 	{
 		REGISTRY.put(tileIn.registryName(), () -> tileIn);
-		CyclicDungeons.LOGGER.info(" ## Loaded {}", tileIn.registryName().toString());
+		CyclicDungeons.LOGGER.info(" ## Loaded {} ({})", tileIn.registryName().toString(), tileIn.sensitivity().name());
 	}
 	
 	public Optional<Tile> get(Identifier id)

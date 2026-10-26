@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 import com.lying.CyclicDungeons;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.Tile.GridSensitivity;
 import com.lying.worldgen.tile.condition.Adjacent;
 import com.lying.worldgen.tile.condition.Boolean;
 import com.lying.worldgen.tile.condition.Boundary;
@@ -37,11 +39,17 @@ public class CDTileConditions
 	// Static yes/no conditions
 	public static final Supplier<Condition> NEVER			= register("never", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return false; }
+		public int cost() { return 0; }
+		public GridSensitivity searchSpace() { return GridSensitivity.SPATIAL; }
+		public boolean affectedBy(BlockPos offset) { return false; }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume) { return false; }
 	});
 	public static final Supplier<Condition> ALWAYS			= register("always", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return true; }
+		public int cost() { return 0; }
+		public GridSensitivity searchSpace() { return GridSensitivity.SPATIAL; }
+		public boolean affectedBy(BlockPos offset) { return false; }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume) { return true; }
 	});
 	
 	// Conditions for boolean logic applications
@@ -54,26 +62,34 @@ public class CDTileConditions
 	public static final Supplier<Condition> HAS_TAG			= register("has_tag", IsAnyOf.HasTag::new);
 	
 	// Conditions for the neighbourhood around the tile being evaluated
-	
 	public static final Supplier<Condition> ON_FLOOR		= register("on_solid_floor", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+		public int cost() { return 1; }
+		public GridSensitivity searchSpace() { return GridSensitivity.ADJACENT; }
+		public boolean affectedBy(BlockPos offset) { return Direction.DOWN.equals(Direction.fromVector(offset, Direction.NORTH)); }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 		{
-			BlockPos down = pos.down();
+			final BlockPos down = pos.down();
 			Optional<Tile> tile;
 			return 
-				grid.contains(down) && 
+				volume.contains(down) && 
 				(tile = grid.get(down)).isPresent() &&
 				CDTileTags.get(CDTileTags.ID_SOLID_FLOORING).get().contains(tile.get());
 		}
 	});
 	public static final Supplier<Condition> ON_BOTTOM		= register("on_bottom", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return grid.isBoundary(pos, Direction.DOWN); }
+		public int cost() { return 1; }
+		public GridSensitivity searchSpace() { return GridSensitivity.SPATIAL; }
+		public boolean affectedBy(BlockPos offset) { return false; }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume) { return volume.isBoundary(pos, Direction.DOWN); }
 	});
 	public static final Supplier<Condition> ON_TOP			= register("on_top", id -> new Condition(id)
 	{
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid) { return grid.isBoundary(pos, Direction.UP); }
+		public int cost() { return 1; }
+		public GridSensitivity searchSpace() { return GridSensitivity.SPATIAL; }
+		public boolean affectedBy(BlockPos offset) { return false; }
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume) { return volume.isBoundary(pos, Direction.UP); }
 	});
 	public static final Supplier<Condition> BOUNDARY		= register("boundary", Boundary::new);
 	public static final Supplier<Condition> NON_BOUNDARY	= register("non_boundary", Boundary.Inverse::new);

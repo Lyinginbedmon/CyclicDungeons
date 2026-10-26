@@ -21,7 +21,6 @@ import com.lying.worldgen.tile.condition.NearBox;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 
 public class DefaultTiles
@@ -125,7 +124,7 @@ public class DefaultTiles
 			.of(TilePredicate.Builder.create()
 				.condition(CDTileConditions.ON_FLOOR.get())
 				.condition(Boundary.of(Direction.Type.HORIZONTAL))
-				.condition(NearBox.Inverse.of(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), IsAnyOf.HasTag.of(CDTileTags.ID_TABLES)))
+				.condition(NearBox.Inverse.of(new BlockPos(-1,0,-1), new BlockPos(1,0,1), IsAnyOf.HasTag.of(CDTileTags.ID_TABLES)))
 				.build())
 			.asStructure()
 			.tags(CDTileTags.ID_TABLES, CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR)
@@ -135,7 +134,7 @@ public class DefaultTiles
 				.condition(CDTileConditions.ON_FLOOR.get())
 				.condition(Boundary.of(Direction.Type.HORIZONTAL))
 				.condition(CDTileConditions.NON_CONSECUTIVE.get())
-				.condition(NearBox.Inverse.of(Box.enclosing(new BlockPos(-1,0,-1), new BlockPos(1,0,1)), IsAnyOf.HasTag.of(CDTileTags.ID_TABLES, CDTileTags.ID_LIGHTING)))
+				.condition(NearBox.Inverse.of(new BlockPos(-1,0,-1), new BlockPos(1,0,1), IsAnyOf.HasTag.of(CDTileTags.ID_TABLES, CDTileTags.ID_LIGHTING)))
 				.build())
 			.asStructure()
 			.tags(CDTileTags.ID_TABLES, CDTileTags.ID_LIGHTING, CDTileTags.ID_OBTRUSIVE, CDTileTags.ID_DECOR)
@@ -153,7 +152,7 @@ public class DefaultTiles
 				.condition(Boundary.of(Direction.Type.HORIZONTAL))
 				.condition(CDTileConditions.ON_FLOOR.get())
 				.condition(CDTileConditions.NON_CONSECUTIVE.get())
-				.condition(NearBox.Inverse.of(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), IsAnyOf.HasTag.of(CDTileTags.ID_LIGHTING)))
+				.condition(NearBox.Inverse.of(new BlockPos(-2,0,-2), new BlockPos(2,0,2), IsAnyOf.HasTag.of(CDTileTags.ID_LIGHTING)))
 				.condition(Adjacent.Inverse.of(IsAnyOf.HasTag.of(CDTileTags.ID_TABLES)))
 				.build())
 			.asStructure()
@@ -164,7 +163,7 @@ public class DefaultTiles
 				.condition(Boundary.of(Direction.Type.HORIZONTAL))
 				.condition(CDTileConditions.ON_FLOOR.get())
 				.condition(CDTileConditions.NON_CONSECUTIVE.get())
-				.condition(NearBox.Inverse.of(Box.enclosing(new BlockPos(-2,0,-2), new BlockPos(2,0,2)), IsAnyOf.HasTag.of(CDTileTags.ID_DECOR)))
+				.condition(NearBox.Inverse.of(new BlockPos(-2,0,-2), new BlockPos(2,0,2), IsAnyOf.HasTag.of(CDTileTags.ID_DECOR)))
 				.build())
 			.asStructure()
 			.withRotation(RotationSupplier.FaceBoundary.of(RotationSupplier.RANDOM.get()))

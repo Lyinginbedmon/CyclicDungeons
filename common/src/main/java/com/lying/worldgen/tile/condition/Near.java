@@ -3,8 +3,10 @@ package com.lying.worldgen.tile.condition;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileConditions;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.Tile.GridSensitivity;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;
@@ -27,8 +29,14 @@ public class Near extends Condition
 		condition.child = childIn;
 		return condition;
 	}
-
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+	
+	public int cost() { return 8; }
+	
+	public GridSensitivity searchSpace() { return GridSensitivity.REGIONAL; }
+	
+	public boolean affectedBy(BlockPos offset) { return offset.isWithinDistance(BlockPos.ZERO, d); }
+	
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 	{
 		for(int x=-(int)d; x<d; x++)
 			for(int z=-(int)d; z<d; z++)
@@ -39,11 +47,11 @@ public class Near extends Condition
 						continue;
 					
 					BlockPos offset = pos.add(x, y, z);
-					if(!grid.contains(offset) || !offset.isWithinDistance(pos, d))
+					if(!volume.contains(offset) || grid.isEmpty(offset) || !offset.isWithinDistance(pos, d))
 						continue;
 					
 					Tile tileAt = grid.get(offset).get();
-					if(child.test(tileAt, offset, grid))
+					if(child.test(tileAt, offset, grid, volume))
 						return true;
 				}
 		
@@ -80,9 +88,9 @@ public class Near extends Condition
 			return condition;
 		}
 
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 		{
-			return !super.test(tileIn, pos, grid);
+			return !super.test(tileIn, pos, grid, volume);
 		}
 	}
 }

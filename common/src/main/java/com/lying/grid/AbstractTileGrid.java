@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.BiPredicate;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +24,6 @@ public abstract class AbstractTileGrid<T extends Object>
 	public static final Tile BLANK	= CDTiles.BLANK.get();
 	
 	protected final Map<T, Tile> set = new HashMap<>();
-	protected final Map<Tile, Integer> tally = new HashMap<>();
-	protected final Map<T, List<Tile>> optionCache = new HashMap<>();
 	
 	public final int volume() { return set.size(); }
 	
@@ -42,12 +39,6 @@ public abstract class AbstractTileGrid<T extends Object>
 	public final AbstractTileGrid<T> addAllToVolume(Collection<T> positions)
 	{
 		positions.forEach(this::addToVolume);
-		return this;
-	}
-	
-	public final AbstractTileGrid<T> removeFromVolume(T pos)
-	{
-		set.remove(pos);
 		return this;
 	}
 	
@@ -82,34 +73,19 @@ public abstract class AbstractTileGrid<T extends Object>
 	
 	public final boolean isEmpty(T pos) { return get(pos).isEmpty() || get(pos).get().isBlank(); }
 	
-	private final void setTile(T pos, @NotNull Tile tile)
+	protected void setTile(T pos, @NotNull Tile tile)
 	{
-		get(pos).ifPresent(t -> tally.put(t, tallyOf(t) - 1));
-		
 		set.put(pos, tile);
-		tally.put(tile, tallyOf(tile) + 1);
 	}
 	
 	public final Collection<T> contents() { return set.keySet(); }
 	
 	public abstract List<T> getBoundaries(List<Direction> faces);
 	
-	public final int tallyOf(Tile tile) { return tally.getOrDefault(tile, 0); }
-	
 	public final List<T> getBlanks()
 	{
 		List<T> blanks = new ArrayList<>();
 		set.entrySet().stream().filter(entry -> entry.getValue().isBlank()).map(Entry::getKey).forEach(blanks::add);
 		return blanks;
-	}
-	
-	public final void clearOptionCache()
-	{
-		optionCache.clear();
-	}
-	
-	public final List<T> getMatchingTiles(BiPredicate<T,Tile> predicate)
-	{
-		return set.entrySet().stream().filter(e -> predicate.test(e.getKey(), e.getValue())).map(Entry::getKey).toList();
 	}
 }

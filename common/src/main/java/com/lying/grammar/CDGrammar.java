@@ -85,11 +85,11 @@ public class CDGrammar
 			else
 			{
 				// Run weight calculation and select term accordingly
-				List<Pair<GrammarTerm,Float>> weights = new ArrayList<>();
+				List<Pair<GrammarTerm,Integer>> weights = new ArrayList<>();
 				for(GrammarTerm candidate : candidates)
-					weights.add(Pair.of(candidate, (float)candidate.weight()));
+					weights.add(Pair.of(candidate, candidate.weight()));
 				
-				term = CDUtils.selectFromWeightedList(weights, rand.nextFloat());
+				term = CDUtils.selectFromWeightedList(weights, rand);
 			}
 		}
 		else

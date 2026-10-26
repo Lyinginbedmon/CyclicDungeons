@@ -307,9 +307,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		final GridVolume vol = GridVolume.fromGraphGrid(graph, 2);
 		
 		// Generate the entryway
-		TileGenerator.generate(grid.addTilesFor(vol), vol, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1F), rand);
+		TileGenerator.generate(grid.addTilesFor(vol), vol, new TileSet(Reference.ModInfo.prefix("entryway_floor")).add(CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR).orElse(CDTiles.STONE.get()), 1), rand);
 		grid.finaliseGrid(start.metadata().theme(), rand);
-//		grid.generate(position, world);
 	}
 	
 	public List<BlueprintPassage> passages()

@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDTileTags.TileTag;
 import com.lying.init.CDTiles;
@@ -122,9 +123,13 @@ public abstract class Tile
 	
 	public final boolean isFlag() { return type == GenStyle.FLAG; }
 	
-	public final boolean canExistAt(BlockPos pos, BlueprintTileGrid set)
+	public final GridSensitivity sensitivity() { return predicate.sensitivity(); }
+	
+	public final boolean placementAffectedBy(BlockPos offset) { return predicate.isPlacementAffectedBy(offset); }
+	
+	public final boolean canExistAt(BlockPos pos, BlueprintTileGrid set, GridVolume volume)
 	{
-		return predicate.test(this, pos, set);
+		return predicate.test(this, pos, set, volume);
 	}
 	
 	public final int priority() { return isFlag() ? -1 : priority; }
@@ -145,9 +150,9 @@ public abstract class Tile
 	
 	/** Returns a valid rotation for an instance of this tile at the given coordinates in the tile set */
 	@NotNull
-	public final BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, Function<BlockPos,Optional<Tile>> func, Random rand)
+	public final BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, GridVolume volume, Function<BlockPos,Optional<Tile>> func, Random rand)
 	{
-		return rotator.assignRotation(pos, grid, func, rand);
+		return rotator.assignRotation(pos, grid, volume, func, rand);
 	}
 	
 	public abstract void generate(TileInstance inst, BlockPos pos, ServerWorld world);
@@ -178,6 +183,28 @@ public abstract class Tile
 					return style;
 			return FLAG;
 		}
+	}
+	
+	/** Tile classification used to identify tiles that need updating during generation steps */
+	public static enum GridSensitivity
+	{
+		/** Tiles that can only be placed in certain positions */
+		SPATIAL(0),
+		/** Tiles that can only be placed on specific other tiles */
+		LOCAL(1),
+		/** Tiles that can only be placed directly next to other tiles */
+		ADJACENT(2),
+		/** Tiles that need certain wider-range conditions */
+		REGIONAL(3);
+		
+		private final int score;
+		
+		private GridSensitivity(int scoreIn)
+		{
+			score = scoreIn;
+		}
+		
+		public int value() { return score; }
 	}
 	
 	public static class Builder

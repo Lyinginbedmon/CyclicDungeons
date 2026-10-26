@@ -3,19 +3,19 @@
   "values": [
     {
       "tile": "cydun:pristine_floor",
-      "weight": 3000.0
+      "weight": 3000
     },
     {
       "tile": "cydun:treasure",
-      "weight": 3000.0
+      "weight": 3000
     },
     {
       "tile": "cydun:air",
-      "weight": 10.0
+      "weight": 10
     },
     {
       "tile": "cydun:floor",
-      "weight": 1000.0
+      "weight": 1000
     }
   ]
 }

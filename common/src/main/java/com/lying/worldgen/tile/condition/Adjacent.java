@@ -6,9 +6,11 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileConditions;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.Tile.GridSensitivity;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;
@@ -44,17 +46,26 @@ public class Adjacent extends Condition
 		return condition;
 	}
 	
+	public int cost() { return 1; }
+	
+	public GridSensitivity searchSpace() { return GridSensitivity.ADJACENT; }
+	
+	public boolean affectedBy(BlockPos offset)
+	{
+		return faces.contains(Direction.fromVector(offset, Direction.NORTH));
+	}
+	
 	protected void setFaces(List<Direction> facesIn)
 	{
 		faces.clear();
 		faces.addAll(facesIn);
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 	{
 		BlockPos offset;
 		for(Direction face : faces)
-			if(grid.contains(offset = pos.offset(face)) && child.test(grid.get(offset).get(), offset, grid))
+			if(volume.contains(offset = pos.offset(face)) && child.test(grid.get(offset).get(), offset, grid, volume))
 				return true;
 		return false;
 	}
@@ -107,9 +118,9 @@ public class Adjacent extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 		{
-			return !super.test(tileIn, pos, grid);
+			return !super.test(tileIn, pos, grid, volume);
 		}
 	}
 	
@@ -136,13 +147,14 @@ public class Adjacent extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 		{
 			int tally = 0;
 			BlockPos offset;
-			Tile tileAt;
 			for(Direction face : faces)
-				if(grid.contains(offset = pos.offset(face)) && !(tileAt = grid.get(offset).get()).isBlank() && child.test(tileAt, offset, grid))
+				if(!volume.contains(offset = pos.offset(face)) || grid.isEmpty(offset))
+					continue;
+				else if(child.test(grid.get(offset).get(), offset, grid, volume))
 					if(++tally >= i)
 						return false;
 			return true;
@@ -204,11 +216,11 @@ public class Adjacent extends Condition
 			return this;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set, GridVolume volume)
 		{
 			BlockPos offset;
 			for(Direction face : faces)
-				if(set.contains(offset = pos.offset(face)) && set.get(offset).get().registryName().equals(CDTiles.ID_PASSAGE_FLAG))
+				if(volume.contains(offset = pos.offset(face)) && !set.isEmpty(offset) && set.get(offset).get().is(CDTiles.PASSAGE_FLAG.get()))
 					return true;
 			return false;
 		}
@@ -232,9 +244,9 @@ public class Adjacent extends Condition
 				return condition;
 			}
 			
-			public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+			public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set, GridVolume volume)
 			{
-				return !super.test(tileIn, pos, set);
+				return !super.test(tileIn, pos, set, volume);
 			}
 		}
 	}

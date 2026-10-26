@@ -2,12 +2,16 @@ package com.lying.worldgen;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Predicates;
 import com.lying.grid.BlueprintTileGrid;
@@ -17,6 +21,7 @@ import com.lying.init.CDTiles;
 import com.lying.utility.CDUtils;
 import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.Tile.GridSensitivity;
 import com.lying.worldgen.tileset.TileSet;
 
 import net.minecraft.util.math.BlockPos;
@@ -42,6 +47,18 @@ public class TileGenerator
 		
 		LOGGER.info("Apply WFC to tile set of {} positions", map.volume());
 		
+		// Ensure grid volume knows its own contents
+		vol.clearTallies();
+		vol.contents().forEach(p -> 
+		{
+			Tile tileAt = map.get(p).orElse(CDTiles.BLANK.get());
+			vol.tally(tileAt, null);
+		});
+		
+		final OptionLog optionManager = new OptionLog(map, vol, tiles.keys().stream()
+				.filter(Predicates.not(Tile::isBlank))
+				.toList());
+		
 		List<BlockPos> positionsToGenerate = vol.unsetPoints();
 		Map<Integer,List<BlockPos>> positionsPerY = new HashMap<>();
 		positionsToGenerate.forEach(p -> 
@@ -61,7 +78,7 @@ public class TileGenerator
 		{
 			List<BlockPos> positions = positionsPerY.get(level);
 			int size = positions.size();
-			processSet(positions, map, vol, tiles, fallback, rand);
+			processSet(positions, map, vol, tiles, optionManager, fallback, rand);
 			
 			LOGGER.info(" ## Generated set {} of {}, {} positions", ++index, levels.size(), size);
 		}
@@ -69,7 +86,7 @@ public class TileGenerator
 		LOGGER.info("WFC complete");
 	}
 	
-	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, GridVolume vol, TileSet tiles, Supplier<Tile> fallback, Random rand)
+	private static void processSet(List<BlockPos> slots, BlueprintTileGrid map, GridVolume vol, final TileSet tiles, final OptionLog manager, final Supplier<Tile> fallback, Random rand)
 	{
 		if(slots.isEmpty() || tiles.isEmpty())
 		{
@@ -77,9 +94,6 @@ public class TileGenerator
 			return;
 		}
 		
-		final List<Tile> candidates = tiles.keys().stream()
-				.filter(Predicates.not(Tile::isBlank))
-				.toList();
 		/**
 		 * Sort open slots by number of available options
 		 * Pop slot with fewest options
@@ -88,47 +102,39 @@ public class TileGenerator
 		 */
 		while(!slots.isEmpty())
 		{
-			MapEntry entry = getMostConstrained(slots, map, candidates);
-			Tile tile;
-			switch(entry.options().size())
+			final BlockPos pos = manager.getMostConstrainedAmong(slots);
+			if(pos == null)
+				break;
+			
+			List<Tile> options = manager.getOptionsFor(pos);
+			Tile tile = null;
+			switch(options.size())
 			{
 				case 0:
 					tile = fallback.get();
 					break;
 				case 1:
-					tile = entry.options().get(0);
+					tile = options.get(0);
 					break;
 				default:
-					tile = selectTile(entry.options(), tiles, rand);
+					tile = selectTile(options, tiles, rand);
 					break;
 			}
 			
 			if(tile != null)
-				setTile(entry.pos(), tile, map, vol);
-			slots.remove(entry.index());
+			{
+				setTile(pos, tile, map, vol);
+				manager.removeAndUpdate(pos, map, vol);
+			}
+			slots.remove(pos);
 		}
-	}
-	
-	protected static MapEntry getMostConstrained(List<BlockPos> slots, BlueprintTileGrid map, List<Tile> candidates)
-	{
-		map.clearOptionCache();
-		MapEntry most = MapEntry.of(slots.get(0), map, candidates);
-		for(int i=0; i<slots.size(); i++)
-		{
-			BlockPos slotB = slots.get(i);
-			MapEntry entry = new MapEntry(i, slotB, map.getOptionsFor(slotB, candidates));
-			if(entry.size() < most.size())
-				most = entry;
-		}
-		return most;
 	}
 	
 	public static Tile selectTile(List<Tile> options, TileSet weights, Random rand)
 	{
-		List<Pair<Tile,Float>> weightedList = new ArrayList<>();
-		options.forEach(tile -> weightedList.add(Pair.of(tile, (float)weights.get(tile))));
-		
-		return CDUtils.selectFromWeightedList(weightedList, rand.nextFloat());
+		return CDUtils.selectFromWeightedList(
+				options.stream().map(t -> Pair.of(t, weights.get(t))).toList(),
+				rand);
 	}
 	
 	/** Sets the tile in the grid and marks it as checked within the volume */
@@ -139,18 +145,136 @@ public class TileGenerator
 			map.addToVolume(pos);
 			vol.add(pos);
 		}
+		Optional<Tile> existing = map.get(pos);
 		map.put(pos, tile);
+		vol.tally(tile, existing.orElse(null));
 		if(!tile.isBlank())
 			vol.set(pos);
 	}
 	
-	protected record MapEntry(int index, BlockPos pos, List<Tile> options)
+	/** Centralised tile options manager object */
+	public static class OptionLog
 	{
-		public int size() { return options.size(); }
-		
-		public static MapEntry of(BlockPos pos, BlueprintTileGrid map, List<Tile> options)
+		private Map<BlockPos,OptionData> data = new HashMap<>();
+		private List<BlockPos> sequence = new ArrayList<>();
+		private final Comparator<BlockPos> placeOrder = (a,b) -> 
 		{
-			return new MapEntry(0, pos, map.getOptionsFor(pos, options));
+			int cA = data.get(a).constraint();
+			int cB = data.get(b).constraint();
+			return cA < cB ? -1 : cA > cB ? 1 : 0;
+		};
+		
+		public OptionLog(BlueprintTileGrid map, GridVolume vol, List<Tile> tileSet)
+		{
+			data.clear();
+			for(BlockPos pos : vol.unsetPoints())
+				data.put(pos, new OptionData(tileSet).initialise(pos, map, vol));
+			
+			sequence.addAll(data.keySet());
+			sequence.sort(placeOrder);
+		}
+		
+		/** Removes the given position and updates all relevant candidates for remaining positions */
+		public void removeAndUpdate(BlockPos pos, BlueprintTileGrid map, GridVolume vol)
+		{
+			data.remove(pos);
+			sequence.remove(pos);
+			
+			boolean anyChange = false;
+			for(BlockPos p2 : vol.unsetPoints())
+			{
+				int constraint = data.get(p2).constraint();
+				data.get(p2).update(pos, p2, map, vol);
+				if(constraint > data.get(p2).constraint())
+					anyChange = true;
+			}
+			
+			// If any candidates became more/less constrained, update the sequence
+			if(anyChange)
+				sequence.sort(placeOrder);
+		}
+		
+		/** Returns the position with the fewest viable options */
+		@Nullable
+		public BlockPos getMostConstrainedAmong(List<BlockPos> set)
+		{
+			for(BlockPos pos : sequence)
+				if(set.contains(pos))
+					return pos;
+			
+			return null;
+		}
+		
+		public List<Tile> getOptionsFor(BlockPos pos)
+		{
+			return data.get(pos).options();
+		}
+		
+		public static class OptionData
+		{
+			/** Map of tiles affected at different levels of sensitivity */
+			private Map<GridSensitivity,List<Tile>> candidates = new HashMap<>();
+			/** Map of tiles to their viability at the end of the last update */
+			private Map<Tile, Boolean> viability = new HashMap<>();
+			private List<Tile> options = List.of();
+			
+			public OptionData(List<Tile> options)
+			{
+				for(GridSensitivity space : GridSensitivity.values())
+					candidates.put(space, options.stream().filter(t -> t.sensitivity() == space).toList());
+				options.forEach(t -> viability.put(t, false));
+			}
+			
+			/** Updates all tile options at once */
+			public OptionData initialise(BlockPos pos, BlueprintTileGrid map, GridVolume vol)
+			{
+				for(Tile tile : viability.keySet())
+					updateTile(tile, pos, map, vol);
+				
+				options = viability.entrySet().stream()
+						.filter(Entry::getValue)
+						.map(Entry::getKey)
+						.toList();
+				return this;
+			}
+			
+			public boolean update(BlockPos origin, BlockPos pos, BlueprintTileGrid map, GridVolume vol)
+			{
+				boolean anyChange = false;
+				
+				// Update regional tiles
+				final BlockPos offset = origin.subtract(pos);
+				for(Tile tile : candidates.getOrDefault(GridSensitivity.REGIONAL, List.of()))
+				{
+					if(!tile.placementAffectedBy(offset))
+						continue;
+					
+					anyChange = updateTile(tile, pos, map, vol) || anyChange;
+				}
+				
+				// Update adjacent tiles
+				if(pos.getManhattanDistance(origin) == 1)
+					for(Tile tile : candidates.getOrDefault(GridSensitivity.ADJACENT, List.of()))
+						anyChange = updateTile(tile, pos, map, vol) || anyChange;
+				
+				// If anything changed, update the options cache
+				if(anyChange)
+					options = viability.entrySet().stream().filter(Entry::getValue).map(Entry::getKey).toList();
+				
+				return anyChange;
+			}
+			
+			protected boolean updateTile(Tile tile, BlockPos pos, BlueprintTileGrid map, GridVolume vol)
+			{
+				final boolean prev = viability.get(tile);
+				final boolean now = tile.canExistAt(pos, map, vol);
+				viability.put(tile, now);
+				return prev != now;
+			}
+			
+			public List<Tile> options() { return options; }
+			
+			public int constraint() { return options().size(); }
 		}
 	}
 }

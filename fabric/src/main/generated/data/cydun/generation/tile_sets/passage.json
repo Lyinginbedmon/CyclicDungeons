@@ -3,15 +3,15 @@
   "values": [
     {
       "tile": "cydun:passage_floor",
-      "weight": 10000.0
+      "weight": 10000
     },
     {
       "tile": "cydun:air",
-      "weight": 10.0
+      "weight": 10
     },
     {
       "tile": "cydun:floor_light",
-      "weight": 1.0
+      "weight": 1
     }
   ]
 }

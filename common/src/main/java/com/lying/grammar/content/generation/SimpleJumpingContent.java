@@ -28,7 +28,6 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 
@@ -76,7 +75,7 @@ public class SimpleJumpingContent extends Content
 		final Tile flooring = FLOOR.get();
 		
 		// Place initial solid flooring underneath doorway exclusions
-		tileMap.getMatchingTiles((p,t) -> t.registryName().equals(CDTiles.ID_PASSAGE_FLAG)).stream()
+		tileMap.getMatchingTilesWithin(volume, (p,t) -> t.registryName().equals(CDTiles.ID_PASSAGE_FLAG)).stream()
 			.map(BlockPos::down)
 			.filter(tileMap::contains)
 			.forEach(p -> tileMap.put(p, flooring));
@@ -91,7 +90,7 @@ public class SimpleJumpingContent extends Content
 		
 		List<BlockPos> platforms = new ArrayList<>();
 		List<BlockPos> options;
-		while(!(options = tileMap.getMatchingTiles((p,t) -> spacingPredicate.test(t, p, tileMap))).isEmpty())
+		while(!(options = tileMap.getMatchingTilesWithin(volume, (p,t) -> spacingPredicate.test(t, p, tileMap, volume))).isEmpty())
 		{
 			BlockPos pos = options.size() > 1 ? options.get(rand.nextInt(options.size())) : options.get(0);
 			tileMap.put(pos, flooring);
@@ -100,11 +99,11 @@ public class SimpleJumpingContent extends Content
 		
 		// Fill in remaining floor space with filler tile
 		final Tile filler = CDTiles.instance().get(fillTile).get();
-		tileMap.getMatchingTiles((p,t) -> t.isBlank() && flooring.canExistAt(p, tileMap)).forEach(p -> tileMap.put(p, filler));
+		tileMap.getMatchingTilesWithin(volume, (p,t) -> t.isBlank() && flooring.canExistAt(p, tileMap, volume)).forEach(p -> tileMap.put(p, filler));
 		
 		if(!room.hasChildren())
 		{
-			final BlockPos entry = tileMap.getMatchingTiles((p,t) -> t.registryName().equals(CDTiles.ID_PASSAGE_FLAG)).getFirst();
+			final BlockPos entry = tileMap.getMatchingTilesWithin(volume, (p,t) -> t.is(CDTiles.PASSAGE_FLAG.get())).getFirst();
 			platforms.stream()
 					.filter(p -> !tileMap.isBoundary(p, Direction.UP) && tileMap.isEmpty(p.up()))
 					.sorted((a,b) -> 
@@ -126,8 +125,8 @@ public class SimpleJumpingContent extends Content
 		
 		return TilePredicate.Builder.create()
 				.condition(CDTileConditions.ON_BOTTOM.get())
-				.condition(NearBox.Inverse.of(Box.enclosing(hitMin, hitMax), IS_FLOOR))
-				.condition(NearBox.of(Box.enclosing(hitMin.add(-1, 0, -1), hitMax.add(1, 0, 1)), IS_FLOOR))
+				.condition(NearBox.Inverse.of(hitMin, hitMax, IS_FLOOR))
+				.condition(NearBox.of(hitMin.add(-1, 0, -1), hitMax.add(1, 0, 1), IS_FLOOR))
 				.build();
 	}
 	

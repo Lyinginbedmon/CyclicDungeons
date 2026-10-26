@@ -30,6 +30,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 
 public class CDUtils
@@ -100,35 +101,30 @@ public class CDUtils
 	public static Block dyeToConcrete(DyeColor color) { return DYE_TO_CONCRETE.get(color).getRight(); }
 	
 	@Nullable
-	public static <T extends Object> T selectFromWeightedList(List<Pair<T,Float>> weightedList, final float selector)
+	public static <T extends Object> T selectFromWeightedList(List<Pair<T,Integer>> weightedList, Random rand)
 	{
 		if(weightedList.isEmpty())
 			return null;
-		else if(weightedList.size() == 1)
+		if(weightedList.size() == 1)
 			return weightedList.get(0).getLeft();
 		
 		// Step 1 - Calculate the sum of all weights
-		float totalWeight = 0F;
-		for(float weight : weightedList.stream().map(Pair::getRight).map(Math::abs).filter(w -> w>0).toList())
-			totalWeight += weight;
+		int totalWeight = 0;
+		for(Pair<T,Integer> entry : weightedList)
+			totalWeight += entry.getRight();
 		
-		// Step 2 - Use that sum to calculate the percentile of each choice within the set
-		List<Pair<T,Float>> percentileList = new ArrayList<>();
-		for(Pair<T,Float> entry : weightedList)
-			percentileList.add(Pair.of(entry.getLeft(), entry.getRight() / totalWeight));
-		percentileList.sort((a,b) -> a.getRight() < b.getRight() ? -1 : a.getRight() > b.getRight() ? 1 : 0);
+		// Step 2 - Select a position within the range
+		int val = rand.nextBetween(0, totalWeight);
 		
-		// Step 3 - Select the first entry in the list whose weight val exceeds the selector value
-		float lowerBound = 0F;
-		for(int i=0; i<percentileList.size(); i++)
+		// Step 3 - Identify value at position and return
+		T latest = null;
+		for(Pair<T,Integer> entry : weightedList)
 		{
-			Pair<T,Float> entry = percentileList.get(i);
-			float upperBound = lowerBound + entry.getRight();
-			if(selector >= lowerBound && selector <= upperBound)
-				return entry.getLeft();
-			lowerBound = upperBound;
+			latest = entry.getLeft();
+			if((val -= entry.getRight()) < 0)
+				break;
 		}
-		return percentileList.getLast().getLeft();
+		return latest;
 	}
 	
 	public static Vec2f rotate(Vec2f a, float radians)

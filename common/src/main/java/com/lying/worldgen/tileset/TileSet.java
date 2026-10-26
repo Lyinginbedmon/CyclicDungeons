@@ -15,7 +15,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.util.Identifier;
 
-public class TileSet extends HashMap<Identifier,Float>
+public class TileSet extends HashMap<Identifier,Integer>
 {
 	private static final long serialVersionUID = 1L;
 	public static final Codec<TileSet> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
@@ -55,20 +55,20 @@ public class TileSet extends HashMap<Identifier,Float>
 	
 	public boolean containsKey(Tile tileIn) { return containsKey(tileIn.registryName()); }
 	
-	public float get(Tile tileIn) { return get(tileIn.registryName()); }
+	public int get(Tile tileIn) { return get(tileIn.registryName()); }
 	
-	public TileSet add(Tile tileIn, float weightIn)
+	public TileSet add(Tile tileIn, int weightIn)
 	{
 		return add(tileIn.registryName(), weightIn);
 	}
 	
-	public TileSet add(Identifier tileIn, float weightIn)
+	public TileSet add(Identifier tileIn, int weightIn)
 	{
 		super.put(tileIn, weightIn);
 		return this;
 	}
 	
-	public TileSet addAll(Map<Identifier,Float> mapIn)
+	public TileSet addAll(Map<Identifier,Integer> mapIn)
 	{
 		mapIn.entrySet().forEach(e -> add(e.getKey(), e.getValue()));
 		return this;
@@ -77,8 +77,8 @@ public class TileSet extends HashMap<Identifier,Float>
 	/** Adds pristine and regular flooring, things most decor can be placed on */
 	public TileSet addPlaceableFlooring()
 	{
-		add(DefaultTiles.ID_PRISTINE_FLOOR, 3000F);
-		add(DefaultTiles.ID_FLOOR, 1000F);
+		add(DefaultTiles.ID_PRISTINE_FLOOR, 3000);
+		add(DefaultTiles.ID_FLOOR, 1000);
 		return this;
 	}
 	
@@ -86,9 +86,9 @@ public class TileSet extends HashMap<Identifier,Float>
 	public TileSet addGenericFlooring()
 	{
 		addPlaceableFlooring();
-		add(DefaultTiles.ID_PUDDLE, 1000F);
-		add(DefaultTiles.ID_WET_FLOOR, 200F);
-		add(DefaultTiles.ID_POOL, 10F);
+		add(DefaultTiles.ID_PUDDLE, 1000);
+		add(DefaultTiles.ID_WET_FLOOR, 200);
+		add(DefaultTiles.ID_POOL, 10);
 		return this;
 	}
 	
@@ -102,11 +102,11 @@ public class TileSet extends HashMap<Identifier,Float>
 		return CODEC.parse(ops, input).getOrThrow();
 	}
 	
-	private static record TileEntry(Identifier tile, float weight)
+	private static record TileEntry(Identifier tile, int weight)
 	{
 		public static final Codec<TileSet.TileEntry> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
 				Identifier.CODEC.fieldOf("tile").forGetter(TileEntry::tile), 
-				Codec.FLOAT.fieldOf("weight").forGetter(TileEntry::weight))
+				Codec.INT.fieldOf("weight").forGetter(TileEntry::weight))
 				.apply(instance, TileSet.TileEntry::new));
 	}
 }

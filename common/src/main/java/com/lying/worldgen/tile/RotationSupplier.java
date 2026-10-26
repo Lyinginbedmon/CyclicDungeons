@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileConditions;
 import com.lying.worldgen.tile.condition.Condition;
 import com.mojang.datafixers.util.Pair;
@@ -43,12 +44,12 @@ public abstract class RotationSupplier
 	public static final Supplier<RotationSupplier> NONE		= register("none", id -> new RotationSupplier(id)
 	{
 		@NotNull
-		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, Function<BlockPos,Optional<Tile>> func, Random rand) { return BlockRotation.NONE; }
+		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, GridVolume volume, Function<BlockPos,Optional<Tile>> func, Random rand) { return BlockRotation.NONE; }
 	});
 	public static final Supplier<RotationSupplier> RANDOM	= register("random", id -> new RotationSupplier(id)
 	{
 		@NotNull
-		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, Function<BlockPos,Optional<Tile>> func, Random rand) { return BlockRotation.values()[rand.nextInt(BlockRotation.values().length)]; }
+		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, GridVolume volume, Function<BlockPos,Optional<Tile>> func, Random rand) { return BlockRotation.values()[rand.nextInt(BlockRotation.values().length)]; }
 	});
 	public static final Supplier<RotationSupplier> FACE_ADJACENT	= register("face_adjacent", FaceAdjacent::new);
 	public static final Supplier<RotationSupplier> AGAINST_BOUNDARY	= register("face_boundary", FaceBoundary::new);
@@ -80,7 +81,7 @@ public abstract class RotationSupplier
 	public final Identifier registryName() { return id; }
 	
 	@NotNull
-	public abstract BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, Function<BlockPos,Optional<Tile>> func, Random rand);
+	public abstract BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, GridVolume volume, Function<BlockPos,Optional<Tile>> func, Random rand);
 	
 	public JsonElement toJson(JsonOps ops)
 	{
@@ -148,17 +149,17 @@ public abstract class RotationSupplier
 		}
 		
 		@NotNull
-		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, Function<BlockPos, Optional<Tile>> func, Random rand)
+		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, GridVolume volume, Function<BlockPos, Optional<Tile>> func, Random rand)
 		{
 			for(Entry<Direction, BlockRotation> entry : faceToRotationMap.entrySet())
 			{
 				BlockPos offset = pos.offset(entry.getKey());
 				Optional<Tile> neighbour = func.apply(offset);
-				if(neighbour.isPresent() && predicate.test(neighbour.get(), offset, grid))
+				if(neighbour.isPresent() && predicate.test(neighbour.get(), offset, grid, volume))
 					return entry.getValue();
 			}
 			
-			return fallback.assignRotation(pos, grid, func, rand);
+			return fallback.assignRotation(pos, grid, volume, func, rand);
 		}
 		
 		public JsonElement toJson(JsonOps ops)
@@ -194,7 +195,7 @@ public abstract class RotationSupplier
 		}
 		
 		@NotNull
-		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, Function<BlockPos, Optional<Tile>> func, Random rand)
+		public BlockRotation assignRotation(BlockPos pos, BlueprintTileGrid grid, GridVolume volume, Function<BlockPos, Optional<Tile>> func, Random rand)
 		{
 			for(Entry<Direction, BlockRotation> entry : faceToRotationMap.entrySet())
 			{
@@ -202,7 +203,7 @@ public abstract class RotationSupplier
 					return entry.getValue();
 			}
 			
-			return fallback.assignRotation(pos, grid, func, rand);
+			return fallback.assignRotation(pos, grid, volume, func, rand);
 		}
 		
 		public JsonElement toJson(JsonOps ops)

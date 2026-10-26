@@ -38,8 +38,8 @@ public class CDTileSets implements ReloadListener<List<JsonObject>>
 	public static final String FILE_PATH = "generation/tile_sets";
 	
 	public static final TileSet DEFAULT	= new TileSet(prefix("default_if_unrecognised"))
-			.add(CDTiles.ID_AIR, 10F)
-			.add(CDTiles.ID_STONE, 1000F);
+			.add(CDTiles.ID_AIR, 10)
+			.add(CDTiles.ID_STONE, 1000);
 	
 	public static CDTileSets instance() { return INSTANCE; }
 	

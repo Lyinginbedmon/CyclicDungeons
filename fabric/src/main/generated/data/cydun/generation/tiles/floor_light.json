@@ -15,6 +15,15 @@
       "condition": {
         "id": "cydun:has_tag",
         "set": [
+          "cydun:tables"
+        ]
+      },
+      "id": "cydun:non_adjacent"
+    },
+    {
+      "condition": {
+        "id": "cydun:has_tag",
+        "set": [
           "cydun:lighting"
         ]
       },
@@ -29,15 +38,6 @@
         0,
         -2
       ]
-    },
-    {
-      "condition": {
-        "id": "cydun:has_tag",
-        "set": [
-          "cydun:tables"
-        ]
-      },
-      "id": "cydun:non_adjacent"
     }
   ],
   "generation": "structure",

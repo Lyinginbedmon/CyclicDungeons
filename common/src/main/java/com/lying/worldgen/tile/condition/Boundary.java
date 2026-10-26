@@ -6,8 +6,10 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
+import com.lying.grid.GridVolume;
 import com.lying.init.CDTileConditions;
 import com.lying.worldgen.tile.Tile;
+import com.lying.worldgen.tile.Tile.GridSensitivity;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.util.Identifier;
@@ -36,9 +38,18 @@ public class Boundary extends Condition
 		return condition;
 	}
 	
-	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid)
+	public int cost() { return 1; }
+	
+	public GridSensitivity searchSpace() { return GridSensitivity.SPATIAL; }
+	
+	public boolean affectedBy(BlockPos offset) { return false; }
+	
+	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
 	{
-		return faces.stream().anyMatch(d -> grid.isBoundary(pos, d));
+		for(Direction face : faces)
+			if(volume.isBoundary(pos, face))
+				return true;
+		return false;
 	}
 	
 	public JsonElement toJson(JsonOps ops)
@@ -78,9 +89,9 @@ public class Boundary extends Condition
 			return condition;
 		}
 		
-		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set)
+		public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid set, GridVolume volume)
 		{
-			return faces.stream().noneMatch(d -> set.isBoundary(pos, d));
+			return faces.stream().noneMatch(d -> volume.isBoundary(pos, d));
 		}
 	}
 }
