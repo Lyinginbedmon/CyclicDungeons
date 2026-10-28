@@ -163,6 +163,7 @@ public class DefaultTiles
 				.condition(Boundary.of(Direction.Type.HORIZONTAL))
 				.condition(CDTileConditions.ON_FLOOR.get())
 				.condition(CDTileConditions.NON_CONSECUTIVE.get())
+				.condition(MaxPerRoom.of(2))
 				.condition(NearBox.Inverse.of(new BlockPos(-2,0,-2), new BlockPos(2,0,2), IsAnyOf.HasTag.of(CDTileTags.ID_DECOR)))
 				.build())
 			.asStructure()

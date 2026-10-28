@@ -198,11 +198,18 @@ public class TileGenerator
 		@Nullable
 		public BlockPos getMostConstrainedAmong(List<BlockPos> set)
 		{
-			for(BlockPos pos : sequence)
-				if(set.contains(pos))
-					return pos;
-			
-			return null;
+			int minIndex = Integer.MAX_VALUE;
+			BlockPos earliest = null;
+			for(BlockPos pos : set)
+			{
+				int index = sequence.indexOf(pos);
+				if(index < minIndex)
+				{
+					earliest = pos;
+					minIndex = index;
+				}
+			}
+			return earliest;
 		}
 		
 		public List<Tile> getOptionsFor(BlockPos pos)

@@ -48,18 +48,18 @@ public abstract class LogicControlledTrap extends Content
 		return this;
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		// Place any post-generation sensor blocks
 		installSensors(min, max, world, meta, rand);
 		
 		// Place trap logic block
-		installLogic(min, max, world);
+		return installLogic(min, max, world);
 	}
 	
 	protected abstract void installSensors(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
-	protected void installLogic(BlockPos min, BlockPos max, ServerWorld world)
+	protected List<BlockPos> installLogic(BlockPos min, BlockPos max, ServerWorld world)
 	{
 		BlockPos logicPos = null;
 		Iterator<BlockPos> iterator = BlockPos.Mutable.iterate(min, max.withY(min.getY())).iterator();
@@ -92,6 +92,12 @@ public abstract class LogicControlledTrap extends Content
 		});
 		sensors.forEach(p -> logic.processInputConnection(CDLogicGates.INPUT, new PortEntry(p, CDLogicGates.OUTPUT), WireMode.GLOBAL));
 		actors.forEach(p -> logic.processOutputConnection(CDLogicGates.OUTPUT, new PortEntry(p, CDLogicGates.INPUT), WireMode.GLOBAL));
+		
+		List<BlockPos> modified = new ArrayList<>();
+		modified.add(logicPos);
+		modified.addAll(sensors);
+		modified.addAll(actors);
+		return modified;
 	}
 	
 	private static record LogicManifest(Identifier handlerID)

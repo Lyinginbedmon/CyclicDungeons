@@ -42,10 +42,14 @@ public abstract class AbstractTileGrid<T extends Object>
 		return this;
 	}
 	
+	/** Returns true if this grid contains the given point */
 	public boolean contains(T pos)
 	{
 		return set.keySet().stream().anyMatch(pos::equals);
 	}
+	
+	/** Returns true if this grid contains a point adjacent to the given point */
+	public abstract boolean containsAdjacent(T pos);
 	
 	public final Optional<Tile> get(T pos)
 	{

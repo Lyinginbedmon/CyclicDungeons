@@ -130,5 +130,5 @@ public class SimpleJumpingContent extends Content
 				.build();
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { }
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { return List.of(); }
 }

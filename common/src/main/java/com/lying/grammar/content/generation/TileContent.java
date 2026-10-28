@@ -88,5 +88,5 @@ public class TileContent extends Content
 		}
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { }
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { return List.of(); }
 }

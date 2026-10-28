@@ -1,5 +1,6 @@
 package com.lying.grammar.content;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,10 +72,12 @@ public abstract class RegistryRoomContent<T extends IContentEntry> extends RoomC
 				entry.prepare(room, tileMap, volume, world, rand)));
 	}
 	
-	public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand)
+	public List<BlockPos> applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand)
 	{
-		meta.processorID().ifPresent(id -> 
-			registry.get(id).apply(min, max, world, meta, rand));
+		List<BlockPos> modified = new ArrayList<>();
+		if(meta.processorID().isPresent())
+			modified.addAll(registry.get(meta.processorID().get()).apply(min, max, world, meta, rand));
+		return modified;
 	}
 	
 	@SuppressWarnings("unchecked")

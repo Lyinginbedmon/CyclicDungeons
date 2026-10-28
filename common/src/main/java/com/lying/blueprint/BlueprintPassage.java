@@ -172,7 +172,11 @@ public class BlueprintPassage
 		
 		// Exclude the grandparent entryway tile and any tiles immediately adjacent to it
 		if(grandParentEntry != null)
-			parentDoorways.removeIf(t -> t.isAdjacentOrSame(grandParentEntry));
+		{
+			parentDoorways.remove(grandParentEntry);
+			for(Direction face : Direction.Type.HORIZONTAL)
+				parentDoorways.remove(grandParentEntry.offset(face));
+		}
 		
 		return GridTile.findClosestToAll(parentDoorways, children.stream().map(BlueprintRoom::tilePosition).toList());
 	}
@@ -405,7 +409,7 @@ public class BlueprintPassage
 		if(!vol.isComplete())
 		{
 			TileGenerator.generate(grid, vol, theme.passageTileSet(), rand);
-			grid.finaliseRegion(vol, theme, rand);
+			grid.finaliseRegion(vol, Optional.empty(), theme, rand);
 		}
 	}
 }

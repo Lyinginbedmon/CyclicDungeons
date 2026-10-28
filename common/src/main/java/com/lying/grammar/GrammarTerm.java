@@ -5,13 +5,13 @@ import static com.lying.worldgen.TileGenerator.setTile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.gson.JsonElement;
-import com.lying.block.entity.IRoomTaggedBlock;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
@@ -26,13 +26,11 @@ import com.lying.init.CDTiles;
 import com.lying.worldgen.TileGenerator;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.RotationSupplier;
-import com.lying.worldgen.tile.Tile;
 import com.lying.worldgen.tileset.DoorWaySet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -156,7 +154,7 @@ public class GrammarTerm
 		}
 		catch(Exception e) { e.printStackTrace(); return null; }
 		
-		grid.finaliseRegion(vol, meta.theme(), rand);
+		grid.finaliseRegion(vol, Optional.of(node.uuid()), meta.theme(), rand);
 		return vol;
 	}
 	
@@ -167,23 +165,9 @@ public class GrammarTerm
 		BlockPos min = new BlockPos((int)box.minX, (int)box.minY, (int)box.minZ);
 		BlockPos max = new BlockPos((int)box.maxX, (int)box.maxY, (int)box.maxZ).subtract(new Vec3i(1,1,1));
 		
-		contentBuilder.applyPostProcessing(min, max, world, node, meta, rand);
-		
-		// Assign room ID to room-tagged blocks post-tile generation
-		volume.contents().stream()
-			.map(p -> p.multiply(Tile.TILE_SIZE).add(position))
-			.forEach(pos -> 
-			{
-				for(int y=0; y<Tile.TILE_SIZE; y++)
-					for(int x=0; x<Tile.TILE_SIZE; x++)
-						for(int z=0; z<Tile.TILE_SIZE; z++)
-						{
-							final BlockPos p = pos.add(x, y, z);
-							BlockEntity e = world.getBlockEntity(p);
-							if(e != null && e instanceof IRoomTaggedBlock)
-								((IRoomTaggedBlock)e).setRoom(node.uuid());
-						}
-			});
+		final UUID id = node.uuid();
+		contentBuilder.applyPostProcessing(min, max, world, node, meta, rand)
+				.forEach(p -> BlueprintTileGrid.tryTagBlockAt(p, world, id));
 	}
 	
 	protected static List<DoorData> preseedDoorways(BlueprintRoom node, BlueprintTileGrid map, GridVolume vol, List<BlueprintPassage> passages, Random rand)
@@ -229,9 +213,8 @@ public class GrammarTerm
 					(exitSets.size() > 1 ? exitSets.removeFirst() : exitSets.getFirst()) : 
 					entrySet;
 			
-			
 			doorways.add(data);
-			data.placeInMap(map, vol, theme, tileSet);
+			data.placeInMap(map, vol, node.uuid(), theme, tileSet);
 		}
 		
 		return doorways;
@@ -239,7 +222,7 @@ public class GrammarTerm
 	
 	private static record DoorData(BlockPos tile, Direction face, boolean shouldPlaceDoor)
 	{
-		public void placeInMap(BlueprintTileGrid map, GridVolume vol, Theme theme, DoorWaySet tileSet)
+		public void placeInMap(BlueprintTileGrid map, GridVolume vol, UUID uuid, Theme theme, DoorWaySet tileSet)
 		{
 			BlockPos[] footprint = new BlockPos[] 
 					{
@@ -272,7 +255,12 @@ public class GrammarTerm
 			
 			// Finalise rotations
 			for(BlockPos p : footprint)
-				map.finalise(new TileInstance(p, map.get(p).get(), theme, RotationSupplier.faceToRotationMap.get(face)));
+				map.finalise(new TileInstance(
+						p, 
+						map.get(p).get(), 
+						theme, 
+						RotationSupplier.faceToRotationMap.get(face),
+						Optional.of(uuid)));
 		}
 	}
 	

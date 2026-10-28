@@ -46,10 +46,15 @@ public class DungeonBuilder
 	{
 		final long startTime = System.currentTimeMillis();
 		final Theme theme = CDThemes.instance().get(CDThemes.ID_GENERIC).get();
-		final GrammarPhrase phrase = CDGrammar.initialPhrase(15, rand);	// FIXME Resolve stock grammar phrase passage issues
+		final GrammarPhrase phrase = theme.chooseInitialPhrase(rand); // CDGrammar.initialPhrase(15, rand);	// FIXME Resolve stock grammar phrase passage issues
 		if(phrase == null)
 		{
 			LOGGER.error(" ! Tried to generate a dungeon w/out providing an initial phrase");
+			return false;
+		}
+		else if(phrase.isEmpty())
+		{
+			LOGGER.error(" ! Tried to generate a dungeon w/ an empty initial phrase");
 			return false;
 		}
 		
@@ -57,9 +62,9 @@ public class DungeonBuilder
 		SPOOL.add(new BlueprintGeneration(THREAD.submit(() -> 
 		{
 			CDGrammar.generate(phrase, rand);
-			if(phrase == null || phrase.isEmpty())
+			if(phrase.hasBlanks())
 			{
-				LOGGER.error(" # Grammar generation failed");
+				LOGGER.error(" # Grammar generation failed, persistent blanks detected");
 				return Optional.empty();
 			}
 			long time;
@@ -77,7 +82,11 @@ public class DungeonBuilder
 			do
 			{
 				CDLoggers.PLANAR.info(" - Attempt {} at organising graph", attempts);
-				ORGANISER.organise(blueprint, rand);
+				try
+				{
+					ORGANISER.organise(blueprint, rand);
+				}
+				catch(Exception e) { e.printStackTrace(); }
 			}
 			while(blueprint.hasErrors() && attempts-- > 0);
 			if(blueprint.hasErrors())

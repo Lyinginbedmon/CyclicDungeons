@@ -41,6 +41,7 @@ public class GrammarRoom
 	public static final int MAX_LINKS = 4;
 	
 	private final UUID id;
+	private Optional<String> customName = Optional.empty();
 	private RoomMetadata metadata = new RoomMetadata();
 	private Optional<UUID> parentId = Optional.empty();
 	private List<UUID> childLinks = new ArrayList<>();
@@ -68,6 +69,10 @@ public class GrammarRoom
 	public final UUID uuid() { return id; }
 	
 	public final boolean matches(GrammarRoom b) { return b.id.equals(id); }
+	
+	public final GrammarRoom setCustomName(String nameIn) { customName = Optional.of(nameIn); return this; }
+	
+	public final String customName() { return customName.orElse("N/A"); }
 	
 	public final MutableText name() { return metadata.name(); }
 	
@@ -160,7 +165,7 @@ public class GrammarRoom
 	
 	public GrammarRoom applyTerm(Identifier termIn, GrammarPhrase graph)
 	{
-		return applyTerm(CDTerms.instance().get(termIn).orElse(CDTerms.instance().blank()), graph);
+		return applyTerm(CDTerms.instance().get(termIn).orElse(CDTerms.BLANK), graph);
 	}
 	public GrammarRoom applyTerm(GrammarTerm termIn, GrammarPhrase graph)
 	{

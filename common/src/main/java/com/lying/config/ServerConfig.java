@@ -4,6 +4,8 @@ import java.io.FileWriter;
 import java.util.Properties;
 import java.util.function.BiFunction;
 
+import com.lying.init.CDLoggers;
+import com.lying.init.CDLoggers.Logger;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.StringIdentifiable;
@@ -25,16 +27,22 @@ public class ServerConfig extends Config
 	protected void readValues(Properties valuesIn)
 	{
 		shellGenerationType = ShellType.fromString(valuesIn.getProperty("ShellType", ShellType.MINIMUM.asString()));
+		for(Logger log : Logger.values())
+			CDLoggers.getLogger(log).setActive(parseBoolOr(log.name(), false));
 	}
 	
 	protected void writeValues(FileWriter writer)
 	{
 		Config.writeString(writer, "ShellType", shellGenerationType.asString());
+		for(Logger log : Logger.values())
+			Config.writeBool(writer, log.asString(), CDLoggers.getLogger(log).isActive());
 	}
 	
 	static
 	{
 		DEFAULT_SETTINGS.put("ShellType", ShellType.MINIMUM.asString());
+		for(Logger log : Logger.values())
+			DEFAULT_SETTINGS.put(log.asString(), "0");
 	}
 	
 	public static enum ShellType implements StringIdentifiable

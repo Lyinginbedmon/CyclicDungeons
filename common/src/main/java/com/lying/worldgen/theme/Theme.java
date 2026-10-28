@@ -1,6 +1,5 @@
 package com.lying.worldgen.theme;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,24 +96,11 @@ public record Theme(
 	@Nullable
 	public GrammarPhrase chooseInitialPhrase(Random rand)
 	{
-		List<GrammarPhrase> phraseSet = new ArrayList<>();
-		for(InitialPhrase phrase : phrases)
-		{
-			GrammarPhrase result = null;
-			try
-			{
-				result = phrase.toPhrase();
-			}
-			catch(Exception e) { }
-			if(result != null)
-				phraseSet.add(result);
-		}
-		
-		switch(phraseSet.size())
+		switch(phrases.size())
 		{
 			case 0:	return null;
-			case 1: return phraseSet.get(0);
-			default: return phraseSet.get(rand.nextInt(phraseSet.size()));
+			case 1: return phrases.get(0).toPhrase();
+			default: return phrases.get(rand.nextInt(phrases.size())).toPhrase();
 		}
 	}
 	

@@ -65,7 +65,7 @@ public abstract class AbstractPlacerContent extends Content
 		return this;
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		int floorY = min.getY() + Tile.TILE_SIZE;
 		
@@ -92,7 +92,10 @@ public abstract class AbstractPlacerContent extends Content
 			CDLoggers.WORLDGEN.warn("Failed to find any place for trap");
 		
 		if(trapCounter.isUnlimited())
+		{
 			placeAllTraps(viablePoints, world, rand);
+			return viablePoints;
+		}
 		else
 		{
 			// Select N places for traps
@@ -103,6 +106,7 @@ public abstract class AbstractPlacerContent extends Content
 			
 			// Place traps
 			placeAllTraps(traps, world, rand);
+			return traps;
 		}
 	}
 	

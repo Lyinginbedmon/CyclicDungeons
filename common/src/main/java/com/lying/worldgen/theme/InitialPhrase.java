@@ -8,7 +8,9 @@ import java.util.Optional;
 
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
+import com.lying.init.CDLoggers;
 import com.lying.init.CDTerms;
+import com.lying.utility.logging.DebugLogger;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -20,8 +22,9 @@ public class InitialPhrase
 			Identifier.CODEC.fieldOf("Name").forGetter(InitialPhrase::registryName),
 			PhraseTerm.CODEC.listOf().fieldOf("Rooms").forGetter(InitialPhrase::contents)
 			).apply(instance, InitialPhrase::new));
+	public static final DebugLogger LOGGER = CDLoggers.GRAMMAR;
 	protected final Identifier registryName;
-	protected final List<PhraseTerm> entries = new ArrayList<>();
+	protected final Map<String, PhraseTerm> entries = new HashMap<>();
 	
 	public InitialPhrase(Identifier name)
 	{
@@ -36,39 +39,55 @@ public class InitialPhrase
 	
 	public InitialPhrase add(PhraseTerm term)
 	{
-		entries.removeIf(term::same);
-		entries.add(term);
+		entries.put(term.name(), term);
 		return this;
 	}
 	
 	public Identifier registryName() { return registryName; }
 	
-	protected List<PhraseTerm> contents() { return entries.stream().filter(PhraseTerm::needsRecordingInJSON).toList(); }
+	protected List<PhraseTerm> contents() { return entries.values().stream().filter(PhraseTerm::needsRecordingInJSON).toList(); }
 	
 	public int size() { return entries.size(); }
 	
 	public GrammarPhrase toPhrase()
 	{
-		Map<String, GrammarRoom> stock = new HashMap<>();
-		for(PhraseTerm term : entries)
-			stock.put(term.name(), term.asRoom());
+		List<PhraseTerm> toAdd = new ArrayList<>();
+		entries.values().stream().filter(PhraseTerm::isStart).findAny().ifPresent(toAdd::add);
 		
-		// Interconnect rooms
-		for(PhraseTerm term : entries)
+		// Recursive approach walking through connections, precludes orphan rooms
+		LOGGER.info("Parsing phrase from stock:");
+		final GrammarPhrase graph = new GrammarPhrase();
+		Map<String, GrammarRoom> stock = new HashMap<>();
+		while(!toAdd.isEmpty())
 		{
-			GrammarRoom room = stock.get(term.name());
-			term.connections().stream()
-				.map(s -> 
+			List<PhraseTerm> next = new ArrayList<>();
+			for(PhraseTerm term : toAdd)
+			{
+				final String name = term.name();
+				LOGGER.info(" # {}", term.toString());
+				
+				final GrammarRoom room = stock.getOrDefault(name, term.asRoom()).setCustomName(name);
+				stock.put(name, room);
+				
+				for(String child : term.connections())
 				{
-					if(!stock.containsKey(s))
-						stock.put(s, PhraseTerm.of(s).asRoom());
-					return stock.get(s);
-				})
-				.forEach(room::linkTo);
+					PhraseTerm t2 = entries.getOrDefault(child, PhraseTerm.of(child));
+					next.add(t2);
+					
+					GrammarRoom r2 = stock.getOrDefault(child, t2.asRoom()).setCustomName(child);
+					room.linkTo(r2);
+					stock.put(child, r2);
+				}
+				
+				graph.add(room);
+			}
+			
+			toAdd.clear();
+			toAdd.addAll(next);
 		}
 		
-		GrammarPhrase graph = new GrammarPhrase();
-		stock.values().forEach(graph::add);
+		// FIXME Resolve loading errors in stock phrases
+		
 		return graph;
 	}
 	
@@ -92,14 +111,26 @@ public class InitialPhrase
 			return new PhraseTerm(name, Optional.empty(), Optional.empty());
 		}
 		
-		public boolean same(PhraseTerm term) { return term.name.equalsIgnoreCase(name); }
+		public boolean equals(PhraseTerm term) { return term.name.equalsIgnoreCase(name); }
+		
+		public String toString()
+		{
+			String name = name();
+			if(content.isPresent())
+				name += " {" + content.get().toString() +"}";
+			if(doorCount() > 0)
+				name += ", parent of " + String.join(", ", doors.get());
+			return name;
+		}
 		
 		public Identifier type() { return content.orElse(CDTerms.ID_BLANK); }
+		
+		public boolean isStart() { return content.isPresent() && content.get().equals(CDTerms.ID_START); }
 		
 		public GrammarRoom asRoom()
 		{
 			GrammarRoom room = new GrammarRoom();
-			room.metadata().setType(type());
+			content.ifPresent(id -> room.metadata().setType(id));
 			return room;
 		}
 		

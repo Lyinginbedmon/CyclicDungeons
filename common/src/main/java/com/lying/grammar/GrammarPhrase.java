@@ -94,7 +94,7 @@ public class GrammarPhrase
 	
 	protected Identifier theme() { return this.theme; }
 	
-	protected List<GrammarRoom> rooms() { return this.rooms; }
+	public List<GrammarRoom> rooms() { return this.rooms; }
 	
 	public Optional<GrammarRoom> get(UUID idIn)
 	{
@@ -149,12 +149,19 @@ public class GrammarPhrase
 	
 	public boolean hasBlanks()
 	{
-		return rooms.stream().map(GrammarRoom::metadata).anyMatch(RoomMetadata::isReplaceable);
+		for(GrammarRoom room : rooms)
+			if(room.metadata().isReplaceable())
+				return true;
+		return false;
 	}
 	
 	public List<GrammarRoom> getBlanks()
 	{
-		return rooms.stream().filter(r -> r.metadata().isReplaceable()).toList();
+		List<GrammarRoom> blanks = new ArrayList<>();
+		for(GrammarRoom room : rooms)
+			if(room.metadata().isReplaceable())
+				blanks.add(room);
+		return blanks;
 	}
 	
 	public int depth()

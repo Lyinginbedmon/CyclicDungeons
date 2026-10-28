@@ -68,6 +68,7 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 	/** Flag tile placed either side of doorways to ensure navigability */
 	public static final Supplier<Tile> PASSAGE_FLAG	= () -> Tile.Builder
 			.of(TilePredicate.fromCondition(Boundary.of(Direction.Type.HORIZONTAL)))
+			.priority(-1)
 			.asAir().build().apply(ID_PASSAGE_FLAG);
 	
 	public static final Supplier<Tile> DOORWAY	= () -> Tile.Builder
@@ -77,11 +78,13 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 	
 	public static final Supplier<Tile> DOORWAY_LINTEL	= () -> Tile.Builder
 			.of(TilePredicate.fromCondition(Boundary.of(Direction.Type.HORIZONTAL)))
+			.priority(-1)
 			.asStructure()
 			.build().apply(ID_DOORWAY_LINTEL);
 	
 	public static final Supplier<Tile> SHELL	= () -> Tile.Builder
 			.of(TilePredicate.fromCondition(CDTileConditions.ALWAYS.get()))
+			.priority(-1)
 			.asBlock(CDBlocks.CYLICIUM_BLOCK.get().getDefaultState())
 			.build().apply(ID_SHELL);
 	
@@ -97,7 +100,7 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 	public void register(Tile tileIn)
 	{
 		REGISTRY.put(tileIn.registryName(), () -> tileIn);
-		CyclicDungeons.LOGGER.info(" ## Loaded {} ({})", tileIn.registryName().toString(), tileIn.sensitivity().name());
+		CyclicDungeons.LOGGER.info(" ## Loaded {}", tileIn.registryName().toString());
 	}
 	
 	public Optional<Tile> get(Identifier id)

@@ -39,7 +39,7 @@ public record SpawnerEntry(Identifier registryName, Battle encounter) implements
 				.child(new SubPredicate(BlockPos.ORIGIN.down(), BlockPredicate.Builder.create().addFlag(BlockFlags.SOLID).build()))
 			.build();
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		List<BlockPos> positions = new ArrayList<>();
 		BlockPos.Mutable.iterate(min, max).forEach(p -> 
@@ -57,6 +57,7 @@ public record SpawnerEntry(Identifier registryName, Battle encounter) implements
 			entity.setRoomArea(min, max);
 			entity.setBattle(encounter);
 		});
+		return List.of(pos);
 	}
 	
 	public Text describe() { return encounter.describe(); }

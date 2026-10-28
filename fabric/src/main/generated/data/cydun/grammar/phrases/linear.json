@@ -2,34 +2,29 @@
   "Name": "cydun:linear",
   "Rooms": [
     {
-      "Connection": "a",
-      "Content": "cydun:start",
-      "Name": "start"
-    },
-    {
       "Connection": "b",
-      "Content": "cydun:start",
       "Name": "a"
     },
     {
       "Connection": "c",
-      "Content": "cydun:start",
       "Name": "b"
     },
     {
       "Connection": "d",
-      "Content": "cydun:start",
       "Name": "c"
     },
     {
       "Connection": "e",
-      "Content": "cydun:start",
       "Name": "d"
     },
     {
       "Connection": "terminus",
-      "Content": "cydun:start",
       "Name": "e"
+    },
+    {
+      "Connection": "a",
+      "Content": "cydun:start",
+      "Name": "start"
     },
     {
       "Content": "cydun:end",

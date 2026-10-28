@@ -2,6 +2,14 @@
   "Name": "cydun:simple",
   "Rooms": [
     {
+      "Connection": "vault",
+      "Name": "armory"
+    },
+    {
+      "Content": "cydun:end",
+      "Name": "barracks"
+    },
+    {
       "Connection": "atrium",
       "Content": "cydun:start",
       "Name": "entrance"
@@ -19,16 +27,8 @@
       "Name": "kitchen"
     },
     {
-      "Connection": "vault",
-      "Name": "armory"
-    },
-    {
       "Content": "cydun:treasure",
       "Name": "vault"
-    },
-    {
-      "Content": "cydun:end",
-      "Name": "barracks"
     }
   ]
 }

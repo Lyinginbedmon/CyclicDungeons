@@ -69,7 +69,7 @@ public class ModularContent extends Content
 	@Override
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		// Sort modules by necessary order of placement
 		modules.sort(Module.BUILD_ORDER);
@@ -103,7 +103,7 @@ public class ModularContent extends Content
 			
 			// Abort generation if a wiring component cannot be placed
 			if(viable.isEmpty() && (component.isVitalComponent() || component.isWiringElement(modules)))
-				return;
+				return List.of();
 			
 			List<BlockPos> set = new ArrayList<>();
 			for(int i=0; i<component.count(); i++)
@@ -119,6 +119,7 @@ public class ModularContent extends Content
 		}
 		
 		// Place all components in the world
+		List<BlockPos> placedComponents = new ArrayList<>();
 		for(Module component : modules)
 		{
 			final Identifier name = component.name();
@@ -129,6 +130,7 @@ public class ModularContent extends Content
 					break;
 				
 				component.placeAt(points.get(i), world);
+				placedComponents.add(points.get(i));
 			}
 		}
 		
@@ -139,5 +141,7 @@ public class ModularContent extends Content
 			final ModuleWiring wiringObj = component.inputs().get();
 			instances.forEach(i -> wiringObj.applyWiring(i, componentMap, world));
 		}
+		
+		return placedComponents;
 	}
 }

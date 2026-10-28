@@ -100,6 +100,7 @@ public class StructurePlacerContent extends AbstractPlacerContent
 		placeStructure(pos, poolOpt.get(), offset, world, rand);
 	}
 	
+	// FIXME Collect all modified block positions to report back to GrammarTerm for id tagging
 	protected static void placeStructure(BlockPos pos, StructurePool pool, BlockPos offset, ServerWorld world, Random rand)
 	{
 		StructureTemplateManager structureManager = world.getStructureTemplateManager();

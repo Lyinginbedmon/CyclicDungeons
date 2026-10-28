@@ -4,13 +4,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiPredicate;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.lying.block.entity.IRoomTaggedBlock;
+import com.lying.init.CDTiles;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.Tile;
 
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
@@ -87,7 +92,11 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		if(z < (min.getZ() - 1) || z > (max.getZ() + 1))
 			return false;
 		
-		return set.keySet().stream().anyMatch(p2 -> p2.getManhattanDistance(pos) == 1);
+		for(Direction face : Direction.values())
+			if(contains(pos.offset(face)))
+				return true;
+		
+		return false;
 	}
 	
 	public boolean contains(BlockPos pos)
@@ -144,55 +153,71 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 	
 	public void put(BlockPos pos, @Nullable Tile tile)
 	{
-		// FIXME Check tile priority to prevent overwriting
-//		if(tile != null && !tile.isBlank())
-//		{
-//			Optional<Tile> existing;
-//			if(tile != null && (existing = get(pos)).isPresent() && !existing.get().isBlank())
-//			{
-//				// Avoid setting tiles when the new tile is lower priority than the existing one
-//				final int priorityEx = existing.get().priority();
-//				final int priorityIn = tile.priority();
-//				if(priorityEx != priorityIn && (priorityEx < 0 || priorityEx > priorityIn))
-//					return;
-//			}
-//		}
+		if(tile != null && !tile.isBlank())
+		{
+			Optional<Tile> existing;
+			if(tile != null && (existing = get(pos)).isPresent() && !existing.get().isBlank())
+			{
+				// Avoid setting tiles when the new tile is lower priority than the existing one
+				final int priorityEx = existing.get().priority();
+				final int priorityIn = tile.priority();
+				if(priorityEx == priorityIn)
+					return;
+				if(priorityEx < 0)
+					return;
+				if(priorityIn >= 0 && priorityIn < priorityEx)
+					return;
+			}
+		}
 		super.put(pos, tile);
-		if(finalised.containsKey(pos))
+		if(isFinalised(pos))
 			finalised.remove(pos);
 	}
+	
+	public boolean isFinalised(BlockPos pos) { return finalised.keySet().stream().anyMatch(pos::equals); }
 	
 	/** Populates the finalised map with tile instances with appropriate orientations */
 	public BlueprintTileGrid finaliseGrid(Theme theme, Random rand)
 	{
 		LOGGER.info("Finalising total tile set...");
-		return finaliseRegion(volume, theme, rand);
+		finaliseRegion(volume, Optional.empty(), theme, rand);
+		
+		List<BlockPos> empties = new ArrayList<>();
+		empties.addAll(volume.contents());
+		empties.removeAll(finalised.keySet());
+		empties.forEach(p -> finalised.put(p, new TileInstance(p, CDTiles.AIR.get(), theme, BlockRotation.NONE, Optional.empty())));
+		
+		return finaliseRegion(volume, Optional.empty(), theme, rand);
 	}
 	
-	public BlueprintTileGrid finaliseRegion(GridVolume region, Theme theme, Random rand)
+	public BlueprintTileGrid finaliseRegion(GridVolume region, Optional<UUID> uuid, Theme theme, Random rand)
 	{
 		LOGGER.info("Finalising tile set region...");
-		for(BlockPos pos : region.contents())
+		region.contents().forEach(pos ->
 		{
-			if(finalised.containsKey(pos))
-				continue;
-			
 			Tile tile = get(pos).orElse(null);
-			if(tile == null)
-				continue;
-			
-			finalise(new TileInstance(
-					pos, 
-					tile, 
-					theme, 
-					tile.assignRotation(pos, this, region, this::get, rand)));	// FIXME Add room tag
-		}
+			if(tile != null && !tile.isBlank())
+				finalise(new TileInstance(
+						pos, 
+						tile, 
+						theme, 
+						tile.assignRotation(pos, this, region, this::get, rand),
+						uuid));
+		});
 		return this;
 	}
 	
 	public void finalise(TileInstance instance)
 	{
-		finalised.put(instance.pos(), instance);
+		if(instance.tile().isBlank())
+			return;
+		
+		final BlockPos pos = instance.pos();
+		if(get(pos).get() != instance.tile())
+			return;
+		
+		if(!isFinalised(pos))
+			finalised.put(pos, instance);
 	}
 	
 	/** Generates the finalised map into the world at the given position */
@@ -209,11 +234,32 @@ public class BlueprintTileGrid extends AbstractTileGrid<BlockPos>
 		return true;
 	}
 	
-	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation)
+	public static boolean tryTagBlockAt(BlockPos pos, ServerWorld world, UUID uuid)
+	{
+		BlockEntity e = world.getBlockEntity(pos);
+		IRoomTaggedBlock taggable;
+		if(e != null && e instanceof IRoomTaggedBlock && !(taggable = (IRoomTaggedBlock)e).hasRoom())
+		{
+			taggable.setRoom(uuid);
+			return true;
+		}
+		return false;
+	}
+	
+	public static record TileInstance(BlockPos pos, Tile tile, Theme theme, BlockRotation rotation, Optional<UUID> uuid)
 	{
 		public void generate(BlockPos position, ServerWorld world)
 		{
 			tile.generate(this, position, world);
+			
+			uuid.ifPresent(id -> 
+			{
+				BlockPos.Mutable.iterate(
+						position, 
+						position.add(Tile.TILE_SIZE, Tile.TILE_SIZE, Tile.TILE_SIZE))
+					.forEach(p -> tryTagBlockAt(p, world, id));
+			}
+			);
 		}
 	}
 }

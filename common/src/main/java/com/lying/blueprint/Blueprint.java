@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
+import com.lying.CyclicDungeons;
 import com.lying.config.ServerConfig;
 import com.lying.config.ServerConfig.ShellType;
 import com.lying.grammar.GrammarPhrase;
@@ -172,8 +173,16 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 	
 	public boolean build(BlockPos position, ServerWorld world, Random rand)
 	{
-		if(isEmpty() || hasErrors())
+		if(isEmpty())
+		{
+			CyclicDungeons.LOGGER.error(" # Cannot generate empty blueprint");
 			return false;
+		}
+		if(hasErrors())
+		{
+			CyclicDungeons.LOGGER.error(" # Blueprint contains errors");
+			return false;
+		}
 		
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Beginning blueprint generation");
@@ -184,7 +193,6 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		forEach(room -> room.metadata().type().prePassageProcessing(room, world, rand));
 		
 		BlueprintTileGrid mainGrid = new BlueprintTileGrid();
-		
 		buildExteriorPaths(mainGrid, position, world, rand);
 		
 		Map<BlueprintRoom,GridVolume> volumes = buildRooms(mainGrid, position, world, rand);
@@ -192,12 +200,8 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		buildEntrance(mainGrid, position, world, rand);
 		
 		mainGrid.finaliseGrid(theme(), rand);
-		
-		// Apply door orientation finalisation
-		
 		mainGrid.generate(position, world);
 		
-		// Apply room post-processing
 		buildFinishedRooms(volumes, position, world, rand);
 		
 		LOGGER.info(" # Blueprint generation completed, {}ms total", System.currentTimeMillis() - timeMillis);

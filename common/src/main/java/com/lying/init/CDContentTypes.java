@@ -109,7 +109,7 @@ public class CDContentTypes
 		/** Applied when the entry is selected, before the room goes through tile generation */
 		public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { type.prepare(room, tileMap, volume, world, rand); }
 		
-		public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { type.apply(min, max, world, meta, rand); }
+		public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { return type.apply(min, max, world, meta, rand); }
 		
 		public List<DoorWaySet> getExitDoorTiles(Random rand, int count)
 		{

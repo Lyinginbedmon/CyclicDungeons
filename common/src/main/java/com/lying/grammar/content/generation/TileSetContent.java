@@ -1,5 +1,6 @@
 package com.lying.grammar.content.generation;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.JsonObject;
@@ -62,7 +63,7 @@ public class TileSetContent extends Content
 	
 	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return getTileSet().isPresent(); }
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { }
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { return List.of(); }
 	
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{

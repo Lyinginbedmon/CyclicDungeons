@@ -1,7 +1,7 @@
 package com.lying.grammar;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -49,26 +49,33 @@ public class CDGrammar
 	/** Populates the given graph */
 	public static GrammarPhrase generate(GrammarPhrase graph, Random rand)
 	{
-		if(graph == null)
-			return null;
+		if(graph == null || graph.isEmpty())
+			throw new UnsupportedOperationException("Cannot apply grammar generation to a null or empty phrase");
 		
 		PLACEABLES = CDThemes.instance().get(graph.theme()).get().getPlaceableTerms();
-		int iterationCap = 5;
-		while(!graph.isEmpty() && graph.hasBlanks() && --iterationCap > 0)
-			recursiveGenerate(graph.get(0).get(), graph, rand);
+		final Optional<GrammarRoom> start = graph.getStart();
+		if(start.isPresent())
+		{
+			int iterationCap = 500;
+			while(graph.hasBlanks() && iterationCap-- > 0)
+				recursiveGenerate(start.get(), graph, rand);
+		}
+		
+		if(graph.hasBlanks())
+			LOGGER.error("Ran out of iterations before all blanks were replaced in phrase");
+		
 		return graph;
 	}
 	
 	private static void recursiveGenerate(GrammarRoom room, GrammarPhrase graph, Random rand)
 	{
-		generate(room, graph, rand);
+		if(room.metadata().isReplaceable())
+			generate(room, graph, rand);
 		room.getChildRooms(graph).forEach(r -> recursiveGenerate(r, graph, rand));
 	}
 	
 	private static void generate(GrammarRoom room, GrammarPhrase graph, Random rand)
 	{
-		if(!room.metadata().isReplaceable())
-			return;
 		
 		/** Rooms that connect to this one */
 		final List<GrammarRoom> previous = room.getParentRoom(graph);
@@ -76,24 +83,21 @@ public class CDGrammar
 		/** Rooms immediately following this one */
 		final List<GrammarRoom> next = room.getChildRooms(graph);
 		
-		GrammarTerm term = CDTerms.instance().nan();
-		List<GrammarTerm> candidates = PLACEABLES.stream().filter(t -> t.canBePlaced(room, previous, next, graph)).toList();
-		if(!candidates.isEmpty())
+		GrammarTerm term = null;
+		final List<GrammarTerm> candidates = PLACEABLES.stream().filter(t -> t.canBePlaced(room, previous, next, graph)).toList();
+		switch(candidates.size())
 		{
-			if(candidates.size() == 1)
+			case 0:
+				LOGGER.warn("No viable terms found to replace {}", room.name().getString());
+				term = CDTerms.VOID;
+				break;
+			case 1:
 				term = candidates.get(0);
-			else
-			{
-				// Run weight calculation and select term accordingly
-				List<Pair<GrammarTerm,Integer>> weights = new ArrayList<>();
-				for(GrammarTerm candidate : candidates)
-					weights.add(Pair.of(candidate, candidate.weight()));
-				
-				term = CDUtils.selectFromWeightedList(weights, rand);
-			}
+				break;
+			default:
+				term = CDUtils.selectFromWeightedList(candidates.stream().map(c -> Pair.of(c, c.weight())).toList(), rand);
+				break;
 		}
-		else
-			LOGGER.warn("No candidates found to replace {}", room.name().getString());
 		
 		room.applyTerm(term, graph);
 	}

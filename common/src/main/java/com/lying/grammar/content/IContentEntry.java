@@ -35,7 +35,7 @@ public interface IContentEntry
 	public default void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
 	
 	/** Applied after tile generation */
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
+	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
 	public default List<DoorWaySet> getExitDoorTiles(Random rand, int count) { return List.of(); }
 	

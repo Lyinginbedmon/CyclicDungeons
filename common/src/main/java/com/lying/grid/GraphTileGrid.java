@@ -55,7 +55,11 @@ public class GraphTileGrid extends AbstractTileGrid<GridTile>
 		if(max.isPresent() && x > (max.get().x + 1) || y > (max.get().y + 1))
 			return false;
 		
-		return set.keySet().stream().anyMatch(p2 -> p2.manhattanDistance(pos) == 1);
+		for(Direction face : Direction.Type.HORIZONTAL)
+			if(contains(pos.offset(face)))
+				return true;
+		
+		return false;
 	}
 	
 	public List<GridTile> getBoundaries(List<Direction> faces)

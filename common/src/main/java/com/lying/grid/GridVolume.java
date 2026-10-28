@@ -82,10 +82,10 @@ public class GridVolume
 	
 	public void tally(@Nullable Tile addition, @Nullable Tile removal)
 	{
-		if(addition != null)
+		if(addition != null && !addition.isBlank())
 			tallies.put(addition, tallies.getOrDefault(addition, 0) + 1);
 		
-		if(removal != null)
+		if(removal != null && !addition.isBlank())
 			tallies.put(removal, Math.max(0, tallies.getOrDefault(removal, 0) - 1));
 	}
 	

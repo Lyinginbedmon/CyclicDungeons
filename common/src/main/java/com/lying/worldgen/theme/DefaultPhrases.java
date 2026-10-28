@@ -25,11 +25,11 @@ public class DefaultPhrases
 	
 	protected static final Supplier<InitialPhrase> LINEAR	= register(ID_LINEAR, id -> new InitialPhrase(id)
 			.add(new PhraseTerm("start", Optional.of(CDTerms.ID_START), Optional.of(List.of("a"))))
-			.add(new PhraseTerm("a", Optional.of(CDTerms.ID_START), Optional.of(List.of("b"))))
-			.add(new PhraseTerm("b", Optional.of(CDTerms.ID_START), Optional.of(List.of("c"))))
-			.add(new PhraseTerm("c", Optional.of(CDTerms.ID_START), Optional.of(List.of("d"))))
-			.add(new PhraseTerm("d", Optional.of(CDTerms.ID_START), Optional.of(List.of("e"))))
-			.add(new PhraseTerm("e", Optional.of(CDTerms.ID_START), Optional.of(List.of("terminus"))))
+			.add(new PhraseTerm("a", Optional.empty(), Optional.of(List.of("b"))))
+			.add(new PhraseTerm("b", Optional.empty(), Optional.of(List.of("c"))))
+			.add(new PhraseTerm("c", Optional.empty(), Optional.of(List.of("d"))))
+			.add(new PhraseTerm("d", Optional.empty(), Optional.of(List.of("e"))))
+			.add(new PhraseTerm("e", Optional.empty(), Optional.of(List.of("terminus"))))
 			.add(new PhraseTerm("terminus", Optional.of(CDTerms.ID_END), Optional.empty())));
 	
 	protected static final Supplier<InitialPhrase> MILD_BRANCHING	= register(ID_MILD_BRANCHING, id -> new InitialPhrase(id)

@@ -12,6 +12,10 @@
     "cydun:on_solid_floor",
     "cydun:nonconsecutive",
     {
+      "cap": 2,
+      "id": "cydun:max_per_room"
+    },
+    {
       "condition": {
         "id": "cydun:has_tag",
         "set": [

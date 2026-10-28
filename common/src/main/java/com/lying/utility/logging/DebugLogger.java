@@ -21,6 +21,8 @@ public class DebugLogger
 		return new DebugLogger(sub);
 	}
 	
+	public boolean isActive() { return isActive; }
+	
 	public DebugLogger setActive(boolean bool)
 	{
 		isActive = bool;

@@ -3,6 +3,7 @@ package com.lying.grammar.content;
 import static com.lying.reference.Reference.ModInfo.prefix;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -33,7 +34,7 @@ public abstract class RoomContent
 		
 		public void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
 		
-		public void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand) { }
+		public List<BlockPos> applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand) { return List.of(); }
 	});
 	public static final Supplier<BattleRoomContent> BATTLE	= register(BattleRoomContent::new);
 	public static final Supplier<TrapRoomContent> TRAP		= register(TrapRoomContent::new);
@@ -66,8 +67,8 @@ public abstract class RoomContent
 	/** Applied before room tile generation */
 	public abstract void applyPreProcessing(BlueprintRoom room, RoomMetadata meta, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand);
 	
-	/** Applied after all other room generation */
-	public abstract void applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand);
+	/** Applied after all other room generation, returns a list of modified block positions */
+	public abstract List<BlockPos> applyPostProcessing(BlockPos min, BlockPos max, ServerWorld world, BlueprintRoom room, RoomMetadata meta, Random rand);
 	
 	public Optional<IContentEntry> tryGetContents(Identifier registryID)
 	{

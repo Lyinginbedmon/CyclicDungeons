@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
@@ -46,31 +47,60 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 		ID_EMPTY			= prefix("empty"),
 		ID_BLANK			= prefix("blank");
 	
+	/** Immutable system terms that cannot be customised via datapacks */
+	private static final List<Identifier> IMMUTABLE	= List.of(
+			ID_VOID,
+			ID_BLANK
+			);
+	
+	/** Replaceable rooms, only occur during generation */
+	public static final GrammarTerm BLANK	= GrammarTerm.Builder.create(0x080808)
+			.unplaceable()
+			.replaceable()
+			.build(ID_BLANK);
+	/** Completely blank, only used to mark errors in generation */
+	public static final GrammarTerm VOID	= GrammarTerm.Builder.create(0x000000)
+			.unplaceable()
+			.build(ID_VOID);
+	
 	public CDTerms()
 	{
 		reset();
 	}
 	
+	@Nullable
 	public GrammarTerm register(Identifier id, GrammarTerm.Builder funcIn)
 	{
 		return register(funcIn.build(id));
 	}
 	
+	@Nullable
 	public GrammarTerm register(GrammarTerm supplierIn)
 	{
-		registerSilent(supplierIn);
+		GrammarTerm term = registerSilent(supplierIn);
+		if(term == null)
+			return null;
+		
 		CyclicDungeons.LOGGER.info(" ## Loaded {}", supplierIn.registryName().toString());
 		return supplierIn;
 	}
 	
+	@Nullable
 	private GrammarTerm registerSilent(Identifier id, GrammarTerm.Builder funcIn)
 	{
 		return registerSilent(funcIn.build(id));
 	}
 	
+	@Nullable
 	private GrammarTerm registerSilent(GrammarTerm term)
 	{
-		Identifier id = term.registryName();
+		final Identifier id = term.registryName();
+		if(IMMUTABLE.contains(id) && !REGISTRY.containsKey(id))
+		{
+			CyclicDungeons.LOGGER.info(" # Found immutable {} term in datapack, ignored", id.toString());
+			return null;
+		}
+		
 		REGISTRY.put(id, term);
 		return term;
 	}
@@ -92,8 +122,6 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 	
 	public final GrammarTerm start() { return tryGetEvergreen(ID_START); }
 	public final GrammarTerm end() { return tryGetEvergreen(ID_END); }
-	public final GrammarTerm blank() { return tryGetEvergreen(ID_BLANK); }
-	public final GrammarTerm nan() { return tryGetEvergreen(ID_VOID); }
 	
 	protected final GrammarTerm tryGetEvergreen(Identifier idIn)
 	{
@@ -111,6 +139,9 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 	{
 		REGISTRY.clear();
 		
+		REGISTRY.put(ID_BLANK, BLANK);
+		REGISTRY.put(ID_VOID, VOID);
+		
 		// Initial building blocks
 		registerSilent(ID_START, GrammarTerm.Builder.create(0xFFFFFF)
 				.size(new Vector2i(6, 8))
@@ -118,15 +149,6 @@ public class CDTerms implements ReloadListener<List<JsonObject>>
 		registerSilent(ID_END, GrammarTerm.Builder.create(0xFFFFFF)
 				.size(new Vector2i(6, 8))
 				.unplaceable());
-		
-		/** Completely blank, only used to mark errors in generation */
-		registerSilent(ID_VOID, GrammarTerm.Builder.create(0x000000)
-				.unplaceable());
-		
-		// Replaceable rooms, only occur during generation
-		registerSilent(ID_BLANK, GrammarTerm.Builder.create(0x080808)
-				.unplaceable()
-				.replaceable());
 		
 		// Functional rooms
 		registerSilent(ID_EMPTY, GrammarTerm.Builder.create(0xA6A6A6)

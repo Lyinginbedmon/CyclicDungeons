@@ -50,7 +50,7 @@ public class RoomMetadata
 				return meta;
 			}));
 	
-	private GrammarTerm type = CDTerms.instance().blank();
+	private GrammarTerm type = CDTerms.BLANK;
 	private Vector2i tileSize = new Vector2i(3, 3);
 	private List<GridTile> tileFootprint = new ArrayList<>();
 	private int depth = 0;
@@ -119,6 +119,13 @@ public class RoomMetadata
 	}
 	public RoomMetadata setTileSize(int x, int y)
 	{
+		// Impose minimum of at least one side of length 3 or greater
+		// This is necessary due to constraints on doorway placement
+		if(x < 3 && y < 3)
+		{
+			x = 3;
+			y = Math.max(2, y);
+		}
 		tileSize = new Vector2i(x, y);
 		
 		tileFootprint.clear();
@@ -157,7 +164,7 @@ public class RoomMetadata
 	
 	public RoomMetadata setType(Identifier idIn)
 	{
-		return setType(CDTerms.instance().get(idIn).orElse(CDTerms.instance().blank()));
+		return setType(CDTerms.instance().get(idIn).orElse(CDTerms.BLANK));
 	}
 	
 	public RoomMetadata setType(GrammarTerm term){ type = term; return this; }
