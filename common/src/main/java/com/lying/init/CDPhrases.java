@@ -87,7 +87,7 @@ public class CDPhrases implements ReloadListener<List<JsonObject>>
 		{
 			CyclicDungeons.LOGGER.info(" # Loading phrases from datapack", REGISTRY.size());
 			REGISTRY.clear();
-			data.forEach(prep -> register(InitialPhrase.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow()));
+			data.forEach(prep -> register(InitialPhrase.validate(InitialPhrase.CODEC.parse(JsonOps.INSTANCE, prep).getOrThrow())));
 			CyclicDungeons.LOGGER.info(" # {} initial phrases loaded", REGISTRY.size());
 		});
 	}

@@ -46,7 +46,7 @@ public class DungeonBuilder
 	{
 		final long startTime = System.currentTimeMillis();
 		final Theme theme = CDThemes.instance().get(CDThemes.ID_GENERIC).get();
-		final GrammarPhrase phrase = theme.chooseInitialPhrase(rand); // CDGrammar.initialPhrase(15, rand);	// FIXME Resolve stock grammar phrase passage issues
+		final GrammarPhrase phrase = theme.chooseInitialPhrase(rand);
 		if(phrase == null)
 		{
 			LOGGER.error(" ! Tried to generate a dungeon w/out providing an initial phrase");
