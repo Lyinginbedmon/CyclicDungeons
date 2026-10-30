@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.IWireableBlock;
 import com.lying.block.ModularLogicBlock;
@@ -262,8 +261,8 @@ public class ModularLogicBlockEntity extends TrapLogicBlockEntity
 			outputMap.put(entry.getKey(), entry.getValue().getOutputStatus(CDLogicGates.OUTPUT));
 	}
 	
-	public List<Port> inputPorts() { return Lists.newArrayList(inputModules); }
-	public List<Port> outputPorts() { return Lists.newArrayList(outputModules.keySet()); }
+	public List<Port> inputPorts() { return new ArrayList<>(inputModules); }
+	public List<Port> outputPorts() { return new ArrayList<>(outputModules.keySet()); }
 	
 	protected boolean getPortStatus(Port port, boolean isInput)
 	{

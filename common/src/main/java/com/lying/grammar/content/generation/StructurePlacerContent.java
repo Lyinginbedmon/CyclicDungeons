@@ -1,5 +1,6 @@
 package com.lying.grammar.content.generation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +31,7 @@ import net.minecraft.structure.pool.StructurePools;
 import net.minecraft.structure.pool.alias.StructurePoolAliasLookup;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 
@@ -85,7 +87,7 @@ public class StructurePlacerContent extends AbstractPlacerContent
 	@Override
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand) { }
 	
-	protected void placeTrap(BlockPos pos, ServerWorld world, Random rand)
+	protected List<BlockPos> placeTrap(BlockPos pos, ServerWorld world, Random rand)
 	{
 		DynamicRegistryManager manager = world.getRegistryManager();
 		Registry<StructurePool> registry = manager.getOrThrow(RegistryKeys.TEMPLATE_POOL);
@@ -94,14 +96,13 @@ public class StructurePlacerContent extends AbstractPlacerContent
 		if(poolOpt.isEmpty())
 		{
 			LOGGER.warn("Blank structure pool: {} for placer structure", structureKey.getValue().toString());
-			return;
+			return List.of();
 		}
 		
-		placeStructure(pos, poolOpt.get(), offset, world, rand);
+		return placeStructure(pos, poolOpt.get(), offset, world, rand);
 	}
 	
-	// FIXME Collect all modified block positions to report back to GrammarTerm for id tagging
-	protected static void placeStructure(BlockPos pos, StructurePool pool, BlockPos offset, ServerWorld world, Random rand)
+	protected static List<BlockPos> placeStructure(BlockPos pos, StructurePool pool, BlockPos offset, ServerWorld world, Random rand)
 	{
 		StructureTemplateManager structureManager = world.getStructureTemplateManager();
 		BlockPos place = pos.add(offset);
@@ -123,5 +124,10 @@ public class StructurePlacerContent extends AbstractPlacerContent
 				piece.getBoundingBox(), 
 				place, 
 				false);
+		
+		BlockBox box = piece.getBoundingBox();
+		List<BlockPos> blocks = new ArrayList<>();
+		box.forEachVertex(blocks::add);
+		return blocks;
 	}
 }

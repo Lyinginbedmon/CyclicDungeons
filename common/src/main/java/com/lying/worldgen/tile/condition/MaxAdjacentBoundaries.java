@@ -2,7 +2,6 @@ package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
@@ -18,7 +17,7 @@ import net.minecraft.util.math.Direction;
 
 public class MaxAdjacentBoundaries extends Condition
 {
-	protected List<Direction> faces = Lists.newArrayList(Direction.stream().iterator());
+	protected List<Direction> faces = List.of(Direction.values());
 	protected int i = 0;
 	
 	public MaxAdjacentBoundaries(Identifier idIn)
@@ -47,8 +46,7 @@ public class MaxAdjacentBoundaries extends Condition
 	
 	protected void setFaces(List<Direction> facesIn)
 	{
-		faces.clear();
-		faces.addAll(facesIn);
+		faces = facesIn;
 	}
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
@@ -72,8 +70,7 @@ public class MaxAdjacentBoundaries extends Condition
 	
 	public Condition fromJson(JsonObject obj, JsonOps ops)
 	{
-		faces.clear();
-		faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
+		faces = FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow();
 		i = obj.get("cap").getAsInt();
 		return this;
 	}

@@ -39,7 +39,7 @@ public class InitialPhrase
 		registryName = name;
 	}
 	
-	public InitialPhrase(Identifier name, List<PhraseTerm> terms)
+	public InitialPhrase(Identifier name, Collection<PhraseTerm> terms)
 	{
 		this(name);
 		terms.forEach(this::add);
@@ -74,12 +74,7 @@ public class InitialPhrase
 		// All terms in the phrase, specified or otherwise
 		final Map<String,PhraseTerm> stock = getFullStock(phrase.entries);
 		
-		final Function<Collection<PhraseTerm>,InitialPhrase> builder = set -> 
-		{
-			final InitialPhrase phraseOut = new InitialPhrase(phrase.registryName());
-			set.forEach(phraseOut::add);
-			return validate(phraseOut);
-		};
+		final Function<Collection<PhraseTerm>,InitialPhrase> builder = set -> validate(new InitialPhrase(phrase.registryName(), set));
 		
 		// Modified phrase contents, if any
 		final Map<String,PhraseTerm> entries = new HashMap<>();

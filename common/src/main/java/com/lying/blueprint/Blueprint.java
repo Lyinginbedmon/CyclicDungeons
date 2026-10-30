@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.config.ServerConfig;
 import com.lying.config.ServerConfig.ShellType;
@@ -254,7 +253,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 		long timeMillis = System.currentTimeMillis();
 		LOGGER.info(" # Generating rooms");
 		
-		final List<BlueprintPassage> passages = Lists.newArrayList(passages());
+		final List<BlueprintPassage> passages = new ArrayList<>(passages());
 		int tally = 0;
 		for(BlueprintRoom node : this)
 		{
@@ -391,7 +390,7 @@ public class Blueprint extends ArrayList<BlueprintRoom>
 			for(int i=0; i<passages.size(); i++)
 			{
 				final BlueprintPassage passage = passages.get(i);
-				List<BlueprintPassage> others = Lists.newArrayList(passages.subList(i+1, passages.size()));
+				List<BlueprintPassage> others = new ArrayList<>(passages.subList(i+1, passages.size()));
 				if(i > 0)
 					others.addAll(passages.subList(0, i));
 				

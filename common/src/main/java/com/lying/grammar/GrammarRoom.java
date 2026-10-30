@@ -8,7 +8,6 @@ import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.google.common.collect.Lists;
 import com.lying.init.CDTerms;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -143,7 +142,7 @@ public class GrammarRoom
 	@NotNull
 	public List<GrammarRoom> getChildRooms(GrammarPhrase graph)
 	{
-		return Lists.newArrayList(
+		return new ArrayList<>(
 				childLinks.stream()
 					.map(graph::get)
 					.filter(Optional::isPresent)
@@ -155,7 +154,7 @@ public class GrammarRoom
 	@NotNull
 	public List<GrammarRoom> getParentRoom(GrammarPhrase graph)
 	{
-		return Lists.newArrayList(
+		return new ArrayList<>(
 				parentId.stream()
 					.map(graph::get)
 					.filter(Optional::isPresent)

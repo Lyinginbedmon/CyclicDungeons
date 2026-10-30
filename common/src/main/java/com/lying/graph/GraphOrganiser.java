@@ -14,7 +14,6 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintPassage;
@@ -94,7 +93,7 @@ public abstract class GraphOrganiser
 	public static List<BlueprintPassage> getPassages(Collection<BlueprintRoom> chart)
 	{
 		List<BlueprintPassage> paths = new ArrayList<>();
-		List<BlueprintRoom> rooms = Lists.newArrayList(chart);
+		List<BlueprintRoom> rooms = new ArrayList<>(chart);
 		rooms.sort((a,b) -> a.metadata().depth() < b.metadata().depth() ? -1 : a.metadata().depth() > b.metadata().depth() ? 1 : 0);
 		
 		for(BlueprintRoom n : rooms)
@@ -147,7 +146,7 @@ public abstract class GraphOrganiser
 			PoissonGrid fish = new PoissonGrid(radius, 16);
 			fish.generateTo(chart.size() * chart.size(), rand);
 			
-			List<GridTile> points = Lists.newArrayList(fish.values());
+			List<GridTile> points = new ArrayList<>(fish.values());
 			for(int d=0; d<=chart.maxDepth(); d++)
 				for(BlueprintRoom room : chart.byDepth(d))
 				{
@@ -184,7 +183,7 @@ public abstract class GraphOrganiser
 		public static class PoissonGrid
 		{
 			// Precalculated offset positions, for immediate-neighbourhood
-			private static List<GridTile> HARD_OFFSETS = Lists.newArrayList
+			private static List<GridTile> HARD_OFFSETS = List.of
 					(
 						new GridTile(0, 0),
 						new GridTile(-1, -1),
@@ -197,7 +196,7 @@ public abstract class GraphOrganiser
 						new GridTile(1, 1)
 					);
 			// Precalculated offset positions, for outer-neighbourhood
-			private static List<GridTile> SOFT_OFFSETS = Lists.newArrayList
+			private static List<GridTile> SOFT_OFFSETS = List.of
 					(
 						new GridTile(-2, -2),
 						new GridTile(-1, -2),
@@ -218,7 +217,7 @@ public abstract class GraphOrganiser
 					);
 			private static final Point INITIAL = Point.of(GridTile.ZERO, GridTile.ZERO);
 			/** List of points that are still evaluable */
-			private final List<Point> activePoints = Lists.newArrayList(INITIAL);
+			private final List<Point> activePoints = new ArrayList<>();
 			/** Map of background grid tiles to foreground grid tiles */
 			private final Map<GridTile, GridTile> background = new HashMap<>();
 			
@@ -233,6 +232,7 @@ public abstract class GraphOrganiser
 				cellLength = Math.sqrt(radiusIn);
 				samples = samplesIn;
 				
+				activePoints.add(INITIAL);
 				log(INITIAL);
 			}
 			
@@ -249,7 +249,7 @@ public abstract class GraphOrganiser
 			}
 			
 			/** Returns all points within this foreground grid */
-			public List<GridTile> values() { return Lists.newArrayList(background.values()); }
+			public List<GridTile> values() { return new ArrayList<>(background.values()); }
 			
 			/** Converts the given vector to a corresponding position in the background grid */
 			public GridTile toBackground(GridTile vector)

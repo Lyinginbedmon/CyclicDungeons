@@ -13,7 +13,6 @@ import org.joml.Vector2i;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
 import com.ibm.icu.text.Collator;
 import com.lying.block.ModularLogicBlock;
 import com.lying.block.Port;
@@ -121,7 +120,7 @@ public class CDLogicGates
 				if(ports.isEmpty())
 					return LogicResult.create().put(OUTPUT, false);
 				
-				List<Boolean> lines = Lists.newArrayList(ports.values());
+				List<Boolean> lines = new ArrayList<>(ports.values());
 				if(lines.isEmpty())
 					return LogicResult.create().put(OUTPUT, true);
 				

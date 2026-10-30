@@ -1,5 +1,6 @@
 package com.lying.client.screen.circuit;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,6 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
 import com.lying.block.entity.logic.PortSet;
@@ -115,7 +115,7 @@ public class CircuitModule
 	
 	protected static Map<Port, Vector2i> calculatePortPositions(List<Port> portsIn, int clockwise)
 	{
-		List<Port> set = Lists.newArrayList(portsIn);
+		List<Port> set = new ArrayList<>(portsIn);
 		if(clockwise < 0)
 			set.sort(Port.SORT);
 		Map<Port, Vector2i> positions = new HashMap<>();

@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
-import com.google.common.collect.Lists;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintPassage;
@@ -127,7 +126,7 @@ public class GraphScruncher
 				
 				// Collection unique course changes along passage towards parent
 				List<Direction> courseChanges = new ArrayList<>();
-				List<GridTile> path = Lists.newArrayList(route.result());
+				List<GridTile> path = new ArrayList<>(route.result());
 				GridTile prev = path.removeFirst();
 				while(!path.isEmpty())
 				{

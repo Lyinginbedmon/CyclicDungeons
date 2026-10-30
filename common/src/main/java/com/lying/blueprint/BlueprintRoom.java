@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grid.GraphTileGrid;
 import com.lying.grid.GridTile;
@@ -321,7 +320,7 @@ public class BlueprintRoom
 	public List<BlueprintRoom> getChildren(Collection<BlueprintRoom> graph)
 	{
 		final int depth = metadata().depth();
-		List<BlueprintRoom> set = Lists.newArrayList(
+		List<BlueprintRoom> set = new ArrayList<>(
 				graph.stream()
 				.filter(n -> childLinks.contains(n.id) && n.metadata().depth() > depth)
 				.toList());

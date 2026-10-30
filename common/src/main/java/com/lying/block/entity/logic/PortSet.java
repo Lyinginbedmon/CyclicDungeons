@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Lists;
 import com.lying.block.Port;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
@@ -113,7 +112,7 @@ public class PortSet
 		boolean result = false;
 		for(Port port : values.keySet())
 		{
-			List<String> set = Lists.newArrayList(values.get(port));
+			List<String> set = new ArrayList<>(values.get(port));
 			if(!set.contains(wireName))
 				continue;
 			

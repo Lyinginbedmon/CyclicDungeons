@@ -2,7 +2,6 @@ package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
@@ -18,7 +17,7 @@ import net.minecraft.util.math.Direction;
 
 public class Boundary extends Condition
 {
-	protected final List<Direction> faces = Lists.newArrayList(Direction.values());
+	protected List<Direction> faces = List.of(Direction.values());
 	
 	public Boundary(Identifier idIn)
 	{
@@ -33,8 +32,7 @@ public class Boundary extends Condition
 	public static Boundary of(List<Direction> facesIn)
 	{
 		Boundary condition = (Boundary)CDTileConditions.BOUNDARY.get();
-		condition.faces.clear();
-		condition.faces.addAll(facesIn);
+		condition.faces = facesIn;
 		return condition;
 	}
 	
@@ -64,8 +62,7 @@ public class Boundary extends Condition
 	
 	public Condition fromJson(JsonObject obj, JsonOps ops)
 	{
-		faces.clear();
-		faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
+		faces = FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow();
 		return this;
 	}
 	
@@ -84,8 +81,7 @@ public class Boundary extends Condition
 		public static Inverse of(List<Direction> facesIn)
 		{
 			Inverse condition = (Inverse)CDTileConditions.NON_BOUNDARY.get();
-			condition.faces.clear();
-			condition.faces.addAll(facesIn);
+			condition.faces = facesIn;
 			return condition;
 		}
 		

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.IWireableBlock.WireRecipient;
 import com.lying.block.Port;
@@ -28,8 +27,8 @@ import net.minecraft.world.World;
 public class WiringManifest
 {
 	public static final Codec<WiringManifest> CODEC	= RecordCodecBuilder.create(instance -> instance.group(
-			ManifestEntry.LIST_CODEC.fieldOf("inputs").forGetter(m -> Lists.newArrayList(m.inputs.values())),
-			ManifestEntry.LIST_CODEC.fieldOf("outputs").forGetter(m -> Lists.newArrayList(m.outputs.values())))
+			ManifestEntry.LIST_CODEC.fieldOf("inputs").forGetter(m -> new ArrayList<>(m.inputs.values())),
+			ManifestEntry.LIST_CODEC.fieldOf("outputs").forGetter(m -> new ArrayList<>(m.outputs.values())))
 			.apply(instance, (i,o) -> 
 			{
 				WiringManifest manifest = new WiringManifest();

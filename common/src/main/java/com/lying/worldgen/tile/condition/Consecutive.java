@@ -2,7 +2,6 @@ package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
@@ -18,7 +17,7 @@ import net.minecraft.util.math.Direction;
 
 public class Consecutive extends Condition
 {
-	protected List<Direction> faces = Lists.newArrayList(Direction.values());
+	protected List<Direction> faces = List.of(Direction.values());
 	
 	public Consecutive(Identifier idIn)
 	{
@@ -28,8 +27,7 @@ public class Consecutive extends Condition
 	public static Consecutive of(List<Direction> facesIn)
 	{
 		Consecutive condition = (Consecutive)CDTileConditions.CONSECUTIVE.get();
-		condition.faces.clear();
-		condition.faces.addAll(facesIn);
+		condition.faces = facesIn;
 		return condition;
 	}
 	
@@ -66,12 +64,9 @@ public class Consecutive extends Condition
 	public Condition fromJson(JsonObject obj, JsonOps ops)
 	{
 		if(obj.has("sides"))
-		{
-			faces.clear();
-			faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
-		}
+			faces = FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow();
 		else
-			faces = Lists.newArrayList(Direction.values());
+			faces = List.of(Direction.values());
 		return this;
 	}
 	
@@ -85,8 +80,7 @@ public class Consecutive extends Condition
 		public static Inverse of(List<Direction> facesIn)
 		{
 			Inverse condition = (Inverse)CDTileConditions.NON_CONSECUTIVE.get();
-			condition.faces.clear();
-			condition.faces.addAll(facesIn);
+			condition.faces = facesIn;
 			return condition;
 		}
 		

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.Pair;
@@ -55,7 +54,8 @@ public class GridPathing
 					if(offset.length() != 1)
 						return PathingResult.failure("Tiles placed diagonally");
 					
-					List<GridTile> set = Lists.newArrayList(start);
+					List<GridTile> set = new ArrayList<>();
+					set.add(start);
 					GridTile tile = start;
 					for(int i=0; i<direction.length(); i++)
 						if(!walkable.test(tile = tile.add(offset)))
@@ -176,7 +176,8 @@ public class GridPathing
 		List<GridTile> closedTiles = new ArrayList<>();
 		
 		// Nodes we've yet to investigate
-		List<AStarNode> open = Lists.newArrayList(new AStarNode(start, end));
+		List<AStarNode> open = new ArrayList<>();
+		open.add(new AStarNode(start, end));
 		
 		// Calculate maximum search space limit so we don't run excessively long and waste CPU
 		final int xSpan = Math.max(5, Math.abs(start.x - end.x));
@@ -272,14 +273,14 @@ public class GridPathing
 		
 		public List<GridTile> route()
 		{
-			List<AStarNode> history = Lists.newArrayList(this.history);
+			List<AStarNode> history = new ArrayList<>(this.history);
 			history.add(this);
 			return history.stream().map(AStarNode::pos).toList();
 		}
 		
 		public AStarNode apply(AStarMove move)
 		{
-			List<AStarNode> history = Lists.newArrayList(this.history);
+			List<AStarNode> history = new ArrayList<>(this.history);
 			history.add(this);
 			return new AStarNode(
 					pos.add(move.offset), 

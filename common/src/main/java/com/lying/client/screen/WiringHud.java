@@ -2,12 +2,12 @@ package com.lying.client.screen;
 
 import static com.lying.reference.Reference.ModInfo.prefix;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.PortEntry;
@@ -106,7 +106,7 @@ public class WiringHud extends Screen
 				return IconState.SHOW_OUTPUT;
 			
 			IWireableBlock wireable = IWireableBlock.getWireable(pos, mc.world).get();
-			List<Port> inputs = Lists.newArrayList(wireable.inputPorts(pos, mc.world));
+			List<Port> inputs = new ArrayList<>(wireable.inputPorts(pos, mc.world));
 			if(inputs.isEmpty())
 				return IconState.SHOW_OUTPUT;
 			
@@ -136,7 +136,7 @@ public class WiringHud extends Screen
 				return IconState.NONE;
 			
 			IWireableBlock wireable = IWireableBlock.getWireable(pos, mc.world).get();
-			List<Port> outputs = Lists.newArrayList(wireable.outputPorts(pos, mc.world));
+			List<Port> outputs = new ArrayList<>(wireable.outputPorts(pos, mc.world));
 			if(outputs.isEmpty())
 				return IconState.NONE;
 			

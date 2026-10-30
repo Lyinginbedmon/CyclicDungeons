@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.lying.data.CDTags;
 import com.lying.grammar.RoomMetadata;
@@ -93,8 +92,7 @@ public abstract class AbstractPlacerContent extends Content
 		
 		if(trapCounter.isUnlimited())
 		{
-			placeAllTraps(viablePoints, world, rand);
-			return viablePoints;
+			return placeAllTraps(viablePoints, world, rand);
 		}
 		else
 		{
@@ -105,14 +103,15 @@ public abstract class AbstractPlacerContent extends Content
 				traps.add(viablePoints.remove(rand.nextInt(viablePoints.size())));
 			
 			// Place traps
-			placeAllTraps(traps, world, rand);
-			return traps;
+			return placeAllTraps(traps, world, rand);
 		}
 	}
 	
-	protected final void placeAllTraps(List<BlockPos> positions, ServerWorld world, Random rand)
+	protected final List<BlockPos> placeAllTraps(List<BlockPos> positions, ServerWorld world, Random rand)
 	{
-		List<BlockPos> traps = Lists.newArrayList(positions);
+		List<BlockPos> alteredBlocks = new ArrayList<>();
+		
+		List<BlockPos> traps = new ArrayList<>(positions);
 		List<BlockPos> placedTraps = new ArrayList<>();
 		final Predicate<BlockPos> rectifier = p -> 
 			!isPosViableForTrap(p, world) || 
@@ -120,12 +119,14 @@ public abstract class AbstractPlacerContent extends Content
 		while(!traps.isEmpty())
 		{
 			BlockPos place = traps.remove(rand.nextInt(traps.size())); 
-			placeTrap(place, world, rand);
+			alteredBlocks.addAll(placeTrap(place, world, rand));
 			placedTraps.add(place);
 			
 			// Traps may be chosen to be placed in areas that invalidate other traps, so re-evaluate the set each time one is placed
 			traps.removeIf(rectifier);
 		}
+		
+		return alteredBlocks;
 	}
 	
 	/** Returns how far from any avoided blocks (such as doors) the traps should be placed */
@@ -138,5 +139,5 @@ public abstract class AbstractPlacerContent extends Content
 	protected boolean isPosViableForTrap(BlockPos pos, ServerWorld world) { return viabilityCheck.applyTo(pos, world); }
 	
 	/** Generates the trap in the world */
-	protected abstract void placeTrap(BlockPos pos, ServerWorld world, Random rand);
+	protected abstract List<BlockPos> placeTrap(BlockPos pos, ServerWorld world, Random rand);
 }

@@ -1,10 +1,10 @@
 package com.lying.block.actors.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.actors.DartTrapBlock;
 import com.lying.entity.DartEntity;
@@ -33,13 +33,12 @@ import net.minecraft.world.World;
 
 public class DartTrapBlockEntity extends TrapActorBlockEntity<DartTrapBlock>
 {
-	protected List<StatusEffectInstance> effects = Lists.newArrayList(
-			new StatusEffectInstance(StatusEffects.POISON, Reference.Values.TICKS_PER_SECOND * 7, 0)
-			);
+	protected List<StatusEffectInstance> effects = new ArrayList<>();
 	
 	public DartTrapBlockEntity(BlockPos pos, BlockState state)
 	{
 		super(CDBlockEntityTypes.DART_TRAP.get(), pos, state);
+		effects.add(new StatusEffectInstance(StatusEffects.POISON, Reference.Values.TICKS_PER_SECOND * 7, 0));
 	}
 	
 	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)

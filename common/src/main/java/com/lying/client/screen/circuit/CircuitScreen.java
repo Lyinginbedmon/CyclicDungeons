@@ -13,7 +13,6 @@ import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
 import com.lying.CyclicDungeons;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.LogicModule;
@@ -73,12 +72,15 @@ public class CircuitScreen extends Screen
 	private Map<String, CircuitWire> circuitWires = new HashMap<>();
 	private int wireIndex = 0;
 	
-	private static final List<ClickHandlerBuilder> HANDLERS = Lists.newArrayList(
-			ConnectPortHandler::tryCreateFrom,
-			ConnectWireHandler::tryCreateFrom,
-			RenameGateHandler::tryCreateFrom
-			);
+	private static final List<ClickHandlerBuilder> HANDLERS = new ArrayList<>();
 	private Optional<ClickHandler> currentHandler = Optional.empty();
+	
+	static
+	{
+		HANDLERS.add(ConnectPortHandler::tryCreateFrom);
+		HANDLERS.add(ConnectWireHandler::tryCreateFrom);
+		HANDLERS.add(RenameGateHandler::tryCreateFrom);
+	}
 	
 	public CircuitScreen()
 	{

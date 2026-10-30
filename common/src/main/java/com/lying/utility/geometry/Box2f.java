@@ -1,11 +1,10 @@
 package com.lying.utility.geometry;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
-
-import com.google.common.collect.Lists;
 
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
@@ -46,7 +45,7 @@ public class Box2f extends AbstractBox2f
 	
 	public List<LineSegment2f> asEdges()
 	{
-		return Lists.newArrayList(edgeMap.values());
+		return new ArrayList<>(edgeMap.values());
 	}
 	
 	public List<Vec2f> asPoints()

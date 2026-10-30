@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.google.common.collect.Lists;
 import com.lying.grammar.DefaultTerms;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
@@ -51,7 +50,7 @@ public class DefaultThemes
 					DefaultBattles.ID_ZOMBIE_CROWD,
 					DefaultBattles.ID_SKELETONS
 					)), 
-			Lists.newArrayList(
+			List.of(
 					DefaultTraps.ID_PITFALL,
 					DefaultTraps.ID_LAVA_RIVER,
 					DefaultTraps.ID_PIT_JUMPING,
@@ -62,7 +61,7 @@ public class DefaultThemes
 					DefaultTraps.ID_HATCH_PITFALL,
 					DefaultTraps.ID_MODULE_TEST
 					),
-			Lists.newArrayList(
+			List.of(
 					DefaultPuzzles.ID_COMBO_LOCK
 					),
 			Map.of(

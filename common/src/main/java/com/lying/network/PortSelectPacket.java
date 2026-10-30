@@ -2,9 +2,9 @@ package com.lying.network;
 
 import static com.lying.reference.Reference.ModInfo.translate;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.lying.block.IWireableBlock;
 import com.lying.block.Port;
 import com.lying.block.entity.logic.PortEntry;
@@ -70,7 +70,7 @@ public class PortSelectPacket
 			if(!wiring.isWiring())
 			{
 				IWireableBlock wireable = (IWireableBlock)world.getBlockState(pos).getBlock();
-				List<Port> ports = Lists.newArrayList(wireable.outputPorts(pos, world));
+				List<Port> ports = new ArrayList<>(wireable.outputPorts(pos, world));
 				if(ports.isEmpty())
 				{
 					player.sendMessage(translate("gui", "wiring_gun.no_outputs", blockName), true);
@@ -100,7 +100,7 @@ public class PortSelectPacket
 				}
 				
 				IWireableBlock wireable = (IWireableBlock)world.getBlockState(pos).getBlock();
-				List<Port> ports = Lists.newArrayList(wireable.inputPorts(pos, world));
+				List<Port> ports = new ArrayList<>(wireable.inputPorts(pos, world));
 				if(ports.isEmpty())
 				{
 					player.sendMessage(translate("gui", "wiring_gun.no_inputs", blockName), true);

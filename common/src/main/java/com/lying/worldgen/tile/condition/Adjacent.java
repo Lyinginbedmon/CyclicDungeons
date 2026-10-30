@@ -2,7 +2,6 @@ package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
@@ -19,7 +18,7 @@ import net.minecraft.util.math.Direction;
 
 public class Adjacent extends Condition
 {
-	protected List<Direction> faces = Lists.newArrayList(Direction.values());
+	protected List<Direction> faces = List.of(Direction.values());
 	protected Condition child = CDTileConditions.NEVER.get();
 	
 	public Adjacent(Identifier idIn)
@@ -57,8 +56,7 @@ public class Adjacent extends Condition
 	
 	protected void setFaces(List<Direction> facesIn)
 	{
-		faces.clear();
-		faces.addAll(facesIn);
+		faces = facesIn;
 	}
 	
 	public boolean test(Tile tileIn, BlockPos pos, BlueprintTileGrid grid, GridVolume volume)
@@ -82,12 +80,9 @@ public class Adjacent extends Condition
 	public Condition fromJson(JsonObject obj, JsonOps ops)
 	{
 		if(obj.has("sides"))
-		{
-			faces.clear();
-			faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
-		}
+			faces = FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow();
 		else
-			faces = Lists.newArrayList(Direction.values());
+			faces = List.of(Direction.values());
 		child = Condition.fromJson(obj.get("condition"), ops);
 		return this;
 	}
@@ -207,12 +202,9 @@ public class Adjacent extends Condition
 		public Condition fromJson(JsonObject obj, JsonOps ops)
 		{
 			if(obj.has("sides"))
-			{
-				faces.clear();
-				faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
-			}
+				faces = FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow();
 			else
-				faces = Lists.newArrayList(Direction.values());
+				faces = List.of(Direction.values());
 			return this;
 		}
 		

@@ -2,7 +2,6 @@ package com.lying.worldgen.tile.condition;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lying.grid.BlueprintTileGrid;
@@ -18,7 +17,7 @@ import net.minecraft.util.math.Direction;
 
 public class MaxConsecutive extends Condition
 {
-	private List<Direction> faces = Lists.newArrayList(Direction.stream().iterator());
+	private List<Direction> faces = List.of(Direction.values());
 	private int i = 0;
 	
 	public MaxConsecutive(Identifier idIn)
@@ -36,8 +35,7 @@ public class MaxConsecutive extends Condition
 	public static MaxConsecutive of(List<Direction> facesIn, int val)
 	{
 		MaxConsecutive condition = (MaxConsecutive)CDTileConditions.MAX_SELF.get();
-		condition.faces.clear();
-		condition.faces.addAll(facesIn);
+		condition.faces = facesIn;
 		condition.i = val;
 		return condition;
 	}
@@ -76,8 +74,7 @@ public class MaxConsecutive extends Condition
 	
 	public Condition fromJson(JsonObject obj, JsonOps ops)
 	{
-		faces.clear();
-		faces.addAll(FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow());
+		faces = FACE_LIST_CODEC.parse(ops, obj.get("sides")).getOrThrow();
 		i = obj.get("cap").getAsInt();
 		return this;
 	}

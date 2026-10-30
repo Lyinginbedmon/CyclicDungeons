@@ -7,7 +7,6 @@ import java.util.function.Function;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
@@ -255,7 +254,7 @@ public abstract class Tile
 		public Builder asBlock(BlockState... statesIn)
 		{
 			style = GenStyle.BLOCK;
-			states = Optional.of(Lists.newArrayList(statesIn));
+			states = Optional.of(List.of(statesIn));
 			return this;
 		}
 		
@@ -308,7 +307,7 @@ public abstract class Tile
 						public void generate(TileInstance inst, BlockPos pos, ServerWorld world)
 						{
 							final int sc = Tile.TILE_SIZE - 1;
-							List<BlockState> blocks = states.orElse(Lists.newArrayList(Blocks.AIR.getDefaultState()));
+							List<BlockState> blocks = states.orElse(List.of(Blocks.AIR.getDefaultState()));
 							if(blocks.isEmpty())
 								return;
 							BlockPos.Mutable.iterate(pos, pos.add(sc, sc, sc)).forEach(p -> Tile.tryPlace(blocks.get(world.random.nextInt(blocks.size())), p, world));

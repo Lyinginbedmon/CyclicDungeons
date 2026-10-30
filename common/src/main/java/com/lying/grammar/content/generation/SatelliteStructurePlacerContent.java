@@ -1,5 +1,6 @@
 package com.lying.grammar.content.generation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -92,7 +93,7 @@ public class SatelliteStructurePlacerContent extends StructurePlacerContent
 					adjacentCheck.applyTo(p, world));
 	}
 	
-	protected void placeTrap(BlockPos pos, ServerWorld world, Random rand)
+	protected List<BlockPos> placeTrap(BlockPos pos, ServerWorld world, Random rand)
 	{
 		DynamicRegistryManager manager = world.getRegistryManager();
 		Registry<StructurePool> registry = manager.getOrThrow(RegistryKeys.TEMPLATE_POOL);
@@ -101,14 +102,20 @@ public class SatelliteStructurePlacerContent extends StructurePlacerContent
 		if(poolOpt.isEmpty())
 		{
 			LOGGER.warn("Blank structure pool: {} for satellite placer structure", adjacentKey.getValue().toString());
-			return;
+			return List.of();
 		}
 		
-		super.placeTrap(pos, world, rand);
+		List<BlockPos> blocks = new ArrayList<>();
+		blocks.addAll(super.placeTrap(pos, world, rand));
 		
-		Direction.Type.HORIZONTAL.stream()
-			.map(pos::offset)
-			.filter(p -> adjacentCheck.applyTo(p, world))
-			.forEach(p -> StructurePlacerContent.placeStructure(p, poolOpt.get(), adjacentOffset, world, rand));
+		final StructurePool pool = poolOpt.get();
+		for(Direction adjacent : Direction.Type.HORIZONTAL)
+		{
+			final BlockPos neighbour = pos.offset(adjacent);
+			if(!adjacentCheck.applyTo(pos, world))
+				continue;
+			blocks.addAll(StructurePlacerContent.placeStructure(neighbour, pool, adjacentOffset, world, rand));
+		}
+		return blocks;
 	}
 }

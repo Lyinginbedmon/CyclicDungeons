@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.tile.DefaultTiles;
 
@@ -27,7 +26,7 @@ public class DefaultTileSets
 		ID_TRAP				= prefix("trap"),
 		ID_PITFALL_TRAP		= prefix("pitfall_trap");
 	
-	private static final List<TileSet> ROOM_TILESETS	= Lists.newArrayList(
+	private static final List<TileSet> ROOM_TILESETS	= List.of(
 			new TileSet(ID_DEFAULT)
 				.addPlaceableFlooring()
 				.addAll(Map.of(
@@ -81,7 +80,7 @@ public class DefaultTileSets
 			new TileSet(ID_TRAP)
 				.addPlaceableFlooring());
 	
-	private static final List<TileSet> TRAP_TILESETS = Lists.newArrayList(
+	private static final List<TileSet> TRAP_TILESETS = List.of(
 			new TileSet(ID_PITFALL_TRAP)
 			.addAll(Map.of(
 				DefaultTiles.ID_PITFALL, 30
