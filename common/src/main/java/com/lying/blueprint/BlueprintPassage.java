@@ -384,6 +384,20 @@ public class BlueprintPassage
 		return false;
 	}
 	
+	public boolean shouldGenerateLintelFor(BlueprintRoom node)
+	{
+		// Otherwise only generate a door if it is sufficiently removed from another door in this passage
+		final GridTile target = getTileAdjacentTo(node);
+		GridTile door;
+		for(BlueprintRoom terminus : connectedTo)
+			if(
+				!terminus.equals(node) && 
+				(door = getTileAdjacentTo(terminus)) != null && 
+				door.manhattanDistance(target) == 1)
+				return false;
+		return true;
+	}
+	
 	public void generate(BlueprintTileGrid grid, BlockPos origin, ServerWorld world, Random rand)
 	{
 		final Theme theme = parent().metadata().theme();
@@ -391,6 +405,13 @@ public class BlueprintPassage
 		grid.addTilesFor(vol);
 		
 		GridTile doorGrid;
+		
+		List<BlockPos> terminusTiles = 
+				connectedTo.stream()
+				.map(this::getTileAdjacentTo)
+				.map(t -> t.toPos(1))
+				.toList();
+		
 		for(BlueprintRoom terminus : connectedTo)
 			if((doorGrid = getTileAdjacentTo(terminus)) != null)
 			{
@@ -402,7 +423,7 @@ public class BlueprintPassage
 				BlockPos dPos = doorGrid.toPos(1);
 				BlockPos neighbour;
 				for(Direction face : Direction.Type.HORIZONTAL)
-					if(vol.contains(neighbour = dPos.offset(face)))
+					if(vol.contains(neighbour = dPos.offset(face)) && !terminusTiles.contains(neighbour))
 						TileGenerator.setTile(neighbour, CDTiles.PASSAGE_FLAG.get(), grid, vol);
 			}
 		

@@ -3,6 +3,7 @@ package com.lying.grammar.content.entities;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import com.lying.CyclicDungeons;
 import com.lying.grammar.RoomMetadata;
@@ -57,23 +58,23 @@ public class CrowdBattle<T extends Entity> extends Battle
 	public Text describe() { return ((MutableText)data.range()).append(" ").append(data.type().getUntranslatedName()); }
 	
 	@SuppressWarnings("unchecked")
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
+	public List<UUID> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
 		if(data == null)
 		{
 			CyclicDungeons.LOGGER.error("# Error loading crowd battle data");
-			return;
+			return List.of();
 		}
 		final EntityType<T> type = (EntityType<T>)data.type();
 		if(type == null)
 		{
 			CyclicDungeons.LOGGER.error("# Error loading crowd battle entity type");
-			return;
+			return List.of();
 		}
 		
 		final int mobs = data.getCount(rand);
 		if(mobs <= 0)
-			return;
+			return List.of();
 		
 		List<BlockPos> positions = new ArrayList<>();
 		BlockPos.Mutable.iterate(min, max).forEach(p -> 
@@ -84,12 +85,23 @@ public class CrowdBattle<T extends Entity> extends Battle
 		
 		BlockPos pos;
 		if(!positions.isEmpty())
+		{
+			List<UUID> ids = new ArrayList<>();
 			for(int i=mobs; i>0; --i)
+			{
+				Entity ent = null;
 				do
 				{
 					pos = positions.size() == 1 ? positions.remove(0) : positions.remove(rand.nextInt(positions.size()));
 				}
-				while(!trySpawn(type, pos, world) && !positions.isEmpty());
+				while((ent = trySpawn(type, pos, world)) == null && !positions.isEmpty());
+				if(ent != null)
+					ids.add(ent.getUuid());
+			}
+			return ids;
+		}
+		else
+			return List.of();
 	}
 	
 	public NbtCompound writeConfig(NbtCompound nbt)

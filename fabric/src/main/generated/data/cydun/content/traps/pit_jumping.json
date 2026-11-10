@@ -1,7 +1,9 @@
 {
   "Name": "cydun:pit_jumping",
   "Settings": {
-    "Hazard": "cydun:pit"
+    "Hazard": "cydun:pit",
+    "MinimumXSpacing": 1,
+    "MinimumZSpacing": 1
   },
   "Type": "cydun:simple_jumping"
 }

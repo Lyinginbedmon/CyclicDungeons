@@ -55,6 +55,10 @@ public class InitialPhrase
 	
 	protected List<PhraseTerm> contents() { return entries.values().stream().filter(PhraseTerm::needsRecordingInJSON).toList(); }
 	
+	/** 
+	 * Returns a version of the given phrase, corrected for any formatting errors where possible.<br>
+	 * Returns NULL if the given phrase cannot be salvaged or is blank.
+	 */
 	@Nullable
 	public static InitialPhrase validate(InitialPhrase phrase)
 	{
@@ -67,7 +71,7 @@ public class InitialPhrase
 		final Logger errorLog = CyclicDungeons.LOGGER;
 		if(phrase.entries.isEmpty())
 		{
-			errorLog.error("Failed to load initial phrase {}: no entries found", phrase.registryName().toString());
+			errorLog.error("X Failed to load initial phrase {}: no entries found", phrase.registryName().toString());
 			return null;
 		}
 		
@@ -84,7 +88,7 @@ public class InitialPhrase
 		Optional<PhraseTerm> startOpt = stock.values().stream().filter(PhraseTerm::isStart).findFirst();
 		if(startOpt.isEmpty())
 		{
-			errorLog.warn("Error while loading initial phrase {}: no start room declared", phrase.registryName().toString());
+			errorLog.warn("? Error while loading initial phrase {}: no start room declared", phrase.registryName().toString());
 			
 			Map<PhraseTerm, String> paternity = calculatePaternity(stock);
 			List<PhraseTerm> orphans = stock.values().stream().filter(Predicates.not(paternity::containsKey)).toList();
@@ -111,7 +115,7 @@ public class InitialPhrase
 		// Case 2: Multiple START rooms. Identify most connected and blank the rest
 		if(stock.values().stream().filter(PhraseTerm::isStart).count() > 1)
 		{
-			errorLog.warn("Error while loading initial phrase {}: multiple start rooms declared", phrase.registryName().toString());
+			errorLog.warn("? Error while loading initial phrase {}: multiple start rooms declared", phrase.registryName().toString());
 			
 			Map<PhraseTerm, String> paternity = calculatePaternity(stock);
 			PhraseTerm bestStart = null;
@@ -144,7 +148,7 @@ public class InitialPhrase
 		Map<PhraseTerm, String> paternity = calculatePaternity(stock);
 		if(paternity.containsKey(start))
 		{
-			errorLog.warn("Error while loading initial phrase {}: start room declared as child of another room", phrase.registryName().toString());
+			errorLog.warn("? Error while loading initial phrase {}: start room declared as child of another room", phrase.registryName().toString());
 			
 			final PhraseTerm parent = entries.get(paternity.get(start));
 			entries.put(parent.name(), new PhraseTerm(

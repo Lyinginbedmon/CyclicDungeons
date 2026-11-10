@@ -13,7 +13,6 @@ import java.util.function.Supplier;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.base.Predicates;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GridVolume;
 import com.lying.init.CDLoggers;
@@ -45,7 +44,7 @@ public class TileGenerator
 			return;
 		}
 		
-		LOGGER.info("Apply WFC to tile set of {} positions", map.volume());
+		LOGGER.info("Applying WFC to tile set of {} positions", map.volume());
 		
 		// Ensure grid volume knows its own contents
 		vol.clearTallies();
@@ -55,9 +54,7 @@ public class TileGenerator
 			vol.tally(tileAt, null);
 		});
 		
-		final OptionLog optionManager = new OptionLog(map, vol, tiles.keys().stream()
-				.filter(Predicates.not(Tile::isBlank))
-				.toList());
+		final OptionLog optionManager = new OptionLog(map, vol, tiles.contents());
 		
 		List<BlockPos> positionsToGenerate = vol.unsetPoints();
 		Map<Integer,List<BlockPos>> positionsPerY = new HashMap<>();
@@ -106,27 +103,32 @@ public class TileGenerator
 			if(pos == null)
 				break;
 			
-			List<Tile> options = manager.getOptionsFor(pos);
-			Tile tile = null;
-			switch(options.size())
-			{
-				case 0:
-					tile = fallback.get();
-					break;
-				case 1:
-					tile = options.get(0);
-					break;
-				default:
-					tile = selectTile(options, tiles, rand);
-					break;
-			}
-			
-			if(tile != null)
-			{
-				setTile(pos, tile, map, vol);
-				manager.removeAndUpdate(pos, map, vol);
-			}
+			processTile(pos, map, vol, tiles, manager, fallback, rand);
 			slots.remove(pos);
+		}
+	}
+	
+	public static void processTile(BlockPos pos, BlueprintTileGrid map, GridVolume vol, final TileSet tiles, final OptionLog manager, final Supplier<Tile> fallback, Random rand)
+	{
+		List<Tile> options = manager.getOptionsFor(pos);
+		Tile tile = null;
+		switch(options.size())
+		{
+			case 0:
+				tile = fallback.get();
+				break;
+			case 1:
+				tile = options.get(0);
+				break;
+			default:
+				tile = selectTile(options, tiles, rand);
+				break;
+		}
+		
+		if(tile != null)
+		{
+			setTile(pos, tile, map, vol);
+			manager.removeAndUpdate(pos, map, vol);
 		}
 	}
 	

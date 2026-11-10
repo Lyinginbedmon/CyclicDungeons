@@ -1,5 +1,7 @@
 package com.lying.grammar.content.generation;
 
+import static com.lying.worldgen.TileGenerator.setTile;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -7,22 +9,21 @@ import java.util.Optional;
 import org.joml.Vector2i;
 
 import com.google.gson.JsonObject;
+import com.lying.CyclicDungeons;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.Content;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.GridVolume;
-import com.lying.init.CDTileConditions;
-import com.lying.init.CDTileTags;
+import com.lying.init.CDTileSets;
 import com.lying.init.CDTiles;
 import com.lying.reference.Reference;
+import com.lying.worldgen.TileGenerator;
+import com.lying.worldgen.TileGenerator.OptionLog;
 import com.lying.worldgen.theme.Theme;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
-import com.lying.worldgen.tile.TilePredicate;
-import com.lying.worldgen.tile.condition.Condition;
-import com.lying.worldgen.tile.condition.IsAnyOf;
-import com.lying.worldgen.tile.condition.NearBox;
+import com.lying.worldgen.tileset.TileSet;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.server.world.ServerWorld;
@@ -34,10 +35,11 @@ import net.minecraft.util.math.random.Random;
 public class SimpleJumpingContent extends Content
 {
 	public static final Identifier ID	= Reference.ModInfo.prefix("simple_jumping");
-	private static final Optional<Tile> FLOOR = CDTiles.instance().get(DefaultTiles.ID_PRISTINE_FLOOR);
+	private Identifier floorTile = DefaultTiles.ID_PRISTINE_FLOOR;
 	private Identifier fillTile = CDTiles.ID_STONE;
-	
-	private static final Condition IS_FLOOR = IsAnyOf.HasTag.of(CDTileTags.ID_SOLID_FLOORING);
+	private Optional<Identifier> treasureTile = Optional.empty();
+	private Optional<Identifier> tileSet = Optional.empty();
+	private Vector2i separations = new Vector2i(1,1);
 	
 	public SimpleJumpingContent(Identifier idIn)
 	{
@@ -58,6 +60,10 @@ public class SimpleJumpingContent extends Content
 	public JsonObject toJson(JsonObject obj, JsonOps ops)
 	{
 		obj.addProperty("Hazard", fillTile.toString());
+		obj.addProperty("MinimumXSpacing", separations.x);
+		obj.addProperty("MinimumZSpacing", separations.y);
+		tileSet.ifPresent(id -> obj.addProperty("Platforms", id.toString()));
+		treasureTile.ifPresent(id -> obj.addProperty("Treasure", id.toString()));
 		return obj;
 	}
 	
@@ -65,69 +71,110 @@ public class SimpleJumpingContent extends Content
 	{
 		super.fromJson(ops, obj);
 		fillTile = Identifier.of(obj.get("Hazard").getAsString());
+		separations = new Vector2i(
+				Math.abs(obj.get("MinimumXSpacing").getAsInt()), 
+				Math.abs(obj.get("MinimumZSpacing").getAsInt()));
+		if(obj.has("Platforms"))
+			tileSet = Optional.of(Identifier.of(obj.get("Platforms").getAsString()));
+		if(obj.has("Treasure"))
+			treasureTile = Optional.of(Identifier.of(obj.get("Treasure").getAsString()));
 		return this;
 	}
 	
-	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme) { return CDTiles.instance().get(fillTile).isPresent() && FLOOR.isPresent(); }
+	public boolean isApplicableTo(BlueprintRoom room, RoomMetadata meta, Theme theme)
+	{
+		for(Identifier id : List.of(fillTile,floorTile))
+			if(CDTiles.instance().get(id).isEmpty())
+			{
+				CyclicDungeons.LOGGER.warn("? Content {} requires {} tile, but it is not present in datapack tile data", registryName().toString(), id.toString());
+				return false;
+			}
+		
+		return true;
+	}
 	
 	public void prepare(BlueprintRoom room, BlueprintTileGrid tileMap, GridVolume volume, ServerWorld world, Random rand)
 	{
-		final Tile flooring = FLOOR.get();
+		final TileSet baseTiles = room.metadata().theme().getTileSet(room.metadata().type());
+		final TileSet tileSet = this.tileSet.isEmpty() ? baseTiles : CDTileSets.instance().get(this.tileSet.get()).orElse(baseTiles);
+		final OptionLog optionManager = new OptionLog(tileMap, volume, tileSet.contents());
 		
 		// Place initial solid flooring underneath doorway exclusions
+		List<BlockPos> platforms = new ArrayList<>();
 		tileMap.getMatchingTilesWithin(volume, (p,t) -> t.registryName().equals(CDTiles.ID_PASSAGE_FLAG)).stream()
 			.map(BlockPos::down)
-			.filter(tileMap::contains)
-			.forEach(p -> tileMap.put(p, flooring));
+			.filter(volume::contains)
+			.forEach(p -> 
+			{
+				TileGenerator.processTile(p, tileMap, volume, tileSet, optionManager, CDTiles.STONE, rand);
+				platforms.add(p);
+			});
 		
 		// Randomly place solid flooring at distance from other solid flooring
-		final Vector2i roomSize = room.metadata().tileSize();
-		final int minSepX = roomSize.x < 4 ? 1 : rand.nextBetween(1, 2);
-		final int minSepY = roomSize.y < 4 ? 1 : rand.nextBetween(1, 2);
-		final TilePredicate spacingPredicate = buildSpacingPredicate(minSepX, minSepY);
+		final int minSepX = separations.x;
+		final int minSepY = separations.y;
 		
 		// TODO Implement platform height offsets
 		
-		List<BlockPos> platforms = new ArrayList<>();
-		List<BlockPos> options;
-		while(!(options = tileMap.getMatchingTilesWithin(volume, (p,t) -> spacingPredicate.test(t, p, tileMap, volume))).isEmpty())
+		List<BlockPos> floor = volume.getBoundaries(List.of(Direction.DOWN));
+		List<BlockPos> options = new ArrayList<>();
+		for(BlockPos p : floor)
+			if(!volume.isSet(p) && !isPlatformWithin(p, platforms, minSepX, minSepY))
+				options.add(p);
+		
+		while(!options.isEmpty())
 		{
-			BlockPos pos = options.size() > 1 ? options.get(rand.nextInt(options.size())) : options.get(0);
-			tileMap.put(pos, flooring);
+			// List of options within 1 step of the minimums from any existing platform
+			// These are the positions we select from to ensure the intervening gap(s) are actually jumpable
+			List<BlockPos> candidates = options.stream().filter(p -> isPlatformWithin(p, platforms, minSepX + 1, minSepY + 1)).toList();
+			if(candidates.isEmpty())
+				break;
+			
+			BlockPos pos = 
+					candidates.size() == 1 ? 
+						candidates.getFirst() : 
+						candidates.get(rand.nextInt(candidates.size()));
+			options.remove(pos);
+			
+			TileGenerator.processTile(pos, tileMap, volume, tileSet, optionManager, CDTiles.STONE, rand);
 			platforms.add(pos);
+			
+			options.removeIf(p -> isPlatformWithin(p, platforms, minSepX, minSepY));
 		}
 		
 		// Fill in remaining floor space with filler tile
 		final Tile filler = CDTiles.instance().get(fillTile).get();
-		tileMap.getMatchingTilesWithin(volume, (p,t) -> t.isBlank() && flooring.canExistAt(p, tileMap, volume)).forEach(p -> tileMap.put(p, filler));
+		for(BlockPos p : floor)
+			if(!volume.isSet(p))
+				setTile(p, filler, tileMap, volume);
 		
+		// Place treasure at farthest platform if this room is a dead end
 		if(!room.hasChildren())
-		{
-			final BlockPos entry = tileMap.getMatchingTilesWithin(volume, (p,t) -> t.is(CDTiles.PASSAGE_FLAG.get())).getFirst();
-			platforms.stream()
-					.filter(p -> !tileMap.isBoundary(p, Direction.UP) && tileMap.isEmpty(p.up()))
-					.sorted((a,b) -> 
-					{
-						double distA = a.getSquaredDistance(entry);
-						double distB = b.getSquaredDistance(entry);
-						return distA > distB ? -1 : distA < distB ? 1 : 0;
-					})
-					.findFirst()
-					.ifPresent(p -> tileMap.put(p, DefaultTiles.TREASURE.get()));
-		}
+			treasureTile.ifPresent(id -> 
+			{
+				final BlockPos entry = tileMap.getMatchingTilesWithin(volume, (p,t) -> t.is(CDTiles.PASSAGE_FLAG.get())).getFirst();
+				platforms.stream()
+						.filter(p -> !tileMap.isBoundary(p, Direction.UP))
+						.sorted((a,b) -> 
+						{
+							double distA = a.getSquaredDistance(entry);
+							double distB = b.getSquaredDistance(entry);
+							return distA > distB ? -1 : distA < distB ? 1 : 0;
+						})
+						.findFirst()
+						.ifPresent(p -> setTile(p.up(), CDTiles.instance().getElse(id, CDTiles.BLANK), tileMap, volume));
+			});
 	}
 	
-	protected TilePredicate buildSpacingPredicate(int minSepX, int minSepY)
+	protected static boolean isPlatformWithin(BlockPos pos, List<BlockPos> platforms, int minSepX, int minSepZ)
 	{
-		final BlockPos 
-			hitMin = new BlockPos(-minSepX, 0, -minSepY),
-			hitMax = new BlockPos(minSepX, 0, minSepY);
-		
-		return TilePredicate.Builder.create()
-				.condition(CDTileConditions.ON_BOTTOM.get())
-				.condition(NearBox.Inverse.of(hitMin, hitMax, IS_FLOOR))
-				.condition(NearBox.of(hitMin.add(-1, 0, -1), hitMax.add(1, 0, 1), IS_FLOOR))
-				.build();
+		for(BlockPos platform : platforms)
+			if(
+				(minSepX == 0 || Math.abs(platform.getX() - pos.getX()) <= minSepX) &&
+				(minSepZ == 0 || Math.abs(platform.getZ() - pos.getZ()) <= minSepZ)
+			)
+				return true;
+		return false;
 	}
 	
 	public List<BlockPos> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand) { return List.of(); }

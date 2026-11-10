@@ -1,6 +1,8 @@
 package com.lying.grammar.content.entities;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +61,7 @@ public abstract class Battle
 	
 	public abstract Text describe();
 	
-	public abstract void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
+	public abstract List<UUID> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand);
 	
 	@Nullable
 	protected static BlockPos findSpawnablePosition(EntityType<? extends Entity> type, BlockPos min, BlockPos max, ServerWorld world, Random rand, int searchAttempts)
@@ -105,7 +107,8 @@ public abstract class Battle
 		return true;
 	}
 	
-	protected static <T extends Entity> boolean trySpawn(EntityType<T> type, BlockPos pos, ServerWorld world)
+	@SuppressWarnings("unchecked")
+	protected static <T extends Entity> T trySpawn(EntityType<T> type, BlockPos pos, ServerWorld world)
 	{
 		Entity entity = type.create(world, SpawnReason.STRUCTURE);
 		entity.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 360F * world.random.nextFloat(), 0);
@@ -120,9 +123,9 @@ public abstract class Battle
 				mob.getBrain().remember(MemoryModuleType.HOME, new GlobalPos(world.getRegistryKey(), pos));
 			
 			if(world.spawnNewEntityAndPassengers(entity))
-				return true;
+				return (T)entity;
 		}
-		return false;
+		return null;
 	}
 	
 	public Optional<NbtCompound> getConfig()

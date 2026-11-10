@@ -176,6 +176,12 @@ public class RoomMetadata
 	/** Returns true if this room can be replaced during generation */
 	public boolean isReplaceable() { return type.isReplaceable(); }
 	
+	public boolean hasCustomEntryDoor()
+	{
+		Optional<IContentEntry> content = type().getContentEntry(processorID);
+		return content.isPresent() && !content.get().getEntryDoorTiles().hasDefinedDoor();
+	}
+	
 	public DoorWaySet getEntryDoorTiles()
 	{
 		GrammarTerm type = type();

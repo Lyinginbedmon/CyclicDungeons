@@ -4,8 +4,12 @@ import java.io.FileWriter;
 import java.util.Properties;
 import java.util.function.BiFunction;
 
+import org.slf4j.Logger;
+
+import com.lying.CyclicDungeons;
 import com.lying.init.CDLoggers;
-import com.lying.init.CDLoggers.Logger;
+import com.lying.init.CDLoggers.LogType;
+import com.lying.utility.logging.DebugLogger;
 import com.lying.worldgen.tile.Tile;
 
 import net.minecraft.util.StringIdentifiable;
@@ -26,22 +30,36 @@ public class ServerConfig extends Config
 	
 	protected void readValues(Properties valuesIn)
 	{
+		Logger log = CyclicDungeons.LOGGER;
+		log.info("Loading server config");
+		
 		shellGenerationType = ShellType.fromString(valuesIn.getProperty("ShellType", ShellType.MINIMUM.asString()));
-		for(Logger log : Logger.values())
-			CDLoggers.getLogger(log).setActive(parseBoolOr(log.name(), false));
+		log.info(" # Dungeon exterior set to {}", shellGenerationType.asString());
+		
+		log.info(" # Console logs: ");
+		for(LogType l : LogType.values())
+		{
+			DebugLogger log2 = CDLoggers.getLogger(l);
+			if(log2 == null)
+				continue;
+			
+			final boolean active = parseBoolOr(valuesIn.getProperty(l.asString()), false);
+			log2.setActive(active);
+			log.info(" ## {}: {}", l.asString(), active);
+		}
 	}
 	
 	protected void writeValues(FileWriter writer)
 	{
 		Config.writeString(writer, "ShellType", shellGenerationType.asString());
-		for(Logger log : Logger.values())
+		for(LogType log : LogType.values())
 			Config.writeBool(writer, log.asString(), CDLoggers.getLogger(log).isActive());
 	}
 	
 	static
 	{
 		DEFAULT_SETTINGS.put("ShellType", ShellType.MINIMUM.asString());
-		for(Logger log : Logger.values())
+		for(LogType log : LogType.values())
 			DEFAULT_SETTINGS.put(log.asString(), "0");
 	}
 	

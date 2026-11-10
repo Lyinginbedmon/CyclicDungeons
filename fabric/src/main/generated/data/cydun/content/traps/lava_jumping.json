@@ -1,7 +1,9 @@
 {
   "Name": "cydun:lava_jumping",
   "Settings": {
-    "Hazard": "cydun:lava"
+    "Hazard": "cydun:lava",
+    "MinimumXSpacing": 1,
+    "MinimumZSpacing": 1
   },
   "Type": "cydun:simple_jumping"
 }

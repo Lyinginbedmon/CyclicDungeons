@@ -105,7 +105,13 @@ public class CDTiles implements ReloadListener<List<JsonObject>>
 	
 	public Optional<Tile> get(Identifier id)
 	{
-		return REGISTRY.containsKey(id) ? Optional.of(REGISTRY.get(id).get()) : Optional.empty();
+		if(REGISTRY.containsKey(id))
+			return Optional.of(REGISTRY.get(id).get());
+		else
+		{
+			CyclicDungeons.LOGGER.warn(" ? Tried to retrieve absent tile {}", id.toString());
+			return Optional.empty();
+		}
 	}
 	
 	public Tile getElse(Identifier id, Supplier<Tile> sys)

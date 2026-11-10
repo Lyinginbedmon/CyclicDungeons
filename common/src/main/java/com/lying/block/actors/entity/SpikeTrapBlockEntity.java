@@ -178,6 +178,9 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity<SpikeTrapBlock>
 								(box.getLengthX() + 0.01) * direction.getOffsetX(),
 								(box.getLengthY() + 0.05) * direction.getOffsetY(),
 								(box.getLengthZ() + 0.01) * direction.getOffsetZ()));
+					
+					if(entity instanceof LivingEntity)
+						SpikesBlock.skewerEntity((LivingEntity)entity, 4F);
 				});
 	}
 	
@@ -185,8 +188,6 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity<SpikeTrapBlock>
 	{
 		if(extension == 0F || world.isClient())
 			return;
-		
-		// FIXME Improve entity-to-hurt detection
 		
 		Box hurtBox = SpikesBlock.getHurtShape(facing)
 			.offset(
@@ -201,9 +202,6 @@ public class SpikeTrapBlockEntity extends TrapActorBlockEntity<SpikeTrapBlock>
 		world.getOtherEntities(null, hurtBox).stream()
 			.filter(e -> e.getPistonBehavior() != PistonBehavior.IGNORE)
 			.filter(e -> e instanceof LivingEntity)
-			.forEach(entity -> 
-				{
-					SpikesBlock.skewerEntity((LivingEntity)entity, 4F);
-				});
+			.forEach(entity -> SpikesBlock.skewerEntity((LivingEntity)entity, 4F));
 	}
 }

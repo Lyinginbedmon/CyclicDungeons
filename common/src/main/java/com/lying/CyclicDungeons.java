@@ -7,6 +7,7 @@ import com.lying.block.PitBlock;
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
 import com.lying.event.PuzzleTriggerEvent;
+import com.lying.grammar.content.entities.ActiveEncounterUtility;
 import com.lying.init.CDBattleEntries;
 import com.lying.init.CDBattleTypes;
 import com.lying.init.CDBlockEntityTypes;
@@ -32,6 +33,7 @@ import com.lying.network.CDPacketHandler;
 import com.lying.reference.Reference;
 import com.lying.utility.BlockResetUtility;
 
+import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.TickEvent;
 
@@ -96,5 +98,6 @@ public final class CyclicDungeons
 		TickEvent.SERVER_LEVEL_PRE.register(DungeonBuilder::onServerTick);
 		LifecycleEvent.SERVER_STARTED.register(DungeonBuilder::onServerStart);
 		PuzzleTriggerEvent.EVENT.register(DungeonBuilder.instance()::logPuzzleTrigger);
+		EntityEvent.LIVING_DEATH.register(ActiveEncounterUtility::logMobDeath);
 	}
 }

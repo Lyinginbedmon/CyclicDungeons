@@ -204,10 +204,13 @@ public class GrammarTerm
 				}
 			
 			final boolean isParent = node.equals(passage.parent());
+			
 			// Always generate door from parent, otherwise only generate if door isn't adjacent to another door
-			DoorData data = isParent ? 
-					new DoorData(door, faceIn, true) : 
-					new DoorData(door, faceIn.getOpposite(), passage.shouldGenerateDoorTo(node));
+			DoorData data = new DoorData(
+					door, 
+					isParent ? faceIn : faceIn.getOpposite(),
+					passage.shouldGenerateDoorTo(node) || meta.hasCustomEntryDoor(),
+					passage.shouldGenerateLintelFor(node));
 			
 			DoorWaySet tileSet = isParent ? 
 					(exitSets.size() > 1 ? exitSets.removeFirst() : exitSets.getFirst()) : 
@@ -220,7 +223,7 @@ public class GrammarTerm
 		return doorways;
 	}
 	
-	private static record DoorData(BlockPos tile, Direction face, boolean shouldPlaceDoor)
+	private static record DoorData(BlockPos tile, Direction face, boolean shouldPlaceDoor, boolean shouldPlaceLintel)
 	{
 		public void placeInMap(BlueprintTileGrid map, GridVolume vol, UUID uuid, Theme theme, DoorWaySet tileSet)
 		{
@@ -248,7 +251,8 @@ public class GrammarTerm
 				vol.set(footprint[1]);
 			
 			// Lintel
-			setTile(footprint[2], CDTiles.instance().get(tileSet.lintelTile().orElse(CDTiles.ID_DOORWAY_LINTEL)).get(), map, vol);
+			if(shouldPlaceDoor || shouldPlaceLintel)
+				setTile(footprint[2], CDTiles.instance().get(tileSet.lintelTile().orElse(CDTiles.ID_DOORWAY_LINTEL)).get(), map, vol);
 			
 			for(int i=3;i<Blueprint.ROOM_TILE_HEIGHT;i++)
 				setTile(tile.withY(i), CDTiles.SHELL.get(), map, vol);

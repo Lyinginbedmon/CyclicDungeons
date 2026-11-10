@@ -46,6 +46,8 @@ public record DoorWaySet(
 		return obj.has(name) ? Optional.of(Identifier.of(obj.get(name).getAsString())) : Optional.empty();
 	}
 	
+	public boolean hasDefinedDoor() { return doorTile.isEmpty(); }
+	
 	public static DoorWaySet fromJson(JsonElement obj) { return CODEC.parse(JsonOps.INSTANCE, obj).getOrThrow(); }
 	
 	public JsonElement toJson() { return CODEC.encodeStart(JsonOps.INSTANCE, this).getOrThrow(); }

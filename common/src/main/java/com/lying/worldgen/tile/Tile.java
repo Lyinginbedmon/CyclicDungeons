@@ -8,6 +8,7 @@ import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.gson.JsonElement;
+import com.lying.CyclicDungeons;
 import com.lying.grid.BlueprintTileGrid;
 import com.lying.grid.BlueprintTileGrid.TileInstance;
 import com.lying.grid.GridVolume;
@@ -325,7 +326,7 @@ public abstract class Tile
 							Optional<StructurePool> poolOpt = Optional.of(structureKey).flatMap(key -> registry.getOptionalValue(alias.lookup(key)));
 							if(poolOpt.isEmpty())
 							{
-								LOGGER.warn("Blank structure pool: {} for tile {} in theme {}", 
+								CyclicDungeons.LOGGER.warn("Blank structure pool: {} for tile {} in theme {}", 
 										structureKey.getValue().toString(), 
 										inst.tile().registryName().toString(), 
 										inst.theme().registryName().toString());

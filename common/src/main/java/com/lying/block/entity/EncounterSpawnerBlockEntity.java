@@ -1,11 +1,15 @@
 package com.lying.block.entity;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.EncounterSpawnerBlock;
 import com.lying.grammar.RoomMetadata;
+import com.lying.grammar.content.entities.ActiveEncounterUtility;
+import com.lying.grammar.content.entities.ActiveEncounterUtility.ActiveEncounter;
 import com.lying.grammar.content.entities.Battle;
 import com.lying.init.CDBlockEntityTypes;
 
@@ -22,10 +26,12 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 
-public class EncounterSpawnerBlockEntity extends BlockEntity
+public class EncounterSpawnerBlockEntity extends BlockEntity implements IRoomTaggedBlock
 {
+	private Optional<UUID> roomOrigin = Optional.empty();
 	private Optional<Battle> encounter = Optional.empty();
 	private BlockPos min, max;
 	
@@ -33,6 +39,14 @@ public class EncounterSpawnerBlockEntity extends BlockEntity
 	{
 		super(CDBlockEntityTypes.ENCOUNTER.get(), pos, state);
 	}
+	
+	public void setRoom(UUID room)
+	{
+		roomOrigin = room == null ? Optional.empty() : Optional.of(room);
+	}
+	
+	@Nullable
+	public UUID getRoom() { return roomOrigin.orElse(null); }
 	
 	public void setRoomArea(BlockPos min, BlockPos max)
 	{
@@ -89,7 +103,48 @@ public class EncounterSpawnerBlockEntity extends BlockEntity
 		if(world.getEntitiesByClass(PlayerEntity.class, bounds, EntityPredicates.EXCEPT_CREATIVE_OR_SPECTATOR).isEmpty())
 			return;
 		
-		tile.encounter.ifPresent(battle -> battle.apply(min, max, (ServerWorld)world, new RoomMetadata(), world.getRandom()));
-		world.breakBlock(pos, false);
+		tile.encounterTick(min, max, new RoomMetadata(), world.getRandom());
+	}
+	
+	protected void encounterTick(BlockPos min, BlockPos max, RoomMetadata meta, Random rand)
+	{
+		final UUID roomId = getRoom();
+		if(roomId == null)
+		{
+			world.breakBlock(pos, false);
+			return;
+		}
+		
+		final ActiveEncounterUtility utility = ActiveEncounterUtility.getActiveEncounterUtility(((ServerWorld)getWorld()).getServer());
+		
+		// Initialise encounter
+		if(!getCachedState().get(EncounterSpawnerBlock.ACTIVE))
+			startEncounter(roomId, min, max, meta, utility, rand);
+		else if(utility.retrieveForRoom(roomId).isEmpty())
+		{
+			/*
+			 * Query ActiveEncounterUtility with room UUID
+			 * If no such encounter, complete room & break
+			 */
+			
+			// TODO Issue room completed event
+			world.breakBlock(pos, false);
+		}
+		// Monitor mob deaths until all ids nonexistent
+	}
+	
+	protected void startEncounter(final UUID roomId, BlockPos min, BlockPos max, RoomMetadata meta, final ActiveEncounterUtility utility, Random rand)
+	{
+		world.setBlockState(getPos(), getCachedState().with(EncounterSpawnerBlock.ACTIVE, true), 3);
+		
+		// TODO Issue room start event
+		
+		// Spawn mobs and pass the resulting UUID list to the ActiveEncounterUtility for monitoring
+		encounter.ifPresent(battle -> 
+		{
+			List<UUID> ids = battle.apply(min, max, (ServerWorld)getWorld(), meta, rand);
+			if(!ids.isEmpty())
+				utility.add(new ActiveEncounter(roomId, ids.toArray(new UUID[0])));
+		});
 	}
 }

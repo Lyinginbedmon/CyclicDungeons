@@ -22,12 +22,12 @@
       "weight": 1
     },
     {
-      "tile": "cydun:table_light",
-      "weight": 1
-    },
-    {
       "tile": "cydun:floor",
       "weight": 1000
+    },
+    {
+      "tile": "cydun:table_light",
+      "weight": 1
     },
     {
       "tile": "cydun:workstation",

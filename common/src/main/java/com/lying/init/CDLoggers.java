@@ -15,7 +15,7 @@ public class CDLoggers
 	public static final DebugLogger WORLDGEN	= DebugLogger.of("worldgen");
 	
 	@Nullable
-	public static DebugLogger getLogger(Logger logIn)
+	public static DebugLogger getLogger(LogType logIn)
 	{
 		switch(logIn)
 		{
@@ -31,7 +31,7 @@ public class CDLoggers
 		return null;
 	}
 	
-	public static enum Logger implements StringIdentifiable
+	public static enum LogType implements StringIdentifiable
 	{
 		GRAMMAR("LogGrammar"),
 		PLANAR("LogPlanar"),
@@ -40,19 +40,19 @@ public class CDLoggers
 		
 		private final String name;
 		
-		private Logger(String nameIn)
+		private LogType(String nameIn)
 		{
 			name = nameIn;
 		}
 		
 		public String asString() { return name; }
 		
-		public static Logger fromString(String name)
+		public static LogType fromString(String name)
 		{
-			for(Logger val : values())
+			for(LogType val : values())
 				if(val.asString().equalsIgnoreCase(name))
 					return val;
-			return Logger.GRAMMAR;
+			return LogType.GRAMMAR;
 		}
 	}
 }

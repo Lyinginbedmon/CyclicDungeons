@@ -27,6 +27,14 @@
   ],
   "tilesets": [
     {
+      "term": "cydun:boss",
+      "tile_set": "cydun:boss"
+    },
+    {
+      "term": "cydun:trap",
+      "tile_set": "cydun:trap"
+    },
+    {
       "term": "cydun:empty",
       "tile_set": "cydun:empty"
     },
@@ -53,14 +61,6 @@
     {
       "term": "cydun:end",
       "tile_set": "cydun:end"
-    },
-    {
-      "term": "cydun:boss",
-      "tile_set": "cydun:boss"
-    },
-    {
-      "term": "cydun:trap",
-      "tile_set": "cydun:trap"
     }
   ],
   "traps": [

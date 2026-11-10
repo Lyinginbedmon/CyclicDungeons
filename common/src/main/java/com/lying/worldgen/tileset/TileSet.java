@@ -2,9 +2,11 @@ package com.lying.worldgen.tileset;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.base.Predicates;
 import com.lying.init.CDTiles;
 import com.lying.worldgen.tile.DefaultTiles;
 import com.lying.worldgen.tile.Tile;
@@ -36,6 +38,7 @@ public class TileSet extends HashMap<Identifier,Integer>
 	private Optional<DoorWaySet> 
 		entryDoorTiles = Optional.empty(), 
 		exitDoorTiles = Optional.empty();
+	private List<Tile> nonBlanks = null;
 	
 	public TileSet(Identifier idIn)
 	{
@@ -48,9 +51,23 @@ public class TileSet extends HashMap<Identifier,Integer>
 	
 	public Optional<DoorWaySet> exitDoorTiles() { return exitDoorTiles; }
 	
-	public Collection<Tile> keys()
+	protected Collection<Tile> keys()
 	{
-		return keySet().stream().map(CDTiles.instance()::get).filter(Optional::isPresent).map(Optional::get).toList();
+		return keySet().stream()
+				.map(CDTiles.instance()::get)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.toList();
+	}
+	
+	public List<Tile> contents()
+	{
+		if(nonBlanks == null)
+			nonBlanks = keys().stream()
+					.filter(Predicates.not(Tile::isBlank))
+					.toList();
+		
+		return nonBlanks;
 	}
 	
 	public boolean containsKey(Tile tileIn) { return containsKey(tileIn.registryName()); }

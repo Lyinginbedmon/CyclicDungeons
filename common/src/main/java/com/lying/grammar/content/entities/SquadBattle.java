@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.function.Consumers;
@@ -32,6 +33,8 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.random.Random;
+
+// XXX Remove? Define use-case
 
 /** Spawns a predefined set of mobs */
 public class SquadBattle extends Battle
@@ -63,8 +66,9 @@ public class SquadBattle extends Battle
 		return this;
 	}
 	
-	public void apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
+	public List<UUID> apply(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, Random rand)
 	{
+		List<UUID> ids = new ArrayList<>();
 		SquadBattle.Roster roster = new Roster();
 		for(SquadBattle.SquadEntry entry : squad)
 		{
@@ -82,12 +86,16 @@ public class SquadBattle extends Battle
 					{
 						Entity mob = entry.trySpawn(pos, world);
 						if(mob != null)
+						{
 							list.add(mob);
+							ids.add(mob.getUuid());
+						}
 					}
 				}
 			roster.put(entry.name(), list);
 		}
 		setup.accept(roster);
+		return ids;
 	}
 	
 	public NbtCompound writeConfig(NbtCompound nbt)
