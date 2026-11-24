@@ -2,14 +2,13 @@ package com.lying.block.actors.entity;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.IWireableBlock;
 import com.lying.block.actors.PuzzleTriggerBlock;
 import com.lying.block.entity.IRoomTaggedBlock;
-import com.lying.event.PuzzleTriggerEvent;
+import com.lying.event.RoomTriggerEvent;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.reference.Reference;
 
@@ -18,8 +17,6 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.command.ServerCommandSource;
@@ -101,48 +98,12 @@ public class PuzzleTriggerBlockEntity extends TrapActorBlockEntity<PuzzleTrigger
 	{
 		super.readNbt(nbt, registryLookup);
 		
-		roomOrigin = tryRetrieve(nbt, "Room", NbtHelper::toUuid);
-		triggerChannel = tryRetrieve(nbt, "Channel");
-		triggerCount = tryRetrieve(nbt, "Triggers");
+		roomOrigin = nbt.contains("Room") ? Optional.of(nbt.getUuid("Room")) : Optional.empty();
+		triggerChannel = nbt.contains("Channel") ? Optional.of(nbt.getString("Channel")) : Optional.empty();
+		triggerCount = nbt.contains("Triggers") ? Optional.of(nbt.getInt("Triggers")) : Optional.empty();
 		
-		message = tryRetrieve(nbt, "Message", e -> TextCodecs.STRINGIFIED_CODEC.parse(NbtOps.INSTANCE, e).getOrThrow());
-		command = tryRetrieve(nbt, "Command");
-	}
-	
-	protected static <T extends Object> Optional<T> tryRetrieve(NbtCompound nbt, String name)
-	{
-		return tryRetrieve(nbt, name, null);
-	}
-	
-	@SuppressWarnings("unchecked")
-	protected static <T extends Object> Optional<T> tryRetrieve(NbtCompound nbt, String name, Function<NbtElement,T> converter)
-	{
-		if(nbt.contains(name))
-		{
-			final NbtElement ele = nbt.get(name);
-			if(converter != null)
-				return Optional.of(converter.apply(ele));
-			else
-			{
-				Object val = null;
-				switch(ele.getType())
-				{
-					case NbtElement.STRING_TYPE:
-						val = nbt.getString(name);
-						break;
-					case NbtElement.INT_TYPE:
-						val = nbt.getInt(name);
-						break;
-					case NbtElement.INT_ARRAY_TYPE:
-						val = nbt.getIntArray(name);
-						break;
-				}
-				
-				if(val != null)
-					return Optional.of((T)val);
-			}
-		}
-		return Optional.empty();
+		message = nbt.contains("Message") ? Optional.of(TextCodecs.STRINGIFIED_CODEC.parse(NbtOps.INSTANCE, nbt.get("Message")).getOrThrow()) : Optional.empty();
+		command = nbt.contains("Command") ? Optional.of(nbt.getString("Command")) : Optional.empty();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -165,7 +126,7 @@ public class PuzzleTriggerBlockEntity extends TrapActorBlockEntity<PuzzleTrigger
 	public void onTrigger()
 	{
 		// Fire puzzle trigger event
-		roomOrigin.ifPresent(r -> PuzzleTriggerEvent.EVENT.invoker().onPuzzleTriggered(r, triggerChannel));
+		roomOrigin.ifPresent(r -> RoomTriggerEvent.EVENT.invoker().onTriggered(r, triggerChannel));
 		
 		// Decrement trigger count and destroy, as appropriate
 		int count = triggerCount.orElse(0);

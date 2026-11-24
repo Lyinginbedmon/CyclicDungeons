@@ -1,16 +1,16 @@
 package com.lying.block.entity;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.lying.block.EncounterSpawnerBlock;
+import com.lying.event.RoomTriggerEvent;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.entities.ActiveEncounterUtility;
-import com.lying.grammar.content.entities.ActiveEncounterUtility.ActiveEncounter;
-import com.lying.grammar.content.entities.Battle;
+import com.lying.grammar.content.entities.SpawnerEntry;
+import com.lying.init.CDBattleEntries;
 import com.lying.init.CDBlockEntityTypes;
 
 import net.minecraft.block.BlockState;
@@ -20,10 +20,10 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.random.Random;
@@ -32,7 +32,7 @@ import net.minecraft.world.World;
 public class EncounterSpawnerBlockEntity extends BlockEntity implements IRoomTaggedBlock
 {
 	private Optional<UUID> roomOrigin = Optional.empty();
-	private Optional<Battle> encounter = Optional.empty();
+	private Optional<Identifier> encounterId = Optional.empty();
 	private BlockPos min, max;
 	
 	public EncounterSpawnerBlockEntity(BlockPos pos, BlockState state)
@@ -54,31 +54,27 @@ public class EncounterSpawnerBlockEntity extends BlockEntity implements IRoomTag
 		this.max = max;
 	}
 	
-	public void setBattle(Battle battleIn)
+	public void setBattle(Identifier battleIn)
 	{
-		this.encounter = Optional.of(battleIn);
+		this.encounterId = Optional.of(battleIn);
 	}
 	
 	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.writeNbt(nbt, registryLookup);
+		roomOrigin.ifPresent(p -> nbt.putUuid("Room", p));
 		nbt.put("RoomMin", NbtHelper.fromBlockPos(min));
 		nbt.put("RoomMax", NbtHelper.fromBlockPos(max));
-		encounter.ifPresent(b -> nbt.put("Encounter", Battle.CODEC.encodeStart(NbtOps.INSTANCE, b).getOrThrow()));
+		encounterId.ifPresent(b -> nbt.putString("Encounter", b.toString()));
 	}
 	
 	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		super.readNbt(nbt, registryLookup);
+		roomOrigin = nbt.contains("Room") ? Optional.of(nbt.getUuid("Room")) : Optional.empty();
 		NbtHelper.toBlockPos(nbt, "RoomMin").ifPresent(p -> min = p);
 		NbtHelper.toBlockPos(nbt, "RoomMax").ifPresent(p -> max = p);
-		encounter = Optional.empty();
-		if(nbt.contains("Encounter"))
-		{
-			Battle battle = Battle.CODEC.parse(NbtOps.INSTANCE, nbt.get("Encounter")).getOrThrow();
-			if(battle != null)
-				encounter = Optional.of(battle);
-		}
+		encounterId = nbt.contains("Encounter") ? Optional.of(Identifier.of(nbt.getString("Encounter"))) : Optional.empty();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -100,10 +96,8 @@ public class EncounterSpawnerBlockEntity extends BlockEntity implements IRoomTag
 	{
 		final BlockPos min = tile.min, max = tile.max;
 		Box bounds = Box.enclosing(min, max);
-		if(world.getEntitiesByClass(PlayerEntity.class, bounds, EntityPredicates.EXCEPT_CREATIVE_OR_SPECTATOR).isEmpty())
-			return;
-		
-		tile.encounterTick(min, max, new RoomMetadata(), world.getRandom());
+		if(!world.getEntitiesByClass(PlayerEntity.class, bounds, EntityPredicates.EXCEPT_CREATIVE_OR_SPECTATOR).isEmpty())
+			tile.encounterTick(min, max, new RoomMetadata(), world.getRandom());
 	}
 	
 	protected void encounterTick(BlockPos min, BlockPos max, RoomMetadata meta, Random rand)
@@ -116,6 +110,8 @@ public class EncounterSpawnerBlockEntity extends BlockEntity implements IRoomTag
 		}
 		
 		final ActiveEncounterUtility utility = ActiveEncounterUtility.getActiveEncounterUtility(((ServerWorld)getWorld()).getServer());
+		if(utility == null)
+			return;
 		
 		// Initialise encounter
 		if(!getCachedState().get(EncounterSpawnerBlock.ACTIVE))
@@ -127,7 +123,7 @@ public class EncounterSpawnerBlockEntity extends BlockEntity implements IRoomTag
 			 * If no such encounter, complete room & break
 			 */
 			
-			// TODO Issue room completed event
+			roomOrigin.ifPresent(r -> RoomTriggerEvent.EVENT.invoker().onTriggered(r, RoomTriggerEvent.FINISH));
 			world.breakBlock(pos, false);
 		}
 		// Monitor mob deaths until all ids nonexistent
@@ -137,14 +133,14 @@ public class EncounterSpawnerBlockEntity extends BlockEntity implements IRoomTag
 	{
 		world.setBlockState(getPos(), getCachedState().with(EncounterSpawnerBlock.ACTIVE, true), 3);
 		
-		// TODO Issue room start event
+		roomOrigin.ifPresent(r -> RoomTriggerEvent.EVENT.invoker().onTriggered(r, RoomTriggerEvent.START));
 		
 		// Spawn mobs and pass the resulting UUID list to the ActiveEncounterUtility for monitoring
-		encounter.ifPresent(battle -> 
+		encounterId.ifPresent(id -> 
 		{
-			List<UUID> ids = battle.apply(min, max, (ServerWorld)getWorld(), meta, rand);
-			if(!ids.isEmpty())
-				utility.add(new ActiveEncounter(roomId, ids.toArray(new UUID[0])));
+			final SpawnerEntry battle = CDBattleEntries.instance().get(id).orElse(null);
+			if(battle != null)
+				battle.beginBattle(min, max, (ServerWorld)getWorld(), meta, roomId, rand);
 		});
 	}
 }

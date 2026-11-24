@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import com.lying.block.PitBlock;
 import com.lying.command.CDCommands;
 import com.lying.config.ServerConfig;
-import com.lying.event.PuzzleTriggerEvent;
+import com.lying.event.RoomTriggerEvent;
 import com.lying.grammar.content.entities.ActiveEncounterUtility;
 import com.lying.init.CDBattleEntries;
 import com.lying.init.CDBattleTypes;
@@ -97,7 +97,7 @@ public final class CyclicDungeons
 		TickEvent.SERVER_LEVEL_POST.register(w -> BlockResetUtility.getBlockResetUtility(w.getServer()).tickWorld(w));
 		TickEvent.SERVER_LEVEL_PRE.register(DungeonBuilder::onServerTick);
 		LifecycleEvent.SERVER_STARTED.register(DungeonBuilder::onServerStart);
-		PuzzleTriggerEvent.EVENT.register(DungeonBuilder.instance()::logPuzzleTrigger);
+		RoomTriggerEvent.EVENT.register(DungeonBuilder.instance()::logPuzzleTrigger);
 		EntityEvent.LIVING_DEATH.register(ActiveEncounterUtility::logMobDeath);
 	}
 }

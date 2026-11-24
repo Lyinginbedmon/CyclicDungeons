@@ -165,7 +165,7 @@ public class GraphScruncher
 	 * @param move The local vector to apply to the room
 	 * @return True if the room was successfully moved at all
 	 */
-	private static boolean tryMoveRelative(BlueprintRoom node, Blueprint chart, Vector2i move)
+	public static boolean tryMoveRelative(BlueprintRoom node, Blueprint chart, Vector2i move)
 	{
 		if(move.length() == 0)
 			return false;

@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.lying.reference.Reference;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -40,8 +42,12 @@ public class ActiveEncounterUtility extends PersistentState
 	
 	private final Map<UUID,ActiveEncounter> map = new HashMap<>();
 	
+	@Nullable
 	public static ActiveEncounterUtility getActiveEncounterUtility(MinecraftServer server)
 	{
+		if(server == null)
+			return null;
+		
 		ServerWorld world = server.getWorld(World.OVERWORLD);
 		PersistentStateManager manager = world.getPersistentStateManager();
 		return manager.getOrCreate(ActiveEncounterUtility.TYPE, String.join("_", Reference.ModInfo.MOD_ID, ENCOUNTERS));
@@ -67,7 +73,7 @@ public class ActiveEncounterUtility extends PersistentState
 	
 	public Optional<ActiveEncounter> retrieveForRoom(UUID roomID)
 	{
-		return Optional.empty();
+		return map.containsKey(roomID) && !map.get(roomID).isEmpty() ? Optional.of(map.get(roomID)) : Optional.empty();
 	}
 	
 	public void add(ActiveEncounter record)
@@ -79,7 +85,7 @@ public class ActiveEncounterUtility extends PersistentState
 	/** Notifies the ActiveEncounterUtility of non-player entity deaths */
 	public static EventResult logMobDeath(LivingEntity living, DamageSource source)
 	{
-		if(!living.isPlayer())
+		if(!living.isPlayer() && !living.getWorld().isClient())
 			getActiveEncounterUtility(living.getServer()).logMobDeath(living.getUuid());
 		return EventResult.pass();
 	}

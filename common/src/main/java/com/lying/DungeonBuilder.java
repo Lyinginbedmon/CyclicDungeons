@@ -36,7 +36,7 @@ public class DungeonBuilder
 	private static final ExecutorService THREAD = new ThreadPoolExecutor(0, 16, 60L, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 	private static List<BlueprintGeneration> SPOOL = new ArrayList<>();
 	
-	private static List<PuzzleTrigger> PUZZLES	= new ArrayList<>();
+	private static List<PuzzleTrigger> TRIGGERS	= new ArrayList<>();
 	
 	protected DungeonBuilder() { }
 	
@@ -113,7 +113,7 @@ public class DungeonBuilder
 	public static void onServerStart(MinecraftServer server)
 	{
 		SPOOL.clear();
-		PUZZLES.clear();
+		TRIGGERS.clear();
 	}
 	
 	public static void onServerTick(ServerWorld event)
@@ -137,13 +137,12 @@ public class DungeonBuilder
 	
 	public void logPuzzleTrigger(UUID id, Optional<String> channel)
 	{
-		LOGGER.info("Puzzle triggered in room {}", id.toString());
-		PUZZLES.add(new PuzzleTrigger(id, channel));
+		TRIGGERS.add(new PuzzleTrigger(id, channel));
 	}
 	
 	public boolean hasBeenTriggered(UUID id, Optional<String> channel)
 	{
-		return PUZZLES.stream().anyMatch(p -> p.matches(id, channel));
+		return TRIGGERS.stream().anyMatch(p -> p.matches(id, channel));
 	}
 	
 	private record BlueprintGeneration(Future<Optional<Blueprint>> future, BlockPos position, ServerWorld world, Theme theme, Random rand, long startTime)

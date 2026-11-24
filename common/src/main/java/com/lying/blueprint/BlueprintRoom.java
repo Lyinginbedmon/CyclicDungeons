@@ -201,7 +201,7 @@ public class BlueprintRoom
 	{
 		if(tiles.isEmpty())
 			tiles = Optional.of(metadata().tileFootprint(tilePosition()));
-		return tiles.get();
+		return tiles.orElse(List.of());
 	}
 	
 	public GraphTileGrid tileGrid()
@@ -284,6 +284,7 @@ public class BlueprintRoom
 	
 	public boolean hasChildren() { return !childLinks.isEmpty(); }
 	
+	/** Returns true if the given room is a descendant of this one */
 	public boolean isChild(BlueprintRoom child) { return childLinks.contains(child.uuid()); }
 	
 	public int childrenCount() { return childLinks.size(); }

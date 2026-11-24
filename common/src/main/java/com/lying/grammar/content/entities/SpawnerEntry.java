@@ -3,10 +3,13 @@ package com.lying.grammar.content.entities;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import com.lying.CyclicDungeons;
 import com.lying.block.entity.EncounterSpawnerBlockEntity;
 import com.lying.grammar.RoomMetadata;
 import com.lying.grammar.content.IContentEntry;
+import com.lying.grammar.content.entities.ActiveEncounterUtility.ActiveEncounter;
 import com.lying.init.CDBlockEntityTypes;
 import com.lying.init.CDBlocks;
 import com.lying.utility.BlockPredicate;
@@ -55,9 +58,22 @@ public record SpawnerEntry(Identifier registryName, Battle encounter) implements
 		tile.ifPresent(entity -> 
 		{
 			entity.setRoomArea(min, max);
-			entity.setBattle(encounter);
+			entity.setBattle(registryName);
 		});
 		return List.of(pos);
+	}
+	
+	public void beginBattle(BlockPos min, BlockPos max, ServerWorld world, RoomMetadata meta, UUID roomId, Random rand)
+	{
+		final ActiveEncounterUtility utility = ActiveEncounterUtility.getActiveEncounterUtility(world.getServer());
+		if(utility == null)
+			return;
+		
+		List<UUID> ids = encounter.apply(min, max, world, meta, rand);
+		if(!ids.isEmpty())
+			utility.add(new ActiveEncounter(roomId, ids.toArray(new UUID[0])));
+		else
+			CyclicDungeons.LOGGER.warn(" # Failed to spawn {} encounter between {} and {} in {}", registryName, min.toShortString(), max.toShortString(), world.getRegistryKey().getValue());
 	}
 	
 	public Text describe() { return encounter.describe(); }
