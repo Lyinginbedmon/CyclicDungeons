@@ -24,8 +24,8 @@ import com.mojang.serialization.Codec;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.Direction;
 
-/** Utility class for reducing the footprint of a blueprint */
-public class GraphScruncher
+/** Meticulously reduces the spread of the dungeon to minimise its footprint */
+public class GraphCompression
 {
 	public static DebugLogger LOGGER = CDLoggers.PLANAR;
 	public static DataLog DATA_LOG = new DataLog();
@@ -36,51 +36,49 @@ public class GraphScruncher
 	 */
 	public static void collapse(Blueprint chart)
 	{
-		final int iterationCap = chart.theme().collapseIterationCap();
+		final int iterationCap = chart.theme().graphCompressionIterations();
 		DATA_LOG.info("Applying collapse to {} nodes, cap {}", chart.size(), iterationCap);
-		int iterations = iterationCap;
 		final long time = System.currentTimeMillis();
-		int failures = 0;
-		while(iterations-- > 0 && failures < 5)
-		{
-			if(scrunch(chart))
-				failures = 0;
-			else
-				++failures;
-		}
-		
-		DATA_LOG.info(" # Time to complete collapse operation: {}ms over {} iterations", System.currentTimeMillis() - time, iterationCap - iterations);
+		scrunch(chart, iterationCap);
+		DATA_LOG.info(" # Time to complete collapse operation: {}ms", System.currentTimeMillis() - time);
 	}
 	
 	/**
 	 * Reduces the distance between nodes, reducing passageway length
 	 * @param chart The blueprint to scrunch
-	 * @return True if any node was successfully moved
 	 */
-	public static boolean scrunch(Blueprint chart)
+	public static void scrunch(Blueprint chart)
 	{
-		DATA_LOG.clear();
-		DATA_LOG.info("Applying scrunch to {} nodes", chart.size());
-		final long time = System.currentTimeMillis();
+		scrunch(chart, -1);
+	}
+	
+	private static void scrunch(Blueprint chart, int cap)
+	{
 		boolean anyMoved = false;
-		for(int i=1; i <= chart.maxDepth(); i++)
+		int iterations = cap;
+		do
 		{
-			List<BlueprintRoom> nodes = chart.byDepth(i);
-			DATA_LOG.info(" - Scrunching {} nodes at depth {}", nodes.size(), i);
-			if(tryScrunch(nodes, chart))
-				anyMoved = true;
+			DATA_LOG.clear();
+			DATA_LOG.info("Applying scrunch to {} nodes", chart.size());
+			final long time = System.currentTimeMillis();
+			anyMoved = false;
+			for(int i=1; i <= chart.maxDepth(); i++)
+			{
+				List<BlueprintRoom> nodes = chart.byDepth(i);
+				DATA_LOG.info(" - Scrunching {} nodes at depth {}", nodes.size(), i);
+				anyMoved = tryScrunch(nodes, chart) || anyMoved;
+			}
+			DATA_LOG.info("Scrunch operation completed");
+			DATA_LOG.info(" # Time to complete scrunch operation: {}ms", System.currentTimeMillis() - time);
 		}
-		DATA_LOG.info("Scrunch operation completed");
-		DATA_LOG.info(" # Time to complete scrunch operation: {}ms", System.currentTimeMillis() - time);
-		return anyMoved;
+		while(iterations-- > 0 && anyMoved);
 	}
 	
 	private static boolean tryScrunch(List<BlueprintRoom> nodes, Blueprint chart)
 	{
 		boolean anyMoved = false;
 		for(BlueprintRoom node : nodes)
-			if(tryScrunchNode(node, chart))
-				anyMoved = true;
+			anyMoved = tryScrunchNode(node, chart) || anyMoved;
 		return anyMoved;
 	}
 	

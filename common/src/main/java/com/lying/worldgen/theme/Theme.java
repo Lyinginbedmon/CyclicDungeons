@@ -12,7 +12,7 @@ import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarTerm;
 import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.entities.SpawnerEntry;
-import com.lying.graph.GraphScruncher.ScrunchStyle;
+import com.lying.graph.GraphCompression.ScrunchStyle;
 import com.lying.init.CDBattleEntries;
 import com.lying.init.CDContentTypes.ContentEntry;
 import com.lying.init.CDPhrases;
@@ -43,6 +43,7 @@ public record Theme(
 		Map<Identifier,Identifier> tileSets, 
 		Optional<Identifier> passageTiles,
 		Optional<DoorWaySet> defaultDoors,
+		Optional<Integer> verletSpacing,
 		Optional<Integer> collapseIterations,
 		Optional<ScrunchStyle> collapseStyle)
 {
@@ -56,9 +57,10 @@ public record Theme(
 			TileSetEntry.CODEC.listOf().fieldOf("tilesets").forGetter(Theme::tilesetEntries),
 			Identifier.CODEC.optionalFieldOf("passage_tileset").forGetter(Theme::passageTiles),
 			DoorWaySet.CODEC.optionalFieldOf("door_tileset").forGetter(Theme::defaultDoors),
+			Codec.INT.optionalFieldOf("verlet_spacing").forGetter(Theme::verletSpacing),
 			Codec.INT.optionalFieldOf("condense_iterations").forGetter(Theme::collapseIterations),
 			ScrunchStyle.CODEC.optionalFieldOf("condense_style").forGetter(Theme::collapseStyle)
-			).apply(instance, (id,terms,phrases,mobs,traps,puzzles,tiles,passage,doors,iterations,style)-> 
+			).apply(instance, (id,terms,phrases,mobs,traps,puzzles,tiles,passage,doors,spacing,iterations,style)-> 
 			{
 				Map<Identifier, Identifier> tileSets = new HashMap<>();
 				tiles.forEach(t -> tileSets.put(t.roomId(), t.tilesetId()));
@@ -72,6 +74,7 @@ public record Theme(
 						tileSets, 
 						passage,
 						doors,
+						spacing,
 						iterations,
 						style);
 			}));
@@ -169,7 +172,11 @@ public record Theme(
 	
 	public DoorWaySet getStandardDoors() { return defaultDoors.orElse(DoorWaySet.DEFAULTS); }
 	
-	public int collapseIterationCap() { return collapseIterations.orElse(1000); }
+	public int verletCompressionSpacing() { return verletSpacing.orElse(3); }
+	
+	public boolean shouldApplyGraphCompression() { return collapseIterations.isPresent() && collapseIterations.get() <= 0; }
+	
+	public int graphCompressionIterations() { return collapseIterations.orElse(1000); }
 	
 	public ScrunchStyle collapseApproach() { return collapseStyle.orElse(ScrunchStyle.LINEAR); }
 	

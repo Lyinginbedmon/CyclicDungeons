@@ -7,23 +7,23 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.joml.Vector2i;
-import org.slf4j.Logger;
 
-import com.lying.CyclicDungeons;
 import com.lying.blueprint.Blueprint;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.init.CDTerms;
 
-public class GravityScrunch
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Direction.Axis;
+
+/** Verlet-based approach to dungeon compression, using each room's parent as its gravitational direction */
+public class GravityCompression
 {
 	/** Minimum number of tiles between adjacent unconnected room grids */
-	private static final int MIN_SEP	= 1;
-	
-	private static final Logger LOGGER = CyclicDungeons.LOGGER;
+	private static int MIN_SEP;
 	
 	public static void collapse(Blueprint chart)
 	{
-		scrunch(chart, 100);
+		scrunch(chart, 1000);
 	}
 	
 	public static void scrunch(Blueprint chart)
@@ -33,6 +33,8 @@ public class GravityScrunch
 	
 	public static void scrunch(Blueprint chart, final int cap)
 	{
+		MIN_SEP = 1 + chart.theme().verletCompressionSpacing();
+		
 		// Map of rooms to the functions calculating their motion
 		Map<BlueprintRoom, VerletSolver> verletObjects = new HashMap<>();
 		
@@ -75,15 +77,24 @@ public class GravityScrunch
 			depthColliders.put(d, rooms);
 		}
 		
+		// Step 1: Attract all rooms to their parents, respecting boundaries their depth or lower
 		int limit = cap;
 		boolean changed = false;
 		do
 		{
-			for(int i=1; i<chart.maxDepth(); i++)
-				for(BlueprintRoom room : byDepth.get(i))
+			for(int i=1; i<=chart.maxDepth(); i++)
+				for(BlueprintRoom room : byDepth.getOrDefault(i, List.of()))
 					changed = verletObjects.get(room).applyTo(room, depthColliders.get(i)) || changed;
 		}
 		while(limit-- > 0 && changed);
+		
+		// Step 2: Generate passages inbetween rooms
+		chart.clearPassageCache();
+		chart.passages();
+		
+		// Step 3: Apply conventional compression to finalise
+		if(chart.theme().shouldApplyGraphCompression())
+			GraphCompression.collapse(chart);
 	}
 	
 	/** Essentially a Verlet integration object for each room */
@@ -115,7 +126,8 @@ public class GravityScrunch
 			room.move(acceleration);
 			
 			// Occlude rooms moving ahead of the starting room (occupying any tile with Y < 0)
-			final int lowestY = (int)Math.ceil(room.metadata().tileSize().y * 0.5D);
+			final Vector2i aSize = room.metadata().tileSize();
+			final int lowestY = aSize.y / 2;
 			if(room.tilePosition().toVec2i().y < lowestY)
 				room.move(new Vector2i(
 						0, 
@@ -128,26 +140,74 @@ public class GravityScrunch
 				if(room.equals(other))
 					continue;
 				
-				// FIXME Refactor to treat rooms as actual squares instead of circles
-				
-				final Vector2i aPos = room.tilePosition().toVec2i();
-				final Vector2i bPos = other.tilePosition().toVec2i();
-				final Vector2i direction = new Vector2i(aPos).sub(bPos);
-				final double dist = aPos.distance(bPos);
-				
-				final Vector2i aSize = room.metadata().tileSize();
 				final Vector2i bSize = other.metadata().tileSize();
-				final int aMax = Math.max(aSize.x, aSize.y);
-				final int bMax = Math.max(bSize.x, bSize.y);
+				final Vector2i bPos = other.tilePosition().toVec2i();
 				
-				final int target = (int)((aMax + bMax) * 0.5D) + MIN_SEP;
-				if(dist < target)
-					room.move(new Vector2i
-							(
-								(int)((direction.x / dist) * (target - dist)),
-								(int)((direction.y / dist) * (target - dist))
-							));
+				Vector2i aPos;
+				if(colliding(aPos = room.tilePosition().toVec2i(), aSize, bPos, bSize))
+				{
+					final Vector2i direction = new Vector2i(aPos).sub(bPos);
+					final Direction move = 
+							direction.length() == 0 ? 
+									Direction.SOUTH : 
+									Direction.fromVector((int)direction.x, 0, (int)direction.y, Direction.NORTH);
+					
+					// How far we are from each-other on this axis
+					int dist = 0;
+					// How far we need to be from each-other on this axis
+					int target = MIN_SEP;
+					if(move.getAxis() == Axis.X)
+					{
+						dist = Math.abs(direction.x);
+						if(move.getOffsetX() < 0)
+							target += (bSize.x / 2) + aSize.x - (aSize.x / 2);
+						else
+							target += bSize.x - (bSize.x / 2) + aSize.x / 2;
+					}
+					else
+					{
+						dist = Math.abs(direction.y);
+						if(move.getOffsetY() < 0)
+							target += (bSize.y / 2) + aSize.y - (aSize.y / 2);
+						else
+							target += bSize.y - (bSize.y / 2) + aSize.y / 2;
+					}
+					
+					room.move(
+							new Vector2i(move.getOffsetX(), move.getOffsetZ())
+							.mul(target - dist));
+				}
 			}
+		}
+		
+		private static boolean colliding(Vector2i aPos, Vector2i aSize, Vector2i bPos, Vector2i bSize)
+		{
+			final Vector2i direction = new Vector2i(aPos).sub(bPos);
+			if(direction.length() == 0)
+				return true;
+			
+			final Direction move = Direction.fromVector((int)direction.x, 0, (int)direction.y, Direction.NORTH);
+			// How far we are from each-other on this axis
+			int dist = 0;
+			// How far we need to be from each-other on this axis
+			int target = MIN_SEP;
+			if(move.getAxis() == Axis.X)
+			{
+				dist = Math.abs(direction.x);
+				if(move.getOffsetX() < 0)
+					target += (bSize.x / 2) + aSize.x - (aSize.x / 2);
+				else
+					target += bSize.x - (bSize.x / 2) + aSize.x / 2;
+			}
+			else
+			{
+				dist = Math.abs(direction.y);
+				if(move.getOffsetY() < 0)
+					target += (bSize.y / 2) + aSize.y - (aSize.y / 2);
+				else
+					target += bSize.y - (bSize.y / 2) + aSize.y / 2;
+			}
+			return dist < target;
 		}
 	}
 }

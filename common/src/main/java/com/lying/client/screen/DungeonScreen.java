@@ -17,7 +17,7 @@ import com.lying.blueprint.Blueprint.ErrorType;
 import com.lying.blueprint.BlueprintPassage;
 import com.lying.blueprint.BlueprintRoom;
 import com.lying.graph.GraphOrganiser;
-import com.lying.graph.GravityScrunch;
+import com.lying.graph.GravityCompression;
 import com.lying.reference.Reference;
 import com.lying.screen.DungeonScreenHandler;
 import com.lying.utility.geometry.Box2f;
@@ -113,8 +113,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		THREAD.submit(() -> 
 		{
 			scrunchButton.active = collapseButton.active = false;
-//			GraphScruncher.scrunch(blueprint);
-			GravityScrunch.scrunch(blueprint);
+			GravityCompression.scrunch(blueprint);
 			cacheErrors();
 			updatePathCaches();
 			scrunchButton.active = collapseButton.active = true;
@@ -126,8 +125,7 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 		THREAD.submit(() -> 
 		{
 			scrunchButton.active = collapseButton.active = false;
-//			GraphScruncher.collapse(blueprint);
-			GravityScrunch.collapse(blueprint);
+			GravityCompression.collapse(blueprint);
 			cacheErrors();
 			updatePathCaches();
 			scrunchButton.active = collapseButton.active = true;
@@ -137,25 +135,25 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 	private void cacheErrors()
 	{
 		errorCache.clear();
-//		for(ErrorType type : ErrorType.values())
-//		{
-//			int total = Blueprint.tallyErrors(blueprint, type);
-//			if(total > 0)
-//				errorCache.put(type, total);
-//		}
+		for(ErrorType type : ErrorType.values())
+		{
+			int total = Blueprint.tallyErrors(blueprint, type);
+			if(total > 0)
+				errorCache.put(type, total);
+		}
 	}
 	
 	private void updatePathCaches()
 	{
-//		totalPassages = GraphOrganiser.getFinalisedPassages(blueprint);
-//		
-//		if(!errorCache.isEmpty())
-//		{
+		totalPassages = GraphOrganiser.getFinalisedPassages(blueprint);
+		
+		if(!errorCache.isEmpty())
+		{
 			criticalPath.clear();
-//			return;
-//		}
-//		
-//		criticalPath = GraphOrganiser.getPassages(blueprint.getCriticalPath());
+			return;
+		}
+		
+		criticalPath = GraphOrganiser.getPassages(blueprint.getCriticalPath());
 	}
 	
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY)
@@ -205,7 +203,6 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 				context.drawText(textRenderer, Text.literal("Geometry testing"), (mc.getWindow().getScaledWidth() - textRenderer.getWidth(this.title)) / 2, 10, 0xFFFFFF, false);
 				break;
 		}
-		
 	}
 	
 	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY)
@@ -288,7 +285,6 @@ public class DungeonScreen extends HandledScreen<DungeonScreenHandler>
 					});
 				else
 				{
-//					scrunchButton.active = collapseButton.active = criticalButton.active = errorCache.isEmpty();
 					showCriticalPath = showCriticalPath && criticalButton.active;
 				}
 				break;

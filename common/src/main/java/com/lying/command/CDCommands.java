@@ -14,7 +14,7 @@ import com.lying.grammar.CDGrammar;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.GrammarRoom;
 import com.lying.graph.GraphOrganiser;
-import com.lying.graph.GraphScruncher;
+import com.lying.graph.GraphCompression;
 import com.lying.network.ShowDungeonLayoutPacket;
 import com.lying.reference.Reference;
 import com.mojang.brigadier.arguments.IntegerArgumentType;

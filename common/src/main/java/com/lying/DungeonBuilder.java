@@ -18,7 +18,7 @@ import com.lying.grammar.CDGrammar;
 import com.lying.grammar.GrammarPhrase;
 import com.lying.grammar.RoomMetadata;
 import com.lying.graph.GraphOrganiser;
-import com.lying.graph.GraphScruncher;
+import com.lying.graph.GravityCompression;
 import com.lying.init.CDLoggers;
 import com.lying.init.CDThemes;
 import com.lying.worldgen.theme.Theme;
@@ -97,13 +97,13 @@ public class DungeonBuilder
 			LOGGER.info(" # Graph organisation complete in {}ms", System.currentTimeMillis() - time);
 			
 			time = System.currentTimeMillis();
-			GraphScruncher.collapse(blueprint);
+			GravityCompression.collapse(blueprint);
 			if(blueprint.hasErrors())
 			{
-				LOGGER.error(" # Passage optimisation failed");
+				LOGGER.error(" # Dungeon compression failed");
 				return Optional.empty();
 			}
-			LOGGER.info(" # Passage optimisation complete in {}ms", System.currentTimeMillis() - time);
+			LOGGER.info(" # Dungeon compression complete in {}ms", System.currentTimeMillis() - time);
 			return Optional.of(blueprint);
 		}), position, world, theme, rand, startTime));
 		

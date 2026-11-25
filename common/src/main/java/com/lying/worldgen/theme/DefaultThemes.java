@@ -14,7 +14,7 @@ import com.lying.grammar.content.BattleRoomContent.EncounterSet;
 import com.lying.grammar.content.defaults.DefaultBattles;
 import com.lying.grammar.content.defaults.DefaultPuzzles;
 import com.lying.grammar.content.defaults.DefaultTraps;
-import com.lying.graph.GraphScruncher.ScrunchStyle;
+import com.lying.graph.GraphCompression.ScrunchStyle;
 import com.lying.init.CDTerms;
 import com.lying.worldgen.tileset.DefaultTileSets;
 import com.lying.worldgen.tileset.DoorWaySet;
